@@ -1,0 +1,24 @@
+{
+    "rules": [
+    {
+        "rule-type": "selection",
+        "rule-id": 1,
+        "rule-name": "include-example1",
+        "object-locator": {
+        "schema-name": "example1",
+        "table-name": "%"
+        },
+        "rule-action": "include"
+    },
+    {
+        "rule-type": "selection",
+        "rule-id": 2,
+        "rule-name": "include-example2",
+        "object-locator": {
+        "schema-name": "example2",
+        "table-name": "%"
+        },
+        "rule-action": "include"
+    }
+    ]
+}

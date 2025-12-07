@@ -1,0 +1,10 @@
+#
+# https://help.github.com/articles/dealing-with-line-endings/
+#
+# Linux start script should use lf
+* text=auto eol=lf
+
+# These are Windows script files and should use crlf
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf
+

@@ -1,0 +1,46 @@
+{
+  "name": "cdk-workspaces",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:workspace": "eslint workspaces/$npm_config_workspace",
+    "lint:workspace:fix": "eslint workspaces/$npm_config_workspace --fix",
+    "lint:precommit": "eslint 'workspaces/**/*.{ts,tsx}' --max-warnings 0",
+    "fmt:precommit": "prettier -l './**/*.{js,jsx,ts,tsx,json,css,scss}'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@aws-cdk/aws-lambda-python-alpha": "^2.231.0-alpha.0",
+    "@eslint/js": "^9.39.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "cdk-nag": "^2.37.55",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "eslint-cdk-plugin": "^3.4.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "rimraf": "^6.1.2",
+    "typescript-eslint": "^8.48.1"
+  },
+  "dependencies": {
+    "change-case-commonjs": "^5.4.4",
+    "tsconfig-paths": "^4.2.0"
+  },
+  "private": "true",
+  "workspaces": [
+    "workspaces\\*"
+  ],
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": "npm run lint:precommit",
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss}": "npm run fmt:precommit"
+  }
+}

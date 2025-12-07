@@ -1,0 +1,264 @@
+{
+	// Give this a name that will be shown in VS Code
+	// You can use your project name, company name, or something meaningful to you
+	"name": "AWS CDK Development environment",
+
+	// TypeScript Node.js development environment image
+	// Based on Debian "Bullseye" (latest stable version)
+	// For more details and options, see:
+	// https://github.com/devcontainers/templates/tree/main/src/typescript-node
+	// https://hub.docker.com/r/microsoft/devcontainers-typescript-node
+	//"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bullseye",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "../..",
+        "args": {
+            "VARIANT": "1-22-bookworm", // localstack requires glibc 2.35+ which is only available in ubuntu 22.04+ or debian bookworm+
+            //"VARIANT": "1-22-bullseye",
+            "LOCALSTACK_VERSION": "4.9.1"
+        },
+		"runArgs": [
+			"--privileged",
+			"--init"
+		]
+	},
+	// Features pre-installed in your development environment:
+	"features": {
+		// Git installation
+		// https://github.com/devcontainers/features/tree/main/src/git
+		"ghcr.io/devcontainers/features/git:1": {},
+		
+		// AWS CLI installation - allows you to run `aws` commands in terminal
+		// https://aws.amazon.com/cli/
+		//"ghcr.io/devcontainers/features/aws-cli:1": {},
+		
+		// AWS CDK (Cloud Development Kit) installation
+		// https://aws.amazon.com/cdk/
+		// TypeScript API reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html
+		// https://github.com/danielbraun89/devcontainer-features/tree/main/src/aws-cdk
+		//"ghcr.io/devcontainers-contrib/features/aws-cdk:2": {}
+		//"ghcr.io/devcontainers-contrib/features/localstack:2": {},
+
+		// AWS SSO Util to simplify authentication with AWS SSO
+		// Uncomment if you prefer using static AWS IAM keys
+		//"ghcr.io/tomharvey/devcontainer-features/aws-sso-util:1": {}
+
+		// Additional features can be installed
+		// See https://containers.dev/features for a list of available features
+		// Using these features saves you from writing custom installation scripts for tools you need
+
+		// Docker in Docker - allows you to create Docker containers within your development environment
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+		
+		// Claude Code feature (if needed)
+		// "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+
+		// Security tools (optional, uncomment if needed)
+		// tfsec: Security scanner for Terraform code
+		// "ghcr.io/devcontainers-contrib/features/tfsec:1": {},
+		// checkov: Security and compliance scanner for IaC
+		// "ghcr.io/devcontainers-contrib/features/checkov:1": {},
+		// trivy: Vulnerability scanner for containers and infrastructure
+		// "ghcr.io/devcontainers-contrib/features/trivy:1": {}
+	},
+
+	// Environment variables for your development environment:
+    // Suppress warning messages when using cdklocal
+    "containerEnv": {
+        "ENV": "local",
+        "JSII_SILENCE_WARNING_UNTESTED_NODE_VERSION": "true"
+    },
+
+	// Mount local directories into your development environment:
+	"mounts": [
+		// This mounts your local machine's `~/.aws` to `/home/vscode/.aws/` in the environment
+		// Makes your local AWS configuration available in the development environment
+		// Required if using static AWS IAM keys
+		// Useful if using AWS SSO and want to share AWS config across environments
+		//"source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws/,target=/home/vscode/.aws/,type=bind,consistency=cached"
+		"source=./.aws/,target=/home/node/.aws/,type=bind,consistency=cached"
+	],
+
+	// Recommended settings for the development environment
+	// These are VS Code settings that determine how your code is handled
+	// You can delete or modify these as needed, but they are sensible defaults
+	// Additional settings can be added as needed (tabs vs spaces, line length, etc.)
+	"customizations": {
+		"vscode": {
+			// Extensions (plugins) to install in VS Code
+			// These add valuable features to your development environment
+			"extensions": [
+				// Python code linting and formatting
+				"charliermarsh.ruff",
+
+				// GitHub features:
+				// Authenticate to GitHub, manage pull requests and issues directly in VS Code
+				// https://github.com/microsoft/vscode-pull-request-github
+				"github.vscode-pull-request-github",
+				// GitLens shows who last changed a line and when
+				// https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens
+				"eamodio.gitlens",
+				"donjayamanne.githistory",
+
+				// Additional features:
+				// AWS Toolkit
+				// Rich toolset for working with AWS services from within VS Code
+				// Allows exploring deployed services and using CodeWhisperer
+				"amazonwebservices.aws-toolkit-vscode",
+				"amazonwebservices.amazon-q-vscode",
+
+				// AI-assisted code completion and generation
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"Anthropic.claude-code",
+
+				// Japanese language pack, helpful if using a Japanese environment
+				//"ms-ceintl.vscode-language-pack-ja",
+
+				// Docker-related extensions
+				"ms-azuretools.vscode-docker",
+				// Devcontainer extension
+				"ms-vscode-remote.remote-containers",
+				// Markdown extensions
+				"davidanson.vscode-markdownlint",
+				"yzhang.markdown-all-in-one",
+				// CSV visualization extension
+				"mechatroner.rainbow-csv",
+				// Text linting extension
+				//"taichi.vscode-textlint", // deprecated
+				"3w36zj6.textlint",
+				// Diagram creation extension
+				"hediet.vscode-drawio",
+				// Code formatting extensions
+				"esbenp.prettier-vscode",
+				"dbaeumer.vscode-eslint",
+                "oderwat.indent-rainbow",
+				"vscode-icons-team.vscode-icons",
+				"nopjmp.fairyfloss"
+			],
+			"settings": {
+				// Default terminal in Linux
+				"terminal.integrated.defaultProfile.linux": "/bin/bash",
+				// TypeScript library path
+				"typescript.tsdk": "/usr/local/lib/node_modules/typescript/lib",
+				"editor.formatOnSave": true,
+				"editor.codeActionsOnSave": {
+					"source.fixAll.eslint": "explicit",
+					"source.fixAll.stylelint": "always"
+				},
+				"[typescript]": {
+					"editor.formatOnSave": true
+				},
+				"eslint.validate": ["typescript"],
+				"mcp": {
+					"inputs": [],
+					"servers": {
+						"mcp-server-time": {
+							"command": "python3",
+							"args": [
+								"-m",
+								"mcp_server_time",
+								"--local-timezone=Asia/Tokyo"
+							],
+							"env": {}
+						},
+						"github": {
+							"command": "docker",
+							"args": [
+								"run",
+								"-i",
+								"--rm",
+								"--network",
+								"bridge",
+								"-e",
+								"GITHUB_PERSONAL_ACCESS_TOKEN",
+								"mcp/github"
+							],
+							"env": {
+								"GITHUB_PERSONAL_ACCESS_TOKEN": "${localEnv:GITHUB_PERSONAL_ACCESS_TOKEN}"
+							}
+						},
+						"awslabs.core-mcp-server": {
+							"command": "uvx",
+							"args": [
+								"awslabs.core-mcp-server@latest"
+							],
+							"env": {
+								"FASTMCP_LOG_LEVEL": "ERROR"
+							},
+							"autoApprove": [],
+							"disabled": false
+						},
+						"awslabs.cdk-mcp-server": {
+							"command": "uvx",
+							"args": [
+								"awslabs.cdk-mcp-server@latest"
+							],
+							"env": {
+								"FASTMCP_LOG_LEVEL": "ERROR"
+							},
+							"disabled": false,
+							"autoApprove": [
+								"CDKGeneralGuidance",
+								"GetAwsSolutionsConstructPattern",
+								"SearchGenAICDKConstructs",
+								"GenerateBedrockAgentSchema",
+								"LambdaLayerDocumentationProvider",
+								"ExplainCDKNagRules",
+								"ExplainCDKPatterns",
+								"CheckCDKNagSuppressions"
+							]
+						},
+						"awslabs.aws-documentation-mcp-server": {
+							"command": "uvx",
+							"args": [
+								"awslabs.aws-documentation-mcp-server@latest"
+							],
+							"env": {
+								"FASTMCP_LOG_LEVEL": "ERROR"
+							},
+							"disabled": false,
+							"autoApprove": [
+								"read_documentation",
+								"search_documentation",
+								"recommend"
+							]
+						},
+						"awslabs.aws-diagram-mcp-server": {
+							"command": "uvx",
+							"args": ["awslabs.aws-diagram-mcp-server"],
+							"env": {
+								"FASTMCP_LOG_LEVEL": "ERROR"
+							},
+							"autoApprove": [],
+							"disabled": false
+						},
+						"awslabs.cfn-mcp-server": {
+							"command": "uvx",
+							"args": [
+								"awslabs.cfn-mcp-server@latest"
+							],
+							"env": {
+								"AWS_PROFILE": "your-named-profile"
+							},
+							"disabled": false,
+							"autoApprove": []
+						},
+						"aws-knowledge-mcp-server": {
+							"command": "uvx",
+							"args": ["fastmcp", "run", "https://knowledge-mcp.global.api.aws"]
+						}
+					}
+				}
+			}
+		}
+	},
+	// Command to run after container creation
+	"postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+	// For Japanese environment, use the following post-create command script
+	//"postCreateCommand": "bash .devcontainer/postCreateCommand.ja.sh",
+	// User in the container
+	"remoteUser": "node",
+	// Workspace folder path
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+}
