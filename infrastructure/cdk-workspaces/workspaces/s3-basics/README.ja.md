@@ -454,10 +454,11 @@ lifecycleBucket.addLifecycleRule({
 
 | ストレージクラス | 用途 | コスト |
 |-----------------|------|--------|
-| STANDARD | 頻繁にアクセス | 高 |
-| STANDARD_IA | 30日後（月1回程度のアクセス） | 中 |
-| GLACIER | 90日後（年数回のアクセス） | 低 |
-| DEEP_ARCHIVE | アーカイブ（ほぼアクセスしない） | 最低 |
+| Standard | 頻繁にアクセス | 高 |
+| Standard IA | 30日後（月1回程度のアクセス） | 中 |
+| Glacier Instant Retrieval | 90日後（年数回のアクセス） | 低 |
+| Glacier Flexible Retrieval | アーカイブ (90日後 (年数回のアクセス) ) | 低 |
+| Glacier Deep Archive | アーカイブ（ほぼアクセスしない） | 最低 |
 
 ### コスト最適化のポイント
 

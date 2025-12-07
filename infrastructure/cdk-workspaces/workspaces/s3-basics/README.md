@@ -451,10 +451,11 @@ Generated CloudFormation:
 
 | Storage Class | Use Case | Cost |
 |---------------|----------|------|
-| STANDARD | Frequent access | High |
-| STANDARD_IA | After 30 days (monthly access) | Medium |
-| GLACIER | After 90 days (annual access) | Low |
-| DEEP_ARCHIVE | Archive (minimal access) | Lowest |
+| Standard | Frequent access | High |
+| Standard IA | After 30 days (monthly access) | Medium |
+| Glacier Instant Retrieval | After 90 days (annual access) | Low |
+| Glacier Flexible Retrieval | Archive (After 90 days (annual access) ) | Low |
+| Glacier Deep Archive | Archive (minimal access) | Lowest |
 
 ### Cost Optimization Tips
 
