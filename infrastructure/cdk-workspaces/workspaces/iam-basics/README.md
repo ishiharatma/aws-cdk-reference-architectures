@@ -579,6 +579,7 @@ The key part is the condition:
 ```
 
 This means:
+
 - Users **must** authenticate with MFA before assuming the role
 - Without MFA, the `AssumeRole` API call will fail
 - Even if the user has the `sts:AssumeRole` permission
@@ -586,6 +587,7 @@ This means:
 ### How to Use Switch Role
 
 1. **Enable MFA for the user**:
+
    ```bash
    aws iam create-virtual-mfa-device \
      --virtual-mfa-device-name SwitchRoleUser-MFA \
@@ -600,6 +602,7 @@ This means:
    ```
 
 2. **Assume the role**:
+
    ```bash
    aws sts assume-role \
      --role-arn arn:aws:iam::123456789012:role/ReadOnlyRole \
@@ -636,6 +639,7 @@ cdk deploy "**" --project=sample --env=dev
 ### Verification
 
 1. **Check IAM Users**:
+
    ```bash
    # List all users
    aws iam list-users
@@ -645,6 +649,7 @@ cdk deploy "**" --project=sample --env=dev
    ```
 
 2. **Check Attached Policies**:
+
    ```bash
    # List user policies
    aws iam list-attached-user-policies --user-name PasswordUser
@@ -654,6 +659,7 @@ cdk deploy "**" --project=sample --env=dev
    ```
 
 3. **Verify Secrets Manager**:
+
    ```bash
    # Get secret value
    aws secretsmanager get-secret-value \
@@ -663,6 +669,7 @@ cdk deploy "**" --project=sample --env=dev
    ```
 
 4. **Test Switch Role**:
+
    ```bash
    # Assume role with MFA
    aws sts assume-role \
