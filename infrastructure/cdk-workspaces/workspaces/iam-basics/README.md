@@ -543,7 +543,7 @@ Generated CloudFormation:
             },
             "Effect": "Allow",
             "Principal": {
-              "AWS": "arn:aws:iam::904233092792:root"
+              "AWS": "arn:aws:iam::123456789012:root"
             }
           }
         ]
