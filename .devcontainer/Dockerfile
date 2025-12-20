@@ -1,16 +1,40 @@
 ARG VARIANT="1-22-bookworm"
+ARG IS_PROXY="false"
+ARG CERT_NAME="YourRootCA"
 FROM mcr.microsoft.com/devcontainers/typescript-node:${VARIANT}
 
-# Copy and update certificate
-COPY .devcontainer/withProxy/YourRootCA.cer /usr/local/share/ca-certificates/YourRootCA.crt
-RUN update-ca-certificates
-# Configure SSL settings and specify certificate path for npm
-RUN npm config --global set cafile /etc/ssl/certs/ca-certificates.crt \
-    && npm config --global set registry http://registry.npmjs.org/ \
-    && npm config --global set strict-ssl false \
-    && git config --system http.sslCAInfo /usr/local/share/ca-certificates/YourRootCA.crt
+RUN if [ "$IS_PROXY" = "true" ] ; then \
+    echo "Configuring proxy settings..."; \
+    fi
 
-ENV AWS_CA_BUNDLE=/usr/local/share/ca-certificates/YourRootCA.crt
+# Copy the entire withProxy directory to avoid file-not-found errors
+# This ensures the build doesn't fail even when IS_PROXY=false
+COPY .devcontainer/withProxy /tmp/withProxy
+
+RUN if [ "$IS_PROXY" = "true" ] ; then \
+    # Check if certificate file exists and configure proxy settings
+    CERT_FILE=$(find /tmp/withProxy -name "${CERT_NAME}.cer" -type f | head -n 1); \
+    if [ -n "$CERT_FILE" ] && [ -f "$CERT_FILE" ]; then \
+    echo "Setting up certificate for proxy environment..." && \
+    cp "$CERT_FILE" "/usr/local/share/ca-certificates/${CERT_NAME}.crt" && \
+    update-ca-certificates && \
+    # Configure SSL settings and specify certificate path for npm
+    npm config --global set cafile /etc/ssl/certs/ca-certificates.crt && \
+    npm config --global set registry http://registry.npmjs.org/ && \
+    npm config --global set strict-ssl false && \
+    git config --system http.sslCAInfo "/usr/local/share/ca-certificates/${CERT_NAME}.crt" && \
+    # Set AWS CA Bundle environment variable
+    echo "export AWS_CA_BUNDLE=/usr/local/share/ca-certificates/${CERT_NAME}.crt" >> /etc/profile.d/proxy-env.sh && \
+    rm -rf /tmp/withProxy && \
+    echo "Proxy configuration completed."; \
+    else \
+    echo "Warning: IS_PROXY is true but certificate file ${CERT_NAME}.cer not found"; \
+    rm -rf /tmp/withProxy; \
+    fi; \
+    else \
+    # Clean up copied files when proxy is not enabled
+    rm -rf /tmp/withProxy; \
+    fi
 
 # Install additional packages
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -71,7 +95,7 @@ WORKDIR /home/node
 RUN npm config set cafile /etc/ssl/certs/ca-certificates.crt \
     && npm config set registry https://registry.npmjs.org/ \
     && npm config set strict-ssl true \
-    && git config --global http.sslCAInfo /usr/local/share/ca-certificates/YourRootCA.crt
+    && if [ "$IS_PROXY" = "true" ]; then git config --global http.sslCAInfo "/usr/local/share/ca-certificates/${CERT_NAME}.crt"; fi
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -94,6 +118,23 @@ RUN export FILE="" && \
     sudo tar xvzf "${FILE}" -C /usr/local/bin && \
     rm "${FILE}"; \
     fi
+
+
+# Install Amazon Q CLI
+RUN export OS=$(uname -m) && \
+    if [ -n "$OS" ]; then \
+    curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/q-${OS}-linux-musl.zip" -o "/tmp/q.zip" && \
+    cd /tmp && \
+    unzip q.zip && \
+    cd q && \
+    ./install.sh --no-confirm&& \
+    cd / && \
+    sudo rm -rf /tmp/q && \
+    sudo rm -f /tmp/q.zip; \
+    fi
+
+# Install Act
+RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
 
 # Set PATH for container startup
 ENV PATH="/home/node/.local/bin:${PATH}"

@@ -2,7 +2,7 @@
 #set -ex
 set -e
 
-#cd /workspaces/${localWorkspaceFolderBasename}/infra
+#cd /workspaces/${localWorkspaceFolderBasename}/infrastructure/cdk-workspaces
 #test -f package.json && npm install || echo 'No package.json found, skipping npm install'
 
 # Add node user to docker group
@@ -15,10 +15,10 @@ git config --global core.filemode false
 
 # AWS SSO login and get-caller-identity alias setup
 # Basic commands (for default profile)
-echo 'alias awslogin="aws sso login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.bashrc
-#echo 'alias awslogin="aws sso login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.zshrc
+echo 'alias awslogin="aws login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.bashrc
 echo 'alias awsid="aws sts get-caller-identity"' >> ~/.bashrc
-#echo 'alias awsid="aws sts get-caller-identity"' >> ~/.zshrc
+
+echo 'alias ssologin="aws sso login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.bashrc
 
 # NPM-related alias
 echo 'alias npmfl="npm run format && npm run lint:fix"' >> ~/.bashrc
@@ -34,6 +34,14 @@ awsloginp() {
     echo "Usage: awsloginp <profile-name>"
     return 1
   fi
+  aws login --profile "$1" && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1"
+}
+
+ssologinp() {
+  if [ -z "$1" ]; then
+    echo "Usage: ssologinp <profile-name>"
+    return 1
+  fi
   aws sso login --profile "$1" && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1"
 }
 
@@ -46,16 +54,236 @@ awsidp() {
   aws sts get-caller-identity --profile "$1"
 }
 
+# Switch role and save config
+swrole() {
+  if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "Usage: swrole <accountId> <role-arn> <profile-name> [source-profile] [region] [MFA-name]"
+    echo "Example: swrole 123456789012 @role-admin my-admin-role awslogin ap-northeast-1 my-mfa"
+    return 1
+  fi
+  
+  local account_id="$1"
+  local role_name="$2"
+  local profile_name="$3"
+  local source_profile="${4:-awslogin}"
+  local region="${5:-ap-northeast-1}"
+  local mfa_name="${6:-}"
+
+  local role_arn="arn:aws:iam::${account_id}:role/${role_name}"
+  
+  echo "Account ID: $account_id"
+  echo "Assuming role: $role_arn"
+  echo "Source profile: $source_profile"
+  echo "Target profile: $profile_name"
+  echo "Region: $region"
+  
+  # Create or update credentials file
+  local config_file="$HOME/.aws/config"
+  touch "$config_file"
+  
+  # Remove existing profile if it exists
+  if grep -q "^\[$profile_name\]" "$config_file"; then
+    echo "Updating existing profile: $profile_name"
+    # Create temp file without the target profile
+    awk -v profile="$profile_name" '\''
+      BEGIN { skip=0 }
+      /^\[/ { skip=0 }
+      $0 == "[profile "profile"]" { skip=1; next }
+      skip == 0 { print }
+    '\'' "$config_file" > "${config_file}.tmp"
+    mv "${config_file}.tmp" "$config_file"
+  else
+    echo "Creating new profile: $profile_name"
+  fi
+  
+  # Ensure file ends with newline, then append new config
+  [ -s "$config_file" ] && [ -z "$(tail -c 1 "$config_file")" ] || echo "" >> "$config_file"
+  
+  {
+    echo "[profile $profile_name]"
+    echo "role_arn = $role_arn"
+    if [ -n "$mfa_name" ]; then
+      echo "mfa_serial = arn:aws:iam::${account_id}:mfa/${mfa_name}"
+    fi
+    echo "source_profile = $source_profile"
+    echo "account = $account_id"
+    echo "region = $region"
+  } >> "$config_file"
+
+  echo "✅ Config saved to profile: $profile_name"
+  echo ""
+  echo "Testing config..."
+  aws sts get-caller-identity --profile "$profile_name"
+  
+  if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ Profile is ready to use!"
+    echo "Example: aws s3 ls --profile $profile_name"
+  fi
+}
+
+# Switch role and save credentials
+swcre() {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: swcre <role-arn> <profile-name> [source-profile] [session-name]"
+    echo "Example: swcre arn:aws:iam::123456789012:role/@role-admin my-admin-role awslogin my-session"
+    return 1
+  fi
+  
+  local role_arn="$1"
+  local profile_name="$2"
+  local source_profile="${3:-awslogin}"
+  local session_name="${4:-${profile_name}-session}"
+  
+  echo "Assuming role: $role_arn"
+  echo "Source profile: $source_profile"
+  echo "Target profile: $profile_name"
+  echo "Session name: $session_name"
+  
+  # Assume role and get credentials
+  local assume_output
+  assume_output=$(aws sts assume-role --role-arn "$role_arn" --role-session-name "$session_name" --profile "$source_profile" 2>&1)
+  
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to assume role"
+    echo "$assume_output"
+    return 1
+  fi
+  
+  # Parse JSON output
+  local access_key
+  local secret_key
+  local session_token
+  
+  access_key=$(echo "$assume_output" | grep -o "\"AccessKeyId\": \"[^\"]*\"" | cut -d"\"" -f4)
+  secret_key=$(echo "$assume_output" | grep -o "\"SecretAccessKey\": \"[^\"]*\"" | cut -d"\"" -f4)
+  session_token=$(echo "$assume_output" | grep -o "\"SessionToken\": \"[^\"]*\"" | cut -d"\"" -f4)
+  
+  if [ -z "$access_key" ] || [ -z "$secret_key" ] || [ -z "$session_token" ]; then
+    echo "Error: Failed to parse credentials"
+    return 1
+  fi
+  
+  # Create or update credentials file
+  local cred_file="$HOME/.aws/credentials"
+  touch "$cred_file"
+  
+  # Remove existing profile if it exists
+  if grep -q "^\[$profile_name\]" "$cred_file"; then
+    echo "Updating existing profile: $profile_name"
+    # Create temp file without the target profile
+    awk -v profile="$profile_name" '\''
+      BEGIN { skip=0 }
+      /^\[/ { skip=0 }
+      $0 == "["profile"]" { skip=1; next }
+      skip == 0 { print }
+    '\'' "$cred_file" > "${cred_file}.tmp"
+    mv "${cred_file}.tmp" "$cred_file"
+  else
+    echo "Creating new profile: $profile_name"
+  fi
+  
+  # Ensure file ends with newline, then append new credentials
+  [ -s "$cred_file" ] && [ -z "$(tail -c 1 "$cred_file")" ] || echo "" >> "$cred_file"
+  
+  {
+    echo "[$profile_name]"
+    echo "aws_access_key_id = $access_key"
+    echo "aws_secret_access_key = $secret_key"
+    echo "aws_session_token = $session_token"
+  } >> "$cred_file"
+  
+  echo "✅ Credentials saved to profile: $profile_name"
+  echo ""
+  echo "Testing credentials..."
+  aws sts get-caller-identity --profile "$profile_name"
+  
+  if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ Profile is ready to use!"
+    echo "Example: aws s3 ls --profile $profile_name"
+  fi
+}
+
+# Clear assumed role credentials from profile
+clearrole() {
+  if [ -z "$1" ]; then
+    echo "Usage: clearrole <profile-name>"
+    echo "Example: clearrole my-admin-role"
+    return 1
+  fi
+  
+  local profile_name="$1"
+  local cred_file="$HOME/.aws/credentials"
+  
+  if [ ! -f "$cred_file" ]; then
+    echo "Error: Credentials file not found: $cred_file"
+    return 1
+  fi
+  
+  if ! grep -q "^\[$profile_name\]" "$cred_file"; then
+    echo "Error: Profile not found: $profile_name"
+    return 1
+  fi
+  
+  echo "Removing profile: $profile_name"
+  
+  # Remove the profile
+  awk -v profile="$profile_name" '\''
+    BEGIN { skip=0 }
+    /^\[/ { skip=0 }
+    $0 == "["profile"]" { skip=1; next }
+    skip == 0 { print }
+  '\'' "$cred_file" > "${cred_file}.tmp"
+  mv "${cred_file}.tmp" "$cred_file"
+  
+  echo "✅ Profile removed: $profile_name"
+}
+
+# AWS logout and optionally clear credentials
+awslogout() {
+  local profile_name="${1:-awslogin}"
+  
+  echo "Logging out from profile: $profile_name"
+  aws logout --profile "$profile_name"
+  
+  if [ $? -eq 0 ]; then
+    echo ""
+    echo "Checking if profile exists in credentials..."
+    if grep -q "^\[$profile_name\]" "$HOME/.aws/credentials" 2>/dev/null; then
+      echo "Removing profile from credentials file..."
+      clearrole "$profile_name"
+    else
+      echo "✅ Logout complete (no credentials to remove)"
+    fi
+  else
+    echo "Warning: Logout command failed, but will still attempt to remove credentials if they exist"
+    if grep -q "^\[$profile_name\]" "$HOME/.aws/credentials" 2>/dev/null; then
+      clearrole "$profile_name"
+    fi
+  fi
+}
+
 # Function to display alias tips
 tips() {
   echo "-----------------------------------"
   echo "Useful Command Tips"
   echo "-----------------------------------"
   echo "AWS related:"
-  echo "  awslogin: AWS SSO login + check current credentials (default profile)"
+  echo "  awslogin: AWS login + check current credentials (default profile)"
+  echo "  awsloginp <profile-name>: AWS login with specified profile + check credentials"
+  echo "  awslogout [profile-name]: AWS logout and remove credentials (default: awslogin)"
+  echo "  ssologin: AWS SSO login + check current credentials (default profile)"
+  echo "  ssologinp <profile-name>: AWS SSO login with specified profile + check credentials"
   echo "  awsid: Check credentials only (default profile)"
-  echo "  awsloginp <profile-name>: AWS SSO login with specified profile + check credentials"
   echo "  awsidp <profile-name>: Check credentials only for specified profile"
+  echo ""
+  echo "Role switching:"
+  echo "  swrole <role-arn> <profile-name> [source-profile] [session-name]"
+  echo "    Example: swrole arn:aws:iam::123456789012:role/@role-admin my-admin awslogin"
+  echo "    Assumes a role and saves temporary credentials to specified profile"
+  echo "  clearrole <profile-name>: Remove assumed role credentials from profile"
+  echo "    Example: clearrole my-admin"
   echo ""
   echo "NPM related:"
   echo "  npmfl: Run linter and formatter (npm run format && npm run lint:fix)"
@@ -68,6 +296,13 @@ tips() {
   echo "Examples:"
   echo "  awslogin             : Login with default profile"
   echo "  awsloginp dev-admin  : Login with dev profile"
+  echo "  awslogout            : Logout from awslogin profile"
+  echo "  awslogout my-admin   : Logout from my-admin profile"
+  echo "  swrole arn:aws:iam::123456789012:role/@role-admin my-admin-role"
+  echo "    : Assume role and save to my-admin-role profile"
+  echo "  aws s3 ls --profile my-admin-role"
+  echo "    : Use assumed role credentials"
+  echo "  clearrole my-admin-role : Remove my-admin-role from credentials"
   echo "  npmfl                : Run linter and formatter"
   echo "-----------------------------------"
 }

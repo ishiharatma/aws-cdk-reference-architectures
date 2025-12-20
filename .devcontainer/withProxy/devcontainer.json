@@ -10,12 +10,16 @@
 	// https://hub.docker.com/r/microsoft/devcontainers-typescript-node
 	//"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bullseye",
 	"build": {
-		"dockerfile": "Dockerfile",
+		"dockerfile": "../Dockerfile",
 		"context": "../..",
         "args": {
             "VARIANT": "1-22-bookworm", // localstack requires glibc 2.35+ which is only available in ubuntu 22.04+ or debian bookworm+
             //"VARIANT": "1-22-bullseye",
-            "LOCALSTACK_VERSION": "4.9.1"
+            // see: https://github.com/localstack/localstack/releases
+            "LOCALSTACK_VERSION": "4.12.0",
+			// Proxy settings
+			"IS_PROXY": "true",
+			"CERT_NAME": "YourRootCA"
         },
 		"runArgs": [
 			"--privileged",
