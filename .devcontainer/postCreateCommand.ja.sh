@@ -2,7 +2,7 @@
 #set -ex
 set -e
 
-#cd /workspaces/${localWorkspaceFolderBasename}/infra
+#cd /workspaces/${localWorkspaceFolderBasename}/infrastructure/cdk-workspaces
 #test -f package.json && npm install || echo 'No package.json found, skipping npm install'
 
 # nodeユーザーをdockerグループに追加
