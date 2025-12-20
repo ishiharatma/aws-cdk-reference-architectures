@@ -9,7 +9,7 @@
 ![アーキテクチャ概要](https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/cdk-workspaces/workspaces/iam-basics/overview.png)
 
 以下の3つのコンストラクトで6つの異なるパターンを実装します。
-
+以下の4つのコンストラクトで6つの異なるパターンを実装します。
 ### コンストラクト1: 基本ユーザー (CDKDefaultUser)
 
 - パターン1: 最小限のIAMユーザー構成
@@ -177,7 +177,7 @@ const user = new iam.User(this, 'SecretsPasswordUser', {
 });
 // change password policy
 userWithSecretsManager.addManagedPolicy(
-  iam.ManagedPolicy.fromAwsManagedPolicyName('IAMUserChangePassword')
+user.addManagedPolicy(
 );
 
 // ユーザーに自分のパスワードを読み取る権限を付与
