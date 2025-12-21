@@ -4,12 +4,12 @@
 
 ## アーキテクチャ概要
 
-この演習で構築する内容は次のとおりです。
+構築する内容は次のとおりです。
 
-![アーキテクチャ概要](https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/cdk-workspaces/workspaces/iam-basics/overview.png)
+![アーキテクチャ概要](overview.png)
 
-以下の3つのコンストラクトで6つの異なるパターンを実装します。
-以下の4つのコンストラクトで6つの異なるパターンを実装します。
+以下の4つのコンストラクトで5つの異なるパターンを実装します。
+
 ### コンストラクト1: 基本ユーザー (CDKDefaultUser)
 
 - パターン1: 最小限のIAMユーザー構成
@@ -30,8 +30,6 @@
 - パターン5: MFA必須のロール引き受け
 
 ## 前提条件
-
-この演習を進めるには、以下が必要です。
 
 - AWS CLI v2のインストールと設定
 - Node.js 20+
@@ -748,4 +746,3 @@ cdk destroy "**" --force --project=sample --env=dev
 - [IAMベストプラクティス](https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/best-practices.html)
 - [AWS Secrets Manager](https://docs.aws.amazon.com/ja_jp/secretsmanager/)
 - [IAMポリシーリファレンス](https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/reference_policies.html)
-- [私のGitHubリポジトリ](https://github.com/ishiharatma/aws-cdk-reference-architectures)
