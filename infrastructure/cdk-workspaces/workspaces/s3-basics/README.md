@@ -19,7 +19,7 @@ In this architecture, you can learn the following:
 
 An overview of the S3 bucket we will create:
 
-![Architecture Overview](https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/s3/s3-basics/overview.png)
+![Architecture Overview](overview.png)
 
 We will implement 8 patterns:
 
@@ -33,8 +33,6 @@ We will implement 8 patterns:
 8. VersioningEnabled: Versioning and lifecycle management
 
 ## Prerequisites
-
-To proceed with this exercise, you need:
 
 - AWS CLI v2 installed and configured
 - Node.js 20 or later
@@ -696,4 +694,3 @@ This architecture demonstrates the basics of S3 bucket implementation with AWS C
 - [AWS CDK Official Documentation](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
 - [S3 Bucket Security Best Practices](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html)
 - [S3 Lifecycle Configuration](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html)
-- [GitHub Repository](https://github.com/ishiharatma/aws-cdk-reference-architectures)

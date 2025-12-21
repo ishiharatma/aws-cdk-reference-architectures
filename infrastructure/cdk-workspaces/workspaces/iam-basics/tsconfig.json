@@ -7,7 +7,7 @@
       "parameters/*": ["parameters/*"],
       "test/*": ["test/*"],
       "@common/*": ["../../common/*"]
-    },
+    }
   },
   "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "parameters/**/*.ts"]
 }

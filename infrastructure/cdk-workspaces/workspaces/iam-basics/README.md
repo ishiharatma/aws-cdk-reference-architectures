@@ -4,11 +4,11 @@
 
 ## Architecture Overview
 
-Here's what we'll build in this exercise:
+Here's what you'll build:
 
-![Architecture Overview](https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/cdk-workspaces/workspaces/iam-basics/overview.png)
+![Architecture Overview](overview.png)
 
-We'll implement six different patterns across four constructs:
+We'll implement five different patterns across four constructs:
 
 ### Construct 1: Basic User (CDKDefaultUser)
 
@@ -30,8 +30,6 @@ We'll implement six different patterns across four constructs:
 - Pattern 5: MFA-required role assumption
 
 ## Prerequisites
-
-To follow along, you'll need:
 
 - AWS CLI v2 installed and configured
 - Node.js 20+
@@ -748,4 +746,3 @@ In this exercise, we learned IAM fundamentals through AWS CDK.
 - [IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 - [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/)
 - [IAM Policy Reference](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies.html)
-- [My GitHub Repository](https://github.com/ishiharatma/aws-cdk-reference-architectures)

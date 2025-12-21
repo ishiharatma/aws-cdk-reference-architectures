@@ -25,11 +25,11 @@ export class S3BasicStack extends cdk.Stack {
 
     // named bucket
     const bucketName = [
-      props.project, // プロジェクト名
-      props.environment, // 環境識別子
-      "namedbucket", // 用途
-      accountId, // AWSアカウントID
-      regionNoHyphens, // リージョン（ハイフン除去）
+      props.project, // project name
+      props.environment, // environment identifier
+      "namedbucket", // purpose
+      accountId, // AWS account ID
+      regionNoHyphens, // region (hyphens removed)
     ]
       .join("-")
       .toLowerCase();

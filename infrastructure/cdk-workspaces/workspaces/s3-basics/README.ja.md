@@ -17,9 +17,9 @@
 
 ## アーキテクチャ概要
 
-今回作成するS3バケットの全体像です。
+構築する内容は次のとおりです。
 
-![Architecture Overview](https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/s3/s3-basics/overview.png)
+![Architecture Overview](overview.png)
 
 以下の7つのパターンを実装します。
 
@@ -33,8 +33,6 @@
 8. VersioningEnabled: バージョニングとライフサイクル管理
 
 ## 前提条件
-
-この演習を進めるには、以下が必要です。
 
 - AWS CLI v2がインストール・設定済み
 - Node.js 20以上
@@ -700,4 +698,3 @@ cdk destroy "**" --force --project=sample --env=dev
 - [AWS CDK公式ドキュメント](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
 - [S3バケットのベストプラクティス](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html)
 - [S3ライフサイクル設定](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html)
-- [GitHubリポジトリ](https://github.com/ishiharatma/aws-cdk-reference-architectures)
