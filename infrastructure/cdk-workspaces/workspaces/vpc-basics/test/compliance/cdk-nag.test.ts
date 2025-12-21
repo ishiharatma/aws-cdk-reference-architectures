@@ -5,7 +5,6 @@ import { Environment } from '@common/parameters/environments';
 
 import { VpcCDKDefaultStack } from 'lib/stacks/vpc-cdkdefault-stack';
 import { VpcBasicsStack } from 'lib/stacks/vpc-basics-stack';
-import { vpc } from 'cdk-nag/lib/rules';
 
 const defaultEnv = {
     account: '123456789012',
