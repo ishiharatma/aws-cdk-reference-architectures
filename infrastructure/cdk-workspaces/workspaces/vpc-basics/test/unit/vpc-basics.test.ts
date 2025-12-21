@@ -73,7 +73,7 @@ describe("VpcBasicsStack Fine-grained Assertions", () => {
   });
 
   describe("Subnet Configuration", () => {
-    const subnets = [
+    const expectedSubnets = [
         "External",
         "Management",
         "Internal",
@@ -81,7 +81,7 @@ describe("VpcBasicsStack Fine-grained Assertions", () => {
         "Isolated",
         "TransitGateway"
     ];
-    subnets.forEach((subnetName) => {
+    expectedSubnets.forEach((subnetName) => {
       test(`should create ${subnetName} Subnet`, () => {
         const allSubnets = stackTemplate.findResources("AWS::EC2::Subnet");
         const subnets = Object.values(allSubnets).filter((subnet: any) => {

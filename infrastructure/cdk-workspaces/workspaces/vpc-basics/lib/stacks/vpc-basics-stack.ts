@@ -13,6 +13,8 @@ export interface StackProps extends cdk.StackProps {
 }
 
 export class VpcBasicsStack extends cdk.Stack {
+  public readonly vpc: ec2.IVpc;
+
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
@@ -63,6 +65,7 @@ export class VpcBasicsStack extends cdk.Stack {
         }
       ],
     });
+    this.vpc = customVpc;
     // add Flow Logs exporting to S3
     const flowLogBucket = new s3.Bucket(this, "FlowLogBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -100,7 +103,7 @@ export class VpcBasicsStack extends cdk.Stack {
       subnetGroupName: 'Internal',
     });
     if (endpointSubnets.subnets.length === 0) {
-      throw new Error('InternalSubnet not found');
+      throw new Error('Internal Subnet not found');
     }
     // Gateway Endpoints
     // see: https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html

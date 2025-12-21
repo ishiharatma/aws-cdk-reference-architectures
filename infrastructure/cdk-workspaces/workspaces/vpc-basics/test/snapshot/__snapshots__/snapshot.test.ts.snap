@@ -145,19 +145,30 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::VPC",
     },
-    "CustomVPCApplicationSubnetSubnet1DefaultRouteF39E7F72": {
+    "CustomVPCApplicationSubnet1DefaultRoute467D815C": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet1RouteTable8F450860",
+          "Ref": "CustomVPCApplicationSubnet1RouteTableEF6A4952",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCApplicationSubnetSubnet1RouteTable8F450860": {
+    "CustomVPCApplicationSubnet1RouteTableAssociation96EF341B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet1RouteTableEF6A4952",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCApplicationSubnet1Subnet1D23AB0D",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCApplicationSubnet1RouteTableEF6A4952": {
       "Properties": {
         "Tags": [
           {
@@ -166,7 +177,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet1",
           },
           {
             "Key": "Project",
@@ -179,18 +190,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCApplicationSubnetSubnet1RouteTableAssociation79DEA8F9": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet1RouteTable8F450860",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet1Subnet8D151D15",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCApplicationSubnetSubnet1Subnet8D151D15": {
+    "CustomVPCApplicationSubnet1Subnet1D23AB0D": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.16.0/22",
@@ -198,7 +198,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ApplicationSubnet",
+            "Value": "Application",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -210,7 +210,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet1",
           },
           {
             "Key": "Project",
@@ -223,19 +223,19 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCApplicationSubnetSubnet2DefaultRoute663466C8": {
+    "CustomVPCApplicationSubnet2DefaultRoute8A1BA27C": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet2RouteTable619893E2",
+          "Ref": "CustomVPCApplicationSubnet2RouteTable8B4DB101",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCApplicationSubnetSubnet2RouteTable619893E2": {
+    "CustomVPCApplicationSubnet2RouteTable8B4DB101": {
       "Properties": {
         "Tags": [
           {
@@ -244,7 +244,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet2",
           },
           {
             "Key": "Project",
@@ -257,18 +257,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCApplicationSubnetSubnet2RouteTableAssociation75DBBF7B": {
+    "CustomVPCApplicationSubnet2RouteTableAssociation72A4D2A6": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet2RouteTable619893E2",
+          "Ref": "CustomVPCApplicationSubnet2RouteTable8B4DB101",
         },
         "SubnetId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet2Subnet12600022",
+          "Ref": "CustomVPCApplicationSubnet2Subnet04D01C6F",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCApplicationSubnetSubnet2Subnet12600022": {
+    "CustomVPCApplicationSubnet2Subnet04D01C6F": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.20.0/22",
@@ -276,7 +276,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ApplicationSubnet",
+            "Value": "Application",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -288,7 +288,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet2",
           },
           {
             "Key": "Project",
@@ -301,30 +301,30 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCApplicationSubnetSubnet3DefaultRoute53FEEFFE": {
+    "CustomVPCApplicationSubnet3DefaultRouteBDB8EE4A": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet3RouteTableEEC6499C",
+          "Ref": "CustomVPCApplicationSubnet3RouteTableE5C9A8A3",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCApplicationSubnetSubnet3RouteTableAssociationEFC84FD0": {
+    "CustomVPCApplicationSubnet3RouteTableAssociationDCA23E00": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet3RouteTableEEC6499C",
+          "Ref": "CustomVPCApplicationSubnet3RouteTableE5C9A8A3",
         },
         "SubnetId": {
-          "Ref": "CustomVPCApplicationSubnetSubnet3Subnet67A0871D",
+          "Ref": "CustomVPCApplicationSubnet3SubnetB1EFB937",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCApplicationSubnetSubnet3RouteTableEEC6499C": {
+    "CustomVPCApplicationSubnet3RouteTableE5C9A8A3": {
       "Properties": {
         "Tags": [
           {
@@ -333,7 +333,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet3",
           },
           {
             "Key": "Project",
@@ -346,7 +346,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCApplicationSubnetSubnet3Subnet67A0871D": {
+    "CustomVPCApplicationSubnet3SubnetB1EFB937": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.24.0/22",
@@ -354,7 +354,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ApplicationSubnet",
+            "Value": "Application",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -366,7 +366,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ApplicationSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet3",
           },
           {
             "Key": "Project",
@@ -383,13 +383,13 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "RouteTableIds": [
           {
-            "Ref": "CustomVPCInternalSubnetSubnet1RouteTableB29B72EE",
+            "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet2RouteTableE0355EEA",
+            "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet3RouteTable846247A2",
+            "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
           },
         ],
         "ServiceName": {
@@ -425,7 +425,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::VPCEndpoint",
     },
-    "CustomVPCExternalSubnetSubnet1DefaultRoute94839BD5": {
+    "CustomVPCExternalSubnet1DefaultRoute58CF8397": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -435,12 +435,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1RouteTableCA3B3A71",
+          "Ref": "CustomVPCExternalSubnet1RouteTable27A8D829",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCExternalSubnetSubnet1EIPB66E789D": {
+    "CustomVPCExternalSubnet1EIP4AFB1584": {
       "Properties": {
         "Domain": "vpc",
         "Tags": [
@@ -450,7 +450,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
           },
           {
             "Key": "Project",
@@ -460,20 +460,20 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::EIP",
     },
-    "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE": {
+    "CustomVPCExternalSubnet1NATGatewayD57D2161": {
       "DependsOn": [
-        "CustomVPCExternalSubnetSubnet1DefaultRoute94839BD5",
-        "CustomVPCExternalSubnetSubnet1RouteTableAssociationA540E450",
+        "CustomVPCExternalSubnet1DefaultRoute58CF8397",
+        "CustomVPCExternalSubnet1RouteTableAssociation2572058C",
       ],
       "Properties": {
         "AllocationId": {
           "Fn::GetAtt": [
-            "CustomVPCExternalSubnetSubnet1EIPB66E789D",
+            "CustomVPCExternalSubnet1EIP4AFB1584",
             "AllocationId",
           ],
         },
         "SubnetId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1SubnetF1F79933",
+          "Ref": "CustomVPCExternalSubnet1Subnet32ADE41E",
         },
         "Tags": [
           {
@@ -482,7 +482,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
           },
           {
             "Key": "Project",
@@ -492,18 +492,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::NatGateway",
     },
-    "CustomVPCExternalSubnetSubnet1RouteTableAssociationA540E450": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1RouteTableCA3B3A71",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1SubnetF1F79933",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCExternalSubnetSubnet1RouteTableCA3B3A71": {
+    "CustomVPCExternalSubnet1RouteTable27A8D829": {
       "Properties": {
         "Tags": [
           {
@@ -512,7 +501,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
           },
           {
             "Key": "Project",
@@ -525,7 +514,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCExternalSubnetSubnet1SubnetF1F79933": {
+    "CustomVPCExternalSubnet1RouteTableAssociation2572058C": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet1RouteTable27A8D829",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet1Subnet32ADE41E",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet1Subnet32ADE41E": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.0.0/26",
@@ -533,7 +533,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ExternalSubnet",
+            "Value": "External",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -545,7 +545,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
           },
           {
             "Key": "Project",
@@ -558,7 +558,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCExternalSubnetSubnet2DefaultRoute7AE5C163": {
+    "CustomVPCExternalSubnet2DefaultRouteFBEC75E0": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -568,23 +568,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet2RouteTableC6261B8F",
+          "Ref": "CustomVPCExternalSubnet2RouteTable9C445024",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCExternalSubnetSubnet2RouteTableAssociationDB2123AC": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet2RouteTableC6261B8F",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCExternalSubnetSubnet2SubnetCB7DCDE3",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCExternalSubnetSubnet2RouteTableC6261B8F": {
+    "CustomVPCExternalSubnet2RouteTable9C445024": {
       "Properties": {
         "Tags": [
           {
@@ -593,7 +582,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet2",
           },
           {
             "Key": "Project",
@@ -606,7 +595,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCExternalSubnetSubnet2SubnetCB7DCDE3": {
+    "CustomVPCExternalSubnet2RouteTableAssociationCEB23F9D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet2RouteTable9C445024",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet2Subnet0FE9E45B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet2Subnet0FE9E45B": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.0.64/26",
@@ -614,7 +614,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ExternalSubnet",
+            "Value": "External",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -626,7 +626,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet2",
           },
           {
             "Key": "Project",
@@ -639,7 +639,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCExternalSubnetSubnet3DefaultRoute8D1664EB": {
+    "CustomVPCExternalSubnet3DefaultRouteDE5A7826": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -649,12 +649,23 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet3RouteTable04462600",
+          "Ref": "CustomVPCExternalSubnet3RouteTableBCD1F3A2",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCExternalSubnetSubnet3RouteTable04462600": {
+    "CustomVPCExternalSubnet3RouteTableAssociation43BAE4B8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet3RouteTableBCD1F3A2",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet3SubnetFE7D113B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet3RouteTableBCD1F3A2": {
       "Properties": {
         "Tags": [
           {
@@ -663,7 +674,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet3",
           },
           {
             "Key": "Project",
@@ -676,18 +687,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCExternalSubnetSubnet3RouteTableAssociation88FBDC4D": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCExternalSubnetSubnet3RouteTable04462600",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCExternalSubnetSubnet3SubnetF30EFF31",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCExternalSubnetSubnet3SubnetF30EFF31": {
+    "CustomVPCExternalSubnet3SubnetFE7D113B": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.0.128/26",
@@ -695,7 +695,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ExternalSubnet",
+            "Value": "External",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -707,7 +707,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ExternalSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet3",
           },
           {
             "Key": "Project",
@@ -882,30 +882,19 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::InternetGateway",
     },
-    "CustomVPCInternalSubnetSubnet1DefaultRouteDBE650AE": {
+    "CustomVPCInternalSubnet1DefaultRouteFF3D60B3": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet1RouteTableB29B72EE",
+          "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCInternalSubnetSubnet1RouteTableAssociationD3DE5E3E": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet1RouteTableB29B72EE",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCInternalSubnetSubnet1SubnetD60F6682",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCInternalSubnetSubnet1RouteTableB29B72EE": {
+    "CustomVPCInternalSubnet1RouteTable2EBE9CDF": {
       "Properties": {
         "Tags": [
           {
@@ -914,7 +903,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet1",
           },
           {
             "Key": "Project",
@@ -927,7 +916,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCInternalSubnetSubnet1SubnetD60F6682": {
+    "CustomVPCInternalSubnet1RouteTableAssociation8CEF9C21": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCInternalSubnet1Subnet377C8961": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.4.0/22",
@@ -935,7 +935,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "InternalSubnet",
+            "Value": "Internal",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -947,7 +947,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet1",
           },
           {
             "Key": "Project",
@@ -960,30 +960,30 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCInternalSubnetSubnet2DefaultRoute5494F3DA": {
+    "CustomVPCInternalSubnet2DefaultRoute99983E57": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet2RouteTableE0355EEA",
+          "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCInternalSubnetSubnet2RouteTableAssociationEAC1007E": {
+    "CustomVPCInternalSubnet2RouteTableAssociation9434EB0E": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet2RouteTableE0355EEA",
+          "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
         },
         "SubnetId": {
-          "Ref": "CustomVPCInternalSubnetSubnet2SubnetCD670CA5",
+          "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCInternalSubnetSubnet2RouteTableE0355EEA": {
+    "CustomVPCInternalSubnet2RouteTableE7BA652B": {
       "Properties": {
         "Tags": [
           {
@@ -992,7 +992,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet2",
           },
           {
             "Key": "Project",
@@ -1005,7 +1005,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCInternalSubnetSubnet2SubnetCD670CA5": {
+    "CustomVPCInternalSubnet2SubnetC5E749D3": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.8.0/22",
@@ -1013,7 +1013,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "InternalSubnet",
+            "Value": "Internal",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1025,7 +1025,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet2",
           },
           {
             "Key": "Project",
@@ -1038,19 +1038,19 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCInternalSubnetSubnet3DefaultRoute20CDB713": {
+    "CustomVPCInternalSubnet3DefaultRouteCDDBA1B5": {
       "Properties": {
         "DestinationCidrBlock": "0.0.0.0/0",
         "NatGatewayId": {
-          "Ref": "CustomVPCExternalSubnetSubnet1NATGatewayF13085CE",
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet3RouteTable846247A2",
+          "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCInternalSubnetSubnet3RouteTable846247A2": {
+    "CustomVPCInternalSubnet3RouteTable9E53CAEA": {
       "Properties": {
         "Tags": [
           {
@@ -1059,7 +1059,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet3",
           },
           {
             "Key": "Project",
@@ -1072,18 +1072,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCInternalSubnetSubnet3RouteTableAssociation72F2F97A": {
+    "CustomVPCInternalSubnet3RouteTableAssociation1159D7B1": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCInternalSubnetSubnet3RouteTable846247A2",
+          "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
         },
         "SubnetId": {
-          "Ref": "CustomVPCInternalSubnetSubnet3Subnet87F02C1B",
+          "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCInternalSubnetSubnet3Subnet87F02C1B": {
+    "CustomVPCInternalSubnet3SubnetEB09D8D9": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.12.0/22",
@@ -1091,7 +1091,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "InternalSubnet",
+            "Value": "Internal",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1103,7 +1103,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/InternalSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet3",
           },
           {
             "Key": "Project",
@@ -1116,18 +1116,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCIsolatedSubnetSubnet1RouteTableAssociationEF0AE3C4": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet1RouteTableE47102E8",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet1SubnetC0EA7A7D",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCIsolatedSubnetSubnet1RouteTableE47102E8": {
+    "CustomVPCIsolatedSubnet1RouteTable340905CB": {
       "Properties": {
         "Tags": [
           {
@@ -1136,7 +1125,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet1",
           },
           {
             "Key": "Project",
@@ -1149,7 +1138,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCIsolatedSubnetSubnet1SubnetC0EA7A7D": {
+    "CustomVPCIsolatedSubnet1RouteTableAssociationF25187ED": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCIsolatedSubnet1RouteTable340905CB",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCIsolatedSubnet1Subnet9658DD90",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCIsolatedSubnet1Subnet9658DD90": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.28.0/24",
@@ -1157,7 +1157,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "IsolatedSubnet",
+            "Value": "Isolated",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1169,7 +1169,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet1",
           },
           {
             "Key": "Project",
@@ -1182,7 +1182,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCIsolatedSubnetSubnet2RouteTable34FAC4D3": {
+    "CustomVPCIsolatedSubnet2RouteTable9716169C": {
       "Properties": {
         "Tags": [
           {
@@ -1191,7 +1191,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet2",
           },
           {
             "Key": "Project",
@@ -1204,18 +1204,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCIsolatedSubnetSubnet2RouteTableAssociationFD720EAC": {
+    "CustomVPCIsolatedSubnet2RouteTableAssociation93A0ABE4": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet2RouteTable34FAC4D3",
+          "Ref": "CustomVPCIsolatedSubnet2RouteTable9716169C",
         },
         "SubnetId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet2Subnet48EE2E8C",
+          "Ref": "CustomVPCIsolatedSubnet2Subnet78DF72B5",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCIsolatedSubnetSubnet2Subnet48EE2E8C": {
+    "CustomVPCIsolatedSubnet2Subnet78DF72B5": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.29.0/24",
@@ -1223,7 +1223,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "IsolatedSubnet",
+            "Value": "Isolated",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1235,7 +1235,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet2",
           },
           {
             "Key": "Project",
@@ -1248,18 +1248,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCIsolatedSubnetSubnet3RouteTableAssociation51644D7E": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet3RouteTableCAA8C7DB",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCIsolatedSubnetSubnet3Subnet268A1610",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCIsolatedSubnetSubnet3RouteTableCAA8C7DB": {
+    "CustomVPCIsolatedSubnet3RouteTable21001961": {
       "Properties": {
         "Tags": [
           {
@@ -1268,7 +1257,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet3",
           },
           {
             "Key": "Project",
@@ -1281,7 +1270,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCIsolatedSubnetSubnet3Subnet268A1610": {
+    "CustomVPCIsolatedSubnet3RouteTableAssociationDEE8BF6E": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCIsolatedSubnet3RouteTable21001961",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCIsolatedSubnet3Subnet258944CB",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCIsolatedSubnet3Subnet258944CB": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.30.0/24",
@@ -1289,7 +1289,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "IsolatedSubnet",
+            "Value": "Isolated",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1301,7 +1301,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/IsolatedSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet3",
           },
           {
             "Key": "Project",
@@ -1314,7 +1314,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCManagementSubnetSubnet1DefaultRoute758E0F6C": {
+    "CustomVPCManagementSubnet1DefaultRoute8CBDE50D": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -1324,23 +1324,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet1RouteTableDFA62D27",
+          "Ref": "CustomVPCManagementSubnet1RouteTable45009174",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCManagementSubnetSubnet1RouteTableAssociation604104C6": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet1RouteTableDFA62D27",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCManagementSubnetSubnet1Subnet76A9DD75",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCManagementSubnetSubnet1RouteTableDFA62D27": {
+    "CustomVPCManagementSubnet1RouteTable45009174": {
       "Properties": {
         "Tags": [
           {
@@ -1349,7 +1338,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet1",
           },
           {
             "Key": "Project",
@@ -1362,7 +1351,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCManagementSubnetSubnet1Subnet76A9DD75": {
+    "CustomVPCManagementSubnet1RouteTableAssociation811FB87B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet1RouteTable45009174",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCManagementSubnet1SubnetA7D3E56B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCManagementSubnet1SubnetA7D3E56B": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.0.192/27",
@@ -1370,7 +1370,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ManagementSubnet",
+            "Value": "Management",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1382,7 +1382,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet1",
           },
           {
             "Key": "Project",
@@ -1395,7 +1395,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCManagementSubnetSubnet2DefaultRoute4279FD4A": {
+    "CustomVPCManagementSubnet2DefaultRouteCBC05167": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -1405,12 +1405,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet2RouteTable9582BA1E",
+          "Ref": "CustomVPCManagementSubnet2RouteTable335D958A",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCManagementSubnetSubnet2RouteTable9582BA1E": {
+    "CustomVPCManagementSubnet2RouteTable335D958A": {
       "Properties": {
         "Tags": [
           {
@@ -1419,7 +1419,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet2",
           },
           {
             "Key": "Project",
@@ -1432,18 +1432,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCManagementSubnetSubnet2RouteTableAssociationF78F2BEF": {
+    "CustomVPCManagementSubnet2RouteTableAssociation9EE3BDCD": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet2RouteTable9582BA1E",
+          "Ref": "CustomVPCManagementSubnet2RouteTable335D958A",
         },
         "SubnetId": {
-          "Ref": "CustomVPCManagementSubnetSubnet2SubnetB4228AD6",
+          "Ref": "CustomVPCManagementSubnet2Subnet59305DC1",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCManagementSubnetSubnet2SubnetB4228AD6": {
+    "CustomVPCManagementSubnet2Subnet59305DC1": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.0.224/27",
@@ -1451,7 +1451,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ManagementSubnet",
+            "Value": "Management",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1463,7 +1463,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet2",
           },
           {
             "Key": "Project",
@@ -1476,7 +1476,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCManagementSubnetSubnet3DefaultRouteC74F3E5F": {
+    "CustomVPCManagementSubnet3DefaultRoute13008D6B": {
       "DependsOn": [
         "CustomVPCVPCGW9371D645",
       ],
@@ -1486,23 +1486,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "CustomVPCIGWCB65EB6B",
         },
         "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet3RouteTableBC1E85B9",
+          "Ref": "CustomVPCManagementSubnet3RouteTable79B0EBBE",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "CustomVPCManagementSubnetSubnet3RouteTableAssociationAD095F37": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCManagementSubnetSubnet3RouteTableBC1E85B9",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCManagementSubnetSubnet3Subnet66D6006F",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCManagementSubnetSubnet3RouteTableBC1E85B9": {
+    "CustomVPCManagementSubnet3RouteTable79B0EBBE": {
       "Properties": {
         "Tags": [
           {
@@ -1511,7 +1500,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet3",
           },
           {
             "Key": "Project",
@@ -1524,7 +1513,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCManagementSubnetSubnet3Subnet66D6006F": {
+    "CustomVPCManagementSubnet3RouteTableAssociation7DAAF2F1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet3RouteTable79B0EBBE",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCManagementSubnet3Subnet43F55756",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCManagementSubnet3Subnet43F55756": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.1.0/27",
@@ -1532,7 +1532,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "ManagementSubnet",
+            "Value": "Management",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1544,7 +1544,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/ManagementSubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet3",
           },
           {
             "Key": "Project",
@@ -1561,13 +1561,13 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "RouteTableIds": [
           {
-            "Ref": "CustomVPCInternalSubnetSubnet1RouteTableB29B72EE",
+            "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet2RouteTableE0355EEA",
+            "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet3RouteTable846247A2",
+            "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
           },
         ],
         "ServiceName": {
@@ -1617,13 +1617,13 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "ServiceName": "com.amazonaws.ap-northeast-1.ssm",
         "SubnetIds": [
           {
-            "Ref": "CustomVPCInternalSubnetSubnet1SubnetD60F6682",
+            "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet2SubnetCD670CA5",
+            "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet3Subnet87F02C1B",
+            "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
           },
         ],
         "Tags": [
@@ -1719,13 +1719,13 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "ServiceName": "com.amazonaws.ap-northeast-1.ssmmessages",
         "SubnetIds": [
           {
-            "Ref": "CustomVPCInternalSubnetSubnet1SubnetD60F6682",
+            "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet2SubnetCD670CA5",
+            "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
           },
           {
-            "Ref": "CustomVPCInternalSubnetSubnet3Subnet87F02C1B",
+            "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
           },
         ],
         "Tags": [
@@ -1807,7 +1807,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "CustomVPCTransitGatewaySubnetSubnet1RouteTable3D98F5ED": {
+    "CustomVPCTransitGatewaySubnet1RouteTable998584CE": {
       "Properties": {
         "Tags": [
           {
@@ -1816,7 +1816,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet1",
           },
           {
             "Key": "Project",
@@ -1829,18 +1829,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCTransitGatewaySubnetSubnet1RouteTableAssociation4845210E": {
+    "CustomVPCTransitGatewaySubnet1RouteTableAssociation867F89F2": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet1RouteTable3D98F5ED",
+          "Ref": "CustomVPCTransitGatewaySubnet1RouteTable998584CE",
         },
         "SubnetId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet1SubnetF3DD53FC",
+          "Ref": "CustomVPCTransitGatewaySubnet1SubnetA065BA3F",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCTransitGatewaySubnetSubnet1SubnetF3DD53FC": {
+    "CustomVPCTransitGatewaySubnet1SubnetA065BA3F": {
       "Properties": {
         "AvailabilityZone": "dummy1a",
         "CidrBlock": "10.1.31.0/28",
@@ -1848,7 +1848,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "TransitGatewaySubnet",
+            "Value": "TransitGateway",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1860,7 +1860,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet1",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet1",
           },
           {
             "Key": "Project",
@@ -1873,7 +1873,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCTransitGatewaySubnetSubnet2RouteTable241E2539": {
+    "CustomVPCTransitGatewaySubnet2RouteTableAssociationEBE6223F": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCTransitGatewaySubnet2RouteTableB70DE7E3",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCTransitGatewaySubnet2Subnet5C892112",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCTransitGatewaySubnet2RouteTableB70DE7E3": {
       "Properties": {
         "Tags": [
           {
@@ -1882,7 +1893,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet2",
           },
           {
             "Key": "Project",
@@ -1895,18 +1906,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCTransitGatewaySubnetSubnet2RouteTableAssociation1F180BAD": {
-      "Properties": {
-        "RouteTableId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet2RouteTable241E2539",
-        },
-        "SubnetId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet2Subnet0864B84A",
-        },
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation",
-    },
-    "CustomVPCTransitGatewaySubnetSubnet2Subnet0864B84A": {
+    "CustomVPCTransitGatewaySubnet2Subnet5C892112": {
       "Properties": {
         "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.1.31.16/28",
@@ -1914,7 +1914,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "TransitGatewaySubnet",
+            "Value": "TransitGateway",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1926,7 +1926,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet2",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet2",
           },
           {
             "Key": "Project",
@@ -1939,7 +1939,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::Subnet",
     },
-    "CustomVPCTransitGatewaySubnetSubnet3RouteTable0E5A621A": {
+    "CustomVPCTransitGatewaySubnet3RouteTable0A47419F": {
       "Properties": {
         "Tags": [
           {
@@ -1948,7 +1948,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet3",
           },
           {
             "Key": "Project",
@@ -1961,18 +1961,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "CustomVPCTransitGatewaySubnetSubnet3RouteTableAssociation433F571A": {
+    "CustomVPCTransitGatewaySubnet3RouteTableAssociationEE4567AC": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet3RouteTable0E5A621A",
+          "Ref": "CustomVPCTransitGatewaySubnet3RouteTable0A47419F",
         },
         "SubnetId": {
-          "Ref": "CustomVPCTransitGatewaySubnetSubnet3Subnet7ECA6AAB",
+          "Ref": "CustomVPCTransitGatewaySubnet3Subnet9E34CF55",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "CustomVPCTransitGatewaySubnetSubnet3Subnet7ECA6AAB": {
+    "CustomVPCTransitGatewaySubnet3Subnet9E34CF55": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.1.31.32/28",
@@ -1980,7 +1980,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "Tags": [
           {
             "Key": "aws-cdk:subnet-name",
-            "Value": "TransitGatewaySubnet",
+            "Value": "TransitGateway",
           },
           {
             "Key": "aws-cdk:subnet-type",
@@ -1992,7 +1992,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Key": "Name",
-            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnetSubnet3",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet3",
           },
           {
             "Key": "Project",
@@ -2028,7 +2028,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
         ],
         "SubnetId": {
-          "Ref": "CustomVPCInternalSubnetSubnet1SubnetD60F6682",
+          "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
         },
         "Tags": [
           {
