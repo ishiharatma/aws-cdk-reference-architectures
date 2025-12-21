@@ -42,7 +42,7 @@ describe("VpcBasicsStack Fine-grained Assertions", () => {
   });
 
   describe("VPC Resources", () => {
-    test("should create 1 VPCs", () => {
+    test("should create 1 VPC", () => {
       stackTemplate.resourceCountIs("AWS::EC2::VPC", 1);
     });
 
