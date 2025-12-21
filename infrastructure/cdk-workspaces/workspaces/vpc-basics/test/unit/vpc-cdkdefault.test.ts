@@ -3,7 +3,6 @@ import * as cdk from "aws-cdk-lib";
 import { VpcCDKDefaultStack } from "lib/stacks/vpc-cdkdefault-stack";
 import { Template } from "aws-cdk-lib/assertions";
 import { Environment } from "@common/parameters/environments";
-import { pascalCase } from "change-case-commonjs";
 
 const defaultEnv = {
   account: "123456789012",

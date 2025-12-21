@@ -103,7 +103,7 @@ export class VpcBasicsStack extends cdk.Stack {
       subnetGroupName: 'Internal',
     });
     if (endpointSubnets.subnets.length === 0) {
-      throw new Error('Internal Subnet not found');
+      throw new Error('No subnets found for subnet group "Internal"');
     }
     // Gateway Endpoints
     // see: https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html
