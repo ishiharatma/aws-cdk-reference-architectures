@@ -30,7 +30,7 @@ export class VpcBasicsStack extends cdk.Stack {
       vpcName,
       ipAddresses: ec2.IpAddresses.cidr('10.1.0.0/16'),
       maxAzs: 3, // maximum number of AZs to use
-      //availabilityZones: ['ap-northeast-1a', 'ap-northeast-1c', 'ap-northeast-1d'], // specify AZs
+      // You can explicitly set availabilityZones here if you need to pin the VPC to specific AZs.
       natGateways: 1, // number of NAT Gateways
       subnetConfiguration: [
         {
