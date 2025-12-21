@@ -46,13 +46,13 @@ describe("VpcCDKDefaultStack Fine-grained Assertions", () => {
       stackTemplate.resourceCountIs("AWS::EC2::VPC", 1);
     });
 
-    test("default VPC should have correct CIDR block", () => {
+    test("CDK default VPC should have correct CIDR block", () => {
       stackTemplate.hasResourceProperties("AWS::EC2::VPC", {
         CidrBlock: "10.0.0.0/16",
       });
     });
 
-    test("custom VPC should have DNS support enabled", () => {
+    test("CDK default VPC should have DNS support enabled", () => {
       stackTemplate.hasResourceProperties("AWS::EC2::VPC", {
         EnableDnsSupport: true,
         EnableDnsHostnames: true,
@@ -114,7 +114,7 @@ describe("VpcCDKDefaultStack Fine-grained Assertions", () => {
   });
 
   describe("VPC Flow Logs", () => {
-    test("should create Flow Logs", () => {
+    test("should not create Flow Logs", () => {
       stackTemplate.resourceCountIs("AWS::EC2::FlowLog", 0);
     });
   });

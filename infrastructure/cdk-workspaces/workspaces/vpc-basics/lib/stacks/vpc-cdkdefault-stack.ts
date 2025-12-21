@@ -10,11 +10,13 @@ export interface StackProps extends cdk.StackProps {
 }
 
 export class VpcCDKDefaultStack extends cdk.Stack {
+  public readonly vpc: ec2.IVpc;
+
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
     // Create a VPC with default settings
-    new ec2.Vpc(this, "CDKDefault", {});
+    this.vpc = new ec2.Vpc(this, "CDKDefault", {});
 
   }
 }
