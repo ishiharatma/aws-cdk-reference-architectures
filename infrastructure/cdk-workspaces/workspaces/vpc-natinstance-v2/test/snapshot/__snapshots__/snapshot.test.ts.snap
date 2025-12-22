@@ -1,0 +1,2647 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "NatInstance1PublicIP": {
+      "Description": "Public IP address of NAT Instance 1",
+      "Value": {
+        "Ref": "NatEip1",
+      },
+    },
+    "NatInstance2PublicIP": {
+      "Description": "Public IP address of NAT Instance 2",
+      "Value": {
+        "Ref": "NatEip2",
+      },
+    },
+    "NatInstance3PublicIP": {
+      "Description": "Public IP address of NAT Instance 3",
+      "Value": {
+        "Ref": "NatEip3",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AllowSSHFromInstanceConnect": {
+      "Properties": {
+        "Description": "Allow SSH from Instance Connect SG",
+        "FromPort": 22,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EC2SG244E8056",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EC2InstanceConnectSG697BC6D2",
+            "GroupId",
+          ],
+        },
+        "ToPort": 22,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "AllowSSHToEC2SG": {
+      "Properties": {
+        "Description": "Allow SSH to EC2 SG",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EC2SG244E8056",
+            "GroupId",
+          ],
+        },
+        "FromPort": 22,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EC2InstanceConnectSG697BC6D2",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 22,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FlowLogBucket0863ACCA",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EC2InstanceConnectEndpoint": {
+      "Properties": {
+        "PreserveClientIp": false,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EC2InstanceConnectSG697BC6D2",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet1Subnet50A40173",
+        },
+      },
+      "Type": "AWS::EC2::InstanceConnectEndpoint",
+    },
+    "EC2InstanceConnectSG697BC6D2": {
+      "Properties": {
+        "GroupDescription": "Security group for EC2 Instance Connect Endpoint",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EC2SG244E8056": {
+      "Properties": {
+        "GroupDescription": "Security group for EC2 instances",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EC2StartRule1": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+              },
+              " cron(0 0 ? * * *) Start",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStartRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 0 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StartEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EC2StartRule2": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+              },
+              " cron(0 0 ? * * *) Start",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStartRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 0 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StartEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EC2StartRule3": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+              },
+              " cron(0 0 ? * * *) Start",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStartRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 0 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StartEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EC2StopRule1": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+              },
+              " cron(0 9 ? * * *) Stop",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStopRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 9 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StopEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EC2StopRule2": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+              },
+              " cron(0 9 ? * * *) Stop",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStopRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 9 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StopEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EC2StopRule3": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+              },
+              " cron(0 9 ? * * *) Stop",
+            ],
+          ],
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "TestProject-test-NATStopRule-",
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+              },
+            ],
+          ],
+        },
+        "ScheduleExpression": "cron(0 9 ? * * *)",
+        "Targets": [
+          {
+            "Arn": "arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StopEC2Instance:$DEFAULT",
+            "Id": "TargetEC2Instance1",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{"InstanceId": ["",
+                  {
+                    "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+                  },
+                  ""]}",
+                ],
+              ],
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "NatInstanceScheduleRoleA02CA26E",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "FlowLogBucket0863ACCA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FlowLogBucketAutoDeleteObjectsCustomResource77AF9EB3": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FlowLogBucketPolicyD22C263C",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FlowLogBucket0863ACCA",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FlowLogBucketPolicyD22C263C": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FlowLogBucket0863ACCA",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FlowLogBucket0863ACCA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FlowLogBucket0863ACCA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FlowLogBucket0863ACCA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FlowLogBucket0863ACCA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FlowLogGroup3E25AA51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NatEip1": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/NatEIP1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NatEip2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/NatEIP2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NatEip3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/NatEIP3",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NatEipAssociation1": {
+      "Properties": {
+        "EIP": {
+          "Fn::GetAtt": [
+            "NatEip1",
+            "AllocationId",
+          ],
+        },
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "NatEipAssociation2": {
+      "Properties": {
+        "EIP": {
+          "Fn::GetAtt": [
+            "NatEip2",
+            "AllocationId",
+          ],
+        },
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "NatEipAssociation3": {
+      "Properties": {
+        "EIP": {
+          "Fn::GetAtt": [
+            "NatEip3",
+            "AllocationId",
+          ],
+        },
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "NatInstanceScheduleRoleA02CA26E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonSSMAutomationRole",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "TestProject-test-NatInstanceSchedule",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "NatInstanceStateChangeRule01D95CB5": {
+      "Properties": {
+        "EventPattern": {
+          "detail": {
+            "instance-id": [
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+              },
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+              },
+              {
+                "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+              },
+            ],
+            "state": [
+              "stopped",
+              "terminated",
+              "shutting-down",
+              "pending",
+              "running",
+            ],
+          },
+          "detail-type": [
+            "EC2 Instance State-change Notification",
+          ],
+          "source": [
+            "aws.ec2",
+          ],
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "NatInstanceStateChangeTopic4B141D09",
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "account": "$.account",
+                "detail": "$.detail",
+                "detail-instance-id": "$.detail.instance-id",
+                "detail-state": "$.detail.state",
+                "region": "$.region",
+                "time": "$.time",
+              },
+              "InputTemplate": "{"default":<detail>,"subject":"[TESTPROJECT-TEST] NAT Instance State Changed","message":{"summary":"NAT Instance state changed to <detail-state>","details":{"instanceId":<detail-instance-id>,"state":<detail-state>,"time":<time>,"region":<region>,"account":<account>},"metadata":{"project":"TestProject","environment":"test"}}}",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "NatInstanceStateChangeTopic4B141D09": {
+      "Properties": {
+        "DisplayName": "TestProject-test-NatInstanceStateChange",
+        "TopicName": "TestProject-test-NatInstanceStateChange",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "NatInstanceStateChangeTopicPolicy87628661": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "NatInstanceStateChangeTopic4B141D09",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "NatInstanceStateChangeTopic4B141D09",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "NatInstanceStateChangeTopic4B141D09",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "VpcNatInstanceV2A3505E8A": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcNatInstanceV2ApplicationSubnet1DefaultRoute789196C3": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet1RouteTable892033EF",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ApplicationSubnet1RouteTable892033EF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ApplicationSubnet1RouteTableAssociationDF129528": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet1RouteTable892033EF",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet1SubnetFB90DE80",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ApplicationSubnet1SubnetFB90DE80": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.16.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ApplicationSubnet2DefaultRouteA7B84B92": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet2RouteTableCC304F09",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ApplicationSubnet2RouteTableAssociation90E4F5B4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet2RouteTableCC304F09",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet2Subnet3D87E645",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ApplicationSubnet2RouteTableCC304F09": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ApplicationSubnet2Subnet3D87E645": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.20.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ApplicationSubnet3DefaultRoute86901BF7": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet3RouteTable347E35A2",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ApplicationSubnet3RouteTable347E35A2": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ApplicationSubnet3RouteTableAssociation8B4E0D62": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet3RouteTable347E35A2",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ApplicationSubnet3Subnet453FAFFA",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ApplicationSubnet3Subnet453FAFFA": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.24.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ApplicationSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2DynamoDbEndpointA0249ED9": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet1RouteTable4E6302B0",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet2RouteTable29173109",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet3RouteTable57EA45E2",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcNatInstanceV2ExternalSubnet1DefaultRouteFC94BE78": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1RouteTableD31A1B90",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380": {
+      "DependsOn": [
+        "VpcNatInstanceV2ExternalSubnet1NatInstanceInstanceRoleAD256813",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "IamInstanceProfile": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceInstanceProfileBECA9417",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatInstanceV2NatSecurityGroupE1FF28E3",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": false,
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1Subnet48F079CA",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet1/NatInstance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+yum install iptables-services -y
+systemctl enable iptables
+systemctl start iptables
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/custom-ip-forwarding.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+sudo /sbin/iptables -t nat -A POSTROUTING -o $(route | awk '/^default/{print $NF}') -j MASQUERADE
+sudo /sbin/iptables -F FORWARD
+sudo service iptables save",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcNatInstanceV2ExternalSubnet1NatInstanceInstanceProfileBECA9417": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceInstanceRoleAD256813",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcNatInstanceV2ExternalSubnet1NatInstanceInstanceRoleAD256813": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet1/NatInstance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcNatInstanceV2ExternalSubnet1RouteTableAssociationB3AF7218": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1RouteTableD31A1B90",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1Subnet48F079CA",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ExternalSubnet1RouteTableD31A1B90": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ExternalSubnet1Subnet48F079CA": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ExternalSubnet2DefaultRoute030EB257": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2RouteTableF20146E0",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7": {
+      "DependsOn": [
+        "VpcNatInstanceV2ExternalSubnet2NatInstanceInstanceRole29FBA085",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "IamInstanceProfile": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceInstanceProfile25248D14",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatInstanceV2NatSecurityGroupE1FF28E3",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": false,
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2Subnet6B87D0EA",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet2/NatInstance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+yum install iptables-services -y
+systemctl enable iptables
+systemctl start iptables
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/custom-ip-forwarding.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+sudo /sbin/iptables -t nat -A POSTROUTING -o $(route | awk '/^default/{print $NF}') -j MASQUERADE
+sudo /sbin/iptables -F FORWARD
+sudo service iptables save",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcNatInstanceV2ExternalSubnet2NatInstanceInstanceProfile25248D14": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceInstanceRole29FBA085",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcNatInstanceV2ExternalSubnet2NatInstanceInstanceRole29FBA085": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet2/NatInstance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcNatInstanceV2ExternalSubnet2RouteTableAssociation93E12EE8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2RouteTableF20146E0",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2Subnet6B87D0EA",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ExternalSubnet2RouteTableF20146E0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ExternalSubnet2Subnet6B87D0EA": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.64/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ExternalSubnet3DefaultRoute2DA04E0E": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3RouteTableA7BD7A3C",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720": {
+      "DependsOn": [
+        "VpcNatInstanceV2ExternalSubnet3NatInstanceInstanceRoleE9B3B33F",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "IamInstanceProfile": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstanceInstanceProfile51F7DC44",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatInstanceV2NatSecurityGroupE1FF28E3",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": false,
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3SubnetCE1EE0C8",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet3/NatInstance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+yum install iptables-services -y
+systemctl enable iptables
+systemctl start iptables
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/custom-ip-forwarding.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+sudo /sbin/iptables -t nat -A POSTROUTING -o $(route | awk '/^default/{print $NF}') -j MASQUERADE
+sudo /sbin/iptables -F FORWARD
+sudo service iptables save",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcNatInstanceV2ExternalSubnet3NatInstanceInstanceProfile51F7DC44": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstanceInstanceRoleE9B3B33F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcNatInstanceV2ExternalSubnet3NatInstanceInstanceRoleE9B3B33F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet3/NatInstance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcNatInstanceV2ExternalSubnet3RouteTableA7BD7A3C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ExternalSubnet3RouteTableAssociation432B5924": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3RouteTableA7BD7A3C",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3SubnetCE1EE0C8",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ExternalSubnet3SubnetCE1EE0C8": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.0.128/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2FlowLog8839DE88": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "VpcNatInstanceV2FlowLogIAMRole84663D97",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "FlowLogGroup3E25AA51",
+        },
+        "ResourceId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/FlowLog",
+          },
+        ],
+        "TrafficType": "REJECT",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "VpcNatInstanceV2FlowLogIAMRole84663D97": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/FlowLog",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcNatInstanceV2FlowLogIAMRoleDefaultPolicy584939BD": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FlowLogGroup3E25AA51",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcNatInstanceV2FlowLogIAMRoleDefaultPolicy584939BD",
+        "Roles": [
+          {
+            "Ref": "VpcNatInstanceV2FlowLogIAMRole84663D97",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcNatInstanceV2FlowLogToS3FlowLog19FAFA91": {
+      "DependsOn": [
+        "FlowLogBucketAutoDeleteObjectsCustomResource77AF9EB3",
+        "FlowLogBucketPolicyD22C263C",
+      ],
+      "Properties": {
+        "DestinationOptions": {
+          "fileFormat": "plain-text",
+          "hiveCompatiblePartitions": true,
+          "perHourPartition": true,
+        },
+        "LogDestination": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Fn::GetAtt": [
+                  "FlowLogBucket0863ACCA",
+                  "Arn",
+                ],
+              },
+              "/vpcFlowLog/",
+            ],
+          ],
+        },
+        "LogDestinationType": "s3",
+        "ResourceId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/FlowLogToS3",
+          },
+        ],
+        "TrafficType": "ALL",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "VpcNatInstanceV2IGW1A171A32": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcNatInstanceV2InternalSubnet1DefaultRoute46C76590": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet1RouteTable4E6302B0",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2InternalSubnet1RouteTable4E6302B0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2InternalSubnet1RouteTableAssociation9D7345C9": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet1RouteTable4E6302B0",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet1Subnet50A40173",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2InternalSubnet1Subnet50A40173": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.4.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2InternalSubnet2DefaultRoute5DAE471E": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet2RouteTable29173109",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2InternalSubnet2RouteTable29173109": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2InternalSubnet2RouteTableAssociationE3DBF0AD": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet2RouteTable29173109",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet2SubnetEFB99BA5",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2InternalSubnet2SubnetEFB99BA5": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.8.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2InternalSubnet3DefaultRoute390DA4CE": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet3RouteTable57EA45E2",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2InternalSubnet3RouteTable57EA45E2": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2InternalSubnet3RouteTableAssociationB15A5C0D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet3RouteTable57EA45E2",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2InternalSubnet3Subnet075FFB30",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2InternalSubnet3Subnet075FFB30": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.12.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/InternalSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2IsolatedSubnet1RouteTable99717E34": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2IsolatedSubnet1RouteTableAssociation15D5987A": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet1RouteTable99717E34",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet1SubnetCF4328C3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2IsolatedSubnet1SubnetCF4328C3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.28.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2IsolatedSubnet2RouteTable9571BE72": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2IsolatedSubnet2RouteTableAssociation0D541A88": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet2RouteTable9571BE72",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet2SubnetE27C5EB1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2IsolatedSubnet2SubnetE27C5EB1": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.29.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2IsolatedSubnet3RouteTable7ACC232C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2IsolatedSubnet3RouteTableAssociationBA441B04": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet3RouteTable7ACC232C",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2IsolatedSubnet3Subnet72D6BAB4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2IsolatedSubnet3Subnet72D6BAB4": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.30.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/IsolatedSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ManagementSubnet1DefaultRoute86A2A0BE": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet1RouteTable656895A4",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ManagementSubnet1RouteTable656895A4": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ManagementSubnet1RouteTableAssociationF0591928": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet1RouteTable656895A4",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet1Subnet42697602",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ManagementSubnet1Subnet42697602": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.192/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ManagementSubnet2DefaultRoute8B4DFBD4": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet2RouteTable5BC1DFFE",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ManagementSubnet2RouteTable5BC1DFFE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ManagementSubnet2RouteTableAssociation830BFCE8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet2RouteTable5BC1DFFE",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet2Subnet28E8B065",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ManagementSubnet2Subnet28E8B065": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.224/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2ManagementSubnet3DefaultRouteD5973FDA": {
+      "DependsOn": [
+        "VpcNatInstanceV2VPCGW8158BB5E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet3RouteTable8BDC31ED",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcNatInstanceV2ManagementSubnet3RouteTable8BDC31ED": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2ManagementSubnet3RouteTableAssociation4DB87EED": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet3RouteTable8BDC31ED",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2ManagementSubnet3Subnet31E1EDF0",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2ManagementSubnet3Subnet31E1EDF0": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.1.0/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ManagementSubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2NatSecurityGroupE1FF28E3": {
+      "Properties": {
+        "GroupDescription": "Security Group for NAT instances",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcNatInstanceV2A3505E8A",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic from VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcNatInstanceV2S3EndpointD294D552": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet1RouteTable4E6302B0",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet2RouteTable29173109",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet3RouteTable57EA45E2",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcNatInstanceV2SSMEndpoint733A19E6": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatInstanceV2SSMEndpointSecurityGroup7225A6F8",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet1Subnet50A40173",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet2SubnetEFB99BA5",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet3Subnet075FFB30",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcNatInstanceV2SSMEndpointSecurityGroup7225A6F8": {
+      "Properties": {
+        "GroupDescription": "VpcNatInstanceV2Stack/VpcNatInstanceV2/SSMEndpoint/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcNatInstanceV2A3505E8A",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VpcNatInstanceV2A3505E8A",
+                      "CidrBlock",
+                    ],
+                  },
+                  ":443",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcNatInstanceV2SSMMessagesEndpoint59A20FD0": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatInstanceV2SSMMessagesEndpointSecurityGroup036B467C",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet1Subnet50A40173",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet2SubnetEFB99BA5",
+          },
+          {
+            "Ref": "VpcNatInstanceV2InternalSubnet3Subnet075FFB30",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcNatInstanceV2SSMMessagesEndpointSecurityGroup036B467C": {
+      "Properties": {
+        "GroupDescription": "VpcNatInstanceV2Stack/VpcNatInstanceV2/SSMMessagesEndpoint/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcNatInstanceV2A3505E8A",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VpcNatInstanceV2A3505E8A",
+                      "CidrBlock",
+                    ],
+                  },
+                  ":443",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/NatInstanceV2VPC",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet1RouteTable3194C183": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet1RouteTableAssociation8802EC18": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet1RouteTable3194C183",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet1Subnet9C0C14BF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet1Subnet9C0C14BF": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.31.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet2RouteTable7E0F806B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet2RouteTableAssociationD4B38830": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet2RouteTable7E0F806B",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet2SubnetE7981CBB",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet2SubnetE7981CBB": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.31.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet3RouteTable70BEA4C5": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet3RouteTableAssociationE1D988E3": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet3RouteTable70BEA4C5",
+        },
+        "SubnetId": {
+          "Ref": "VpcNatInstanceV2TransitGatewaySubnet3Subnet8469AB8F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcNatInstanceV2TransitGatewaySubnet3Subnet8469AB8F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.31.32/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/TransitGatewaySubnet3",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatInstanceV2VPCGW8158BB5E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcNatInstanceV2IGW1A171A32",
+        },
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 3,
+  "AWS::EC2::EIPAssociation": 3,
+  "AWS::EC2::FlowLog": 2,
+  "AWS::EC2::Instance": 3,
+  "AWS::EC2::InstanceConnectEndpoint": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::Route": 12,
+  "AWS::EC2::RouteTable": 18,
+  "AWS::EC2::SecurityGroup": 5,
+  "AWS::EC2::SecurityGroupEgress": 1,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 18,
+  "AWS::EC2::SubnetRouteTableAssociation": 18,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 4,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::Events::Rule": 7,
+  "AWS::IAM::InstanceProfile": 3,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 6,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
