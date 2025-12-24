@@ -1020,7 +1020,7 @@ NAT InstanceはNAT Gatewayの優れた代替手段です。特に開発環境で
 
 ## 参考リンク
 
-- [前回の記事: VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-3m5d)
+- [前回の記事: VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4a43)
 - [AWS CDK VPC コンストラクト](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html)
 - [NAT Instance v2](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.NatInstanceProviderV2.html)
 - [EventBridge スケジュール式](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html)
