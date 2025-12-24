@@ -1,4 +1,4 @@
-# VPC-BASICS --
+# VPC-BASICS
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
@@ -433,6 +433,13 @@ customVpc.addInterfaceEndpoint('SSMMessagesEndpoint', {
 ## EC2 Instance Connect Endpoint
 
 [EC2 Instance Connect Endpoint](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html)を使用すると、パブリックIPアドレスやBastionホストなしで、プライベートサブネット内のEC2インスタンスにSSH接続できます。
+
+なお、Instance Connect Endpointには以下の制約があります。詳しくは、[こちら](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/eice-quotas.html)のドキュメントを参照してください。
+
+- AWS アカウント ごとの AWS リージョン あたりの EC2 Instance Connect エンドポイントの最大数: 5
+- VPC あたりの EC2 Instance Connect エンドポイントの最大数: 1
+- サブネットあたりの EC2 Instance Connect エンドポイントの最大数: 1
+- EC2 Instance Connect エンドポイントあたりの同時接続の最大数: 20
 
 ```typescript
 // Instance Connect用セキュリティグループ

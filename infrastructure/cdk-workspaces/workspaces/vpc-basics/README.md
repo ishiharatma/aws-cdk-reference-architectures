@@ -434,6 +434,13 @@ customVpc.addInterfaceEndpoint('SSMMessagesEndpoint', {
 
 [EC2 Instance Connect Endpoint](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-ec2-instance-connect-endpoint.html) allows SSH connections to EC2 instances in private subnets without public IPs or Bastion hosts.
 
+Please note that the Instance Connect Endpoint has the following restrictions. For details, please refer to the documentation [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/eice-quotas.html).
+
+- Maximum number of EC2 Instance Connect Endpoints per AWS account per AWS Region: 5
+- Maximum number of EC2 Instance Connect Endpoints per VPC: 1
+- Maximum number of EC2 Instance Connect Endpoints per subnet: 1
+- Maximum number of concurrent connections per EC2 Instance Connect Endpoint: 20
+
 ```typescript
 // Security group for Instance Connect
 const ec2InstanceConnectsg = new ec2.SecurityGroup(this, 'EC2InstanceConnectSG', {
