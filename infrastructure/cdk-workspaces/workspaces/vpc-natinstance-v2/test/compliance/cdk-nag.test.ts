@@ -3,7 +3,7 @@ import { Annotations, Match } from 'aws-cdk-lib/assertions';
 import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
 import { Environment } from '@common/parameters/environments';
 
-//import { YoutStackName } from 'lib/stacks/your-stack';
+import { VpcNatInstanceV2Stack } from 'lib/stacks/vpc-natinstance-v2-stack';
 
 const defaultEnv = {
     account: '123456789012',
@@ -15,13 +15,13 @@ const envName: Environment = Environment.TEST;
 
 describe('CDK Nag AwsSolutions Pack', () => {
   let app: cdk.App;
-  let stack: YoutStackName;
+  let stack: VpcNatInstanceV2Stack;
 
   beforeAll(() => {
     // Execute CDK Nag checks
     app = new cdk.App();
 
-    stack = new YoutStackName(app, `${projectName}-${envName}`, {
+    stack = new VpcNatInstanceV2Stack(app, `${projectName}-${envName}`, {
       project: projectName,
       environment: envName,
       isAutoDeleteObject: false,
@@ -85,9 +85,10 @@ describe('CDK Nag AwsSolutions Pack', () => {
  * 3. Use appliesTo when there are multiple specific issues with the same resource
  * 4. Provide clear and specific reasons
  */
-function applySuppressions(stack: YoutStackName): void {
+function applySuppressions(stack: VpcNatInstanceV2Stack): void {
   const stackName = stack.stackName;
   console.log(`Applying CDK Nag suppressions to stack: ${stackName}`);
+  const pathPrefix = `/${stackName}`;
 
   // Apply stack-wide suppressions for example buckets that don't require logging
   NagSuppressions.addStackSuppressions(
@@ -101,8 +102,64 @@ function applySuppressions(stack: YoutStackName): void {
         id: 'AwsSolutions-S10',
         reason: 'These are example S3 buckets for demonstration and SSL is not required.',
       },
+      {
+        id: 'AwsSolutions-EC26',
+        reason: 'NAT Instances are used instead of NAT Gateways as per architecture design.',
+      },
+      {
+        id: 'AwsSolutions-EC28',
+        reason: 'NAT Instances are used instead of NAT Gateways as per architecture design.',
+      },
+      {
+        id: 'AwsSolutions-EC29',
+        reason: 'NAT Instances require a public IP address to function as intended.',
+      }
     ],
     true,
   );
 
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `${pathPrefix}/NatInstanceScheduleRole/Resource`,
+    [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'The IAM role requires wildcard permissions for EC2 actions to manage NAT instance states effectively.',
+      },
+    ]
+  );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `${pathPrefix}/VpcNatInstanceV2/NatSecurityGroup/Resource`,
+    [
+      {
+        id: 'AwsSolutions-EC23',
+        reason: 'Security group allows all outbound traffic as required for NAT functionality.',
+      },
+    ]
+  );
+
+  // Suppress EC23 validation failure for SSM Endpoint security groups
+  // This is a known issue with CDK Nag when VPC CIDR is retrieved via Fn::GetAtt
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `${pathPrefix}/VpcNatInstanceV2/SSMEndpoint/SecurityGroup/Resource`,
+    [
+      {
+        id: 'CdkNagValidationFailure',
+        reason: 'CdkNagValidationFailure for AwsSolutions-EC23 is expected when VPC CIDR block is referenced via intrinsic function. The security group configuration is valid.',
+      },
+    ]
+  );
+
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `${pathPrefix}/VpcNatInstanceV2/SSMMessagesEndpoint/SecurityGroup/Resource`,
+    [
+      {
+        id: 'CdkNagValidationFailure',
+        reason: 'CdkNagValidationFailure for AwsSolutions-EC23 is expected when VPC CIDR block is referenced via intrinsic function. The security group configuration is valid.',
+      },
+    ]
+  );
 }
