@@ -445,9 +445,9 @@ When an email address is provided, you'll receive notifications like:
 | Metric | NAT Gateway | NAT Instance (t4g.nano) | NAT Instance (t4g.micro) |
 |--------|-------------|------------------------|-------------------------|
 | **Bandwidth** | Up to 100 Gbps | Up to 5 Gbps | Up to 5 Gbps |
-| **Max Connections** | 900,000 | ~55,000 | ~55,000 |
-| **PPS** | 10 million | ~300,000 | ~300,000 |
-| **Latency** | Low (< 1ms) | Low (< 2ms) | Low (< 2ms) |
+| **Max Connections** | 55,000~440,000 | ~55,000 | ~55,000 |
+| **Bandwidth** | 10 Gbps | ~ 5 Gbps | ~ 5 Gbps |
+| **Latency** | Low | Low | Low |
 
 💡 **Tips**: For development environments with low traffic, t4g.nano is sufficient. For production use, consider t4g.medium or larger.
 
@@ -482,11 +482,11 @@ Data Transfer:
 - Same as NAT Gateway ($0.062/GB)
 - Example: 100 GB/month = $6.20
 
-Total: ~$10.14/month per instance
-3 instances: ~$30.42/month
+Total: ~$13.79/month per instance
+3 instances: ~$41.37/month
 
-Savings: $154.38 - $30.42 = $123.96/month (80% reduction)
-Annual savings: ~$1,487
+Savings: $154.38 - $41.37 = $113.01/month (73% reduction)
+Annual savings: ~$1,356
 ```
 
 #### 3. NAT Instance - Business Hours Only (Weekdays 9 hours)
@@ -500,10 +500,13 @@ Elastic IP:
 - While stopped: $0.005/hour × 730 hours = $3.65/month
 
 Data Transfer:
-- Same as above
+- Same as NAT Gateway ($0.062/GB)
+- Example: 100 GB/month = $6.20
 
-Total: ~$9.93/month per instance
-3 instances: ~$29.79/month
+Total: ~$10.9/month per instance
+3 instances: ~$32.7/month
+Savings: $154.38 - $32.7 = $121.68/month (79% reduction)
+Annual savings: ~$1,460
 ```
 
 💡 **Important Note**: For scheduled operation, also calculate Elastic IP charges during stop periods. In many cases, 24/7 operation may be more cost-effective.
@@ -605,6 +608,7 @@ const maintenanceWindowRole = new iam.Role(this, 'MaintenanceWindowRole', {
   ),
   managedPolicies: [
     iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonSSMMaintenanceWindowRole'),
+    iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
   ],
 });
 
@@ -1012,7 +1016,7 @@ Drawbacks (Considerations):
 
 ## Reference Links
 
-- [Previous article: VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-3m5d)
+- [Previous article: VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4a43)
 - [AWS CDK VPC Construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html)
 - [NAT Instance v2](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.NatInstanceProviderV2.html)
 - [EventBridge Schedule Expressions](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html)
