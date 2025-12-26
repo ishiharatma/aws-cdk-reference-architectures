@@ -1,8 +1,8 @@
 {
-  "name": "vpc-natinstance-v2",
+  "name": "cdk-parameters",
   "version": "0.1.0",
   "bin": {
-    "vpc-natinstance-v2": "bin/vpc-natinstance-v2.js"
+    "cdk-parameters": "bin/cdk-parameters.js"
   },
   "scripts": {
     "build": "tsc",
