@@ -145,7 +145,7 @@ export interface EnvParams {
     vpcConfig: VpcConfig;
 }
 
-export const params: Record<Environment, EnvParams> = {} as Record<Environment, EnvParams>;
+export const params: Partial<Record<Environment, EnvParams>> = {};
 ```
 
 ```typescript
