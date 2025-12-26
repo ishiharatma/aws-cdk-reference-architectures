@@ -54,7 +54,7 @@
 - AWS CDK CLI（`npm install -g aws-cdk`）
 - TypeScriptの基礎知識
 - AWSアカウント（無料利用枠で実施可能）
-- VPCの基本概念理解（[第3回VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4ddd)を参照）
+- VPCの基本概念理解（[VPC Basics](https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/cdk-workspaces/workspaces/vpc-basics)を参照）
 
 ## プロジェクトディレクトリ構造
 
