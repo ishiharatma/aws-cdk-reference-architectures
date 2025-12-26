@@ -406,6 +406,10 @@ export function validateDeployment(
 }
 ```
 
+![check-accountid](./images/check-accountid-00.jpg)
+
+![check-production](./images/check-production-00.jpg)
+
 **ポイント:**
 
 - アカウントIDの検証により、誤ったアカウントへのデプロイを防止
@@ -655,13 +659,6 @@ export class CdkJsonParametersStack extends cdk.Stack {
 - 基本設定: cdk.jsonで管理（環境名、リージョンなど）
 - 複雑な設定: TypeScriptで管理（VPC構成、セキュリティグループなど）
 - 機密情報: AWS Secrets Managerから取得
-
-```typescript
-// ハイブリッドアプローチの例
-const envName = app.node.tryGetContext("env"); // cdk.jsonから
-const params = await getParametersFromTypeScript(envName); // TypeScriptから
-const secrets = await getSecretsFromSecretsManager(); // Secrets Managerから
-```
 
 ## テストの実装
 
