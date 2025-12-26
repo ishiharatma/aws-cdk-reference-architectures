@@ -406,6 +406,10 @@ export function validateDeployment(
 }
 ```
 
+![check-accountid](./images/check-accountid-00.jpg)
+
+![check-production](./images/check-production-00.jpg)
+
 **Key Points:**
 
 - Account ID validation prevents deployment to wrong accounts
@@ -655,13 +659,6 @@ In production, combining both approaches can be effective.
 - Basic Configuration: Managed in cdk.json (environment name, region, etc.)
 - Complex Configuration: Managed in TypeScript (VPC configuration, security groups, etc.)
 - Sensitive Information: Retrieved from AWS Secrets Manager
-
-```typescript
-// Example of hybrid approach
-const envName = app.node.tryGetContext("env"); // from cdk.json
-const params = await getParametersFromTypeScript(envName); // from TypeScript
-const secrets = await getSecretsFromSecretsManager(); // from Secrets Manager
-```
 
 ## Test Implementation
 
