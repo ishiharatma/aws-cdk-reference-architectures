@@ -54,7 +54,7 @@ To proceed with this exercise, you'll need:
 - AWS CDK CLI (`npm install -g aws-cdk`)
 - Basic knowledge of TypeScript
 - AWS Account (can be done within free tier)
-- Basic understanding of VPC concepts (refer to [Episode 3: VPC Basics](https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4ddd))
+- Basic understanding of VPC concepts (refer to [VPC Basics](https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/cdk-workspaces/workspaces/vpc-basics))
 
 ## Project Directory Structure
 
@@ -797,4 +797,3 @@ In this exercise, we learned two major approaches for managing parameters in CDK
 - [AWS CDK Documentation - Context Values](https://docs.aws.amazon.com/cdk/v2/guide/context.html)
 - [AWS CDK Best Practices](https://docs.aws.amazon.com/cdk/v2/guide/best-practices.html)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
-
