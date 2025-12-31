@@ -426,9 +426,6 @@ export class VpcCStack extends cdk.Stack {
         description: 'VPC C ID in Account B',
         parameterName: `/${props.project}/${props.environment}/vpc-c/id`,
       });
-      // アカウントAに読み取り権限付与
-      const accountAPrincipal = new iam.AccountPrincipal(props.params.accountAId);
-      vpcCIdParam.grantRead(accountAPrincipal);
 
       const parameterReadRole = new iam.Role(this, 'ParameterStoreReadRole', {
         assumedBy: new iam.AccountPrincipal(props.params.accountAId),
@@ -500,8 +497,6 @@ export class CrossAccountPeeringStack extends cdk.Stack {
       description: 'VPC Peering Connection ID for VPC B <-> VPC C',
       parameterName: `/${props.project}/${props.environment}/peering/vpc-b-vpc-c/id`,
     });
-    // アカウントBに読み取り権限付与
-    peeringIdParam.grantRead(new iam.AccountPrincipal(props.params.accountBId));
 
     const peeringIdReadRole = new iam.Role(this, 'PeeringIdReadRole', {
       assumedBy: new iam.AccountPrincipal(props.params.accountBId),
@@ -571,6 +566,8 @@ aws ec2 modify-vpc-peering-connection-options \
 
 同一アカウントの場合は、`RequesterPeeringConnectionOptions`と`AccepterPeeringConnectionOptions`の両方を指定します。
 
+![same-account](./images/same-account.jpg)
+
 ```typescript
     // Enable DNS resolution over VPC Peering
     const onCreate: cr.AwsSdkCall = {
@@ -618,6 +615,8 @@ aws ec2 modify-vpc-peering-connection-options \
 
 1. Requester側 (Account A): CrossAccountPeeringStack
 
+![requester-vpc](./images/requester-vpc.jpg)
+
 ```typescript
         parameters: {
             VpcPeeringConnectionId: this.peeringConnection.ref,
@@ -629,8 +628,11 @@ aws ec2 modify-vpc-peering-connection-options \
 
 2. Accepter側 (Account B): VpcCRoutesStack
 
+![accepter-vpc](./images/accepter-vpc.jpg)
+
 ```typescript
         parameters: {
+            VpcPeeringConnectionId: this.peeringConnection.ref,
             AccepterPeeringConnectionOptions: {
                 AllowDnsResolutionFromRemoteVpc: true,
             }
