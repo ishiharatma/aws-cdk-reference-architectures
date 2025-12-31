@@ -190,6 +190,15 @@
 							"autoApprove": [],
 							"disabled": false
 						},
+						"awslabs.aws-iac-mcp-server": {
+							"command": "uvx",
+							"args": ["awslabs.aws-iac-mcp-server@latest"],
+							"env": {
+								"FASTMCP_LOG_LEVEL": "ERROR"
+							},
+							"disabled": false,
+							"autoApprove": []
+						},
 						"awslabs.cdk-mcp-server": {
 							"command": "uvx",
 							"args": [
@@ -198,7 +207,7 @@
 							"env": {
 								"FASTMCP_LOG_LEVEL": "ERROR"
 							},
-							"disabled": false,
+							"disabled": true,
 							"autoApprove": [
 								"CDKGeneralGuidance",
 								"GetAwsSolutionsConstructPattern",
@@ -209,6 +218,17 @@
 								"ExplainCDKPatterns",
 								"CheckCDKNagSuppressions"
 							]
+						},
+						"awslabs.cfn-mcp-server": {
+							"command": "uvx",
+							"args": [
+								"awslabs.cfn-mcp-server@latest"
+							],
+							"env": {
+								"AWS_PROFILE": "your-named-profile"
+							},
+							"disabled": true,
+							"autoApprove": []
 						},
 						"awslabs.aws-documentation-mcp-server": {
 							"command": "uvx",
@@ -233,17 +253,6 @@
 							},
 							"autoApprove": [],
 							"disabled": false
-						},
-						"awslabs.cfn-mcp-server": {
-							"command": "uvx",
-							"args": [
-								"awslabs.cfn-mcp-server@latest"
-							],
-							"env": {
-								"AWS_PROFILE": "your-named-profile"
-							},
-							"disabled": false,
-							"autoApprove": []
 						},
 						"aws-knowledge-mcp-server": {
 							"command": "uvx",
