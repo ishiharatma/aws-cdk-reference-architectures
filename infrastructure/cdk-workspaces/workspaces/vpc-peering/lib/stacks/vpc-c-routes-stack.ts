@@ -94,7 +94,7 @@ export class VpcCRoutesStack extends cdk.Stack {
     });
 
     // target Subnet
-    // private or isolated subnets（privateがあればprivate、なければisolated）
+    // private or isolated subnets
     const targetSubnets =
       (props.vpc.privateSubnets && props.vpc.privateSubnets.length > 0)
         ? props.vpc.privateSubnets
