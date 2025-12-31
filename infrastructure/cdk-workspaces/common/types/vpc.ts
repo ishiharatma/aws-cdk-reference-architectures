@@ -26,6 +26,9 @@ export interface VpcConfig {
 }
 
 // VPC creation configuration
+export type ipv4CidrBlock = `${number}.${number}.${number}.${number}/${number}`;
+export type ipv6CidrBlock = `${string}/${number}`;
+
 export interface VpcCreateConfig {
     /** VPC name */
     readonly vpcName: string;
@@ -35,14 +38,14 @@ export interface VpcCreateConfig {
     * @see https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html#vpc-sizing-ipv4
     * @example "172.31.0.0/16"
      */
-    readonly cidr: string;
+    readonly cidr: ipv4CidrBlock | ipv6CidrBlock;
     /**
      * Whether to enable IPv6
      * @default false (ipv4 only)
      */
     readonly enableIpv6?: boolean;
     /** Additional CIDR blocks */
-    readonly additionalCidrs?: string[];
+    readonly additionalCidrs?: ipv4CidrBlock[] | ipv6CidrBlock[];
     /** Flow log configuration */
     readonly enableFlowLogsToCloudWatch?: boolean;
     readonly flowLogs?: cdk.aws_ec2.FlowLogOptions;

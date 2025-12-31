@@ -87,7 +87,7 @@ describe('CDK Nag AwsSolutions Pack', () => {
  */
 function applySuppressions(stack: YoutStackName): void {
   const stackName = stack.stackName;
-  console.log(`Applying CDK Nag suppressions to stack: ${stackName}`);
+  //console.log(`Applying CDK Nag suppressions to stack: ${stackName}`);
   const pathPrefix = `/${stackName}`;
 
   // Apply stack-wide suppressions for example buckets that don't require logging
