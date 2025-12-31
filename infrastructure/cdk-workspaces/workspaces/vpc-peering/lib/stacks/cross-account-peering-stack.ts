@@ -111,10 +111,10 @@ export class CrossAccountPeeringStack extends cdk.Stack {
         service: 'EC2',
         action: 'modifyVpcPeeringConnectionOptions',
         parameters: {
-        VpcPeeringConnectionId: this.peeringConnection.ref,
-            RequesterPeeringConnectionOptions: {
-                AllowDnsResolutionFromRemoteVpc: true
-            }
+          VpcPeeringConnectionId: this.peeringConnection.ref,
+          RequesterPeeringConnectionOptions: {
+              AllowDnsResolutionFromRemoteVpc: true
+          }
         },
         region: props.env?.region,
         physicalResourceId: cr.PhysicalResourceId.of(`EnableVpcPeeringDnsResolution:${this.peeringConnection.ref}`),
@@ -169,9 +169,6 @@ export class CrossAccountPeeringStack extends cdk.Stack {
 
     // Grant read access to the peering ID parameter
     peeringIdParam.grantRead(peeringIdReadRole);
-
-    // Also grant read access to Account B principal (for backward compatibility)
-    peeringIdParam.grantRead(new iam.AccountPrincipal(props.params.accountBId));
 
     // Output Peering ID Read Role ARN
     new cdk.CfnOutput(this, 'PeeringIdReadRoleArn', {
