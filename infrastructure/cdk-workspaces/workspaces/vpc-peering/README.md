@@ -426,9 +426,6 @@ export class VpcCStack extends cdk.Stack {
         description: 'VPC C ID in Account B',
         parameterName: `/${props.project}/${props.environment}/vpc-c/id`,
       });
-      // Grant read permission to Account A
-      const accountAPrincipal = new iam.AccountPrincipal(props.params.accountAId);
-      vpcCIdParam.grantRead(accountAPrincipal);
 
       const parameterReadRole = new iam.Role(this, 'ParameterStoreReadRole', {
         assumedBy: new iam.AccountPrincipal(props.params.accountAId),
@@ -500,8 +497,6 @@ export class CrossAccountPeeringStack extends cdk.Stack {
       description: 'VPC Peering Connection ID for VPC B <-> VPC C',
       parameterName: `/${props.project}/${props.environment}/peering/vpc-b-vpc-c/id`,
     });
-    // Grant read permission to Account B
-    peeringIdParam.grantRead(new iam.AccountPrincipal(props.params.accountBId));
 
     const peeringIdReadRole = new iam.Role(this, 'PeeringIdReadRole', {
       assumedBy: new iam.AccountPrincipal(props.params.accountBId),
@@ -571,6 +566,8 @@ In this implementation, we automate this configuration using AWS CDK's `AwsCusto
 
 For same account, specify both `RequesterPeeringConnectionOptions` and `AccepterPeeringConnectionOptions`.
 
+![same-account](./images/same-account.jpg)
+
 ```typescript
     // Enable DNS resolution over VPC Peering
     const onCreate: cr.AwsSdkCall = {
@@ -618,6 +615,8 @@ For cross-account VPC Peering, configure separately from Requester and Accepter 
 
 1. Requester side (Account A): CrossAccountPeeringStack
 
+![requester-vpc](./images/requester-vpc.jpg)
+
 ```typescript
         parameters: {
             VpcPeeringConnectionId: this.peeringConnection.ref,
@@ -629,8 +628,11 @@ For cross-account VPC Peering, configure separately from Requester and Accepter 
 
 2. Accepter side (Account B): VpcCRoutesStack
 
+![accepter-vpc](./images/accepter-vpc.jpg)
+
 ```typescript
         parameters: {
+            VpcPeeringConnectionId: this.peeringConnection.ref,
             AccepterPeeringConnectionOptions: {
                 AllowDnsResolutionFromRemoteVpc: true,
             }
@@ -752,7 +754,7 @@ ping 10.2.x.x  # VPC C Private IP
 
 ### 5. Cleanup
 
-If you connect to VPC using CloudShell for connection verification, delete the environment before cleanup. Stack deletion will fail.
+If you connected to VPC using CloudShell for connection verification, delete the CloudShell environment before cleanup. Stack deletion will fail.
 
 ```bash
 # Delete all resources

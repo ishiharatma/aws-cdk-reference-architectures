@@ -67,12 +67,6 @@ export class VpcCStack extends cdk.Stack {
         description: 'VPC C CIDR Block in Account B',
         parameterName: `/${props.project}/${props.environment}/vpc-c/cidr`,
       });
-      
-      // Grant read access to Account A for both parameters
-      // Allow both Account Principal and Custom Resource execution role
-      const accountAPrincipal = new iam.AccountPrincipal(props.params.accountAId);
-      vpcCIdParam.grantRead(accountAPrincipal);
-      vpcCCidrParam.grantRead(accountAPrincipal);
 
       // Output Parameter Store names
       new cdk.CfnOutput(this, 'VpcCIdParamName', {
