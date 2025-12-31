@@ -1,0 +1,3940 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttVpcB165FAAA0CidrBlockA6EFFF27": {
+      "Export": {
+        "Name": "VpcA:ExportsOutputFnGetAttVpcB165FAAA0CidrBlockA6EFFF27",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcB165FAAA0",
+          "CidrBlock",
+        ],
+      },
+    },
+    "ExportsOutputRefVpcB165FAAA0B80D3565": {
+      "Export": {
+        "Name": "VpcA:ExportsOutputRefVpcB165FAAA0B80D3565",
+      },
+      "Value": {
+        "Ref": "VpcB165FAAA0",
+      },
+    },
+    "ExportsOutputRefVpcBPrivateSubnet1RouteTableA584280A722C7B5F": {
+      "Export": {
+        "Name": "VpcA:ExportsOutputRefVpcBPrivateSubnet1RouteTableA584280A722C7B5F",
+      },
+      "Value": {
+        "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+      },
+    },
+    "ExportsOutputRefVpcBPrivateSubnet2RouteTable829EADB8596E74B9": {
+      "Export": {
+        "Name": "VpcA:ExportsOutputRefVpcBPrivateSubnet2RouteTable829EADB8596E74B9",
+      },
+      "Value": {
+        "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+      },
+    },
+    "VpcAAvailabilityZonesD8236899": {
+      "Description": "Availability Zones for TestProject/test/VpcA",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcAInstanceId": {
+      "Description": "Test EC2 Instance ID in VPC A",
+      "Value": {
+        "Ref": "VpcATestInstance16F2E1EA",
+      },
+    },
+    "VpcAPeeringStatus": {
+      "Description": "VPC Peering status between VPC A and VPC B",
+      "Value": "VPC A <-> VPC B peering created",
+    },
+    "VpcATestInstanceEC2InstanceId80955030": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VpcATestInstance16F2E1EA",
+      },
+    },
+    "VpcATestInstanceEC2InstanceKeyPairId98AE1315": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcATestInstanceKeyPair5BF4225C",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VpcATestInstanceEC2InstanceSubnetId58E07F6A": {
+      "Value": {
+        "Ref": "VpcAPrivateSubnet1Subnet24FE7A99",
+      },
+    },
+    "VpcATestInstanceEC2SecurityGroupId6E3C9A2B": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcATestInstanceSecurityGroupAECB8EB6",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcAVpcCidrCCA5B10B": {
+      "Description": "VPC CIDR for TestProject/test/VpcA",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcAF30F05C4",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcAVpcId95A206E5": {
+      "Description": "VPC ID for TestProject/test/VpcA",
+      "Value": {
+        "Ref": "VpcAF30F05C4",
+      },
+    },
+    "VpcBAvailabilityZonesFEC6D26E": {
+      "Description": "Availability Zones for TestProject/test/VpcB",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcBCidrParamName": {
+      "Description": "SSM Parameter Store name for VPC B CIDR",
+      "Export": {
+        "Name": "TestProject-test-VpcB-Cidr-Param-Name",
+      },
+      "Value": {
+        "Ref": "VpcBCidrParam63F78863",
+      },
+    },
+    "VpcBIdParamName": {
+      "Description": "SSM Parameter Store name for VPC B ID",
+      "Export": {
+        "Name": "TestProject-test-VpcB-Id-Param-Name",
+      },
+      "Value": {
+        "Ref": "VpcBIdParam54FF0999",
+      },
+    },
+    "VpcBInstanceId": {
+      "Description": "Test EC2 Instance ID in VPC B",
+      "Value": {
+        "Ref": "VpcBTestInstance1F8066C2",
+      },
+    },
+    "VpcBTestInstanceEC2InstanceIdAB46B9AB": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VpcBTestInstance1F8066C2",
+      },
+    },
+    "VpcBTestInstanceEC2InstanceKeyPairIdB7E24CD9": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcBTestInstanceKeyPair6D45810D",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VpcBTestInstanceEC2InstanceSubnetId325D20A5": {
+      "Value": {
+        "Ref": "VpcBPrivateSubnet1Subnet57A681A2",
+      },
+    },
+    "VpcBTestInstanceEC2SecurityGroupIdC5271F15": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcBTestInstanceSecurityGroup11E77A7A",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcBVpcCidr58D7EC8B": {
+      "Description": "VPC CIDR for TestProject/test/VpcB",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcB165FAAA0",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcBVpcIdAE4E1254": {
+      "Description": "VPC ID for TestProject/test/VpcB",
+      "Value": {
+        "Ref": "VpcB165FAAA0",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcABPeeringEnableVpcPeeringDnsResolution0AF8995F": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "VpcABPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy43BC353A",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+              },
+              ""}}",
+            ],
+          ],
+        },
+        "Delete": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false}}}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+              },
+              ""}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcABPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy43BC353A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ec2:ModifyVpcPeeringConnectionOptions",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcABPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy43BC353A",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcABPeeringLocalVpcPeeringSecurityGroup2C93D70F": {
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            "",
+            [
+              "Security group for VPC Peering traffic from peer VPC[",
+              {
+                "Ref": "VpcB165FAAA0",
+              },
+              "]",
+            ],
+          ],
+        },
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcB165FAAA0",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow all traffic from peer VPC [",
+                  {
+                    "Ref": "VpcB165FAAA0",
+                  },
+                  "]",
+                ],
+              ],
+            },
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcABPeeringPeerVpcPeeringSecurityGroupAFC9CB0B": {
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            "",
+            [
+              "Security group for VPC Peering traffic from local VPC[",
+              {
+                "Ref": "VpcAF30F05C4",
+              },
+              "]",
+            ],
+          ],
+        },
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcAF30F05C4",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow all traffic from local VPC [",
+                  {
+                    "Ref": "VpcAF30F05C4",
+                  },
+                  "]",
+                ],
+              ],
+            },
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcABPeeringVpcPeeringConnection385F2DBB": {
+      "Properties": {
+        "PeerVpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "TestProject-test-Peering-",
+                  {
+                    "Ref": "VpcAF30F05C4",
+                  },
+                  "-to-",
+                  {
+                    "Ref": "VpcB165FAAA0",
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCPeeringConnection",
+    },
+    "VpcABPeeringVpcPeeringRouteToLocalVpc13BBA87AF": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcABPeeringVpcPeeringRouteToLocalVpc226BE4C76": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcABPeeringVpcPeeringRouteToPeerVpc1EB4667D5": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet1RouteTable70A54DE4",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcABPeeringVpcPeeringRouteToPeerVpc2B4F165A9": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet2RouteTable28E48807",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcABPeeringVpcPeeringConnection385F2DBB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcADynamoDbEndpointCD726D3B": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcAPrivateSubnet1RouteTable70A54DE4",
+          },
+          {
+            "Ref": "VpcAPrivateSubnet2RouteTable28E48807",
+          },
+          {
+            "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+          },
+          {
+            "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcAF30F05C4": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcAIGWB0843D43": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcANatgatewayEip1E2805749": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/NatgatewayEIP1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcAPrivateSubnet1DefaultRouteE9EF35B9": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcAPublicSubnet1NATGatewayE1F36602",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet1RouteTable70A54DE4",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPrivateSubnet1RouteTable70A54DE4": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPrivateSubnet1RouteTableAssociation28DBCD94": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet1RouteTable70A54DE4",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPrivateSubnet1Subnet24FE7A99",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPrivateSubnet1Subnet24FE7A99": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAPrivateSubnet2DefaultRouteF279E311": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcAPublicSubnet1NATGatewayE1F36602",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet2RouteTable28E48807",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPrivateSubnet2RouteTable28E48807": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPrivateSubnet2RouteTableAssociationE1A35A5A": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPrivateSubnet2RouteTable28E48807",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPrivateSubnet2Subnet84E012C6",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPrivateSubnet2Subnet84E012C6": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAPublicSubnet1DefaultRouteCC2FBD7F": {
+      "DependsOn": [
+        "VpcAVPCGW477FE913",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPublicSubnet1NATGatewayE1F36602": {
+      "DependsOn": [
+        "VpcAPublicSubnet1DefaultRouteCC2FBD7F",
+        "VpcAPublicSubnet1RouteTableAssociation0D8C6DCF",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcANatgatewayEip1E2805749",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet1SubnetFA6980DF",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcAPublicSubnet1RouteTable8F8E1BDE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPublicSubnet1RouteTableAssociation0D8C6DCF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet1SubnetFA6980DF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPublicSubnet1SubnetFA6980DF": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAPublicSubnet2DefaultRoute181FFB1E": {
+      "DependsOn": [
+        "VpcAVPCGW477FE913",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPublicSubnet2RouteTable4F1CAA69": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPublicSubnet2RouteTableAssociation8AF6D672": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet2SubnetA692A3F6",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPublicSubnet2SubnetA692A3F6": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcA/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAS3Endpoint33E613E7": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcAPrivateSubnet1RouteTable70A54DE4",
+          },
+          {
+            "Ref": "VpcAPrivateSubnet2RouteTable28E48807",
+          },
+          {
+            "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+          },
+          {
+            "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcATestInstance16F2E1EA": {
+      "DependsOn": [
+        "VpcATestInstanceInstanceRoleEBE0751D",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VpcATestInstanceInstanceProfile8D5C34AC",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VpcATestInstanceKeyPair5BF4225C",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VpcATestInstanceLaunchTemplateDC23EB2D",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcATestInstanceSecurityGroupAECB8EB6",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcABPeeringLocalVpcPeeringSecurityGroup2C93D70F",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcAPrivateSubnet1Subnet24FE7A99",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcATestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcATestInstanceInstanceProfile8D5C34AC": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcATestInstanceInstanceRoleEBE0751D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcATestInstanceInstanceRoleEBE0751D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcATestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcATestInstanceKeyPair5BF4225C": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VpcATestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VpcATestInstanceLaunchTemplateDC23EB2D": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VpcATestInstanceSecurityGroupAECB8EB6": {
+      "Properties": {
+        "GroupDescription": "VpcA/VpcATestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcAF30F05C4",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcAVPCGW477FE913": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcB165FAAA0": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcBCidrParam63F78863": {
+      "Properties": {
+        "Description": "VPC B CIDR Block in Account A",
+        "Name": "/TestProject/test/vpc-b/cidr",
+        "Tags": {
+          "Environment": "test",
+          "ManagedBy": "CDK",
+          "Project": "vpc-peering-example",
+        },
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "VpcBDynamoDbEndpointC846FD5D": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+          },
+          {
+            "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+          },
+          {
+            "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+          },
+          {
+            "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcBIGW3AD09AFC": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcBIdParam54FF0999": {
+      "Properties": {
+        "Description": "VPC B ID in Account A",
+        "Name": "/TestProject/test/vpc-b/id",
+        "Tags": {
+          "Environment": "test",
+          "ManagedBy": "CDK",
+          "Project": "vpc-peering-example",
+        },
+        "Type": "String",
+        "Value": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "VpcBNatgatewayEip12D7B5D8E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/NatgatewayEIP1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcBPeeringSGF3CFCA9F": {
+      "Properties": {
+        "GroupDescription": "Security group for VPC Peering traffic from VPC C",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.2.0.0/16",
+            "Description": "Allow all traffic from peer VPC C",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcBPrivateSubnet1DefaultRouteE318620A": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcBPublicSubnet1NATGateway48AF95F4",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPrivateSubnet1RouteTableA584280A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPrivateSubnet1RouteTableAssociation96992F08": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPrivateSubnet1Subnet57A681A2",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPrivateSubnet1Subnet57A681A2": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBPrivateSubnet2DefaultRoute9DE5B31A": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcBPublicSubnet1NATGateway48AF95F4",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPrivateSubnet2RouteTable829EADB8": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPrivateSubnet2RouteTableAssociation6988B5A7": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPrivateSubnet2SubnetC26B1959",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPrivateSubnet2SubnetC26B1959": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBPublicSubnet1DefaultRouteC8BEB7B6": {
+      "DependsOn": [
+        "VpcBVPCGWB1193685",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPublicSubnet1NATGateway48AF95F4": {
+      "DependsOn": [
+        "VpcBPublicSubnet1DefaultRouteC8BEB7B6",
+        "VpcBPublicSubnet1RouteTableAssociation64D1DC85",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcBNatgatewayEip12D7B5D8E",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet1SubnetF1D410C3",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcBPublicSubnet1RouteTable00C3C1C0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPublicSubnet1RouteTableAssociation64D1DC85": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet1SubnetF1D410C3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPublicSubnet1SubnetF1D410C3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBPublicSubnet2DefaultRouteD5F30AA4": {
+      "DependsOn": [
+        "VpcBVPCGWB1193685",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPublicSubnet2RouteTableAssociation06303A18": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet2SubnetE5778C45",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPublicSubnet2RouteTableE9FB005E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPublicSubnet2SubnetE5778C45": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcA/VpcB/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBS3EndpointA89107A4": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcBPrivateSubnet1RouteTableA584280A",
+          },
+          {
+            "Ref": "VpcBPrivateSubnet2RouteTable829EADB8",
+          },
+          {
+            "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+          },
+          {
+            "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcBTestInstance1F8066C2": {
+      "DependsOn": [
+        "VpcBTestInstanceInstanceRoleA02EEEA5",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VpcBTestInstanceInstanceProfile5C055FBD",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VpcBTestInstanceKeyPair6D45810D",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VpcBTestInstanceLaunchTemplate7D813DAE",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcBTestInstanceSecurityGroup11E77A7A",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcABPeeringPeerVpcPeeringSecurityGroupAFC9CB0B",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcBPeeringSGF3CFCA9F",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcBPrivateSubnet1Subnet57A681A2",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcBTestInstanceInstanceProfile5C055FBD": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcBTestInstanceInstanceRoleA02EEEA5",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcBTestInstanceInstanceRoleA02EEEA5": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcBTestInstanceKeyPair6D45810D": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VpcBTestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VpcBTestInstanceLaunchTemplate7D813DAE": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VpcBTestInstanceSecurityGroup11E77A7A": {
+      "Properties": {
+        "GroupDescription": "VpcA/VpcBTestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcB165FAAA0",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcBVPCGWB1193685": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 2`] = `
+{
+  "Outputs": {
+    "AccountBInfo": {
+      "Description": "Account B information",
+      "Value": "VPC C created in Account B: 222222222222",
+    },
+    "AvailabilityZones06C0CE28": {
+      "Description": "Availability Zones for TestProject/test/VpcC",
+      "Value": "dummy1a,dummy1b",
+    },
+    "ExportsOutputRef0C09860A19F6A434": {
+      "Export": {
+        "Name": "VpcC:ExportsOutputRef0C09860A19F6A434",
+      },
+      "Value": {
+        "Ref": "0C09860A",
+      },
+    },
+    "ExportsOutputRefPrivateSubnet1RouteTable08B7943AAFEBC1D4": {
+      "Export": {
+        "Name": "VpcC:ExportsOutputRefPrivateSubnet1RouteTable08B7943AAFEBC1D4",
+      },
+      "Value": {
+        "Ref": "PrivateSubnet1RouteTable08B7943A",
+      },
+    },
+    "ExportsOutputRefPrivateSubnet2RouteTableDADD895C63469D1A": {
+      "Export": {
+        "Name": "VpcC:ExportsOutputRefPrivateSubnet2RouteTableDADD895C63469D1A",
+      },
+      "Value": {
+        "Ref": "PrivateSubnet2RouteTableDADD895C",
+      },
+    },
+    "ParameterStoreReadRoleArn": {
+      "Description": "IAM Role ARN for reading VPC C parameters from Parameter Store",
+      "Export": {
+        "Name": "TestProject-test-ParameterStoreReadRole-Arn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ParameterStoreReadRole3E2A1596",
+          "Arn",
+        ],
+      },
+    },
+    "TestInstanceEC2InstanceIdCF85275D": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "TestInstanceD022F56C",
+      },
+    },
+    "TestInstanceEC2InstanceKeyPairId7ABCF772": {
+      "Value": {
+        "Fn::GetAtt": [
+          "TestInstanceKeyPair442E3213",
+          "KeyPairId",
+        ],
+      },
+    },
+    "TestInstanceEC2InstanceSubnetIdAEAE25F7": {
+      "Value": {
+        "Ref": "PrivateSubnet1Subnet2C5FE8C8",
+      },
+    },
+    "TestInstanceEC2SecurityGroupId1D7EE000": {
+      "Value": {
+        "Fn::GetAtt": [
+          "TestInstanceSecurityGroupB51ECD4B",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcCCidr": {
+      "Description": "VPC C CIDR Block",
+      "Export": {
+        "Name": "TestProject-test-VpcC-Cidr",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "0C09860A",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcCCidrParamName": {
+      "Description": "SSM Parameter Store name for VPC C CIDR",
+      "Export": {
+        "Name": "TestProject-test-VpcC-Cidr-Param-Name",
+      },
+      "Value": {
+        "Ref": "VpcCidrParam6887E44C",
+      },
+    },
+    "VpcCId": {
+      "Description": "VPC C ID",
+      "Export": {
+        "Name": "TestProject-test-VpcC-Id",
+      },
+      "Value": {
+        "Ref": "0C09860A",
+      },
+    },
+    "VpcCIdParamName": {
+      "Description": "SSM Parameter Store name for VPC C ID",
+      "Export": {
+        "Name": "TestProject-test-VpcC-Id-Param-Name",
+      },
+      "Value": {
+        "Ref": "VpcIdParamE55A048C",
+      },
+    },
+    "VpcCTestInstanceId": {
+      "Description": "Test EC2 Instance ID in VPC C",
+      "Value": {
+        "Ref": "TestInstanceD022F56C",
+      },
+    },
+    "VpcCidr58DC1BFB": {
+      "Description": "VPC CIDR for TestProject/test/VpcC",
+      "Value": {
+        "Fn::GetAtt": [
+          "0C09860A",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcIdD42015E1": {
+      "Description": "VPC ID for TestProject/test/VpcC",
+      "Value": {
+        "Ref": "0C09860A",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "0C09860A": {
+      "Properties": {
+        "CidrBlock": "10.2.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "DynamoDbEndpoint727BF8E4": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "PrivateSubnet1RouteTable08B7943A",
+          },
+          {
+            "Ref": "PrivateSubnet2RouteTableDADD895C",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ParameterStoreReadRole3E2A1596": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::111111111111:root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Role to allow Account 111111111111 to read VPC C parameters from Parameter Store",
+        "RoleName": "TestProject-test-ParameterStoreReadRole",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ParameterStoreReadRoleDefaultPolicyF9F2A5ED": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "VpcIdParamE55A048C",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "VpcCidrParam6887E44C",
+                    },
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ParameterStoreReadRoleDefaultPolicyF9F2A5ED",
+        "Roles": [
+          {
+            "Ref": "ParameterStoreReadRole3E2A1596",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PrivateSubnet1RouteTable08B7943A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcC/Resource/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "PrivateSubnet1RouteTableAssociation3184BB52": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "PrivateSubnet1RouteTable08B7943A",
+        },
+        "SubnetId": {
+          "Ref": "PrivateSubnet1Subnet2C5FE8C8",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "PrivateSubnet1Subnet2C5FE8C8": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcC/Resource/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "PrivateSubnet2RouteTableAssociation0610D1FC": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "PrivateSubnet2RouteTableDADD895C",
+        },
+        "SubnetId": {
+          "Ref": "PrivateSubnet2Subnet0F2F66D6",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "PrivateSubnet2RouteTableDADD895C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcC/Resource/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "PrivateSubnet2Subnet0F2F66D6": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.2.1.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcC/Resource/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "S3Endpoint1ED947E0": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "PrivateSubnet1RouteTable08B7943A",
+          },
+          {
+            "Ref": "PrivateSubnet2RouteTableDADD895C",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "TestInstanceD022F56C": {
+      "DependsOn": [
+        "TestInstanceInstanceRole705186E2",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "TestInstanceInstanceProfile10BC2F5B",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "TestInstanceKeyPair442E3213",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "TestInstanceLaunchTemplateC39BD165",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "TestInstanceSecurityGroupB51ECD4B",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcPeeringSGFFF78996",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "PrivateSubnet1Subnet2C5FE8C8",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "TestInstanceInstanceProfile10BC2F5B": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "TestInstanceInstanceRole705186E2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "TestInstanceInstanceRole705186E2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TestInstanceKeyPair442E3213": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "TestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "TestInstanceLaunchTemplateC39BD165": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "TestInstanceSecurityGroupB51ECD4B": {
+      "Properties": {
+        "GroupDescription": "VpcC/TestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "0C09860A",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcCidrParam6887E44C": {
+      "Properties": {
+        "Description": "VPC C CIDR Block in Account B",
+        "Name": "/TestProject/test/vpc-c/cidr",
+        "Tags": {
+          "Environment": "test",
+          "ManagedBy": "CDK",
+          "Project": "vpc-peering-example",
+        },
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "0C09860A",
+            "CidrBlock",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "VpcIdParamE55A048C": {
+      "Properties": {
+        "Description": "VPC C ID in Account B",
+        "Name": "/TestProject/test/vpc-c/id",
+        "Tags": {
+          "Environment": "test",
+          "ManagedBy": "CDK",
+          "Project": "vpc-peering-example",
+        },
+        "Type": "String",
+        "Value": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "VpcPeeringSGFFF78996": {
+      "Properties": {
+        "GroupDescription": "Security Group to allow traffic from VPC B",
+        "GroupName": "TestProject-test-VpcC-Peering-SG",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.1.0.0/16",
+            "Description": "Allow all traffic from VPC B",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "0C09860A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 3`] = `
+{
+  "Outputs": {
+    "NextSteps": {
+      "Description": "Required next steps",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "1. Accept peering connection in Account B | 2. Deploy VpcCRoutes stack to add routes in VPC C |    Destination: 10.2.0.0/16 |    Target: ",
+            {
+              "Ref": "VpcBCPeeringConnection",
+            },
+          ],
+        ],
+      },
+    },
+    "PeeringConnectionId": {
+      "Description": "VPC Peering Connection ID for VPC B <-> VPC C",
+      "Export": {
+        "Name": "TestProject-test-VpcB-VpcC-Peering-Id",
+      },
+      "Value": {
+        "Ref": "VpcBCPeeringConnection",
+      },
+    },
+    "PeeringConnectionIdParamName": {
+      "Description": "SSM Parameter Store name for Peering Connection ID",
+      "Export": {
+        "Name": "TestProject-test-VpcB-VpcC-Peering-Id-Param-Name",
+      },
+      "Value": {
+        "Ref": "PeeringConnectionIdParamAC521D47",
+      },
+    },
+    "PeeringIdReadRoleArn": {
+      "Description": "IAM Role ARN for reading Peering Connection ID from Parameter Store",
+      "Export": {
+        "Name": "TestProject-test-PeeringIdReadRole-Arn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "PeeringIdReadRoleA5E5C8F1",
+          "Arn",
+        ],
+      },
+    },
+    "PeeringStatus": {
+      "Description": "Peering connection status",
+      "Value": "Peering connection created. Acceptance required in Account B.",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EnableVpcPeeringDnsResolution90242EB2": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcBCPeeringConnection",
+              },
+              "","RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"region":"ap-northeast-1","physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VpcBCPeeringConnection",
+              },
+              ""}}",
+            ],
+          ],
+        },
+        "Delete": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcBCPeeringConnection",
+              },
+              "","RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false}}}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VpcBCPeeringConnection",
+              },
+              "","RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"region":"ap-northeast-1","physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VpcBCPeeringConnection",
+              },
+              ""}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ec2:ModifyVpcPeeringConnectionOptions",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "GetVpcCId4692CF63": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "GetVpcCIdCustomResourcePolicy9B468A34",
+      ],
+      "Properties": {
+        "Create": "{"service":"SSM","action":"getParameter","parameters":{"Name":"/TestProject/test/vpc-c/id"},"region":"ap-northeast-1","physicalResourceId":{"id":"VpcCIdLookup"},"assumedRoleArn":"arn:aws:iam::222222222222:role/TestProject-test-ParameterStoreReadRole"}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": "{"service":"SSM","action":"getParameter","parameters":{"Name":"/TestProject/test/vpc-c/id"},"region":"ap-northeast-1","physicalResourceId":{"id":"VpcCIdLookup"},"assumedRoleArn":"arn:aws:iam::222222222222:role/TestProject-test-ParameterStoreReadRole"}",
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetVpcCIdCustomResourcePolicy9B468A34": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::222222222222:role/TestProject-test-ParameterStoreReadRole",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetVpcCIdCustomResourcePolicy9B468A34",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PeeringConnectionIdParamAC521D47": {
+      "Properties": {
+        "Description": "VPC Peering Connection ID for VPC B <-> VPC C",
+        "Name": "/TestProject/test/peering/vpc-b-vpc-c/id",
+        "Tags": {
+          "Environment": "test",
+          "ManagedBy": "CDK",
+          "Project": "vpc-peering-example",
+        },
+        "Type": "String",
+        "Value": {
+          "Ref": "VpcBCPeeringConnection",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "PeeringIdReadRoleA5E5C8F1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::222222222222:root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Role to allow Account 222222222222 to read Peering Connection ID from Parameter Store",
+        "RoleName": "TestProject-test-PeeringIdReadRole",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PeeringIdReadRoleDefaultPolicyBFAE4992": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "PeeringConnectionIdParamAC521D47",
+                    },
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PeeringIdReadRoleDefaultPolicyBFAE4992",
+        "Roles": [
+          {
+            "Ref": "PeeringIdReadRoleA5E5C8F1",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcBCPeeringConnection": {
+      "Properties": {
+        "PeerOwnerId": "222222222222",
+        "PeerRegion": "ap-northeast-1",
+        "PeerRoleArn": "arn:aws:iam::222222222222:role/VpcPeeringAcceptRole",
+        "PeerVpcId": {
+          "Fn::GetAtt": [
+            "GetVpcCId4692CF63",
+            "Parameter.Value",
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-VpcB-VpcC-Peering",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "VpcA:ExportsOutputRefVpcB165FAAA0B80D3565",
+        },
+      },
+      "Type": "AWS::EC2::VPCPeeringConnection",
+    },
+    "VpcBToVpcCRoute1": {
+      "Properties": {
+        "DestinationCidrBlock": "10.2.0.0/16",
+        "RouteTableId": {
+          "Fn::ImportValue": "VpcA:ExportsOutputRefVpcBPrivateSubnet1RouteTableA584280A722C7B5F",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcBCPeeringConnection",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBToVpcCRoute2": {
+      "Properties": {
+        "DestinationCidrBlock": "10.2.0.0/16",
+        "RouteTableId": {
+          "Fn::ImportValue": "VpcA:ExportsOutputRefVpcBPrivateSubnet2RouteTable829EADB8596E74B9",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VpcBCPeeringConnection",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 4`] = `
+{
+  "Outputs": {
+    "PeeringConnectionIdUsed": {
+      "Description": "Peering connection ID used for routes",
+      "Value": {
+        "Fn::GetAtt": [
+          "GetPeeringConnectionId5F6AC83A",
+          "Parameter.Value",
+        ],
+      },
+    },
+    "PeeringConnectionUsed": {
+      "Description": "VPC Peering Connection ID used",
+      "Value": {
+        "Fn::GetAtt": [
+          "GetPeeringConnectionId5F6AC83A",
+          "Parameter.Value",
+        ],
+      },
+    },
+    "RoutesConfigured": {
+      "Description": "VPC C routes configured for VPC B traffic",
+      "Value": "Routes successfully configured",
+    },
+    "VpcCId": {
+      "Description": "VPC C ID",
+      "Value": {
+        "Fn::ImportValue": "VpcC:ExportsOutputRef0C09860A19F6A434",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EnableVpcPeeringDnsResolution90242EB2": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Fn::GetAtt": [
+                  "GetPeeringConnectionId5F6AC83A",
+                  "Parameter.Value",
+                ],
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"region":"ap-northeast-1","physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Fn::GetAtt": [
+                  "GetPeeringConnectionId5F6AC83A",
+                  "Parameter.Value",
+                ],
+              },
+              ""}}",
+            ],
+          ],
+        },
+        "Delete": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Fn::GetAtt": [
+                  "GetPeeringConnectionId5F6AC83A",
+                  "Parameter.Value",
+                ],
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false}}}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Fn::GetAtt": [
+                  "GetPeeringConnectionId5F6AC83A",
+                  "Parameter.Value",
+                ],
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"region":"ap-northeast-1","physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Fn::GetAtt": [
+                  "GetPeeringConnectionId5F6AC83A",
+                  "Parameter.Value",
+                ],
+              },
+              ""}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ec2:ModifyVpcPeeringConnectionOptions",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EnableVpcPeeringDnsResolutionCustomResourcePolicy97C3F782",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "GetPeeringConnectionId5F6AC83A": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "GetPeeringConnectionIdCustomResourcePolicy110246AA",
+      ],
+      "Properties": {
+        "Create": "{"service":"SSM","action":"getParameter","parameters":{"Name":"/TestProject/test/peering/vpc-b-vpc-c/id"},"region":"ap-northeast-1","physicalResourceId":{"id":"PeeringConnectionIdLookup"},"assumedRoleArn":"arn:aws:iam::111111111111:role/TestProject-test-PeeringIdReadRole"}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": "{"service":"SSM","action":"getParameter","parameters":{"Name":"/TestProject/test/peering/vpc-b-vpc-c/id"},"region":"ap-northeast-1","physicalResourceId":{"id":"PeeringConnectionIdLookup"},"assumedRoleArn":"arn:aws:iam::111111111111:role/TestProject-test-PeeringIdReadRole"}",
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetPeeringConnectionIdCustomResourcePolicy110246AA": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::111111111111:role/TestProject-test-PeeringIdReadRole",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetPeeringConnectionIdCustomResourcePolicy110246AA",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcCToVpcBRoute1": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::ImportValue": "VpcA:ExportsOutputFnGetAttVpcB165FAAA0CidrBlockA6EFFF27",
+        },
+        "RouteTableId": {
+          "Fn::ImportValue": "VpcC:ExportsOutputRefPrivateSubnet1RouteTable08B7943AAFEBC1D4",
+        },
+        "VpcPeeringConnectionId": {
+          "Fn::GetAtt": [
+            "GetPeeringConnectionId5F6AC83A",
+            "Parameter.Value",
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcCToVpcBRoute2": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::ImportValue": "VpcA:ExportsOutputFnGetAttVpcB165FAAA0CidrBlockA6EFFF27",
+        },
+        "RouteTableId": {
+          "Fn::ImportValue": "VpcC:ExportsOutputRefPrivateSubnet2RouteTableDADD895C63469D1A",
+        },
+        "VpcPeeringConnectionId": {
+          "Fn::GetAtt": [
+            "GetPeeringConnectionId5F6AC83A",
+            "Parameter.Value",
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts: CrossAccountPeeringStack 1`] = `
+{
+  "AWS::EC2::Route": 2,
+  "AWS::EC2::VPCPeeringConnection": 1,
+  "AWS::IAM::Policy": 3,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::SSM::Parameter": 1,
+  "Custom::AWS": 2,
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts: VpcCRoutesStack 1`] = `
+{
+  "AWS::EC2::Route": 2,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::Function": 1,
+  "Custom::AWS": 2,
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts: VpcCStack 1`] = `
+{
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::KeyPair": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::RouteTable": 2,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::Subnet": 2,
+  "AWS::EC2::SubnetRouteTableAssociation": 2,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 2,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::SSM::Parameter": 2,
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts: VpcPeeringStack 1`] = `
+{
+  "AWS::EC2::EIP": 2,
+  "AWS::EC2::Instance": 2,
+  "AWS::EC2::InternetGateway": 2,
+  "AWS::EC2::KeyPair": 2,
+  "AWS::EC2::LaunchTemplate": 2,
+  "AWS::EC2::NatGateway": 2,
+  "AWS::EC2::Route": 12,
+  "AWS::EC2::RouteTable": 8,
+  "AWS::EC2::SecurityGroup": 5,
+  "AWS::EC2::Subnet": 8,
+  "AWS::EC2::SubnetRouteTableAssociation": 8,
+  "AWS::EC2::VPC": 2,
+  "AWS::EC2::VPCEndpoint": 4,
+  "AWS::EC2::VPCGatewayAttachment": 2,
+  "AWS::EC2::VPCPeeringConnection": 1,
+  "AWS::IAM::InstanceProfile": 2,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 1,
+  "AWS::SSM::Parameter": 2,
+  "Custom::AWS": 1,
+}
+`;
