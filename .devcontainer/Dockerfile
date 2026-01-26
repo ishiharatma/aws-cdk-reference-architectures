@@ -132,6 +132,18 @@ RUN export OS=$(uname -m) && \
     sudo rm -rf /tmp/q && \
     sudo rm -f /tmp/q.zip; \
     fi
+# Install Kiro CLI
+RUN export OS=$(uname -m) && \
+    if [ -n "$OS" ]; then \
+    curl --proto '=https' --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/kirocli-${OS}-linux-musl.zip" -o "/tmp/kirocli.zip" && \
+    cd /tmp && \
+    unzip kirocli.zip && \
+    cd kirocli && \
+    ./install.sh --no-confirm&& \
+    cd / && \
+    sudo rm -rf /tmp/kirocli && \
+    sudo rm -f /tmp/kirocli.zip; \
+    fi
 
 # Install Act
 RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
