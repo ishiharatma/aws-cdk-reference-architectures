@@ -405,6 +405,13 @@ if command -v q &> /dev/null; then
 else
     echo "❌ Amazon Q CLI not found"
 fi
+# Check Kiro CLI configuration
+if command -v kiro-cli &> /dev/null; then
+    echo "✅ Kiro CLI is available"
+    echo "Kiro CLI version: $(kiro-cli version || echo "Version check failed but CLI is installed")"
+else
+    echo "❌ Kiro CLI not found"
+fi
 
 echo "-----------------------------------"
 echo "Checking AWS configuration..."

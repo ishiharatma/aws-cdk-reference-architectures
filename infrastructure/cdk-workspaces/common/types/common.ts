@@ -38,7 +38,7 @@ export const allowedCountryCodesJP = [
     "JP",
 ];
 
-export type CronExpression = `cron(${string})`;
+export type CronExpression = `cron(${string} ${string} ${string} ${string} ${string} ${string})`;
 export interface startstopSchedulerConfig {
     /**
      * Cron expression for start schedule
