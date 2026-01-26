@@ -4,6 +4,8 @@ import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
 import { Environment } from '@common/parameters/environments';
 
 //import { YoutStackName } from 'lib/stacks/your-stack';
+import { params } from "parameters/environments";
+import '../parameters';
 
 const defaultEnv = {
     account: '123456789012',
@@ -12,6 +14,10 @@ const defaultEnv = {
 
 const projectName = "example";
 const envName: Environment = Environment.TEST;
+if (!params[envName]) {
+  throw new Error(`No parameters found for environment: ${envName}`);
+}
+const envParams = params[envName];
 
 describe('CDK Nag AwsSolutions Pack', () => {
   let app: cdk.App;
