@@ -1,0 +1,4 @@
+# https://pypi.org/project/aws-lambda-powertools/
+aws-lambda-powertools==3.21.0
+# https://pypi.org/project/aws-xray-sdk/
+aws-xray-sdk==2.14.0

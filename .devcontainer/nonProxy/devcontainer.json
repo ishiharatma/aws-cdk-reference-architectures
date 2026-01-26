@@ -13,7 +13,7 @@
 		"dockerfile": "../Dockerfile",
 		"context": "../..",
         "args": {
-            "VARIANT": "1-22-bookworm", // localstack requires glibc 2.35+ which is only available in ubuntu 22.04+ or debian bookworm+
+            "VARIANT": "4.0.4-bookworm", // localstack requires glibc 2.35+ which is only available in ubuntu 22.04+ or debian bookworm+
             //"VARIANT": "1-22-bullseye",
             // see: https://github.com/localstack/localstack/releases
             "LOCALSTACK_VERSION": "4.12.0"

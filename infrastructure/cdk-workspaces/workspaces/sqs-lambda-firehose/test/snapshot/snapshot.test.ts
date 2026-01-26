@@ -2,9 +2,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { Environment } from '@common/parameters/environments';
-import { YourStackName } from "lib/stacks/your-stack";
+import { SqsLambdaFirehoseStack } from "lib/stacks/sqs-lambda-firehose-stack";
 import { params } from "parameters/environments";
 import '../parameters';
+import * as path from 'path';
+import { loadCdkContext } from '@common/test-helpers/test-context';
 
 const defaultEnv = {
     account: '123456789012',
@@ -18,6 +20,8 @@ if (!params[envName]) {
   throw new Error(`No parameters found for environment: ${envName}`);
 }
 const envParams = params[envName];
+const cdkJsonPath = path.resolve(__dirname, "../../cdk.json");
+const baseContext = loadCdkContext(cdkJsonPath);
 
 /**
  * AWS CDK Snapshot Test Suite
@@ -35,9 +39,10 @@ const envParams = params[envName];
  * Note: Detailed configuration value verification is done with unit tests (test/unit/)
  */
 describe("Stack Snapshot Tests", () => {
-  const app = new cdk.App();
+  const context = {...baseContext, "aws:cdk:bundling-stacks": [],};
+  const app = new cdk.App({ context });
 
-  const stack = new YourStackName(app, "YourStackName", {
+  const stack = new SqsLambdaFirehoseStack(app, "SqsLambdaFirehoseStack", {
     project: projectName,
     environment: envName,
     env: defaultEnv,
