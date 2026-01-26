@@ -45,7 +45,7 @@ sqs-lambda-firehose/
 │   └── sqs-lambda-firehose.ts                   # Application entry point
 ├── lib/
 │   ├── stacks/
-│   │   └── sqs-lambda-firehose-stack.ts         # Step4. VPC C route configuration
+│   │   └── sqs-lambda-firehose-stack.ts         # Stack
 │   ├── stages/
 │   │   └── sqs-lambda-firehose-stage.ts         # Deployment orchestration
 │   └── types/
