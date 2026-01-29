@@ -83,7 +83,7 @@ function createPatternCard(pattern) {
     // Image HTML
     const imageHTML = pattern.image 
         ? `<div class="pattern-image-container mb-4">
-               <img src="${pattern.image}" alt="${pattern.title}" class="pattern-image" onerror="this.style.display='none'">
+               <img src="${pattern.image}" alt="${pattern.title}" class="pattern-image" onclick="openModal('${pattern.image}', '${pattern.title.replace(/'/g, "\\'")}')">  
            </div>`
         : '';
     
@@ -177,6 +177,56 @@ function setupEventListeners() {
     document.getElementById('searchInput').addEventListener('input', filterPatterns);
     document.getElementById('difficultyFilter').addEventListener('change', filterPatterns);
     document.getElementById('tagFilter').addEventListener('change', filterPatterns);
+    
+    // Modal event listeners
+    const modal = document.getElementById('imageModal');
+    const modalClose = document.querySelector('.modal-close');
+    
+    modalClose.onclick = function() {
+        modal.style.display = 'none';
+    };
+    
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    // ESC key to close modal
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.style.display === 'block') {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Scroll to top button
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+    
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    });
+    
+    scrollToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+// Open image modal
+function openModal(imageSrc, title) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    const captionText = document.getElementById('modalCaption');
+    
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+    captionText.textContent = title;
 }
 
 // Initialize on page load
