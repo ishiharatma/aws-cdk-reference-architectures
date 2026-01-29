@@ -1,0 +1,95 @@
+[
+  {
+    "id": "sqs-lambda-firehose",
+    "title": "SQS to Lambda to Kinesis Firehose",
+    "description": "Process messages from SQS queue using Lambda function and stream to Kinesis Firehose for data lake storage.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/sqs-lambda-firehose/overview.png",
+    "tags": ["CDK", "TypeScript"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/sqs-lambda-firehose",
+    "difficulty": "intermediate",
+    "date": "2026-01-26",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-007-sqs-lambda-firehose-building-event-driven-data-pipelines-2ki8",
+      "zenn": "https://zenn.dev/example/articles/sqs-lambda-firehose",
+      "qiita": "https://qiita.com/example/items/sqs-lambda-firehose"
+    }
+  },
+  {
+    "id": "vpc-basics",
+    "title": "VPC Basics with CDK",
+    "description": "Create a basic VPC infrastructure with public and private subnets using AWS CDK.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/vpc-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/vpc-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-21",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4a43"
+    }
+  },
+  {
+    "id": "vpc-peering",
+    "title": "VPC Peering Connection",
+    "description": "Establish VPC peering connection between two VPCs for private network communication.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/vpc-peering/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/vpc-peering",
+    "difficulty": "intermediate",
+    "date": "2025-12-31",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-006-vpc-peering-cross-account-network-integration-and-dns-546"
+    }
+  },
+  {
+    "id": "s3-basics",
+    "title": "S3 Basics with CDK",
+    "description": "Create and configure S3 buckets with various settings using AWS CDK.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/s3-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Storage"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/s3-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-07",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-001-s3-bucket-fundamentals-from-default-settings-to-practical-1hmd"
+    }
+  },
+  {
+    "id": "iam-basics",
+    "title": "IAM Basics with CDK",
+    "description": "Create IAM roles, policies, and users with AWS CDK following best practices.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/iam-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Security"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/iam-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-09",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-002-iam-basics-users-roles-and-secure-password-management-1npa"
+    }
+  },
+  {
+    "id": "vpc-natinstance-v2",
+    "title": "VPC with NAT Instance",
+    "description": "Create VPC with NAT instance for cost-effective internet access from private subnets.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/vpc-natinstance-v2/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/vpc-natinstance-v2",
+    "difficulty": "intermediate",
+    "date": "2025-12-24",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-004-nat-instance-v2-cost-effective-nat-with-automated-scheduling-49li"
+    }
+  },
+  {
+    "id": "cdk-parameters",
+    "title": "CDK Parameters Best Practices",
+    "description": "Learn how to manage parameters and configurations in AWS CDK applications.",
+    "image": "../infrastructure/cdk-workspaces/workspaces/cdk-parameters/overview.png",
+    "tags": ["CDK", "TypeScript", "Best Practices"],
+    "link": "../infrastructure/cdk-workspaces/workspaces/cdk-parameters",
+    "difficulty": "beginner",
+    "date": "2025-12-25",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-005-cdk-parameters-managing-parameters-with-typescript-vs-cdkjson-12b9"
+    }
+  }
+]
