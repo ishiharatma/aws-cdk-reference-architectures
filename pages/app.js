@@ -1,3 +1,26 @@
+// Base URL configuration
+const IMAGE_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '../'  // Local development
+    : 'https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/cdk-workspaces/workspaces/';  // GitHub リポジトリ
+const REPO_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '../'  // Local development
+    : 'https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/cdk-workspaces/workspaces/';  // GitHub リポジトリ
+
+// Convert relative path to absolute URL
+function toAbsoluteImageUrl(relativePath) {
+    if (!relativePath) return relativePath;
+    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+        return relativePath;  // Already absolute
+    }
+    return IMAGE_BASE_URL + relativePath.replace(/^\.\.?\//, '');
+}
+function toAbsoluteLinkUrl(relativePath) {
+    if (!relativePath) return relativePath;
+    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+        return relativePath;  // Already absolute
+    }
+    return REPO_BASE_URL + relativePath.replace(/^\.\.?\//, '') + '#readme';
+}
 // Load patterns from JSON file
 let allPatterns = [];
 let filteredPatterns = [];
@@ -80,10 +103,14 @@ function createPatternCard(pattern) {
     const difficultyClass = `difficulty-${pattern.difficulty}`;
     const difficultyLabel = difficultyLabels[pattern.difficulty] || pattern.difficulty;
     
+    // Convert paths to absolute URLs
+    const imageUrl = toAbsoluteImageUrl(pattern.image);
+    const linkUrl = toAbsoluteLinkUrl(pattern.link);
+    
     // Image HTML
     const imageHTML = pattern.image 
         ? `<div class="pattern-image-container mb-4">
-               <img src="${pattern.image}" alt="${pattern.title}" class="pattern-image" onclick="openModal('${pattern.image}', '${pattern.title.replace(/'/g, "\\'")}')">  
+               <img src="${imageUrl}" alt="${pattern.title}" class="pattern-image" onclick="openModal('${imageUrl}', '${pattern.title.replace(/'/g, "\\'")}')">  
            </div>`
         : '';
     
@@ -115,7 +142,7 @@ function createPatternCard(pattern) {
                     </div>
                     
                     <!-- View Pattern Button -->
-                    <a href="${pattern.link}" class="inline-block w-full text-center bg-aws-orange hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition">
+                    <a href="${linkUrl}" class="inline-block w-full text-center bg-aws-orange hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition">
                         View Pattern
                     </a>
                 </div>
