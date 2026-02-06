@@ -14,7 +14,6 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@aws-cdk/aws-lambda-python-alpha": "^2.231.0-alpha.0",
     "@eslint/js": "^9.39.1",
     "@types/readline-sync": "^1.4.8",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
@@ -25,26 +24,31 @@
     "eslint-cdk-plugin": "^3.4.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-jsdoc": "^62.5.2",
     "eslint-plugin-unused-imports": "^4.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
+    "typedoc": "^0.28.16",
     "rimraf": "^6.1.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript-eslint": "^8.48.1"
   },
   "dependencies": {
+    "@aws-cdk/aws-lambda-python-alpha": "^2.231.0-alpha.0",
     "change-case-commonjs": "^5.4.4",
     "cdk-ecr-deployment": "^4.1.0",
     "deploy-time-build": "^0.4.8",
-    "readline-sync": "^1.4.10",
-    "tsconfig-paths": "^4.2.0"
+    "readline-sync": "^1.4.10"
   },
   "private": "true",
   "workspaces": [
     "workspaces\\*"
   ],
   "lint-staged": {
-    "src/**/*.{ts,tsx}": "npm run lint:precommit",
-    "src/**/*.{js,jsx,ts,tsx,json,css,scss}": "npm run fmt:precommit"
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }
