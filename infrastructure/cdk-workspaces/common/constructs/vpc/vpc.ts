@@ -1,5 +1,8 @@
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as scheduler from 'aws-cdk-lib/aws-scheduler';
+import * as schedulerTargets from 'aws-cdk-lib/aws-scheduler-targets';
 import { Construct } from 'constructs';
 import {
     VpcConfig,
@@ -8,10 +11,10 @@ import {
     VpcSubnets,
     GatewayVpcEndpointConfig,
     InterfaceVpcEndpointConfig
-} from '../../types/vpc';
+} from '../../types';
 import { pascalCase } from 'change-case-commonjs';
 import { CustomNatProvider } from './custom-nat-provider';
-import { C_RESOURCE } from '../../types';
+import { C_RESOURCE } from '../../constants';
 
 /**
  * VPC Construct Properties
@@ -134,6 +137,7 @@ export class VpcConstruct extends Construct {
         // Create VPC
         this.vpc = new ec2.Vpc(this, C_RESOURCE, {
             vpcName,
+            // see: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html#vpc-sizing-ipv4
             ipAddresses: ec2.IpAddresses.cidr(config.cidr),
             maxAzs: config.maxAzs || 3,
             natGateways: config.natCount || 0,
@@ -143,6 +147,83 @@ export class VpcConstruct extends Construct {
             subnetConfiguration,
             createInternetGateway: config.createInternetGateway ?? true,
         });
+
+        // Nat Instance Allowed VPC Traffic and EIP Association
+        if (natGatewayProvider) {
+            if (config.natType === NatType.INSTANCE) {
+                (natGatewayProvider as ec2.NatInstanceProviderV2).connections.allowFrom(
+                    ec2.Peer.ipv4(this.vpc.vpcCidrBlock),
+                    ec2.Port.allTraffic(),
+                    "Allow all traffic from VPC",
+                );
+            }
+            
+            natGatewayProvider.configuredGateways.map((nat, index) => {
+                if (config.natType === NatType.INSTANCE) {
+                    // if NAT type is INSTANCE, associate EIP here
+                    if (index < this.outboundEips.length) {
+                        // Associate EIP to NAT Instance
+                        new ec2.CfnEIPAssociation(this, `NatEipAssociation${index}`, {
+                            allocationId: this.outboundEips[index].attrAllocationId,
+                            instanceId: nat.gatewayId,
+                        });
+                    }
+                    // Export NAT InstanceID
+                    new cdk.CfnOutput(this, `NatInstanceId${index + 1}`, {
+                        value: nat.gatewayId,
+                    });
+
+                    if (config.natSchedule) {
+                        const schedulerRole = new iam.Role(this, `SchedulerRole${index}`, {
+                            assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+                            description: 'IAM role for EventBridge Scheduler to start/stop EC2',
+                        });
+
+                        schedulerRole.addToPolicy(
+                            new iam.PolicyStatement({
+                                actions: ['ec2:StartInstances', 'ec2:StopInstances'],
+                                resources: [
+                                cdk.Stack.of(this).formatArn({
+                                    service: 'ec2',
+                                    resource: 'instance',
+                                    resourceName: nat.gatewayId,
+                                }),
+                                ],
+                            }),
+                        );
+                        const startTarget = new schedulerTargets.Universal({
+                            service: 'ec2',
+                            action: 'startInstances',
+                            input: scheduler.ScheduleTargetInput.fromObject({
+                                InstanceIds: [nat.gatewayId],
+                            }),
+                            role: schedulerRole,
+                        });
+
+                        const stopTarget = new schedulerTargets.Universal({
+                            service: 'ec2',
+                            action: 'stopInstances',
+                            input: scheduler.ScheduleTargetInput.fromObject({
+                                InstanceIds: [nat.gatewayId],
+                            }),
+                            role: schedulerRole,
+                        });
+                        new scheduler.Schedule(this, `StopSchedule${index}`, {
+                                description: `Stop Nat Instance [${nat.gatewayId}]`,
+                                schedule: scheduler.ScheduleExpression.expression(
+                                    config.natSchedule.stopCronSchedule, config.natSchedule.timeZone),
+                                target: stopTarget,
+                        });
+                        new scheduler.Schedule(this, `StartSchedule${index}`, {
+                                description: `Start Nat Instance [${nat.gatewayId}]`,
+                                schedule: scheduler.ScheduleExpression.expression(
+                                    config.natSchedule.startCronSchedule, config.natSchedule.timeZone),
+                                target: startTarget,
+                        });
+                    }
+                }
+            });
+        }
 
         // Add Flow Logs if enabled
         if (config.enableFlowLogsToCloudWatch || config.flowLogs) {
@@ -181,12 +262,12 @@ export class VpcConstruct extends Construct {
         }
 
         // Outputs
-        new cdk.CfnOutput(this, 'VpcId', {
+        new cdk.CfnOutput(this, 'Id', {
             value: this.vpc.vpcId,
             description: `VPC ID for ${vpcName}`,
         });
 
-        new cdk.CfnOutput(this, 'VpcCidr', {
+        new cdk.CfnOutput(this, 'Cidr', {
             value: this.vpc.vpcCidrBlock,
             description: `VPC CIDR for ${vpcName}`,
         });

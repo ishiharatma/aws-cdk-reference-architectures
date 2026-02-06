@@ -6,7 +6,7 @@ import { EnvParams } from 'lib/types/vpc-peering-params';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { C_RESOURCE } from '@common/types';
+import { C_RESOURCE } from '@common/constants';
 import { TestInstance } from '@common/constructs/ec2/ec2-testinstance';
 
 export interface VpcCStackProps extends cdk.StackProps {
