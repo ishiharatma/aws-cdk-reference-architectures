@@ -1,0 +1,75 @@
+version: 0.2
+
+# This buildspec includes testing and security scanning
+# env:
+#   variables:
+#     AWS_DEFAULT_REGION: ap-northeast-1
+#     AWS_ACCOUNT_ID: 123456789012
+#     ECR_REPOSITORY_NAME: example-nodejs-api
+#     IMAGE_TAG: latest
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing dependencies...
+      - npm install
+  
+  pre_build:
+    commands:
+      - echo Running tests...
+      - npm test || true
+      - echo Logging in to Amazon ECR...
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY_NAME
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${IMAGE_TAG:-latest}
+      - BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+  
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - |
+        docker build \
+          --build-arg BUILD_DATE=$BUILD_DATE \
+          --build-arg VCS_REF=$COMMIT_HASH \
+          --build-arg VERSION=$IMAGE_TAG \
+          -t $ECR_REPOSITORY_NAME:$IMAGE_TAG \
+          .
+      - docker tag $ECR_REPOSITORY_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+      - docker tag $ECR_REPOSITORY_NAME:$IMAGE_TAG $REPOSITORY_URI:$COMMIT_HASH
+      - echo Running container security scan...
+      - |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL \
+          --no-progress $ECR_REPOSITORY_NAME:$IMAGE_TAG || true
+  
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:$COMMIT_HASH
+      - echo Writing image definitions file...
+      - printf '[{"name":"%s","imageUri":"%s"}]' $ECR_REPOSITORY_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+      - echo Cleaning up...
+      - docker rmi $ECR_REPOSITORY_NAME:$IMAGE_TAG || true
+
+artifacts:
+  files:
+    - imagedefinitions.json
+  name: BuildArtifact
+
+reports:
+  test-results:
+    files:
+      - 'test-results/**/*'
+    file-format: 'JUNITXML'
+
+cache:
+  paths:
+    - 'node_modules/**/*'
+    - '/root/.npm/**/*'

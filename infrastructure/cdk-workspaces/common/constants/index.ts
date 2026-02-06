@@ -7,3 +7,10 @@ export const COLORS = {
     color_bold: '\u001b[1m',
     color_dim: '\u001b[2m',
 }
+/**
+ * Special ID for shortening logical IDs in CDK
+ *
+ * @see https://dev.classmethod.jp/articles/best-way-to-name-aws-cdk-construct-id/
+ */
+export const C_DEFAULT = "Default";
+export const C_RESOURCE = "Resource";
