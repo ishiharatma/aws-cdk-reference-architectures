@@ -8,6 +8,10 @@ export enum NatType {
    */
     GATEWAY = "gateway",
     /**
+     * Regional NAT Gateway
+     */
+    REGIONAL_GATEWAY = "regional_gateway",
+    /**
    * NAT Instance
    */
     INSTANCE = "instance",
