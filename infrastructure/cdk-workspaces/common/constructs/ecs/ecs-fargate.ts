@@ -20,6 +20,8 @@ import * as schedulerTargets from 'aws-cdk-lib/aws-scheduler-targets';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as appscaling from 'aws-cdk-lib/aws-applicationautoscaling';
 
 interface ValidationResult {
     isValid: boolean;
@@ -43,6 +45,8 @@ export interface EcsFargateConstructProps {
     readonly snsAlarmTopic?: sns.ITopic;
     readonly containerEnvironment?: Record<string, string>;
     readonly albListener?: elbv2.IApplicationListener;
+
+    readonly enableSsmParameterOutput?: boolean;
 }
 export class EcsFargateConstruct extends Construct {
     public readonly cluster: ecs.ICluster;
@@ -156,6 +160,14 @@ export class EcsFargateConstruct extends Construct {
                     value: service.serviceArn,
                     exportName: `${pascalCase(props.project)}${pascalCase(props.environment)}${serviceId}Arn`
                 });
+
+                // Create SSM Parameter for ECS Service (for ecspresso)
+                this._createSSMParameter(  
+                    props.project, props.environment, props.securityGroups[0], 
+                    taskDef.executionRole!, taskDef.taskRole, service.serviceName,
+                    props.enableSsmParameterOutput
+                );
+
                 // Auto-Scale
                 // Initialize scalableTarget if auto-scaling is needed
                 let scalableTarget: ecs.ScalableTaskCount | undefined;
@@ -178,6 +190,8 @@ export class EcsFargateConstruct extends Construct {
                     this._createTaskScheduler(serviceId,
                         service,
                         props.config.createConfig.desiredCount,
+                        props.config.createConfig.autoScalingConfig?.minCapacity || props.config.createConfig.desiredCount,
+                        props.config.createConfig.autoScalingConfig?.maxCapacity || props.config.createConfig.desiredCount,
                         props.config.createConfig.startstopSchedulerConfig.startCronSchedule,
                         props.config.createConfig.startstopSchedulerConfig.stopCronSchedule,
                         props.config.createConfig.startstopSchedulerConfig.timeZone,
@@ -513,103 +527,117 @@ export class EcsFargateConstruct extends Construct {
      * @param service
      */
     private _createTaskScheduler(id: string, service: ecs.FargateService, desiredCount: number,
+        minCapacity: number, maxCapacity: number,
         startScheduleExpression: string, stopScheduleExpression: string, timezone: cdk.TimeZone = cdk.TimeZone.ETC_UTC, enabledNotification: boolean, snsTopic?: sns.ITopic) {
 
         if (!startScheduleExpression || !stopScheduleExpression) {
             return;
         }
 
-        const role = new iam.Role(this, `${id}SchedulerRole`, {
-            assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+        const scalableTarget = new appscaling.ScalableTarget(this, `${id}ScalableTarget`, {
+            serviceNamespace: appscaling.ServiceNamespace.ECS,
+            maxCapacity: maxCapacity,
+            minCapacity: minCapacity,
+            resourceId: `service/${service.cluster.clusterName}/${service.serviceName}`,
+            scalableDimension: 'ecs:service:DesiredCount',
+            /*
+            * Using ECS Application Auto Scaling requires a service-linked role named AWSServiceRoleForApplicationAutoScaling_ECSService.
+            * This role is automatically created by AWS, so there is no need to create it in CDK.
+            */
+            role: iam.Role.fromRoleArn(
+            this,
+            `${id}AutoScalingRole`,
+            cdk.Stack.of(this).formatArn({
+                service: 'iam',
+                region: '',
+                resource: 'role/aws-service-role/ecs.application-autoscaling.amazonaws.com',
+                resourceName: 'AWSServiceRoleForApplicationAutoScaling_ECSService',
+            })
+            ),
         });
-
-        role.addToPolicy(new iam.PolicyStatement({
-            actions: [
-                'ecs:UpdateService',
-            ],
-            resources: [service.serviceArn],
-        }));
-
-        const EcsFargateTarget = {
-            Cluster: service.cluster.clusterArn,
-            Service: service.serviceName,
-        }
         //const eventBus = events.EventBus.fromEventBusName(this, 'DefaultEventBus', 'default');
         // Create Start Schedule
-        // ECS UpdateService API call to set desiredCount
-        const ecsStopTarget = new schedulerTargets.Universal({
-            service: 'ecs',
-            action: 'updateService',
-            input: scheduler.ScheduleTargetInput.fromObject({
-                ...EcsFargateTarget,
-                desiredCount: 0
-            }),
-            role
+        scalableTarget.scaleOnSchedule(`${id}NightStop`, {
+            schedule: appscaling.Schedule.expression(stopScheduleExpression),
+            timeZone: timezone,
+            minCapacity: 0,
+            maxCapacity: 0,
         });
-        const ecsStartTarget = new schedulerTargets.Universal({
-            service: 'ecs',
-            action: 'updateService',
-            input: scheduler.ScheduleTargetInput.fromObject({
-                ...EcsFargateTarget,
-                desiredCount: desiredCount
-            }),
-            role
-        });
-        new scheduler.Schedule(this, `${id}StartSchedule`, {
-            description: `Start ECS Fargate Service [${service.serviceName}]`,
-            schedule: scheduler.ScheduleExpression.expression(startScheduleExpression, timezone),
-            /*
-            target: new schedulerTargets.EventBridgePutEvents({
-                eventBus: eventBus,
-                source: 'ecs.amazonaws.com',
-                detailType: 'ECS Fargate Start Service',
-                detail: scheduler.ScheduleTargetInput.fromObject({
-                    ...EcsFargateTarget,
-                    DesiredCount: desiredCount,
-                }),
-            }),
-            */
-            target: ecsStartTarget,
-            enabled: true,
+        scalableTarget.scaleOnSchedule(`${id}MorningStart`, {
+            schedule: appscaling.Schedule.expression(startScheduleExpression),
+            timeZone: timezone,
+            minCapacity: minCapacity,
+            maxCapacity: maxCapacity,
         });
 
-        // Create Stop Schedule
-        new scheduler.Schedule(this, `${id}StopSchedule`, {
-            description: `Stop ECS Fargate Service [${service.serviceName}]`,
-            schedule: scheduler.ScheduleExpression.expression(stopScheduleExpression, timezone),
-            /*
-            target: new schedulerTargets.EventBridgePutEvents({
-                eventBus: eventBus,
-                source: 'ecs.amazonaws.com',
-                detailType: 'ECS Fargate Stop Service',
-                detail: scheduler.ScheduleTargetInput.fromObject({
-                    ...EcsFargateTarget,
-                    DesiredCount: 0,
-                }),
-            }),*/
-            target: ecsStopTarget,
-            enabled: true,
-        });
-        /*
-        TODO
-        if (enabledNotification && snsTopic) {
-            // ECS Task State Change Notification Rule
-            new events.Rule(this, `${id}SchedulerNotificationRule`, {
-                eventBus: eventBus,
-                eventPattern: {
-                    source: ['ecs.amazonaws.com'],
-                    detailType: ['ECS Task State Change'],
-                    detail: {
-                        clusterArn: [service.cluster.clusterArn],
-                    },
+        // ECS Task State Change Notification Rule
+        const schedulerNotificationRule = new events.Rule(this, `${id}SchedulerNotificationRule`, {
+            description: `Rule to notify when ECS tasks in service ${service.serviceName} change state`,
+            eventPattern: {
+                source: ['ecs.amazonaws.com'],
+                detailType: ['ECS Task State Change'],
+                detail: {
+                    clusterArn: [service.cluster.clusterArn],
                     lastStatus: ['RUNNING', 'STOPPED'],
                     containers: {
                         exitCode: ['0'],
                     },
                 },
-                targets: [new events.targets.SnsTopic(snsTopic)],
-            });
-        }*/
+            },
+        });
+        if (enabledNotification && snsTopic) {
+            schedulerNotificationRule.addTarget(new eventsTargets.SnsTopic(snsTopic));
+        }
+    }
+
+    /**
+     * Create SSM Parameters for ECS Fargate Service
+     * @param project 
+     * @param environment 
+     * @param ecsSg 
+     * @param taskExecutionRole 
+     * @param taskRole 
+     * @param ecsServiceName
+     * @param enableSsmParameterOutput - Whether to output SSM Parameters (default: false)
+     */
+    private _createSSMParameter(project: string, environment: string, ecsSg: ec2.ISecurityGroup, taskExecutionRole: iam.IRole, taskRole: iam.IRole, ecsServiceName: string, enableSsmParameterOutput: boolean = false) {
+        if (!enableSsmParameterOutput) {
+            return;
+        }
+        const ssmPrefix = `/${project}/${environment}`;
+        /* ─── Output Parameter Store ────────────────────────────────────────────
+        * Output all keys that ecspresso references with {{ ssm "/<project>/<env>/ecs/..." }}.
+        */
+        new ssm.StringParameter(this, 'EcsSgIdParam', {
+            parameterName: `${ssmPrefix}/network/security-group-id`,
+            stringValue: ecsSg.securityGroupId,
+            description: `ECS Security Group ID for ${project}-${environment}`,
+        });
+        new ssm.StringParameter(this, 'ClusterNameParam', {
+            parameterName: `${ssmPrefix}/ecs/cluster-name`,
+            stringValue: this.cluster.clusterName,
+            description: `ECS Cluster Name for ${project}-${environment}`,
+        });
+        new ssm.StringParameter(this, 'ClusterArnParam', {
+            parameterName: `${ssmPrefix}/ecs/cluster-arn`,
+            stringValue: this.cluster.clusterArn,
+            description: `ECS Cluster ARN for ${project}-${environment}`,
+        });
+        new ssm.StringParameter(this, 'ServiceNameParam', {
+            parameterName: `${ssmPrefix}/ecs/service-name`,
+            stringValue: ecsServiceName,
+            description: `ECS Service Name for ${project}-${environment}`,
+        });
+        new ssm.StringParameter(this, 'TaskExecutionRoleArnParam', {
+            parameterName: `${ssmPrefix}/ecs/task-execution-role-arn`,
+            stringValue: taskExecutionRole.roleArn,
+            description: `ECS Task Execution Role ARN for ${project}-${environment}`,
+        });
+        new ssm.StringParameter(this, 'TaskRoleArnParam', {
+            parameterName: `${ssmPrefix}/ecs/task-role-arn`,
+            stringValue: taskRole.roleArn,
+            description: `ECS Task Role ARN for ${project}-${environment}`,
+        });
     }
 
 }

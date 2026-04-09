@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as scheduler from 'aws-cdk-lib/aws-scheduler';
 import * as schedulerTargets from 'aws-cdk-lib/aws-scheduler-targets';
 import { Construct } from 'constructs';
@@ -22,14 +23,16 @@ import { C_RESOURCE } from '../../constants';
 export interface VpcConstructProps {
     readonly project: string;
     readonly environment: string;
-  /**
-   * VPC configuration (existing VPC or create new VPC)
-   */
-  readonly config: VpcConfig;
-  /**
-   * Resource name prefix
-   */
-  readonly prefix?: string;
+    /**
+     * VPC configuration (existing VPC or create new VPC)
+     */
+    readonly config: VpcConfig;
+    /**
+     * Resource name prefix
+     */
+    readonly prefix?: string;
+
+    readonly enableSsmParameterOutput?: boolean;
 }
 
 /**
@@ -67,6 +70,7 @@ export class VpcConstruct extends Construct {
      */
     public readonly vpc: ec2.IVpc;
     public readonly outboundEips: ec2.CfnEIP[];
+    public readonly privateSubnets: ec2.ISubnet[];
 
     constructor(scope: Construct, id: string, props: VpcConstructProps) {
         super(scope, id);
@@ -76,11 +80,17 @@ export class VpcConstruct extends Construct {
             this.vpc = ec2.Vpc.fromLookup(this, 'ImportedVpc', {
                 vpcId: props.config.existingVpcId,
             });
-
+            this.privateSubnets = this.vpc.privateSubnets;
             new cdk.CfnOutput(this, 'VpcId', {
                 value: this.vpc.vpcId,
                 description: 'VPC ID (existing)',
             });
+            // Output SSM Parameters
+            this._outputSsmParameter(
+                props.project,
+                props.environment,
+                props.enableSsmParameterOutput,
+            );
 
             return;
         }
@@ -147,6 +157,7 @@ export class VpcConstruct extends Construct {
             subnetConfiguration,
             createInternetGateway: config.createInternetGateway ?? true,
         });
+        this.privateSubnets = this.vpc.privateSubnets;
 
         // Nat Instance Allowed VPC Traffic and EIP Association
         if (natGatewayProvider) {
@@ -261,6 +272,13 @@ export class VpcConstruct extends Construct {
             });
         }
 
+        // Output SSM Parameters
+        this._outputSsmParameter(
+            props.project,
+            props.environment,
+            props.enableSsmParameterOutput,
+        );
+
         // Outputs
         new cdk.CfnOutput(this, 'Id', {
             value: this.vpc.vpcId,
@@ -275,6 +293,35 @@ export class VpcConstruct extends Construct {
         new cdk.CfnOutput(this, 'AvailabilityZones', {
             value: cdk.Fn.join(',', this.vpc.availabilityZones),
             description: `Availability Zones for ${vpcName}`,
+        });
+    }
+
+    /**
+     * Output SSM Parameters
+     * @param project 
+     * @param environment 
+     * @param enableSsmParameterOutput  - Whether to output SSM Parameters (default: false)
+     */
+    private _outputSsmParameter(project: string, environment: string, enableSsmParameterOutput: boolean = false) {
+        if (!enableSsmParameterOutput) {
+            return;
+        }
+        /* ─── Parameter Store 出力 ──────────────────────────────────────────*/
+        const ssmPrefix = `/${project}/${environment}/network`;
+
+        new ssm.StringParameter(this, 'VpcIdParam', {
+        parameterName: `${ssmPrefix}/vpc-id`,
+        stringValue: this.vpc.vpcId,
+        description: `VPC ID for ${project}-${environment}`,
+        });
+
+        new ssm.StringParameter(this, 'SubnetIdsParam', {
+        parameterName: `${ssmPrefix}/subnet-ids`,
+        stringValue: cdk.Fn.join(
+            ',',
+            this.privateSubnets.map((s) => s.subnetId)
+        ),
+        description: `Private Subnet IDs (comma-separated) for ${project}-${environment}`,
         });
     }
 

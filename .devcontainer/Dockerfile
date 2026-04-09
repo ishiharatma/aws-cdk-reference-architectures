@@ -102,23 +102,22 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # Add .local/bin to PATH
 ENV PATH="/home/node/.local/bin:${PATH}"
 
-# LocalStack CLI
-RUN pip3 install --user awscli-local --break-system-packages
-
-ARG LOCALSTACK_VERSION="4.9.1"
-RUN export FILE="" && \
-    if [ $(uname -m) = "x86_64" ]; then \
-    export FILE="localstack-cli-${LOCALSTACK_VERSION}-linux-amd64-onefile.tar.gz"; \
-    elif [ $(uname -m) = "aarch64" ]; then \
-    export FILE="localstack-cli-${LOCALSTACK_VERSION}-linux-arm64-onefile.tar.gz"; \
-    fi && \
-    if [ -n "$FILE" ]; then \
-    echo "v${LOCALSTACK_VERSION}/Downloading ${FILE}" && \
-    curl --output "${FILE}" --location "https://github.com/localstack/localstack-cli/releases/download/v${LOCALSTACK_VERSION}/${FILE}" && \
-    sudo tar xvzf "${FILE}" -C /usr/local/bin && \
-    rm "${FILE}"; \
-    fi
-
+## LocalStack CLI
+#RUN pip3 install --user awscli-local --break-system-packages
+#
+#ARG LOCALSTACK_VERSION="4.9.1"
+#RUN export FILE="" && \
+#    if [ $(uname -m) = "x86_64" ]; then \
+#    export FILE="localstack-cli-${LOCALSTACK_VERSION}-linux-amd64-onefile.tar.gz"; \
+#    elif [ $(uname -m) = "aarch64" ]; then \
+#    export FILE="localstack-cli-${LOCALSTACK_VERSION}-linux-arm64-onefile.tar.gz"; \
+#    fi && \
+#    if [ -n "$FILE" ]; then \
+#    echo "v${LOCALSTACK_VERSION}/Downloading ${FILE}" && \
+#    curl --output "${FILE}" --location "https://github.com/localstack/localstack-cli/releases/download/v${LOCALSTACK_VERSION}/${FILE}" && \
+#    sudo tar xvzf "${FILE}" -C /usr/local/bin && \
+#    rm "${FILE}"; \
+#    fi
 
 # Install Amazon Q CLI
 RUN export OS=$(uname -m) && \
@@ -132,6 +131,7 @@ RUN export OS=$(uname -m) && \
     sudo rm -rf /tmp/q && \
     sudo rm -f /tmp/q.zip; \
     fi
+
 # Install Kiro CLI
 RUN export OS=$(uname -m) && \
     if [ -n "$OS" ]; then \
@@ -147,6 +147,10 @@ RUN export OS=$(uname -m) && \
 
 # Install Act
 RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Install delstack
+# https://github.com/go-to-k/delstack
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/go-to-k/delstack/main/install.sh | bash
 
 # Set PATH for container startup
 ENV PATH="/home/node/.local/bin:${PATH}"
