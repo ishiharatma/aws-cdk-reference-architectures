@@ -413,6 +413,14 @@ else
     echo "❌ Kiro CLI not found"
 fi
 
+# Check delstack configuration
+if command -v delstack &> /dev/null; then
+    echo "✅ delstack is available"
+    echo "delstack version: $(delstack --version || echo "Version check failed but CLI is installed")"
+else
+    echo "❌ delstack not found"
+fi
+
 echo "-----------------------------------"
 echo "Checking AWS configuration..."
 echo "-----------------------------------"

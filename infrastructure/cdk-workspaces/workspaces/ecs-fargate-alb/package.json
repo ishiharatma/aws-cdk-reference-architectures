@@ -23,6 +23,7 @@
     "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "delstack": "delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint \"**/*.ts\" --fix",
     "format": "prettier --write \"**/*.ts\""

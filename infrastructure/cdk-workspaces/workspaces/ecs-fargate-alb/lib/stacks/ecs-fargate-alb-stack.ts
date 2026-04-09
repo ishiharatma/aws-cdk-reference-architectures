@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import { Construct } from "constructs";
 import { pascalCase } from "change-case-commonjs";
 import { Environment } from "@common/parameters/environments";
@@ -24,6 +25,7 @@ export interface StackProps extends cdk.StackProps {
     readonly repositories: Record<string, EcrConstruct>;
     readonly commitHash: string;
     readonly isALBOpen: boolean;
+    readonly hostedZoneId?: string;
 }
 export class EcsFargateAlbStack extends cdk.Stack {
   public readonly loadBalancer: elbv2.IApplicationLoadBalancer;
@@ -32,6 +34,19 @@ export class EcsFargateAlbStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
+    // Create ACM for ALB SSL certificate if certificateArn is not provided
+    let certificate;
+    if (props.hostedZoneId) {
+      const domainName = `${props.project}.${props.environment}.example.com`; // Adjust domain as needed
+      certificate = new acm.Certificate(this, 'AlbCertificate', {
+        domainName,
+        validation: acm.CertificateValidation.fromDns(),
+      });
+      new cdk.CfnOutput(this, 'CertificateArn', {
+        value: certificate.certificateArn,
+        description: 'The ARN of the ACM certificate for ALB',
+      });
+    }
     // Create ALB Construct
     const alb = new AlbConstruct(this, 'Alb', {
       project: props.project,
@@ -39,6 +54,7 @@ export class EcsFargateAlbStack extends cdk.Stack {
       vpc: props.vpc,
       securityGroup: props.albSecurityGroup,
       isALBOpen: props.isALBOpen,
+      certificate,
     });
     this.loadBalancer = alb.alb;
 /*

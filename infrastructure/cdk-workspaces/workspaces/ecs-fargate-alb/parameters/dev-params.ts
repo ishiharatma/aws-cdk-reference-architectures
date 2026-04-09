@@ -50,6 +50,7 @@ const devParams: EnvParams = {
             },
         }
     },
+    hostedZoneId: 'hogehoge', // Optional: Route53 Hosted Zone ID for ALB DNS record
     // ECS Fargate with ALB Configuration
     ecsFargateConfig: {
         createConfig: {

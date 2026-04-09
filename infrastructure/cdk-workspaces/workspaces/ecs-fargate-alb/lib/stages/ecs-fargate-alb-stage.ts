@@ -7,6 +7,7 @@ import { EcsFargateAlbStack } from "lib/stacks/ecs-fargate-alb-stack";
 import { pascalCase } from "change-case-commonjs";
 import { Environment } from "@common/parameters/environments";
 import { EnvParams } from "parameters/environments";
+import { containerDefinition } from "@common/types";
 
 export interface StageProps extends cdk.StageProps {
     readonly project: string;
@@ -30,7 +31,13 @@ export class EcsFargateAlbStage extends cdk.Stage {
       terminationProtection: props.terminationProtection,
       isAutoDeleteObject: props.isAutoDeleteObject,
       config: props.params.vpcConfig,
+      hostedZoneId: props.params.hostedZoneId,
       allowedIpsforAlb: props.allowedIpsforAlb,
+      ports: props.params.ecsFargateConfig.createConfig?.taskDefinition.flatMap(element =>
+        Object.values(element.containerDefinitions)
+          .filter((containerDef: containerDefinition) => containerDef.port)
+          .map((containerDef: containerDefinition) => containerDef.port)
+      ) || [],
     });
 
     // Bootstrap mode: Build and push initial Docker image from CDK
@@ -70,6 +77,7 @@ export class EcsFargateAlbStage extends cdk.Stage {
       repositories: ecrStack.repositories,
       commitHash: commitHash,
       isALBOpen: props.allowedIpsforAlb && props.allowedIpsforAlb.length > 0 ? false : true,
+      hostedZoneId: props.params.hostedZoneId,
     });
     ecsFargateStack.addDependency(baseStack);
     ecsFargateStack.addDependency(ecrStack);
