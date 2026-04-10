@@ -53,3 +53,4 @@ const stage = new EcsFargateAlbStage(app, `${pascalCase(envName)}`, {
 // --------------------------------- Tagging  -------------------------------------
 cdk.Tags.of(stage).add("Project", pjName);
 cdk.Tags.of(stage).add("Environment", envName);
+cdk.Tags.of(stage).add("ManagedBy", "CDK");
