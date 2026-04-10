@@ -680,9 +680,3 @@ npm run destroy:all -- --project=your-project --env=dev
 - [AWS CDK ECS Patterns](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ecs_patterns-readme.html)
 - [Fargate Spot](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html)
 - [OpenTelemetry on AWS](https://aws-otel.github.io/)
-
----
-
-**作成者**: AWS CDK Reference Architectures Team  
-**最終更新日**: 2026-04-10  
-**ライセンス**: MIT-0
