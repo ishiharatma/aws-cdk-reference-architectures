@@ -1,23 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cdk from "aws-cdk-lib";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Template } from "aws-cdk-lib/assertions";
 import { Environment } from '@common/parameters/environments';
-import { YourStackName } from "lib/stacks/your-stack";
+import { BaseStack } from "lib/stacks/base-stack";
+import { EcrStack } from "lib/stacks/ecr-stack";
+import { EcsFargateAlbStack } from "lib/stacks/ecs-fargate-alb-stack";
 import { params } from "parameters/environments";
 import '../parameters';
+import * as path from 'path';
+import { loadCdkContext } from '@common/test-helpers/test-context';
 
 const defaultEnv = {
     account: '123456789012',
     region: 'ap-northeast-1',
 };
 
-const projectName = "TestProject";
+const projectName = "testproject";
 const envName: Environment = Environment.TEST;
 
 if (!params[envName]) {
   throw new Error(`No parameters found for environment: ${envName}`);
 }
 const envParams = params[envName];
+const cdkJsonPath = path.resolve(__dirname, "../../cdk.json");
+const baseContext = loadCdkContext(cdkJsonPath);
 
 /**
  * AWS CDK Snapshot Test Suite
@@ -35,48 +42,66 @@ const envParams = params[envName];
  * Note: Detailed configuration value verification is done with unit tests (test/unit/)
  */
 describe("Stack Snapshot Tests", () => {
-  const app = new cdk.App();
+  const context = {...baseContext, "aws:cdk:bundling-stacks": [],};
+  const app = new cdk.App({ context });
 
-  const stack = new YourStackName(app, "YourStackName", {
+  // Create base stack first
+  const baseStack = new BaseStack(app, "Base", {
     project: projectName,
     environment: envName,
     env: defaultEnv,
     isAutoDeleteObject: true,
-    terminationProtection: false,
-    params: envParams,
-  });
-  const stackTemplate = Template.fromStack(stack);
-  cdk.Tags.of(app).add('Project', projectName);
-  cdk.Tags.of(app).add('Environment', envName);
-
-  // Cleanup after the entire test suite
-  afterAll(() => {
-    app.node.children.forEach((child) => {
-      if (child instanceof cdk.Stack) {
-        child.node.tryRemoveChild("ResourceHandlerCustomResourceProvider");
-      }
-    });
+    config: envParams.vpcConfig,
+    hostedZoneId: envParams.hostedZoneId,
+    allowedIpsforAlb: ['0.0.0.0/0'],
+    ports: [8080],
   });
 
-  describe("CloudFormation Template Snapshots", () => {
-    test("Complete CloudFormation template snapshot", () => {
-      // Best practice: Complete template snapshot
-      // Purpose: Detect significant changes, ensure safety during refactoring
+  // Create ECR stack
+  const ecrStack = new EcrStack(app, "Ecr", {
+    project: projectName,
+    environment: envName,
+    env: defaultEnv,
+    isAutoDeleteObject: true,
+    config: envParams,
+    isBootstrapMode: false,
+    commitHash: 'snapshot-test',
+  });
+
+  // Create ECS Fargate ALB stack
+  const ecsStack = new EcsFargateAlbStack(app, "EcsFargateAlb", {
+    project: projectName,
+    environment: envName,
+    env: defaultEnv,
+    isAutoDeleteObject: true,
+    config: envParams,
+    vpc: baseStack.vpc.vpc,
+    vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+    ecsSecurityGroups: [baseStack.ecsSecurityGroup],
+    albSecurityGroup: baseStack.albSecurityGroup,
+    repositories: ecrStack.repositories,
+    commitHash: 'snapshot-test',
+    isALBOpen: true,
+  });
+
+  describe("BaseStack Snapshot", () => {
+    test("should match snapshot", () => {
+      const stackTemplate = Template.fromStack(baseStack);
       expect(stackTemplate.toJSON()).toMatchSnapshot();
     });
+  });
 
-    test("Resource types and counts", () => {
-      // Best practice: Track resource counts
-      // Purpose: Detect unintended resource increases or decreases (to understand cost impact)
-      const templateJson = stackTemplate.toJSON();
-      const resourceCounts: Record<string, number> = {};
-      
-      Object.values(templateJson.Resources || {}).forEach((resource: any) => {
-        const type = resource.Type;
-        resourceCounts[type] = (resourceCounts[type] || 0) + 1;
-      });
+  describe("EcrStack Snapshot", () => {
+    test("should match snapshot", () => {
+      const stackTemplate = Template.fromStack(ecrStack);
+      expect(stackTemplate.toJSON()).toMatchSnapshot();
+    });
+  });
 
-      expect(resourceCounts).toMatchSnapshot();
+  describe("EcsFargateAlbStack Snapshot", () => {
+    test("should match snapshot", () => {
+      const stackTemplate = Template.fromStack(ecsStack);
+      expect(stackTemplate.toJSON()).toMatchSnapshot();
     });
   });
 

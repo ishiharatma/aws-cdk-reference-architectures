@@ -3,7 +3,6 @@ import { params, EnvParams } from 'parameters/environments';
 import { NatType } from '@common/types';
 import { Environment } from "@common/parameters/environments";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
 
 /**
  * Development Environment Parameters
@@ -19,9 +18,7 @@ const devParams: EnvParams = {
     stackNamePrefix: 'ecs-fargate-alb',
 
     // Common tags
-    tags: {
-        ManagedBy: 'CDK',
-    },
+    tags: {},
     // VCP Configuration
     vpcConfig: {
         //existingVpcId: undefined, // Set VPC ID if using existing VPC
@@ -50,7 +47,7 @@ const devParams: EnvParams = {
             },
         }
     },
-    hostedZoneId: 'hogehoge', // Optional: Route53 Hosted Zone ID for ALB DNS record
+    //hostedZoneId: 'hogehoge', // Optional: Route53 Hosted Zone ID for ALB DNS record
     // ECS Fargate with ALB Configuration
     ecsFargateConfig: {
         createConfig: {
