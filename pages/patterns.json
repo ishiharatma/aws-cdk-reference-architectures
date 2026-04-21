@@ -89,5 +89,16 @@
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-005-cdk-parameters-managing-parameters-with-typescript-vs-cdkjson-12b9"
     }
+  },
+  {
+    "id": "ecs-fargate-alb",
+    "title": "ECS Fargate with ALB",
+    "description": "Build a production-ready container application platform combining ECS Fargate and Application Load Balancer (ALB) using AWS CDK.",
+    "image": "ecs-fargate-alb/overview.png",
+    "tags": ["CDK", "TypeScript", "ECS", "Fargate", "ALB"],
+    "link": "ecs-fargate-alb",
+    "difficulty": "intermediate",
+    "date": "2026-04-20",
+    "articles": {}
   }
 ]
