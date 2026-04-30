@@ -36,7 +36,7 @@ const isAutoDeleteObject = envName === Environment.DEVELOPMENT;
 const isTerminationProtection = envName === Environment.PRODUCTION;
 
 // Create SQS Lambda Firehose Stack
-const stage = new SqsLambdaFirehoseStage(app, `${pascalCase(envName)}`, {
+const stage = new SqsLambdaFirehoseStage(app, `SqsLambdaFirehose${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,

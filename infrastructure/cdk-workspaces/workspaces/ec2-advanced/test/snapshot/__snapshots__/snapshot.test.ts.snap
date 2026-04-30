@@ -1,0 +1,1458 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests Ec2AsgMultiStack full template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbAlbArn044BCECB": {
+      "Description": "The ARN of the Application Load Balancer",
+      "Value": {
+        "Ref": "AlbC1372A32",
+      },
+    },
+    "AlbAlbDnsName03494E13": {
+      "Description": "The DNS name of the Application Load Balancer",
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbC1372A32",
+          "DNSName",
+        ],
+      },
+    },
+    "Ec2AsgMultiAsgName91D22217": {
+      "Description": "Auto Scaling Group Name (always 2 instances across AZs)",
+      "Value": {
+        "Ref": "Ec2AsgMultiASG28E93184",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AlbC1372A32": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+          },
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttpListener5EF99D8D": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbHttpListenerAsgTargetsGroupC5745C49",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "AlbC1372A32",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpListenerAsgTargetsGroupC5745C49": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "TargetGroupAttributes": [
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "instance",
+        "UnhealthyThresholdCount": 3,
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "ALB (ASG multi) - allow HTTP inbound",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.0/24",
+            "Description": "Allow HTTP from 203.0.113.0/24",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Ec2AsgMultiASG28E93184": {
+      "Properties": {
+        "DesiredCapacity": "2",
+        "HealthCheckGracePeriod": 60,
+        "HealthCheckType": "ELB",
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "Ec2AsgMultiLaunchTemplateDF9BE84C",
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "Ec2AsgMultiLaunchTemplateDF9BE84C",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "MaxSize": "2",
+        "MinSize": "2",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "PropagateAtLaunch": true,
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "PropagateAtLaunch": true,
+            "Value": "TestProject",
+          },
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "AlbHttpListenerAsgTargetsGroupC5745C49",
+          },
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+          },
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+          },
+        ],
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": 1,
+          "SuspendProcesses": [
+            "HealthCheck",
+            "ReplaceUnhealthy",
+            "AZRebalance",
+            "AlarmNotification",
+            "ScheduledActions",
+            "InstanceRefresh",
+          ],
+        },
+        "AutoScalingScheduledAction": {
+          "IgnoreUnmodifiedGroupSizeProperties": true,
+        },
+      },
+    },
+    "Ec2AsgMultiInstanceRole33423C98": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "Ec2AsgMultiStack-InstanceRole",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Ec2AsgMultiLaunchTemplateDF9BE84C": {
+      "DependsOn": [
+        "Ec2AsgMultiInstanceRole33423C98",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/xvda",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Encrypted": true,
+                "VolumeSize": 8,
+                "VolumeType": "gp3",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "Ec2AsgMultiLaunchTemplateProfile8BB19856",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+          "InstanceType": "t3.micro",
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "Ec2SecurityGroup55889913",
+                "GroupId",
+              ],
+            },
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "Environment",
+                  "Value": "test",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "Ec2AsgMultiStack/Ec2AsgMulti/LaunchTemplate",
+                },
+                {
+                  "Key": "Project",
+                  "Value": "TestProject",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "Environment",
+                  "Value": "test",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "Ec2AsgMultiStack/Ec2AsgMulti/LaunchTemplate",
+                },
+                {
+                  "Key": "Project",
+                  "Value": "TestProject",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": "#!/bin/bash",
+          },
+        },
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "Environment",
+                "Value": "test",
+              },
+              {
+                "Key": "Name",
+                "Value": "Ec2AsgMultiStack/Ec2AsgMulti/LaunchTemplate",
+              },
+              {
+                "Key": "Project",
+                "Value": "TestProject",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "Ec2AsgMultiLaunchTemplateProfile8BB19856": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Ec2AsgMultiInstanceRole33423C98",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "Ec2SecurityGroup55889913": {
+      "Properties": {
+        "GroupDescription": "EC2 ASG multi - allow inbound from ALB only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "Allow port 80 from ALB",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "AlbSecurityGroup86A59E99",
+                "GroupId",
+              ],
+            },
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Ec2SecurityGroupfromEc2AsgMultiStackAlbSecurityGroup47CBDA0780BDB4B8E7": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "Ec2SecurityGroup55889913",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2AsgMultiStack resource counts 1`] = `
+{
+  "AWS::AutoScaling::AutoScalingGroup": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::ElasticLoadBalancingV2::Listener": 1,
+  "AWS::ElasticLoadBalancingV2::LoadBalancer": 1,
+  "AWS::ElasticLoadBalancingV2::TargetGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Role": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbAlbArn044BCECB": {
+      "Description": "The ARN of the Application Load Balancer",
+      "Value": {
+        "Ref": "AlbC1372A32",
+      },
+    },
+    "AlbAlbDnsName03494E13": {
+      "Description": "The DNS name of the Application Load Balancer",
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbC1372A32",
+          "DNSName",
+        ],
+      },
+    },
+    "Ec2AsgSingleAsgName160BB899": {
+      "Description": "Auto Scaling Group Name (always 1 instance)",
+      "Value": {
+        "Ref": "Ec2AsgSingleASG847FACE8",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AlbC1372A32": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+          },
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttpListener5EF99D8D": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbHttpListenerAsgTargetsGroupC5745C49",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "AlbC1372A32",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpListenerAsgTargetsGroupC5745C49": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "TargetGroupAttributes": [
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "instance",
+        "UnhealthyThresholdCount": 3,
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "ALB (ASG single) - allow HTTP inbound",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.0/24",
+            "Description": "Allow HTTP from 203.0.113.0/24",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Ec2AsgSingleASG847FACE8": {
+      "Properties": {
+        "DesiredCapacity": "1",
+        "HealthCheckGracePeriod": 60,
+        "HealthCheckType": "ELB",
+        "LaunchTemplate": {
+          "LaunchTemplateId": {
+            "Ref": "Ec2AsgSingleLaunchTemplate997BB34C",
+          },
+          "Version": {
+            "Fn::GetAtt": [
+              "Ec2AsgSingleLaunchTemplate997BB34C",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "MaxSize": "1",
+        "MinSize": "1",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "PropagateAtLaunch": true,
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "PropagateAtLaunch": true,
+            "Value": "TestProject",
+          },
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "AlbHttpListenerAsgTargetsGroupC5745C49",
+          },
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+          },
+          {
+            "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+          },
+        ],
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "SuspendProcesses": [
+            "HealthCheck",
+            "ReplaceUnhealthy",
+            "AZRebalance",
+            "AlarmNotification",
+            "ScheduledActions",
+            "InstanceRefresh",
+          ],
+        },
+        "AutoScalingScheduledAction": {
+          "IgnoreUnmodifiedGroupSizeProperties": true,
+        },
+      },
+    },
+    "Ec2AsgSingleInstanceRole8078D04D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "Ec2AsgSingleStack-InstanceRole",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Ec2AsgSingleLaunchTemplate997BB34C": {
+      "DependsOn": [
+        "Ec2AsgSingleInstanceRole8078D04D",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/xvda",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Encrypted": true,
+                "VolumeSize": 8,
+                "VolumeType": "gp3",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "Ec2AsgSingleLaunchTemplateProfile6E8B7A0A",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+          "InstanceType": "t3.micro",
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "Ec2SecurityGroup55889913",
+                "GroupId",
+              ],
+            },
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "Environment",
+                  "Value": "test",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+                },
+                {
+                  "Key": "Project",
+                  "Value": "TestProject",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "Environment",
+                  "Value": "test",
+                },
+                {
+                  "Key": "Name",
+                  "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+                },
+                {
+                  "Key": "Project",
+                  "Value": "TestProject",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": "#!/bin/bash",
+          },
+        },
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "Environment",
+                "Value": "test",
+              },
+              {
+                "Key": "Name",
+                "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+              },
+              {
+                "Key": "Project",
+                "Value": "TestProject",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "Ec2AsgSingleLaunchTemplateProfile6E8B7A0A": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Ec2AsgSingleInstanceRole8078D04D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "Ec2SecurityGroup55889913": {
+      "Properties": {
+        "GroupDescription": "EC2 ASG single - allow inbound from ALB only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "Allow port 80 from ALB",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "AlbSecurityGroup86A59E99",
+                "GroupId",
+              ],
+            },
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Ec2SecurityGroupfromEc2AsgSingleStackAlbSecurityGroup1E3A1FE2807A6134B6": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "Ec2SecurityGroup55889913",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2AsgSingleStack resource counts 1`] = `
+{
+  "AWS::AutoScaling::AutoScalingGroup": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::ElasticLoadBalancingV2::Listener": 1,
+  "AWS::ElasticLoadBalancingV2::LoadBalancer": 1,
+  "AWS::ElasticLoadBalancingV2::TargetGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Role": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2AutoRecoveryStack full template snapshot 1`] = `
+{
+  "Outputs": {
+    "Ec2AutoRecoveryInstanceId12CB1E04": {
+      "Description": "EC2 Auto-Recovery Instance ID",
+      "Value": {
+        "Ref": "Ec2AutoRecovery9B42C66A",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "Ec2AutoRecovery9B42C66A": {
+      "DependsOn": [
+        "Ec2AutoRecoveryInstanceRole73466F4E",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "Ec2AutoRecoveryInstanceProfile1610A712",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.micro",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "Ec2AutoRecoveryLaunchTemplateE8A054B9",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "Ec2SecurityGroup55889913",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2AutoRecoveryStack/Ec2AutoRecovery/Resource",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "Ec2AutoRecoveryAutoRecoveryAlarm6CFF2230": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":automate:ap-northeast-1:ec2:recover",
+              ],
+            ],
+          },
+        ],
+        "AlarmDescription": "Trigger EC2 auto-recovery when system status check fails",
+        "AlarmName": "TestProject-test-Ec2AutoRecovery-AutoRecovery",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "Ec2AutoRecovery9B42C66A",
+            },
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "StatusCheckFailed_System",
+        "Namespace": "AWS/EC2",
+        "Period": 60,
+        "Statistic": "Maximum",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "Ec2AutoRecoveryInstanceProfile1610A712": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Ec2AutoRecoveryInstanceRole73466F4E",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "Ec2AutoRecoveryInstanceRole73466F4E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2AutoRecoveryStack/Ec2AutoRecovery/Resource",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Ec2AutoRecoveryLaunchTemplateE8A054B9": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "Ec2SecurityGroup55889913": {
+      "Properties": {
+        "GroupDescription": "EC2 Auto-Recovery - allow outbound only (SSM via VPC endpoint or NAT)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2AutoRecoveryStack resource counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Role": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2SingleStack full template snapshot 1`] = `
+{
+  "Outputs": {
+    "Ec2SingleInstanceId46B32B79": {
+      "Description": "EC2 Single Instance ID",
+      "Value": {
+        "Ref": "Ec2SingleFE9CA675",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "Ec2SecurityGroup55889913": {
+      "Properties": {
+        "GroupDescription": "EC2 Single - allow outbound only (SSM via VPC endpoint or NAT)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Ec2SingleFE9CA675": {
+      "DependsOn": [
+        "Ec2SingleInstanceRole1432E47F",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "Ec2SingleInstanceProfileAEAD6E4A",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.micro",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "Ec2SingleLaunchTemplate71F6D040",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "Ec2SecurityGroup55889913",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Fn::ImportValue": "BaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2SingleStack/Ec2Single/Resource",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "Ec2SingleInstanceProfileAEAD6E4A": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Ec2SingleInstanceRole1432E47F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "Ec2SingleInstanceRole1432E47F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2SingleStack/Ec2Single/Resource",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Ec2SingleLaunchTemplate71F6D040": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Ec2SingleStack resource counts 1`] = `
+{
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Role": 1,
+}
+`;

@@ -30,7 +30,7 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
-const stage = new IamBasicsStage(app, `${pascalCase(envName)}`, {
+const stage = new IamBasicsStage(app, `IamBasics${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,
