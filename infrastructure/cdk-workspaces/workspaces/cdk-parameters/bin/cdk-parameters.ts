@@ -36,7 +36,7 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
-new CdkParametersStage(app, `${pascalCase(envName)}`, {
+const stage = new CdkParametersStage(app, `${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,
@@ -46,5 +46,6 @@ new CdkParametersStage(app, `${pascalCase(envName)}`, {
 });
 
 // --------------------------------- Tagging  -------------------------------------
-cdk.Tags.of(app).add("Project", pjName);
-cdk.Tags.of(app).add("Environment", envName);
+cdk.Tags.of(stage).add("Project", pjName);
+cdk.Tags.of(stage).add("Environment", envName);
+cdk.Tags.of(stage).add("ManagedBy", "CDK");

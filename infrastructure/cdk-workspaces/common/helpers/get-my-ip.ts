@@ -19,3 +19,8 @@ export function getMyGlobalIp(): string {
     throw new Error('Could not retrieve global IP address');
   }
 }
+
+export function getMyGlobalIpCidr(cidrMask = 32): string {
+  const ip = getMyGlobalIp();
+  return `${ip}/${cidrMask}`;
+}

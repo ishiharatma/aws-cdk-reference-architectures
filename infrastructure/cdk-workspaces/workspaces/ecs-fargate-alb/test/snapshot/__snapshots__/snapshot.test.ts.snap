@@ -1,0 +1,1857 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests BaseStack Snapshot should match snapshot 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttAlbSecurityGroup86A59E99GroupIdE3A37BC7": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttAlbSecurityGroup86A59E99GroupIdE3A37BC7",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbSecurityGroup86A59E99",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "EcsSecurityGroup44008BF1",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputRefVpc49347EA926D099AB": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpc49347EA926D099AB",
+      },
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet2Subnet55040997",
+      },
+    },
+    "ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+      },
+      "Value": {
+        "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+      },
+    },
+    "ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+      },
+      "Value": {
+        "Ref": "VpcPublicSubnet2Subnet5691B95A",
+      },
+    },
+    "VpcAvailabilityZones3F7C802F": {
+      "Description": "Availability Zones for testproject/test/MyVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcCidr2979DF70": {
+      "Description": "VPC CIDR for testproject/test/MyVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "Vpc49347EA9",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcIdBCACDA58": {
+      "Description": "VPC ID for testproject/test/MyVpc",
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+    "VpcNatInstanceId1D5513348": {
+      "Value": {
+        "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "Security group for Application Load Balancer",
+        "GroupName": "testproject-test-AlbSecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow inbound HTTP traffic from 0.0.0.0/0",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EcsSecurityGroup44008BF1": {
+      "Properties": {
+        "GroupDescription": "Security group for ECS tasks",
+        "GroupName": "testproject-test-EcsSecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "Allow inbound traffic on port 8080 from ALB",
+            "FromPort": 8080,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "AlbSecurityGroup86A59E99",
+                "GroupId",
+              ],
+            },
+            "ToPort": 8080,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EcsSecurityGroupfromBaseAlbSecurityGroupCD261F3B8080ACAA3990": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 8080,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EcsSecurityGroup44008BF1",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "ToPort": 8080,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "EcsSecurityGroupfromBaseEcsSecurityGroupC5CCF1C3UDP200041DD963A": {
+      "Properties": {
+        "Description": "Allow OpenTelemetry/Xray sidecar communication",
+        "FromPort": 2000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EcsSecurityGroup44008BF1",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "udp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EcsSecurityGroup44008BF1",
+            "GroupId",
+          ],
+        },
+        "ToPort": 2000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "Vpc49347EA9": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/MyVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcDynamoDbEndpoint55176AC8": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/MyVpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcIGW5C9F205D": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/MyVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcNatEipAssociation0FB9327F6": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcNatinstanceEip1893E2B75",
+            "AllocationId",
+          ],
+        },
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "VpcNatSecurityGroupB1DB96D3": {
+      "Properties": {
+        "GroupDescription": "Security Group for NAT instances",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "Vpc49347EA9",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic from VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/MyVpc",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcNatinstanceEip1893E2B75": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/NatinstanceEIP1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcPrivateSubnet1DefaultRouteD0A8C89B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1RouteTable5ADAC875": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation11E70C19": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1Subnet7BECC33A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2DefaultRouteE7D97A6D": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2RouteTable0B67C0AD": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociation751D47F2": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet55040997",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet55040997": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute2826E776": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1NatInstanceC78DDF68": {
+      "DependsOn": [
+        "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "IamInstanceProfile": {
+          "Ref": "VpcPublicSubnet1NatInstanceInstanceProfile5E04429E",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatSecurityGroupB1DB96D3",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": false,
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1/NatInstance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+yum install iptables-services -y
+systemctl enable iptables
+systemctl start iptables
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/custom-ip-forwarding.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+sudo /sbin/iptables -t nat -A POSTROUTING -o $(route | awk '/^default/{print $NF}') -j MASQUERADE
+sudo /sbin/iptables -F FORWARD
+sudo service iptables save",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcPublicSubnet1NatInstanceInstanceProfile5E04429E": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1/NatInstance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcPublicSubnet1RouteTable6F9AC31B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation68C388A6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet4D933E0A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute6D8C6AE6": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2RouteTable20915D60": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationD115202B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet5691B95A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet5691B95A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcS3Endpoint511D1166": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/MyVpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcSchedulerRole0DefaultPolicyCDECF4F2": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ec2:StartInstances",
+                "ec2:StopInstances",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ec2:ap-northeast-1:123456789012:instance/",
+                    {
+                      "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "ec2:StopInstances",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "ec2:StartInstances",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcSchedulerRole0DefaultPolicyCDECF4F2",
+        "Roles": [
+          {
+            "Ref": "VpcSchedulerRole0F006BE5A",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcSchedulerRole0F006BE5A": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "IAM role for EventBridge Scheduler to start/stop EC2",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcStartSchedule0184523A9": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Start Nat Instance [",
+              {
+                "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+              },
+              "]",
+            ],
+          ],
+        },
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "ScheduleExpression": "cron(0 18 * * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":scheduler:::aws-sdk:ec2:startInstances",
+              ],
+            ],
+          },
+          "Input": {
+            "Fn::Join": [
+              "",
+              [
+                "{"InstanceIds":["",
+                {
+                  "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+                },
+                ""]}",
+              ],
+            ],
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "VpcSchedulerRole0F006BE5A",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "VpcStopSchedule01F8CE2CB": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Stop Nat Instance [",
+              {
+                "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+              },
+              "]",
+            ],
+          ],
+        },
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "ScheduleExpression": "cron(0 21 * * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":scheduler:::aws-sdk:ec2:stopInstances",
+              ],
+            ],
+          },
+          "Input": {
+            "Fn::Join": [
+              "",
+              [
+                "{"InstanceIds":["",
+                {
+                  "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+                },
+                ""]}",
+              ],
+            ],
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "VpcSchedulerRole0F006BE5A",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "VpcVPCGW0B9C0E73": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests EcrStack Snapshot should match snapshot 1`] = `
+{
+  "Outputs": {
+    "EcrBackendRepositoryNameBEC88F7C": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-name",
+      },
+      "Value": {
+        "Ref": "EcrBackend5381CB87",
+      },
+    },
+    "EcrBackendRepositoryUri2B4F199E": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-uri",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrBackend5381CB87",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrBackend5381CB87",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "EcrBackend5381CB87",
+            },
+          ],
+        ],
+      },
+    },
+    "ExportsOutputRefEcrBackend5381CB878086E981": {
+      "Export": {
+        "Name": "Ecr:ExportsOutputRefEcrBackend5381CB878086E981",
+      },
+      "Value": {
+        "Ref": "EcrBackend5381CB87",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "EcrBackend5381CB87": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "EmptyOnDelete": true,
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":10,"description":"Keep latest 5 images with \\"latest\\" tag","selection":{"tagStatus":"tagged","tagPatternList":["latest"],"countType":"imageCountMoreThan","countNumber":5},"action":{"type":"expire"}},{"rulePriority":20,"description":"Limit the number of images to 30","selection":{"tagStatus":"tagged","tagPatternList":["test"],"countType":"imageCountMoreThan","countNumber":30},"action":{"type":"expire"}},{"rulePriority":990,"description":"Expire untagged images older than 90 days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countNumber":90,"countUnit":"days"},"action":{"type":"expire"}},{"rulePriority":999,"description":"Expire any tagged images older than 180 days","selection":{"tagStatus":"any","countType":"sinceImagePushed","countNumber":180,"countUnit":"days"},"action":{"type":"expire"}}]}",
+        },
+        "RepositoryName": "testproject-test-nodejs-backend-repo",
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbAlbArn044BCECB": {
+      "Description": "The ARN of the Application Load Balancer",
+      "Value": {
+        "Ref": "AlbC1372A32",
+      },
+    },
+    "AlbAlbDnsName03494E13": {
+      "Description": "The DNS name of the Application Load Balancer",
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbC1372A32",
+          "DNSName",
+        ],
+      },
+    },
+    "EcsFargateClusterArn63CCB0D6": {
+      "Export": {
+        "Name": "TestprojectTestEcsClusterArn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "EcsFargateCluster64F91B93",
+          "Arn",
+        ],
+      },
+    },
+    "EcsFargateService0Arn3B0C5DD5": {
+      "Export": {
+        "Name": "TestprojectTestService0Arn",
+      },
+      "Value": {
+        "Ref": "EcsFargateService0ServiceD54B9B92",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlbC1372A32": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputFnGetAttAlbSecurityGroup86A59E99GroupIdE3A37BC7",
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+          },
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttpListener5EF99D8D": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbHttpListenerTargetGroup0Container1GroupD9DC4018",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "AlbC1372A32",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpListenerTargetGroup0Container1GroupD9DC4018": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/health",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Port": 8080,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "90",
+          },
+          {
+            "Key": "slow_start.duration_seconds",
+            "Value": "60",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 5,
+        "VpcId": {
+          "Fn::ImportValue": "Base:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "EcsFargateAbnormalTaskExitAlarm9B01E1D1": {
+      "Properties": {
+        "Description": "Alarm if ECS tasks exit abnormally",
+        "EventPattern": {
+          "detail": {
+            "clusterArn": [
+              {
+                "Fn::GetAtt": [
+                  "EcsFargateCluster64F91B93",
+                  "Arn",
+                ],
+              },
+            ],
+            "containers": {
+              "exitCode": [
+                {
+                  "anything-but": 0,
+                },
+              ],
+            },
+            "lastStatus": [
+              "STOPPED",
+            ],
+          },
+          "detail-type": [
+            "ECS Task State Change",
+          ],
+          "source": [
+            "aws.ecs",
+          ],
+        },
+        "State": "ENABLED",
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EcsFargateAvailableCpuUtilizationAlarm40616C02": {
+      "Properties": {
+        "AlarmDescription": "Alarm if Available CPU utilization is less than 0.01% for 5 minutes",
+        "ComparisonOperator": "LessThanThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "EcsFargateCluster64F91B93",
+            },
+          },
+          {
+            "Name": "ServiceName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EcsFargateService0ServiceD54B9B92",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "AvailableCpu",
+        "Namespace": "AWS/ECS",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 0.01,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "EcsFargateCluster64F91B93": {
+      "Properties": {
+        "ClusterName": "testproject-test-ecs-fargate-cluster",
+        "Configuration": {
+          "ExecuteCommandConfiguration": {
+            "LogConfiguration": {
+              "CloudWatchLogGroupName": {
+                "Ref": "EcsFargateExecuteCommandLogGroupBF8999AC",
+              },
+            },
+            "Logging": "OVERRIDE",
+          },
+        },
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "EcsFargateCpuUtilizationAlarmE79497E3": {
+      "Properties": {
+        "AlarmDescription": "Alarm if CPU utilization exceeds 80% for 5 minutes",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "EcsFargateCluster64F91B93",
+            },
+          },
+          {
+            "Name": "ServiceName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EcsFargateService0ServiceD54B9B92",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/ECS",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "EcsFargateEcsFargateLogGroup5456053C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EcsFargateExecuteCommandLogGroupBF8999AC": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EcsFargateMemoryUtilizationAlarmF73C5AE1": {
+      "Properties": {
+        "AlarmDescription": "Alarm if Memory utilization exceeds 80% for 5 minutes",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "EcsFargateCluster64F91B93",
+            },
+          },
+          {
+            "Name": "ServiceName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EcsFargateService0ServiceD54B9B92",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "MemoryUtilization",
+        "Namespace": "AWS/ECS",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "EcsFargateRunningTaskCountAlarm670C7D21": {
+      "Properties": {
+        "AlarmDescription": "Alarm if running task count is less than desired count for 5 minutes",
+        "ComparisonOperator": "LessThanThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "EcsFargateCluster64F91B93",
+            },
+          },
+          {
+            "Name": "ServiceName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EcsFargateService0ServiceD54B9B92",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "RunningTaskCount",
+        "Namespace": "AWS/ECS",
+        "Period": 60,
+        "Statistic": "Average",
+        "Threshold": 0,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "EcsFargateService0ScalableTargetAA0D0E2C": {
+      "Properties": {
+        "MaxCapacity": 1,
+        "MinCapacity": 1,
+        "ResourceId": {
+          "Fn::Join": [
+            "",
+            [
+              "service/",
+              {
+                "Ref": "EcsFargateCluster64F91B93",
+              },
+              "/",
+              {
+                "Fn::GetAtt": [
+                  "EcsFargateService0ServiceD54B9B92",
+                  "Name",
+                ],
+              },
+            ],
+          ],
+        },
+        "RoleARN": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":iam::123456789012:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService",
+            ],
+          ],
+        },
+        "ScalableDimension": "ecs:service:DesiredCount",
+        "ScheduledActions": [
+          {
+            "ScalableTargetAction": {
+              "MaxCapacity": 0,
+              "MinCapacity": 0,
+            },
+            "Schedule": "cron(55 20 ? * MON-FRI *)",
+            "ScheduledActionName": "Service0NightStop",
+            "Timezone": "Asia/Tokyo",
+          },
+          {
+            "ScalableTargetAction": {
+              "MaxCapacity": 1,
+              "MinCapacity": 1,
+            },
+            "Schedule": "cron(5 18 ? * MON-FRI *)",
+            "ScheduledActionName": "Service0MorningStart",
+            "Timezone": "Asia/Tokyo",
+          },
+        ],
+        "ServiceNamespace": "ecs",
+      },
+      "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
+    },
+    "EcsFargateService0SchedulerNotificationRuleC7ED337D": {
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Rule to notify when ECS tasks in service ",
+              {
+                "Fn::GetAtt": [
+                  "EcsFargateService0ServiceD54B9B92",
+                  "Name",
+                ],
+              },
+              " change state",
+            ],
+          ],
+        },
+        "EventPattern": {
+          "detail": {
+            "clusterArn": [
+              {
+                "Fn::GetAtt": [
+                  "EcsFargateCluster64F91B93",
+                  "Arn",
+                ],
+              },
+            ],
+            "containers": {
+              "exitCode": [
+                "0",
+              ],
+            },
+            "lastStatus": [
+              "RUNNING",
+              "STOPPED",
+            ],
+          },
+          "detail-type": [
+            "ECS Task State Change",
+          ],
+          "source": [
+            "ecs.amazonaws.com",
+          ],
+        },
+        "State": "ENABLED",
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EcsFargateService0ServiceD54B9B92": {
+      "DependsOn": [
+        "AlbHttpListener5EF99D8D",
+        "AlbHttpListenerTargetGroup0Container1GroupD9DC4018",
+        "EcsFargateTaskDef0TaskRoleDefaultPolicy9B982688",
+        "EcsFargateTaskDef0TaskRole87999761",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "EcsFargateCluster64F91B93",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100,
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "EnableExecuteCommand": true,
+        "HealthCheckGracePeriodSeconds": 120,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "backend",
+            "ContainerPort": 8080,
+            "TargetGroupArn": {
+              "Ref": "AlbHttpListenerTargetGroup0Container1GroupD9DC4018",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputFnGetAttEcsSecurityGroup44008BF1GroupIdDE2CA5C5",
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+              },
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+              },
+            ],
+          },
+        },
+        "PlatformVersion": "1.4.0",
+        "TaskDefinition": {
+          "Ref": "EcsFargateTaskDef0E89ADE66",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "EcsFargateTaskDef0E89ADE66": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Cpu": 256,
+            "Environment": [
+              {
+                "Name": "LOG_LEVEL",
+                "Value": "INFO",
+              },
+              {
+                "Name": "PORT",
+                "Value": "8080",
+              },
+              {
+                "Name": "PROJECT",
+                "Value": "testproject",
+              },
+              {
+                "Name": "ENVIRONMENT",
+                "Value": "test",
+              },
+            ],
+            "Essential": true,
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  "123456789012.dkr.ecr.ap-northeast-1.",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Fn::ImportValue": "Ecr:ExportsOutputRefEcrBackend5381CB878086E981",
+                  },
+                  ":latest",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "EcsFargateEcsFargateLogGroup5456053C",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "backend",
+              },
+            },
+            "Memory": 512,
+            "Name": "backend",
+            "PortMappings": [
+              {
+                "ContainerPort": 8080,
+                "Protocol": "tcp",
+              },
+            ],
+            "StopTimeout": 100,
+          },
+          {
+            "Cpu": 32,
+            "Essential": false,
+            "Image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "EcsFargateEcsFargateLogGroup5456053C",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "otel",
+              },
+            },
+            "Memory": 256,
+            "Name": "adot-collector",
+            "PortMappings": [
+              {
+                "ContainerPort": 2000,
+                "Protocol": "udp",
+              },
+            ],
+            "StopTimeout": 100,
+          },
+        ],
+        "Cpu": "512",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "EcsFargateTaskDef0ExecutionRoleD9CD146B",
+            "Arn",
+          ],
+        },
+        "Family": "EcsFargateAlbEcsFargateTaskDef0B1971B4B",
+        "Memory": "1024",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "EcsFargateTaskDef0TaskRole87999761",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "EcsFargateTaskDef0ExecutionRoleD9CD146B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EcsFargateTaskDef0ExecutionRoleDefaultPolicy3AD4C1A4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ecr:ap-northeast-1:123456789012:repository/",
+                    {
+                      "Fn::ImportValue": "Ecr:ExportsOutputRefEcrBackend5381CB878086E981",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "ecr:GetAuthorizationToken",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "EcsFargateEcsFargateLogGroup5456053C",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EcsFargateTaskDef0ExecutionRoleDefaultPolicy3AD4C1A4",
+        "Roles": [
+          {
+            "Ref": "EcsFargateTaskDef0ExecutionRoleD9CD146B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "EcsFargateTaskDef0TaskRole87999761": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EcsFargateTaskDef0TaskRoleDefaultPolicy9B982688": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "logs:DescribeLogGroups",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":logs:ap-northeast-1:123456789012:log-group:",
+                    {
+                      "Ref": "EcsFargateExecuteCommandLogGroupBF8999AC",
+                    },
+                    ":*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EcsFargateTaskDef0TaskRoleDefaultPolicy9B982688",
+        "Roles": [
+          {
+            "Ref": "EcsFargateTaskDef0TaskRole87999761",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "EcsFargateUnhealthyTargetAlarm33CA8CC4": {
+      "Properties": {
+        "AlarmDescription": "Alarm if there are unhealthy targets in the ECS service",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "ClusterName",
+            "Value": {
+              "Ref": "EcsFargateCluster64F91B93",
+            },
+          },
+          {
+            "Name": "ServiceName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EcsFargateService0ServiceD54B9B92",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "UnhealthyHostCount",
+        "Namespace": "AWS/ECS",
+        "Period": 60,
+        "Statistic": "Maximum",
+        "Threshold": 0,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

@@ -36,7 +36,7 @@ const isAutoDeleteObject = envName === Environment.DEVELOPMENT;
 const isTerminationProtection = envName === Environment.PRODUCTION;
 
 // Create VPC Peering Stack (Account A: VPC A <-> VPC B)
-new VpcPeeringStage(app, `${pascalCase(envName)}`, {
+const stage = new VpcPeeringStage(app, `${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,
@@ -46,5 +46,6 @@ new VpcPeeringStage(app, `${pascalCase(envName)}`, {
 });
 
 // --------------------------------- Tagging  -------------------------------------
-cdk.Tags.of(app).add("Project", pjName);
-cdk.Tags.of(app).add("Environment", envName);
+cdk.Tags.of(stage).add("Project", pjName);
+cdk.Tags.of(stage).add("Environment", envName);
+cdk.Tags.of(stage).add("ManagedBy", "CDK");
