@@ -1,29 +1,33 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
+import { Ec2AdvancedStage } from 'lib/stages/ec2-advanced-stage';
 import { pascalCase } from "change-case-commonjs";
-import { params } from "parameters/environments";
-import { CdkParametersStage } from 'lib/stages/cdk-parameters-stage';
-import { Environment } from 'lib/types/common';
+import { Environment } from "@common/parameters/environments";
 import { validateDeployment } from '@common/helpers/validate-deployment';
+import { getMyGlobalIpCidr } from "@common/helpers/get-my-ip";
+import { params } from 'parameters/environments';
 import 'parameters'
 
 const app = new cdk.App();
 
 // Get environment (specified in cdk.json context or at runtime with --context)
-const pjName: string = app.node.tryGetContext("project");
+const pjName: string = process.env.PROJECT_NAME || app.node.tryGetContext("project");
 const envName: Environment =
-  app.node.tryGetContext("env") || Environment.DEVELOPMENT;
-
-if (!params[envName]) {
-  throw new Error(`No parameters found for environment: ${envName}`);
-}
-
-validateDeployment(pjName, envName, params[envName].accountId);
+  process.env.ENV as Environment ||
+  app.node.tryGetContext("env")  || Environment.DEVELOPMENT;
 
 const defaultEnv = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION,
 };
+
+if (!params[envName]) {
+  throw new Error(`No parameters found for environment: ${envName}`);
+}
+
+const envParams = params[envName];
+
+validateDeployment(pjName, envName, envParams.accountId);
 
 // Whether to force delete an S3 bucket even if objects exist
 // Determine by environment identifier
@@ -36,13 +40,14 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
-const stage = new CdkParametersStage(app, `CdkParameters${pascalCase(envName)}`, {
+const stage = new Ec2AdvancedStage(app, `Ec2Advanced${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,
   terminationProtection: isTerminationProtection, // Enabling deletion protection
   isAutoDeleteObject: isAutoDeleteObject,
-  params: params[envName],
+  params: envParams,
+  allowedIpsforAlb: [getMyGlobalIpCidr()],
 });
 
 // --------------------------------- Tagging  -------------------------------------

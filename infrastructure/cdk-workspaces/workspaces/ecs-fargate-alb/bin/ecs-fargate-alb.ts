@@ -40,7 +40,7 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
-const stage = new EcsFargateAlbStage(app, `${pascalCase(envName)}`, {
+const stage = new EcsFargateAlbStage(app, `EcsFargateAlb${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,

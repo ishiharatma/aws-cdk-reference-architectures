@@ -36,7 +36,7 @@ const isAutoDeleteObject = envName === Environment.DEVELOPMENT;
 const isTerminationProtection = envName === Environment.PRODUCTION;
 
 // Create VPC Peering Stack (Account A: VPC A <-> VPC B)
-const stage = new VpcPeeringStage(app, `${pascalCase(envName)}`, {
+const stage = new VpcPeeringStage(app, `VpcPeering${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,

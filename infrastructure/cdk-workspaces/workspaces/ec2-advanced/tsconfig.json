@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "lib/*": ["lib/*"],
+      "parameters/*": ["parameters/*"],
+      "test/*": ["test/*"],
+      "src/*": ["src/*"],
+      "@common/*": ["../../common/*"]
+    }
+  },
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "parameters/**/*.ts", "src/**/*.ts"]
+}

@@ -30,7 +30,7 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
-const stage = new S3BasicStage(app, `${pascalCase(envName)}`, {
+const stage = new S3BasicStage(app, `S3Basic${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,
   env: defaultEnv,
