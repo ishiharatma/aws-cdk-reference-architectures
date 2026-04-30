@@ -1,4 +1,5 @@
 // Common tag definitions
+import * as cdk from 'aws-cdk-lib';
 export interface CommonTags {
     Environment: string;
     Project: string;
@@ -14,13 +15,6 @@ export enum LogLevel {
     WARN = 'warn',
     ERROR = 'error',
 }
-/**
- * Special ID for shortening logical IDs in CDK
- *
- * @see https://dev.classmethod.jp/articles/best-way-to-name-aws-cdk-construct-id/
- */
-export const C_DEFAULT = "Default";
-export const C_RESOURCE = "Resource";
 
 /**
  * Allowed IP ranges for "all IPv6 addresses" and "all IPv4 addresses" used in security group rules
@@ -37,8 +31,9 @@ export const allowedAllIpV4AddressRanges = [
 export const allowedCountryCodesJP = [
     "JP",
 ];
+export type pathPrefix = `/${string}`;
 
-export type CronExpression = `cron(${string} ${string} ${string} ${string} ${string} ${string})`;
+export type cronExpression = `cron(${string} ${string} ${string} ${string} ${string} ${string})`;
 export interface startstopSchedulerConfig {
     /**
      * Cron expression for start schedule
@@ -46,12 +41,20 @@ export interface startstopSchedulerConfig {
      * @example "cron(0 0 * * ? *)" // Start at 9:00 JST every day
      * @example "cron(0 0 ? * MON-FRI *)" // Start at 9:00 JST on Mon-Fri
      */
-    readonly startCronSchedule: CronExpression;
+    readonly startCronSchedule: cronExpression;
     /**
      * Cron expression for stop schedule
      * Specified in UTC
      * @example "cron(0 9 * * ? *)" // Stop at 18:00 JST every day
      * @example "cron(0 9 ? * MON-FRI *)" // Stop at 18:00 JST on Mon-Fri
      */
-    readonly stopCronSchedule: CronExpression;
+    readonly stopCronSchedule: cronExpression;
+
+    readonly timeZone?: cdk.TimeZone;
+
+    /**
+     * Whether to enable notification for start/stop events
+     * @default false
+     */
+    readonly enabledNotification?: boolean;
 }

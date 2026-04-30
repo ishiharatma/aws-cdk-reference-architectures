@@ -29,9 +29,7 @@ const devParams: EnvParams = {
   stackNamePrefix: 'vpc-peering-dev',
 
   // Common tags
-  tags: {
-    ManagedBy: 'CDK',
-  },
+  tags: {},
 
   // VPC A Configuration
   vpcAConfig: {

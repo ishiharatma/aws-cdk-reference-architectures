@@ -37,7 +37,7 @@ mkdir -p parameters src
 cp -r ${PARENT_DIR}/templates/init-workspace/. ${workspacesDir}/
 
 mv ${workspaces_name}.ts lib/stacks/
-mv ${workspaces_name}.test.ts test/unit/
+mv test/${workspaces_name}.test.ts test/unit/
 
 # Add necessary scripts to the main package.json
 cd ${SCRIPT_DIR}

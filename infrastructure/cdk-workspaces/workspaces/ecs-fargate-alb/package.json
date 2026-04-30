@@ -1,0 +1,44 @@
+{
+  "name": "ecs-fargate-alb",
+  "version": "0.1.0",
+  "bin": {
+    "ecs-fargate-alb": "bin/ecs-fargate-alb.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest test/unit",
+    "test:snapshot": "jest test/snapshot",
+    "test:snapshot:update": "jest test/snapshot --updateSnapshot",
+    "test:integration": "jest test/integration",
+    "test:compliance": "jest test/compliance",
+    "bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk bootstrap  --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk diff --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "synth": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth  --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "delstack": "delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "lint": "eslint \"**/*.ts\"",
+    "lint:fix": "eslint \"**/*.ts\" --fix",
+    "format": "prettier --write \"**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "jest": "^30",
+    "ts-jest": "^29",
+    "aws-cdk": "2.1103.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.235.1",
+    "constructs": "^10.0.0"
+  }
+}

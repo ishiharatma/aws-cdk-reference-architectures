@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'; 
 import { Construct } from 'constructs';
-import { C_RESOURCE} from "@common/types";
+import { C_RESOURCE} from "@common/constants";
 import { Environment } from '@common/parameters/environments';
 
 /**

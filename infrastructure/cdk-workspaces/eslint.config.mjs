@@ -3,6 +3,7 @@ import prettierConfig from "eslint-config-prettier";
 import unusedImportPlugin from "eslint-plugin-unused-imports";
 import eslintCdkPlugin from "eslint-cdk-plugin";
 import tseslint from "typescript-eslint";
+import jsdoc from "eslint-plugin-jsdoc";
 
 export default tseslint.config(
   {
@@ -26,6 +27,7 @@ export default tseslint.config(
     plugins: {
       "unused-imports": unusedImportPlugin,
       cdk: eslintCdkPlugin,
+      jsdoc: jsdoc,
     },
     rules: {
       "@typescript-eslint/no-unused-vars": "off", // Disable typescript-eslint to prevent duplicate errors
@@ -41,6 +43,25 @@ export default tseslint.config(
       ],
       ...eslintCdkPlugin.configs.recommended.rules,
       "cdk/no-variable-construct-id": "off",
+      // JSDoc required for public exports
+      "jsdoc/require-jsdoc": [
+        "warn",
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+          contexts: [
+            "TSInterfaceDeclaration",
+            "TSTypeAliasDeclaration",
+            "TSEnumDeclaration",
+          ],
+        },
+      ],
+      "jsdoc/require-description": "warn",
     },
   },
   prettierConfig // Formatting is done by Prettier, so formatting rules are disabled.
