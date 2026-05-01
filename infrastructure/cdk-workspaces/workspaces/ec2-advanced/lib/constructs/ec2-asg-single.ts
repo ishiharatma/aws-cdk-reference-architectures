@@ -137,6 +137,7 @@ export class Ec2AsgSingle extends Construct {
         : autoscaling.HealthChecks.ec2({ gracePeriod: cdk.Duration.seconds(60) }),
       updatePolicy: autoscaling.UpdatePolicy.rollingUpdate(),
       // Notify on instance launch/terminate/error events
+      // @see https://docs.aws.amazon.com/ja_jp/autoscaling/ec2/userguide/ec2-auto-scaling-sns-notifications.html#auto-scaling-sns-notifications
       notifications: props.notificationTopic
         ? [{ topic: props.notificationTopic, scalingEvents: autoscaling.ScalingEvents.ALL }]
         : undefined,
@@ -202,6 +203,25 @@ export class Ec2AsgSingle extends Construct {
       });
       cpuAlarm.addAlarmAction(new cloudwatch_actions.SnsAction(props.notificationTopic));
       cpuAlarm.addOkAction(new cloudwatch_actions.SnsAction(props.notificationTopic));
+
+      // CloudWatch alarm: notify when ASG has fewer in-service instances than desired (launch failure)
+      const launchFailureAlarm = new cloudwatch.Alarm(this, 'InstanceLaunchFailureAlarm', {
+        alarmName: [props.project, props.environment, id, 'InstanceLaunchFailure'].join('-'),
+        alarmDescription: 'ASG in-service instance count dropped below 1 (possible launch failure)',
+        metric: new cloudwatch.Metric({
+          namespace: 'AWS/AutoScaling',
+          metricName: 'GroupInServiceInstances',
+          dimensionsMap: { AutoScalingGroupName: asg.autoScalingGroupName },
+          statistic: 'Minimum',
+          period: cdk.Duration.minutes(1),
+        }),
+        threshold: 1,
+        evaluationPeriods: 2,
+        comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.BREACHING,
+      });
+      launchFailureAlarm.addAlarmAction(new cloudwatch_actions.SnsAction(props.notificationTopic));
+      launchFailureAlarm.addOkAction(new cloudwatch_actions.SnsAction(props.notificationTopic));
     }
   }
 }
