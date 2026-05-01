@@ -7,6 +7,7 @@ import { Ec2SingleStack } from 'lib/stacks/ec2-single-stack';
 import { Ec2AutoRecoveryStack } from 'lib/stacks/ec2-auto-recovery-stack';
 import { Ec2AsgSingleStack } from 'lib/stacks/ec2-asg-single-stack';
 import { Ec2AsgMultiStack } from 'lib/stacks/ec2-asg-multi-stack';
+import { Ec2AsgMultiWarmStack } from 'lib/stacks/ec2-asg-multi-warm-stack';
 import { params } from 'parameters/environments';
 import '../parameters';
 
@@ -129,6 +130,17 @@ nagTest('Ec2AsgSingleStack', new Ec2AsgSingleStack(app, 'Ec2AsgSingleStack', {
 }));
 
 nagTest('Ec2AsgMultiStack', new Ec2AsgMultiStack(app, 'Ec2AsgMultiStack', {
+  project: projectName,
+  environment: envName,
+  env: defaultEnv,
+  isAutoDeleteObject: true,
+  vpc: base.vpc,
+  ec2Config: envParams.ec2Config,
+  ports: envParams.ports,
+  allowedIpsforAlb: ['203.0.113.0/24'],
+}));
+
+nagTest('Ec2AsgMultiWarmStack', new Ec2AsgMultiWarmStack(app, 'Ec2AsgMultiWarmStack', {
   project: projectName,
   environment: envName,
   env: defaultEnv,
