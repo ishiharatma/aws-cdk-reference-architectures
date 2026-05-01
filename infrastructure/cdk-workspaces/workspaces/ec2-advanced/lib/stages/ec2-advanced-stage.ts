@@ -8,6 +8,7 @@ import { Ec2SingleStack } from "lib/stacks/ec2-single-stack";
 import { Ec2AutoRecoveryStack } from "lib/stacks/ec2-auto-recovery-stack";
 import { Ec2AsgSingleStack } from "lib/stacks/ec2-asg-single-stack";
 import { Ec2AsgMultiStack } from "lib/stacks/ec2-asg-multi-stack";
+import { Ec2AsgMultiWarmStack } from "lib/stacks/ec2-asg-multi-warm-stack";
 
 export interface StageProps extends cdk.StageProps {
     readonly project: string;
@@ -95,6 +96,23 @@ export class Ec2AdvancedStage extends cdk.Stage {
       notificationTopic: baseStack.notificationTopic,
     });
     ec2AsgMultiStack.addDependency(baseStack);
+
+    // Pattern 5: EC2 ASG (multi-AZ) + ALB + Warm Pool (hibernated instances for fast scale-out)
+    // Instances in the warm pool are pre-initialized and hibernated.
+    // On scale-out, a warm instance resumes from hibernation (~10 sec) instead of booting from scratch.
+    // Note: AL2023 standard AMI has hibernation agent pre-installed — no extra setup needed.
+    //       AL2023 minimal AMI requires ec2-hibinit-agent via ec2Config.additionalUserData.
+    //   @see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hibernation-enabled-AMI.html
+    const ec2AsgMultiWarmStack = new Ec2AsgMultiWarmStack(this, `${pascalCase(props.project)}AsgMultiWarm`, {
+      ...commonStackProps,
+      env: commonEnv,
+      vpc: baseStack.vpc,
+      ec2Config: props.params.ec2Config,
+      ports: props.params.ports,
+      allowedIpsforAlb: props.allowedIpsforAlb ?? props.params.allowedIpsforAlb,
+      notificationTopic: baseStack.notificationTopic,
+    });
+    ec2AsgMultiWarmStack.addDependency(baseStack);
   }
 }
 

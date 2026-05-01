@@ -1,12 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import { Environment } from '@common/parameters/environments';
 import { BaseStack } from 'lib/stacks/base-stack';
 import { Ec2SingleStack } from 'lib/stacks/ec2-single-stack';
 import { Ec2AutoRecoveryStack } from 'lib/stacks/ec2-auto-recovery-stack';
 import { Ec2AsgSingleStack } from 'lib/stacks/ec2-asg-single-stack';
 import { Ec2AsgMultiStack } from 'lib/stacks/ec2-asg-multi-stack';
+import { Ec2AsgMultiWarmStack } from 'lib/stacks/ec2-asg-multi-warm-stack';
 import { Ec2AsgSingle } from 'lib/constructs/ec2-asg-single';
 import { params } from 'parameters/environments';
 import '../parameters';
@@ -351,6 +353,252 @@ describe('Ec2AsgMultiStack', () => {
           }),
         ]),
       }),
+    });
+  });
+});
+
+// ─── EC2 ASG Multi (with notification topic — alarm tests) ───────────────────
+
+describe('Ec2AsgMultiStack (with notificationTopic)', () => {
+  let template: Template;
+
+  beforeAll(() => {
+    const app = new cdk.App();
+    const base = buildBaseStack(app);
+    const topicStack = new cdk.Stack(app, 'TopicStackMulti', { env: defaultEnv });
+    const topic = new sns.Topic(topicStack, 'Topic');
+    const stack = new Ec2AsgMultiStack(app, 'Ec2AsgMultiStackWithTopic', {
+      project: projectName,
+      environment: envName,
+      env: defaultEnv,
+      isAutoDeleteObject: true,
+      vpc: base.vpc,
+      ec2Config: envParams.ec2Config,
+      ports: envParams.ports,
+      allowedIpsforAlb: ['203.0.113.0/24'],
+      notificationTopic: topic,
+    });
+    template = Template.fromStack(stack);
+  });
+
+  test('InstanceLaunchFailure alarm monitors GroupInServiceInstances', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/AutoScaling',
+      MetricName: 'GroupInServiceInstances',
+      Statistic: 'Minimum',
+      ComparisonOperator: 'LessThanThreshold',
+      Threshold: 2,
+      EvaluationPeriods: 2,
+      TreatMissingData: 'breaching',
+    });
+  });
+
+  test('HighCPU alarm monitors CPUUtilization', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/EC2',
+      MetricName: 'CPUUtilization',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 80,
+    });
+  });
+
+  test('UnhealthyHost alarm monitors ALB unhealthy host count', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/ApplicationELB',
+      MetricName: 'UnHealthyHostCount',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 1,
+    });
+  });
+});
+
+// ─── EC2 ASG Single (with notification topic — alarm tests) ──────────────────
+
+describe('Ec2AsgSingleStack (with notificationTopic)', () => {
+  let template: Template;
+
+  beforeAll(() => {
+    const app = new cdk.App();
+    const base = buildBaseStack(app);
+    const topicStack = new cdk.Stack(app, 'TopicStackSingle', { env: defaultEnv });
+    const topic = new sns.Topic(topicStack, 'Topic');
+    const stack = new Ec2AsgSingleStack(app, 'Ec2AsgSingleStackWithTopic', {
+      project: projectName,
+      environment: envName,
+      env: defaultEnv,
+      isAutoDeleteObject: true,
+      vpc: base.vpc,
+      ec2Config: envParams.ec2Config,
+      ports: envParams.ports,
+      allowedIpsforAlb: ['203.0.113.0/24'],
+      notificationTopic: topic,
+    });
+    template = Template.fromStack(stack);
+  });
+
+  test('InstanceLaunchFailure alarm monitors GroupInServiceInstances', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/AutoScaling',
+      MetricName: 'GroupInServiceInstances',
+      Statistic: 'Minimum',
+      ComparisonOperator: 'LessThanThreshold',
+      Threshold: 1,
+      EvaluationPeriods: 2,
+      TreatMissingData: 'breaching',
+    });
+  });
+
+  test('HighCPU alarm monitors CPUUtilization', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/EC2',
+      MetricName: 'CPUUtilization',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 80,
+    });
+  });
+});
+
+// ─── EC2 ASG Multi Warm Pool ──────────────────────────────────────────────────
+
+describe('Ec2AsgMultiWarmStack', () => {
+  let template: Template;
+
+  beforeAll(() => {
+    const app = new cdk.App();
+    const base = buildBaseStack(app);
+    const stack = new Ec2AsgMultiWarmStack(app, 'Ec2AsgMultiWarmStack', {
+      project: projectName,
+      environment: envName,
+      env: defaultEnv,
+      isAutoDeleteObject: true,
+      vpc: base.vpc,
+      ec2Config: envParams.ec2Config,
+      ports: envParams.ports,
+      allowedIpsforAlb: ['203.0.113.0/24'],
+    });
+    template = Template.fromStack(stack);
+  });
+
+  test('ALB is created', () => {
+    template.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 1);
+  });
+
+  test('Auto Scaling Group is created', () => {
+    template.resourceCountIs('AWS::AutoScaling::AutoScalingGroup', 1);
+  });
+
+  test('Warm pool is attached to ASG', () => {
+    template.resourceCountIs('AWS::AutoScaling::WarmPool', 1);
+  });
+
+  test('Warm pool state is Hibernated', () => {
+    template.hasResourceProperties('AWS::AutoScaling::WarmPool', {
+      PoolState: 'Hibernated',
+    });
+  });
+
+  test('Warm pool reuses instances on scale-in', () => {
+    template.hasResourceProperties('AWS::AutoScaling::WarmPool', {
+      InstanceReusePolicy: { ReuseOnScaleIn: true },
+    });
+  });
+
+  test('Launch template enables hibernation', () => {
+    template.hasResourceProperties('AWS::EC2::LaunchTemplate', {
+      LaunchTemplateData: Match.objectLike({
+        HibernationOptions: { Configured: true },
+      }),
+    });
+  });
+
+  test('Launch template enforces IMDSv2', () => {
+    template.hasResourceProperties('AWS::EC2::LaunchTemplate', {
+      LaunchTemplateData: Match.objectLike({
+        MetadataOptions: { HttpTokens: 'required' },
+      }),
+    });
+  });
+
+  test('EBS root volume is encrypted and GP3', () => {
+    template.hasResourceProperties('AWS::EC2::LaunchTemplate', {
+      LaunchTemplateData: Match.objectLike({
+        BlockDeviceMappings: Match.arrayWith([
+          Match.objectLike({
+            Ebs: Match.objectLike({ Encrypted: true, VolumeType: 'gp3' }),
+          }),
+        ]),
+      }),
+    });
+  });
+
+  test('ASG default capacity is 2/2', () => {
+    template.hasResourceProperties('AWS::AutoScaling::AutoScalingGroup', {
+      MinSize: '2',
+      MaxSize: '2',
+      DesiredCapacity: '2',
+    });
+  });
+
+  test('SSM managed policy is attached to instance role', () => {
+    template.hasResourceProperties('AWS::IAM::Role', {
+      ManagedPolicyArns: Match.arrayWith([
+        Match.objectLike({ 'Fn::Join': Match.anyValue() }),
+      ]),
+    });
+  });
+});
+
+// ─── EC2 ASG Multi Warm Pool (with notification topic — alarm tests) ──────────
+
+describe('Ec2AsgMultiWarmStack (with notificationTopic)', () => {
+  let template: Template;
+
+  beforeAll(() => {
+    const app = new cdk.App();
+    const base = buildBaseStack(app);
+    const topicStack = new cdk.Stack(app, 'TopicStackWarm', { env: defaultEnv });
+    const topic = new sns.Topic(topicStack, 'Topic');
+    const stack = new Ec2AsgMultiWarmStack(app, 'Ec2AsgMultiWarmStackWithTopic', {
+      project: projectName,
+      environment: envName,
+      env: defaultEnv,
+      isAutoDeleteObject: true,
+      vpc: base.vpc,
+      ec2Config: envParams.ec2Config,
+      ports: envParams.ports,
+      allowedIpsforAlb: ['203.0.113.0/24'],
+      notificationTopic: topic,
+    });
+    template = Template.fromStack(stack);
+  });
+
+  test('InstanceLaunchFailure alarm monitors GroupInServiceInstances', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/AutoScaling',
+      MetricName: 'GroupInServiceInstances',
+      Statistic: 'Minimum',
+      ComparisonOperator: 'LessThanThreshold',
+      Threshold: 2,
+      EvaluationPeriods: 2,
+      TreatMissingData: 'breaching',
+    });
+  });
+
+  test('HighCPU alarm monitors CPUUtilization', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/EC2',
+      MetricName: 'CPUUtilization',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 80,
+    });
+  });
+
+  test('UnhealthyHost alarm monitors ALB unhealthy host count', () => {
+    template.hasResourceProperties('AWS::CloudWatch::Alarm', {
+      Namespace: 'AWS/ApplicationELB',
+      MetricName: 'UnHealthyHostCount',
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Threshold: 1,
     });
   });
 });

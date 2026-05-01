@@ -7,6 +7,7 @@ import { Ec2SingleStack } from 'lib/stacks/ec2-single-stack';
 import { Ec2AutoRecoveryStack } from 'lib/stacks/ec2-auto-recovery-stack';
 import { Ec2AsgSingleStack } from 'lib/stacks/ec2-asg-single-stack';
 import { Ec2AsgMultiStack } from 'lib/stacks/ec2-asg-multi-stack';
+import { Ec2AsgMultiWarmStack } from 'lib/stacks/ec2-asg-multi-warm-stack';
 import { params } from 'parameters/environments';
 import '../parameters';
 
@@ -70,7 +71,18 @@ function buildStacks() {
     allowedIpsforAlb: ['203.0.113.0/24'],
   });
 
-  return { base, single, autoRecovery, asgSingle, asgMulti };
+  const asgMultiWarm = new Ec2AsgMultiWarmStack(app, 'Ec2AsgMultiWarmStack', {
+    project: projectName,
+    environment: envName,
+    env: defaultEnv,
+    isAutoDeleteObject: true,
+    vpc: base.vpc,
+    ec2Config: envParams.ec2Config,
+    ports: envParams.ports,
+    allowedIpsforAlb: ['203.0.113.0/24'],
+  });
+
+  return { base, single, autoRecovery, asgSingle, asgMulti, asgMultiWarm };
 }
 
 describe('Stack Snapshot Tests', () => {
@@ -105,6 +117,12 @@ describe('Stack Snapshot Tests', () => {
 
   describe('Ec2AsgMultiStack', () => {
     const t = Template.fromStack(stacks.asgMulti);
+    test('full template snapshot', () => expect(t.toJSON()).toMatchSnapshot());
+    test('resource counts', () => expect(resourceCounts(t)).toMatchSnapshot());
+  });
+
+  describe('Ec2AsgMultiWarmStack', () => {
+    const t = Template.fromStack(stacks.asgMultiWarm);
     test('full template snapshot', () => expect(t.toJSON()).toMatchSnapshot());
     test('resource counts', () => expect(resourceCounts(t)).toMatchSnapshot());
   });
