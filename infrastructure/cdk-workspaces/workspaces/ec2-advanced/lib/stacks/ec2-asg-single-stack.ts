@@ -103,7 +103,7 @@ export class Ec2AsgSingleStack extends cdk.Stack {
       listener = this.alb.listener;
 
       // ASG (always 1 instance) with ALB
-      this.asg = new Ec2AsgSingle(this, "Ec2AsgSingle", {
+      this.asg = new Ec2AsgSingle(this, id, {
         project: props.project,
         environment: props.environment,
         vpc: props.vpc.vpc,
@@ -130,7 +130,7 @@ export class Ec2AsgSingleStack extends cdk.Stack {
       });
 
       // ASG (always 1 instance) without ALB
-      this.asg = new Ec2AsgSingle(this, "Ec2AsgSingle", {
+      this.asg = new Ec2AsgSingle(this, id, {
         project: props.project,
         environment: props.environment,
         vpc: props.vpc.vpc,

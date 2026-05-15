@@ -195,7 +195,7 @@ export class Ec2AsgMultiWarm extends Construct {
       // Maximum number of instances to keep in the warm pool
       maxGroupPreparedCapacity: warmPoolSize,
       // Minimum instances always kept warm (0 = scale to 0 when not needed)
-      minSize: 0,
+      minSize: warmPoolSize,
       poolState,
       // Return instances to the warm pool on scale-in instead of terminating
       reuseOnScaleIn: true,
