@@ -100,5 +100,16 @@
     "difficulty": "intermediate",
     "date": "2026-04-20",
     "articles": {}
+  },
+  {
+    "id": "ec2-advanced",
+    "title": "EC2 Advanced Patterns",
+    "description": "Four EC2 deployment patterns using AWS CDK: Single Instance, Auto-Recovery, ASG Always-1, and ASG Multi-AZ with ALB. Covers IMDSv2, SSM Session Manager access, CloudWatch alarms, and operational notifications.",
+    "image": "ec2-advanced/overview.png",
+    "tags": ["CDK", "TypeScript", "EC2", "ASG", "ALB"],
+    "link": "ec2-advanced",
+    "difficulty": "advanced",
+    "date": "2026-05-16",
+    "articles": {}
   }
 ]
