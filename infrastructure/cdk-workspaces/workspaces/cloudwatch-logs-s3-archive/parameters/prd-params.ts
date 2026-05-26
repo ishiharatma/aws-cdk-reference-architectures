@@ -45,6 +45,26 @@ const prdParams: EnvParams = {
         logGroupName: '/aws/lambda/my-production-function',
         filterPattern: '',
     },
+
+    // Pattern B – Scheduled export task (Stack 4): runs daily at 01:00 UTC
+    exportTask: {
+        scheduleExpression: 'cron(0 1 * * ? *)',
+        s3Prefix: 'exports',
+        logGroupNameSuffix: 'app-export',
+        retention: logs.RetentionDays.THREE_MONTHS,
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(5),
+    },
+
+    // Pattern C – Lambda direct write (Stack 5)
+    lambdaArchive: {
+        s3Prefix: 'subscriptions',
+        logGroupNameSuffix: 'app-lambda',
+        retention: logs.RetentionDays.THREE_MONTHS,
+        filterPattern: '',
+        memorySize: 512,
+        timeout: cdk.Duration.minutes(1),
+    },
 };
 
 params[Environment.PRODUCTION] = prdParams;

@@ -5,6 +5,8 @@ import { Environment } from '@common/parameters/environments';
 import { CloudwatchLogsS3ArchiveBasicStack } from 'lib/stacks/cloudwatch-logs-s3-archive-basic-stack';
 import { CloudwatchLogsS3ArchiveLifecycleStack } from 'lib/stacks/cloudwatch-logs-s3-archive-lifecycle-stack';
 import { CloudwatchLogsS3ArchiveExistingStack } from 'lib/stacks/cloudwatch-logs-s3-archive-existing-stack';
+import { CloudwatchLogsS3ArchiveExportStack } from 'lib/stacks/cloudwatch-logs-s3-archive-export-stack';
+import { CloudwatchLogsS3ArchiveLambdaStack } from 'lib/stacks/cloudwatch-logs-s3-archive-lambda-stack';
 import { params } from 'parameters/environments';
 import 'test/parameters';
 import * as path from 'path';
@@ -510,6 +512,252 @@ describe('CloudwatchLogsS3ArchiveExistingStack Fine-grained Assertions', () => {
             template.hasOutput('ImportedLogGroupName', {
                 Description: 'Name of the imported (existing) CloudWatch Log Group',
                 Value: '/aws/lambda/test-function',
+            });
+        });
+    });
+});
+
+// ============================================================================
+// Stack 4: Pattern B – Export Task
+// ============================================================================
+describe('CloudwatchLogsS3ArchiveExportStack Fine-grained Assertions', () => {
+    let template: Template;
+
+    beforeAll(() => {
+        const app = new cdk.App({ context: baseContext });
+        const stack = new CloudwatchLogsS3ArchiveExportStack(app, 'ExportStack', {
+            project: projectName,
+            environment: envName,
+            env: defaultEnv,
+            isAutoDeleteObject: true,
+            terminationProtection: false,
+            params: envParams,
+        });
+        template = Template.fromStack(stack);
+    });
+
+    describe('CloudWatch Log Group', () => {
+        test('should create a log group with the configured retention', () => {
+            template.hasResourceProperties('AWS::Logs::LogGroup', {
+                RetentionInDays: 7,
+            });
+        });
+    });
+
+    describe('S3 Bucket', () => {
+        test('should add bucket policy allowing logs.amazonaws.com to GetBucketAcl', () => {
+            template.hasResourceProperties('AWS::S3::BucketPolicy', {
+                PolicyDocument: {
+                    Statement: Match.arrayWith([
+                        Match.objectLike({
+                            Effect: 'Allow',
+                            Principal: { Service: 'logs.amazonaws.com' },
+                            Action: 's3:GetBucketAcl',
+                        }),
+                    ]),
+                },
+            });
+        });
+
+        test('should add bucket policy allowing logs.amazonaws.com to PutObject', () => {
+            template.hasResourceProperties('AWS::S3::BucketPolicy', {
+                PolicyDocument: {
+                    Statement: Match.arrayWith([
+                        Match.objectLike({
+                            Effect: 'Allow',
+                            Principal: { Service: 'logs.amazonaws.com' },
+                            Action: 's3:PutObject',
+                            Condition: {
+                                StringEquals: { 's3:x-amz-acl': 'bucket-owner-full-control' },
+                            },
+                        }),
+                    ]),
+                },
+            });
+        });
+    });
+
+    describe('Lambda Function', () => {
+        test('should create Lambda with Python 3.12 runtime', () => {
+            template.hasResourceProperties('AWS::Lambda::Function', {
+                Runtime: 'python3.12',
+                Handler: 'index.lambda_handler',
+            });
+        });
+
+        test('should pass LOG_GROUP_NAME and S3_BUCKET_NAME to Lambda environment', () => {
+            template.hasResourceProperties('AWS::Lambda::Function', {
+                Environment: {
+                    Variables: Match.objectLike({
+                        S3_PREFIX: 'exports',
+                    }),
+                },
+            });
+        });
+
+        test('should grant Lambda CreateExportTask permission', () => {
+            template.hasResourceProperties('AWS::IAM::Policy', {
+                PolicyDocument: {
+                    Statement: Match.arrayWith([
+                        Match.objectLike({
+                            Action: Match.arrayWith([
+                                'logs:CreateExportTask',
+                                'logs:DescribeExportTasks',
+                            ]),
+                            Effect: 'Allow',
+                        }),
+                    ]),
+                },
+            });
+        });
+    });
+
+    describe('EventBridge Rule', () => {
+        test('should create one EventBridge rule', () => {
+            template.resourceCountIs('AWS::Events::Rule', 1);
+        });
+
+        test('should configure the schedule expression', () => {
+            template.hasResourceProperties('AWS::Events::Rule', {
+                ScheduleExpression: 'rate(1 day)',
+            });
+        });
+
+        test('should target the export Lambda function', () => {
+            template.hasResourceProperties('AWS::Events::Rule', {
+                Targets: Match.arrayWith([
+                    Match.objectLike({
+                        Arn: Match.objectLike({
+                            'Fn::GetAtt': Match.arrayWith([
+                                Match.stringLikeRegexp('ExportTaskFunction'),
+                            ]),
+                        }),
+                    }),
+                ]),
+            });
+        });
+    });
+
+    describe('Stack Outputs', () => {
+        test('should output the log group name', () => {
+            template.hasOutput('LogGroupName', {
+                Description: 'Name of the CloudWatch Log Group being exported',
+            });
+        });
+
+        test('should output the export function name', () => {
+            template.hasOutput('ExportFunctionName', {
+                Description: 'Name of the export task Lambda function',
+            });
+        });
+
+        test('should output the schedule expression', () => {
+            template.hasOutput('ScheduleExpression', {
+                Description: 'EventBridge schedule expression for the export task',
+            });
+        });
+    });
+});
+
+// ============================================================================
+// Stack 5: Pattern C – Lambda Direct Write
+// ============================================================================
+describe('CloudwatchLogsS3ArchiveLambdaStack Fine-grained Assertions', () => {
+    let template: Template;
+
+    beforeAll(() => {
+        const app = new cdk.App({ context: baseContext });
+        const stack = new CloudwatchLogsS3ArchiveLambdaStack(app, 'LambdaStack', {
+            project: projectName,
+            environment: envName,
+            env: defaultEnv,
+            isAutoDeleteObject: true,
+            terminationProtection: false,
+            params: envParams,
+        });
+        template = Template.fromStack(stack);
+    });
+
+    describe('Lambda Function', () => {
+        test('should create Lambda with Python 3.12 runtime', () => {
+            template.hasResourceProperties('AWS::Lambda::Function', {
+                Runtime: 'python3.12',
+                Handler: 'index.lambda_handler',
+            });
+        });
+
+        test('should pass S3_BUCKET_NAME and S3_PREFIX to Lambda environment', () => {
+            template.hasResourceProperties('AWS::Lambda::Function', {
+                Environment: {
+                    Variables: Match.objectLike({
+                        S3_PREFIX: 'subscriptions',
+                    }),
+                },
+            });
+        });
+
+        test('should grant Lambda S3 write permission', () => {
+            template.hasResourceProperties('AWS::IAM::Policy', {
+                PolicyDocument: {
+                    Statement: Match.arrayWith([
+                        Match.objectLike({
+                            Action: Match.arrayWith(['s3:PutObject']),
+                            Effect: 'Allow',
+                        }),
+                    ]),
+                },
+            });
+        });
+    });
+
+    describe('Subscription Filter', () => {
+        test('should create exactly one subscription filter', () => {
+            template.resourceCountIs('AWS::Logs::SubscriptionFilter', 1);
+        });
+
+        test('should point the subscription filter to the Lambda function', () => {
+            template.hasResourceProperties('AWS::Logs::SubscriptionFilter', {
+                DestinationArn: Match.objectLike({
+                    'Fn::GetAtt': Match.arrayWith([
+                        Match.stringLikeRegexp('ArchiveFunction'),
+                    ]),
+                }),
+            });
+        });
+
+        test('should add Lambda invoke permission for CloudWatch Logs', () => {
+            template.hasResourceProperties('AWS::Lambda::Permission', {
+                Action: 'lambda:InvokeFunction',
+                Principal: 'logs.amazonaws.com',
+            });
+        });
+    });
+
+    describe('Resource Counts', () => {
+        test('should create 1 subscription filter', () => {
+            template.resourceCountIs('AWS::Logs::SubscriptionFilter', 1);
+        });
+
+        test('should create 1 S3 bucket', () => {
+            template.resourceCountIs('AWS::S3::Bucket', 1);
+        });
+
+        test('should NOT create Firehose or EventBridge', () => {
+            template.resourceCountIs('AWS::KinesisFirehose::DeliveryStream', 0);
+            template.resourceCountIs('AWS::Events::Rule', 0);
+        });
+    });
+
+    describe('Stack Outputs', () => {
+        test('should output the log group name', () => {
+            template.hasOutput('LogGroupName', {
+                Description: 'Name of the CloudWatch Log Group being archived',
+            });
+        });
+
+        test('should output the archive function name', () => {
+            template.hasOutput('ArchiveFunctionName', {
+                Description: 'Name of the archive Lambda function',
             });
         });
     });

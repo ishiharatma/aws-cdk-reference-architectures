@@ -45,6 +45,26 @@ const devParams: EnvParams = {
         logGroupName: '/aws/lambda/my-existing-function',
         filterPattern: '',
     },
+
+    // Pattern B – Scheduled export task (Stack 4)
+    exportTask: {
+        scheduleExpression: 'rate(1 day)',
+        s3Prefix: 'exports',
+        logGroupNameSuffix: 'app-export',
+        retention: logs.RetentionDays.ONE_WEEK,
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(5),
+    },
+
+    // Pattern C – Lambda direct write (Stack 5)
+    lambdaArchive: {
+        s3Prefix: 'subscriptions',
+        logGroupNameSuffix: 'app-lambda',
+        retention: logs.RetentionDays.ONE_WEEK,
+        filterPattern: '',
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(1),
+    },
 };
 
 params[Environment.DEVELOPMENT] = devParams;
