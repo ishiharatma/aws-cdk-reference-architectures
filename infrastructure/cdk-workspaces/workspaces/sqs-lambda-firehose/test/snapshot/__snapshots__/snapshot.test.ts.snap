@@ -1,0 +1,1408 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "FirehoseDeliveryStreamName": {
+      "Description": "Name of the Firehose Delivery Stream",
+      "Value": {
+        "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+      },
+    },
+    "LambdaFunctionName": {
+      "Description": "Name of the Lambda Function",
+      "Value": {
+        "Ref": "SqsFirehoseFunction6BB7D90D",
+      },
+    },
+    "S3BucketName": {
+      "Description": "Name of the S3 Bucket",
+      "Value": {
+        "Ref": "SqsFirehoseBucket0025AD81",
+      },
+    },
+    "SqsQueueFailureUrl": {
+      "Description": "URL of the SQS Failure Queue",
+      "Value": {
+        "Ref": "SqsFirehoseQueueFailure7F32661B",
+      },
+    },
+    "SqsQueueUrl": {
+      "Description": "URL of the SQS Queue",
+      "Value": {
+        "Ref": "SqsFirehoseQueue9D6A95CB",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "SqsFirehoseBucket0025AD81",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FirehoseDeliveryToS3DataFreshnessAlarm36E8AB1D": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm when Firehose falls behind in delivering data to S3",
+        "AlarmName": "FirehoseDeliveryToS3DataFreshnessAlarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "DeliveryStreamName",
+            "Value": {
+              "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "DeliveryToS3.DataFreshness",
+        "Namespace": "AWS/Firehose",
+        "Period": 60,
+        "Statistic": "Average",
+        "Threshold": 900,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FirehoseIncomingBytesRateAlarmAE75D0F4": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm if Incoming Bytes Per Second rate is 80% of the current quota limit",
+        "AlarmName": {
+          "Fn::Join": [
+            "",
+            [
+              "HighIncomingBytesPerSecondAlert-",
+              {
+                "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+              },
+            ],
+          ],
+        },
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 1,
+        "Metrics": [
+          {
+            "Expression": "100*(m1/300/m2)",
+            "Id": "expr_1",
+            "Label": "Percentage of incoming Bytes per second quota used",
+            "ReturnData": true,
+          },
+          {
+            "Id": "m1",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "IncomingBytes",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Sum",
+            },
+            "ReturnData": false,
+          },
+          {
+            "Id": "m2",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "BytesPerSecondLimit",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Minimum",
+            },
+            "ReturnData": false,
+          },
+        ],
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FirehoseIncomingPutRequestsRateAlarmFF7E232E": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm if incoming put requests per second rate is 80% of the current quota limit",
+        "AlarmName": {
+          "Fn::Join": [
+            "",
+            [
+              "HighIncomingPutRequestsPerSecondAlert-",
+              {
+                "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+              },
+            ],
+          ],
+        },
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 1,
+        "Metrics": [
+          {
+            "Expression": "100*(m1/300/m2)",
+            "Id": "expr_1",
+            "Label": "Percentage of incoming put requests quota used",
+            "ReturnData": true,
+          },
+          {
+            "Id": "m1",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "IncomingPutRequests",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Sum",
+            },
+            "ReturnData": false,
+          },
+          {
+            "Id": "m2",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "PutRequestsPerSecondLimit",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Minimum",
+            },
+            "ReturnData": false,
+          },
+        ],
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FirehoseIncomingRecordsRateAlarm940210C3": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm if Incoming Records Per Second rate is 80% of the current quota limit",
+        "AlarmName": {
+          "Fn::Join": [
+            "",
+            [
+              "HighIncomingRecordsPerSecondAlert-",
+              {
+                "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+              },
+            ],
+          ],
+        },
+        "ComparisonOperator": "GreaterThanThreshold",
+        "EvaluationPeriods": 1,
+        "Metrics": [
+          {
+            "Expression": "100*(m1/300/m2)",
+            "Id": "expr_1",
+            "Label": "Percentage of incoming records per second quota used",
+            "ReturnData": true,
+          },
+          {
+            "Id": "m1",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "IncomingRecords",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Sum",
+            },
+            "ReturnData": false,
+          },
+          {
+            "Id": "m2",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "DeliveryStreamName",
+                    "Value": {
+                      "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+                    },
+                  },
+                ],
+                "MetricName": "RecordsPerSecondLimit",
+                "Namespace": "AWS/Firehose",
+              },
+              "Period": 300,
+              "Stat": "Minimum",
+            },
+            "ReturnData": false,
+          },
+        ],
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FirehoseRoleAA67C190": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "firehose.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "s3:AbortMultipartUpload",
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:ListBucketMultipartUploads",
+                    "s3:ListMultipartUploadParts",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "SqsFirehoseBucket0025AD81",
+                        "Arn",
+                      ],
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "SqsFirehoseBucket0025AD81",
+                              "Arn",
+                            ],
+                          },
+                          "/*",
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "AllowPutToS3",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FirehoseRoleDefaultPolicyF034DFF7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SqsFirehoseBucket0025AD81",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SqsFirehoseBucket0025AD81",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseDeliveryStreamLogGroupD1A2F510",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "FirehoseRoleDefaultPolicyF034DFF7",
+        "Roles": [
+          {
+            "Ref": "FirehoseRoleAA67C190",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "FirehoseThrottledRecordsAlarm97DBD0D1": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm when Firehose has throttled records",
+        "AlarmName": "FirehoseThrottledRecordsAlarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "DeliveryStreamName",
+            "Value": {
+              "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ThrottledRecords",
+        "Namespace": "AWS/Firehose",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "SqsApproximateAgeOfOldestMessage686955FE": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm when the oldest message in the SQS Queue is old",
+        "AlarmName": "SqsApproximateAgeOfOldestMessageAlarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "SqsFirehoseQueue9D6A95CB",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateAgeOfOldestMessage",
+        "Namespace": "AWS/SQS",
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 300,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "SqsDlqApproximateNumberOfMessagesC285C84B": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm when there are messages in the SQS Dead-letter Queue",
+        "AlarmName": "SqsDlqApproximateNumberOfMessagesAlarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "SqsFirehoseDeadLetterQueue74DF8C87",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "SqsFirehoseBucket0025AD81": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "MoveToGlacierAfter90Days",
+              "Status": "Enabled",
+              "Transitions": [
+                {
+                  "StorageClass": "GLACIER",
+                  "TransitionInDays": 90,
+                },
+              ],
+            },
+            {
+              "ExpirationInDays": 365,
+              "Id": "ExpireAfter365Days",
+              "Status": "Enabled",
+            },
+            {
+              "Id": "ExpireNonCurrentVersionsAfter90Days",
+              "NoncurrentVersionExpiration": {
+                "NewerNoncurrentVersions": 3,
+                "NoncurrentDays": 90,
+              },
+              "Status": "Enabled",
+            },
+            {
+              "Id": "NonCurrentVersionTransitionToIAAfter30Days",
+              "NoncurrentVersionTransitions": [
+                {
+                  "StorageClass": "STANDARD_IA",
+                  "TransitionInDays": 30,
+                },
+              ],
+              "Status": "Enabled",
+            },
+            {
+              "Id": "CurrentVersionTransitionToIAAfter60Days",
+              "Status": "Enabled",
+              "Transitions": [
+                {
+                  "StorageClass": "STANDARD_IA",
+                  "TransitionInDays": 60,
+                },
+              ],
+            },
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUploadsAfter7Days",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseBucketAutoDeleteObjectsCustomResourceCBB51235": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "SqsFirehoseBucketPolicy7CA9F590",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "SqsFirehoseBucket0025AD81",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseBucketPolicy7CA9F590": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "SqsFirehoseBucket0025AD81",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SqsFirehoseBucket0025AD81",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SqsFirehoseBucket0025AD81",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SqsFirehoseBucket0025AD81",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SqsFirehoseBucket0025AD81",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "SqsFirehoseDeadLetterQueue74DF8C87": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseDeadLetterQueuePolicyED1F585A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseDeadLetterQueue74DF8C87",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "SqsFirehoseDeadLetterQueue74DF8C87",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "SqsFirehoseDeliveryStreamF0DCD622": {
+      "DependsOn": [
+        "FirehoseRoleDefaultPolicyF034DFF7",
+      ],
+      "Properties": {
+        "DeliveryStreamEncryptionConfigurationInput": {
+          "KeyType": "AWS_OWNED_CMK",
+        },
+        "DeliveryStreamType": "DirectPut",
+        "ExtendedS3DestinationConfiguration": {
+          "BucketARN": {
+            "Fn::GetAtt": [
+              "SqsFirehoseBucket0025AD81",
+              "Arn",
+            ],
+          },
+          "BufferingHints": {
+            "IntervalInSeconds": 60,
+            "SizeInMBs": 1,
+          },
+          "CloudWatchLoggingOptions": {
+            "Enabled": true,
+            "LogGroupName": {
+              "Ref": "SqsFirehoseDeliveryStreamLogGroupD1A2F510",
+            },
+            "LogStreamName": {
+              "Ref": "SqsFirehoseDeliveryStreamLogGroupS3Destination708042D1",
+            },
+          },
+          "CustomTimeZone": "Asia/Tokyo",
+          "ErrorOutputPrefix": "!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/",
+          "Prefix": "!{timestamp:yyyy/MM/dd}/",
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::KinesisFirehose::DeliveryStream",
+    },
+    "SqsFirehoseDeliveryStreamLogGroupD1A2F510": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 731,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "SqsFirehoseDeliveryStreamLogGroupS3Destination708042D1": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "LogGroupName": {
+          "Ref": "SqsFirehoseDeliveryStreamLogGroupD1A2F510",
+        },
+      },
+      "Type": "AWS::Logs::LogStream",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "SqsFirehoseErrorNotificationTopic1EBC3D7C": {
+      "Properties": {
+        "DisplayName": "TestProject-test-sqs-firehose-error-notification-topic",
+        "TopicName": "TestProject-test-sqs-firehose-error-notification-topic",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "SqsFirehoseErrorNotificationTopicPolicy6D7EC4A8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "SqsFirehoseFunction6BB7D90D": {
+      "DependsOn": [
+        "SqsFirehoseFunctionServiceRoleDefaultPolicy788CE3BA",
+        "SqsFirehoseFunctionServiceRoleCADAA3E0",
+      ],
+      "Properties": {
+        "Architectures": [
+          "x86_64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "06fb9ff6005fb1b5af2e359fa086c9f42638cd91cca6a2f0b647022e6a78f0d4.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ENVIRONMENT": "test",
+            "FIREHOSE_DELIVERY_STREAM_NAME": {
+              "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+            },
+            "POWERTOOLS_METRICS_NAMESPACE": "TestProject",
+            "POWERTOOLS_SERVICE_NAME": "sqs-firehose-test",
+            "PROJECT": "TestProject",
+          },
+        },
+        "EphemeralStorage": {
+          "Size": 512,
+        },
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "DEBUG",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "SqsFirehoseFunctionLogGroup4FAE98EE",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "SqsFirehoseFunctionServiceRoleCADAA3E0",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 5,
+        "TracingConfig": {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SqsFirehoseFunctionFailure4F05D622": {
+      "DependsOn": [
+        "SqsFirehoseFunctionFailureServiceRoleDefaultPolicy945A40A9",
+        "SqsFirehoseFunctionFailureServiceRole280E358E",
+      ],
+      "Properties": {
+        "Architectures": [
+          "x86_64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "06fb9ff6005fb1b5af2e359fa086c9f42638cd91cca6a2f0b647022e6a78f0d4.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ENVIRONMENT": "test",
+            "FIREHOSE_DELIVERY_STREAM_NAME": {
+              "Ref": "SqsFirehoseDeliveryStreamF0DCD622",
+            },
+            "POWERTOOLS_METRICS_NAMESPACE": "TestProject",
+            "POWERTOOLS_SERVICE_NAME": "sqs-firehose-test",
+            "PROJECT": "TestProject",
+          },
+        },
+        "EphemeralStorage": {
+          "Size": 512,
+        },
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "DEBUG",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "SqsFirehoseFunctionFailureLogGroupB6D27EFB",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "SqsFirehoseFunctionFailureServiceRole280E358E",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 5,
+        "TracingConfig": {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SqsFirehoseFunctionFailureLogGroupB6D27EFB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseFunctionFailureServiceRole280E358E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SqsFirehoseFunctionFailureServiceRoleDefaultPolicy945A40A9": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseQueueFailure7F32661B",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseQueueFailure7F32661B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SqsFirehoseFunctionFailureServiceRoleDefaultPolicy945A40A9",
+        "Roles": [
+          {
+            "Ref": "SqsFirehoseFunctionFailureServiceRole280E358E",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SqsFirehoseFunctionFailureSqsEventSourceSqsLambdaFirehoseStackSqsFirehoseQueueFailureF5279CB2A7F28449": {
+      "Properties": {
+        "BatchSize": 5,
+        "Enabled": true,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "SqsFirehoseQueueFailure7F32661B",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "SqsFirehoseFunctionFailure4F05D622",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "MaximumBatchingWindowInSeconds": 60,
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "SqsFirehoseFunctionLogGroup4FAE98EE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseFunctionServiceRoleCADAA3E0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SqsFirehoseFunctionServiceRoleDefaultPolicy788CE3BA": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseQueue9D6A95CB",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseDeliveryStreamF0DCD622",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SqsFirehoseFunctionServiceRoleDefaultPolicy788CE3BA",
+        "Roles": [
+          {
+            "Ref": "SqsFirehoseFunctionServiceRoleCADAA3E0",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SqsFirehoseFunctionSqsEventSourceSqsLambdaFirehoseStackSqsFirehoseQueue43C633D16A125D57": {
+      "Properties": {
+        "BatchSize": 5,
+        "Enabled": true,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "SqsFirehoseQueue9D6A95CB",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "SqsFirehoseFunction6BB7D90D",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "MaximumBatchingWindowInSeconds": 60,
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "SqsFirehoseQueue9D6A95CB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DelaySeconds": 0,
+        "MessageRetentionPeriod": 345600,
+        "ReceiveMessageWaitTimeSeconds": 20,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "SqsFirehoseDeadLetterQueue74DF8C87",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "SqsManagedSseEnabled": true,
+        "VisibilityTimeout": 30,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseQueueFailure7F32661B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DelaySeconds": 0,
+        "MessageRetentionPeriod": 345600,
+        "ReceiveMessageWaitTimeSeconds": 20,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "SqsFirehoseDeadLetterQueue74DF8C87",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "SqsManagedSseEnabled": true,
+        "VisibilityTimeout": 30,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsFirehoseQueueFailurePolicyA384C65B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseQueueFailure7F32661B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "SqsFirehoseQueueFailure7F32661B",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "SqsFirehoseQueuePolicyC463E600": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SqsFirehoseQueue9D6A95CB",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "SqsFirehoseQueue9D6A95CB",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "SqsNumberOfEmptyReceives31C68016": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "SqsFirehoseErrorNotificationTopic1EBC3D7C",
+          },
+        ],
+        "AlarmDescription": "Alarm when there are many empty receives in the SQS Queue",
+        "AlarmName": "SqsNumberOfEmptyReceivesAlarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "SqsFirehoseQueue9D6A95CB",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "NumberOfEmptyReceives",
+        "Namespace": "AWS/SQS",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 100,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 8,
+  "AWS::IAM::Policy": 3,
+  "AWS::IAM::Role": 4,
+  "AWS::KinesisFirehose::DeliveryStream": 1,
+  "AWS::Lambda::EventSourceMapping": 2,
+  "AWS::Lambda::Function": 3,
+  "AWS::Logs::LogGroup": 3,
+  "AWS::Logs::LogStream": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::SQS::Queue": 3,
+  "AWS::SQS::QueuePolicy": 3,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;

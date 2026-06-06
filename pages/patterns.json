@@ -1,0 +1,115 @@
+[
+  {
+    "id": "sqs-lambda-firehose",
+    "title": "SQS to Lambda to Kinesis Firehose",
+    "description": "Process messages from SQS queue using Lambda function and stream to Kinesis Firehose for data lake storage.",
+    "image": "sqs-lambda-firehose/overview.png",
+    "tags": ["CDK", "TypeScript"],
+    "link": "sqs-lambda-firehose",
+    "difficulty": "intermediate",
+    "date": "2026-01-26",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-007-sqs-lambda-firehose-building-event-driven-data-pipelines-2ki8"
+    }
+  },
+  {
+    "id": "vpc-basics",
+    "title": "VPC Basics with CDK",
+    "description": "Create a basic VPC infrastructure with public and private subnets using AWS CDK.",
+    "image": "vpc-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "vpc-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-21",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4a43"
+    }
+  },
+  {
+    "id": "vpc-peering",
+    "title": "VPC Peering Connection",
+    "description": "Establish VPC peering connection between two VPCs for private network communication.",
+    "image": "vpc-peering/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "vpc-peering",
+    "difficulty": "intermediate",
+    "date": "2025-12-31",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-006-vpc-peering-cross-account-network-integration-and-dns-546"
+    }
+  },
+  {
+    "id": "s3-basics",
+    "title": "S3 Basics with CDK",
+    "description": "Create and configure S3 buckets with various settings using AWS CDK.",
+    "image": "s3-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Storage"],
+    "link": "s3-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-07",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-001-s3-bucket-fundamentals-from-default-settings-to-practical-1hmd"
+    }
+  },
+  {
+    "id": "iam-basics",
+    "title": "IAM Basics with CDK",
+    "description": "Create IAM roles, policies, and users with AWS CDK following best practices.",
+    "image": "iam-basics/overview.png",
+    "tags": ["CDK", "TypeScript", "Security"],
+    "link": "iam-basics",
+    "difficulty": "beginner",
+    "date": "2025-12-09",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-002-iam-basics-users-roles-and-secure-password-management-1npa"
+    }
+  },
+  {
+    "id": "vpc-natinstance-v2",
+    "title": "VPC with NAT Instance",
+    "description": "Create VPC with NAT instance for cost-effective internet access from private subnets.",
+    "image": "vpc-natinstance-v2/overview.png",
+    "tags": ["CDK", "TypeScript", "Networking"],
+    "link": "vpc-natinstance-v2",
+    "difficulty": "intermediate",
+    "date": "2025-12-24",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-004-nat-instance-v2-cost-effective-nat-with-automated-scheduling-49li"
+    }
+  },
+  {
+    "id": "cdk-parameters",
+    "title": "CDK Parameters Best Practices",
+    "description": "Learn how to manage parameters and configurations in AWS CDK applications.",
+    "image": "cdk-parameters/overview.png",
+    "tags": ["CDK", "TypeScript", "Best Practices"],
+    "link": "cdk-parameters",
+    "difficulty": "beginner",
+    "date": "2025-12-25",
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-005-cdk-parameters-managing-parameters-with-typescript-vs-cdkjson-12b9"
+    }
+  },
+  {
+    "id": "ecs-fargate-alb",
+    "title": "ECS Fargate with ALB",
+    "description": "Build a production-ready container application platform combining ECS Fargate and Application Load Balancer (ALB) using AWS CDK.",
+    "image": "ecs-fargate-alb/overview.png",
+    "tags": ["CDK", "TypeScript", "ECS", "Fargate", "ALB"],
+    "link": "ecs-fargate-alb",
+    "difficulty": "intermediate",
+    "date": "2026-04-20",
+    "articles": {}
+  },
+  {
+    "id": "ec2-advanced",
+    "title": "EC2 Advanced Patterns",
+    "description": "Four EC2 deployment patterns using AWS CDK: Single Instance, Auto-Recovery, ASG Always-1, and ASG Multi-AZ with ALB. Covers IMDSv2, SSM Session Manager access, CloudWatch alarms, and operational notifications.",
+    "image": "ec2-advanced/overview.png",
+    "tags": ["CDK", "TypeScript", "EC2", "ASG", "ALB"],
+    "link": "ec2-advanced",
+    "difficulty": "advanced",
+    "date": "2026-05-16",
+    "articles": {}
+  }
+]
