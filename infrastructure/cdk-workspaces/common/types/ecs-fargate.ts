@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { startstopSchedulerConfig, pathPrefix} from './common';
+import { CronExpression } from '../types'
 
 // see: https://gallery.ecr.aws/xray/aws-xray-daemon
 // Support EOL for AWS X-Ray Daemon Docker image
@@ -14,6 +15,9 @@ export const otelRepositoryUri = 'public.ecr.aws/aws-observability/aws-otel-coll
 export const otelTag = 'latest';
 
 // ECS Fargate configuration
+/**
+ *
+ */
 export interface EcsFargateConfig {
     /** Existing ECS Fargate Cluster ARN (if not creating a new one) */
     readonly existingClusterArn?: string;
@@ -22,6 +26,9 @@ export interface EcsFargateConfig {
 }
 
 // ECS Fargate creation configuration
+/**
+ *
+ */
 export interface EcsFargateCreateConfig {
     readonly desiredCount: number;
     readonly capacityProviderStrategies?: FargateCapacityProviderStrategies;
@@ -31,11 +38,17 @@ export interface EcsFargateCreateConfig {
     readonly enabledContainerInsight?: ecs.ContainerInsights;
 }
 
+/**
+ *
+ */
 export interface FargateCapacityProviderStrategies {
     readonly fargateWeight?: number;
     readonly fargateSpotWeight?: number;
 }
 
+/**
+ *
+ */
 export interface AutoScalingConfig {
     readonly minCapacity: number;
     readonly maxCapacity: number;
@@ -44,12 +57,18 @@ export interface AutoScalingConfig {
     readonly requestCountPerTarget?: number;
 }
 
+/**
+ *
+ */
 export interface taskDefinition {
     readonly cpu: number;
     readonly memoryLimitMiB: number;
     readonly containerDefinitions: Record<string, containerDefinition>;
 }
 
+/**
+ *
+ */
 export interface containerDefinition {
     /**
      * CPU units for the container
@@ -73,6 +92,9 @@ export interface containerDefinition {
     readonly enabledOtelSidecar?: boolean;
 }
 
+/**
+ *
+ */
 export interface healthCheck {
     readonly path: string;
     readonly interval?: cdk.Duration;
@@ -81,7 +103,29 @@ export interface healthCheck {
     readonly unhealthyThresholdCount?: number;
 }
 
+/**
+ *
+ */
 export interface albConditions {
     readonly pathPatterns?: pathPrefix[];
     readonly hostHeaders?: string[];
+}
+
+/**
+ * ECS Fargate 夜間スケールダウン スケジュール設定
+ *
+ * 業務時間外にタスク数を 0 にスケールダウンし、朝に元の台数に復帰させる。
+ * enableAutoScaling が true のときのみ有効（ScalableTarget が必要なため）。
+ */
+export interface EcsNightlySchedule {
+  /**
+   * タスク復帰スケジュール（Application Auto Scaling cron 式）
+   * @example "cron(0 0 ? * MON-FRI *)"  // 平日 00:00 UTC = 09:00 JST に復帰
+   */
+  readonly startSchedule: CronExpression;
+  /**
+   * タスク停止スケジュール（Application Auto Scaling cron 式）
+   * @example "cron(0 13 ? * MON-FRI *)"  // 平日 13:00 UTC = 22:00 JST に停止
+   */
+  readonly stopSchedule: CronExpression;
 }

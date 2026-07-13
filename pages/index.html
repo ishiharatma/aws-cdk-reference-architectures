@@ -13,6 +13,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://ishiharatma.github.io/favicon.ico">
     <title>AWS CDK Reference Architectures - Patterns</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -253,6 +254,53 @@
                 transform: translateY(0);
             }
         }
+    .header-nav { display: flex; align-items: center; gap: 4px; }
+    .header-nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #AAB7B8;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 5px 11px;
+      border-radius: 6px;
+      transition: color 0.18s, background-color 0.18s;
+      white-space: nowrap;
+    }
+    .header-nav-link:hover {
+      color: #FF9900;
+      background: rgba(255,153,0,0.12);
+      text-decoration: none;
+    }
+
+        /* ---- Footer ---- */
+    .site-footer {
+      background: #232F3E;
+      color: #AAB7B8;
+      padding: 1.1rem 0;
+      margin-top: auto;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .footer-links { display: flex; align-items: center; gap: 18px; }
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #AAB7B8;
+      font-size: 0.8rem;
+      text-decoration: none;
+      transition: color 0.18s;
+    }
+    .footer-link:hover { color: #FF9900; text-decoration: none; }
+    .footer-copyright { font-size: 0.75rem; color: #5d7278; }
+    .footer-sep { font-size: 0.75rem; color: #5d7278; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -263,12 +311,27 @@
                 <div>
                     <h1 class="text-3xl font-bold">AWS CDK Reference Architectures</h1>
                     <p class="text-gray-300 mt-2">Architecture Patterns</p>
-                </div>
-                <div>
-                    <a href="https://github.com/ishiharatma/aws-cdk-reference-architectures" target="_blank" class="bg-aws-orange hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition">
-                        GitHub
+                </div>                    
+                <nav class="header-nav" aria-label="外部リンク">
+                    <a href="https://github.com/ishiharatma/aws-cdk-reference-architectures"
+                    target="_blank" rel="noopener noreferrer"
+                    class="header-nav-link"
+                    aria-label="GitHubリポジトリ aws-cdk-reference-architectures">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    GitHub
                     </a>
-                </div>
+                    <a href="https://ishiharatma.github.io/"
+                    target="_blank" rel="noopener noreferrer"
+                    class="header-nav-link"
+                    aria-label="Portfolio">
+                    <img src="https://ishiharatma.github.io/favicon.ico"
+                        width="16" height="16" alt="" loading="lazy"
+                        style="border-radius:3px;opacity:0.75;">
+                    Portfolio
+                    </a>
+                </nav>
             </div>
         </div>
     </header>
@@ -317,10 +380,31 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-aws-squid text-white mt-12 py-8">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2026 AWS CDK Reference Architectures. All rights reserved.</p>
-            <p class="text-gray-400 mt-2">Built with AWS CDK and Tailwind CSS</p>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-inner">
+                <p class="footer-copyright mb-0">&copy; 2026 issy. All rights reserved.</p>
+                <span class="footer-sep">|</span>
+                <div class="footer-links">
+                    <a href="https://github.com/ishiharatma/aws-cdk-reference-architectures"
+                    target="_blank" rel="noopener noreferrer"
+                    class="footer-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    Github
+                    </a>
+                    <span class="footer-sep">|</span>
+                    <a href="https://ishiharatma.github.io/"
+                    target="_blank" rel="noopener noreferrer"
+                    class="footer-link">
+                    <img src="https://ishiharatma.github.io/favicon.ico"
+                        width="14" height="14" alt="" loading="lazy"
+                        style="border-radius:2px;opacity:0.7;">
+                    Portfolio
+                    </a>
+                </div>
+            </div>
         </div>
     </footer>
 

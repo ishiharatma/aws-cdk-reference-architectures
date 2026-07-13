@@ -4,3 +4,5 @@ export * from './rds';
 export * from './ecr';
 export * from './ecs-fargate';
 export * from './alb';
+export * from './s3';
+export * from './codecommit';

@@ -2,6 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { startstopSchedulerConfig } from './common';
 
 // NAT type
+/**
+ *
+ */
 export enum NatType {
     /**
    * NAT Gateway
@@ -22,6 +25,9 @@ export enum NatType {
 }
 
 // VPC configuration
+/**
+ *
+ */
 export interface VpcConfig {
     /** Existing VPC ID (if not creating a new one) */
     readonly existingVpcId?: string;
@@ -30,9 +36,26 @@ export interface VpcConfig {
 }
 
 // VPC creation configuration
+/**
+ *
+ */
 export type ipv4CidrBlock = `${number}.${number}.${number}.${number}/${number}`;
+/**
+ *
+ */
 export type ipv6CidrBlock = `${string}/${number}`;
 
+/**
+ * EventBridge cron 式型
+ * `cron(...)` の形式のみ受け付ける。括弧内は任意文字列。
+ * @example "cron(0 18 ? * MON-FRI *)"
+ * @example "cron(0 9 * * ? *)"
+ * @see https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#cron-based
+ */
+export type CronExpression = `cron(${string})`;
+/**
+ *
+ */
 export interface VpcCreateConfig {
     /** VPC name */
     readonly vpcName: string;
@@ -119,6 +142,9 @@ export interface VpcCreateConfig {
     readonly customNatConfig?: CustomNatInstanceConfig;
 }
 
+/**
+ *
+ */
 export interface VpcSubnets {
     readonly subnetType: cdk.aws_ec2.SubnetType;
     readonly cidrMask: number;
@@ -138,6 +164,9 @@ export interface GatewayVpcEndpointConfig {
     readonly subnets: cdk.aws_ec2.SubnetSelection[];
 }
 
+/**
+ *
+ */
 export interface InterfaceVpcEndpointConfig {
     readonly service: cdk.aws_ec2.InterfaceVpcEndpointService;
     readonly subnets: cdk.aws_ec2.SubnetSelection;
