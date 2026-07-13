@@ -62,6 +62,30 @@ export interface InfraPipelineConstructProps {
    * @default ['infra/']
   */
   readonly targetDirs?: string[];
+  /**
+   * Repository name for the infra CDK repository (default: <project>-infra)
+   * @default <project>-infra
+   */
+  readonly repositoryName?: string;
+  /**
+   * BuildSpec path for the infra-test CodeBuild project.
+   * If not specified, the default is `infra` in the <project>-infra repository.
+   * This file should contain the build commands for linting, synthesizing, and testing the CDK app.
+   * @default `infra`
+   */
+  readonly buildSpecPath?: string;
+  /**
+   * BuildSpec path for the infra-test CodeBuild project.
+   * If not specified, the default is `buildspec-ci.yml` in the <project>-infra repository.
+   * This file should contain the build commands for linting, synthesizing, and testing the CDK app.
+   * @default `buildspec-ci.yml`
+   */
+  readonly buildSpecFileName?: string;
+
+  /**
+   * IAM role for the CodeCommit source action when the repository is in a different account.
+   */
+  readonly sourceActionRole?: iam.IRole;
 }
 
 /**
@@ -95,7 +119,16 @@ export class InfraPipelineConstruct extends Construct {
     const stack = cdk.Stack.of(this);
     const actualCodecommitAccountId = codecommitAccountId ?? stack.account;
     const isCrossAccount = actualCodecommitAccountId !== stack.account;
-    const buildspecBasePath = 'infra';
+    const repositoryName = props.repositoryName ?? `${project}-infra`;
+    const buildspecBasePath = props.buildSpecPath ?? 'infra';
+    const buildspecFileName = props.buildSpecFileName ?? 'buildspec-ci.yml';
+
+    if (isCrossAccount && !props.sourceActionRole) {
+      throw new Error(
+        `Cross-account CodeCommit repository detected (account: ${actualCodecommitAccountId}). ` +
+        `Please specify the sourceActionRole property for the CodeCommit source action.`
+      );
+    }
 
     /* ─── Source artifact ─────────────────────────────────────*/
     const sourceOutput = new codepipeline.Artifact('SourceArtifact');
@@ -104,7 +137,7 @@ export class InfraPipelineConstruct extends Construct {
     const infraRepo = codecommit.Repository.fromRepositoryArn(
       this,
       'InfraRepo',
-      `arn:aws:codecommit:${stack.region}:${actualCodecommitAccountId}:${project}-infra`
+      `arn:aws:codecommit:${stack.region}:${actualCodecommitAccountId}:${repositoryName}`
     );
 
     /* ─── CodeBuild: infra-test ───────────────────────────────────────
@@ -118,7 +151,7 @@ export class InfraPipelineConstruct extends Construct {
     });
     const testProject = new codebuild.PipelineProject(this, 'TestProject', {
       projectName: `${project}-${environment}-infra-test`,
-      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-ci.yml`),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/${buildspecFileName}`),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         environmentVariables: {
@@ -154,11 +187,7 @@ export class InfraPipelineConstruct extends Construct {
                * which suppresses auto-generation of the cross-account support stack. */
               trigger: codepipeline_actions.CodeCommitTrigger.NONE,
               role: isCrossAccount
-                ? iam.Role.fromRoleArn(
-                    this,
-                    'SourceActionRole',
-                    `arn:aws:iam::${actualCodecommitAccountId}:role/${project}-pipeline-source-action-${stack.account}`
-                  )
+                ? props.sourceActionRole
                 : undefined,
             }),
           ],
@@ -209,7 +238,7 @@ export class InfraPipelineConstruct extends Construct {
       pathPrefixes: props.targetDirs ?? ['infra/'],
       logRetentionDays,
       crossAccountRoleArn: isCrossAccount
-        ? `arn:aws:iam::${actualCodecommitAccountId}:role/${project}-pipeline-source-action-${stack.account}`
+        ? props.sourceActionRole?.roleArn
         : undefined,
     });
   }

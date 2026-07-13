@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Construct } from 'constructs';
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
@@ -16,37 +16,37 @@ import { Environment } from "../parameters/environments";
  *
  */
 export interface CodeCommitConfig {
-    /** CodeCommit リポジトリが存在する AWS アカウント ID */
-    readonly codecommitAccountId: string;
-    /** CodeCommit リポジトリ名の配列 */
-    readonly repositories: string[];
+    /** AWS account ID where the CodeCommit repository lives */
+    readonly codecommitAccountId?: string;
+    /** Array of CodeCommit repository names */
+    readonly repositories?: string[];
 
-    /** パイプライン通知トピック ARN */
+    /** Pipeline notification topic ARN */
     readonly notificationTopicArn?: string;
-    /** ソースアクションに使用する IAM ロール ARN */
+    /** IAM role ARN used for the source action */
     readonly sourceRoleArn?: string;
-    /** パイプライン実行に使用する IAM ロール名 */
+    /** IAM role name used for pipeline execution */
     readonly pipelineRoleName?: string;
-    /** EventBridge でブランチプッシュを転送する先の定義 */
+    /** Definition of destinations to forward branch pushes to via EventBridge */
     readonly forwardTargets?: EventForwardTargetAccount[];
 }
 /**
- * CodeCommit アカウントから EventBridge でブランチプッシュを転送する先の定義
+ * Definition of a destination that branch pushes are forwarded to via EventBridge from the CodeCommit account
  */
 export interface EventForwardTargetAccount {
   /**
-   * 転送先環境識別子
-   * getBranchName() でブランチ名に変換し、EventBridge ルール命名にも使用する。
+   * Destination environment identifier.
+   * Converted to a branch name via getBranchName() and also used for EventBridge rule naming.
    */
   readonly environment: Environment;
-  /** 転送先 AWS アカウント ID */
+  /** Destination AWS account ID */
   readonly accountId: string;
 }
 
 /**
- * 環境識別子に対応するブランチ名を返す
- * @param environment - 環境識別子
- * @returns ブランチ名
+ * Returns the branch name corresponding to an environment identifier
+ * @param environment - Environment identifier
+ * @returns Branch name
  */
 export function getBranchName(environment: Environment): string {
   switch (environment) {
@@ -62,51 +62,51 @@ export function getBranchName(environment: Environment): string {
 }
 
 /**
- * パス変更検知トリガーを作成する（EventBridge → Lambda → CodePipeline）。
+ * Creates a path-change-detection trigger (EventBridge → Lambda → CodePipeline).
  *
- * CodeCommit の EventBridge イベントにはファイルパス情報が含まれないため、
- * Lambda が CodeCommit:GetDifferences で変更ファイルを検査し、
- * pathPrefixes に一致する変更があった場合のみ CodePipeline を起動する。
+ * CodeCommit EventBridge events don't include file path information, so a
+ * Lambda inspects the changed files via CodeCommit:GetDifferences and only
+ * starts the CodePipeline when a change matches one of the pathPrefixes.
  *
- * 同一アカウント・クロスアカウントのどちらでも使用できる。
- * 呼び出し元では CodeCommitSourceAction の trigger を NONE に設定すること。
+ * Works for both same-account and cross-account setups.
+ * Callers must set the CodeCommitSourceAction's trigger to NONE.
  *
- * @param scope - 親 Construct
- * @param id - Construct ID プレフィックス（例: 'InfraPathFilter'）
- * @param props - 設定
+ * @param scope - Parent Construct
+ * @param id - Construct ID prefix (e.g. 'InfraPathFilter')
+ * @param props - Configuration
  */
-export function createPathFilterTrigger(
+export function createPathFilterTrigger(this: any, 
   scope: Construct,
   id: string,
   props: {
-    /** EventBridge ルール名 */
+    /** EventBridge rule name */
     readonly ruleName: string;
-    /** Lambda 関数名 */
+    /** Lambda function name */
     readonly functionName: string;
-    /** トリガー対象 CodeCommit リポジトリ */
+    /** CodeCommit repository to trigger on */
     readonly repository: codecommit.IRepository;
-    /** 起動するパイプライン */
+    /** Pipeline to start */
     readonly pipeline: codepipeline.IPipeline;
-    /** トリガーするブランチ名 */
+    /** Branch name to trigger on */
     readonly branchName: string;
     /**
-     * 変更検知するパスプレフィックス一覧
-     * いずれかのプレフィックスに一致するファイルが変更された場合にパイプラインを起動する。
+     * List of path prefixes to detect changes for.
+     * The pipeline is started if any changed file matches one of these prefixes.
      */
     readonly pathPrefixes: string[];
-    /** Lambda ロググループの保持期間 */
+    /** Retention period for the Lambda log group */
     readonly logRetentionDays: logs.RetentionDays;
     /**
-     * クロスアカウント CodeCommit アクセス用 IAM ロール ARN。
-     * CodeCommit が別アカウントにある場合に指定する。
-     * Lambda はこのロールを Assume して GetDifferences/GetFolder を呼び出す。
-     * CommitConstruct が prod に作成する prs-pipeline-source-action-<devAccountId> ロールを指定すること。
+     * IAM role ARN for cross-account CodeCommit access.
+     * Specify this when CodeCommit lives in a different account.
+     * The Lambda assumes this role to call GetDifferences/GetFolder.
+     * Use the prs-pipeline-source-action-<devAccountId> role that CommitConstruct creates in prod.
      */
     readonly crossAccountRoleArn?: string;
     /**
-     * コミット時点での存在チェックを行うディレクトリパス（リポジトリルートからの相対パス）。
-     * 設定した場合、そのディレクトリが存在しなければパイプラインを起動しない。
-     * 例: "file-transfer/systems/csms"
+     * Directory path (relative to the repository root) whose existence is checked at commit time.
+     * If set, the pipeline is not started unless this directory exists.
+     * Example: "file-transfer/systems/csms"
      */
     readonly systemDirPath?: string;
     readonly logLevel?: lambda.ApplicationLogLevel;
@@ -114,21 +114,21 @@ export function createPathFilterTrigger(
 ): void {
   const stack = cdk.Stack.of(scope);
 
-  /* ── Lambda ロググループ ───────────────────────────────────────────*/
+  /* ── Lambda log group ───────────────────────────────────────────*/
   const logGroup = new logs.LogGroup(this, `${id}LogGroup`, {
     logGroupName: `/aws/lambda/${props.functionName}`,
     retention: props.logRetentionDays,
     removalPolicy: cdk.RemovalPolicy.DESTROY,
   });
 
-  /* ── パス変更検知 Lambda ──────────────────────────────────────────
-   * CodeCommit:GetDifferences でコミット差分を取得し、
-   * pathPrefixes に一致するファイルが含まれる場合のみパイプラインを起動する。
-   * ソース: infra/src/lambda/path-filter/index.py
+  /* ── Path-change-detection Lambda ──────────────────────────────────────────
+   * Gets the commit diff via CodeCommit:GetDifferences and starts the
+   * pipeline only if a changed file matches pathPrefixes.
+   * Source: infra/src/lambda/path-filter/index.py
    */
   const filterFn = new lambda.Function(this, `${id}Fn`, {
     functionName: props.functionName,
-    description: `${props.repository.repositoryName}/${props.branchName}が変更された場合に ${props.pipeline.pipelineName} をトリガーする Lambda`,
+    description: `Lambda that triggers ${props.pipeline.pipelineName} when ${props.repository.repositoryName}/${props.branchName} changes`,
     runtime: lambda.Runtime.PYTHON_3_13,
     handler: 'index.handler',
     code: lambda.Code.fromAsset(path.join(__dirname, '../../../src/lambda/path-filter')),
@@ -145,8 +145,8 @@ export function createPathFilterTrigger(
   });
 
   if (props.crossAccountRoleArn) {
-    /* クロスアカウントの場合: ロールを Assume して CodeCommit を呼び出す。
-     * Lambda 自身は GetDifferences を直接呼ばず、STS AssumeRole 経由でのみアクセスする。 */
+    /* Cross-account case: assume the role to call CodeCommit.
+     * The Lambda never calls GetDifferences directly; it only accesses it via STS AssumeRole. */
     filterFn.addToRolePolicy(
       new iam.PolicyStatement({
         sid: 'AllowAssumeCodeCommitRole',
@@ -156,7 +156,7 @@ export function createPathFilterTrigger(
       })
     );
   } else {
-    /* 同一アカウントの場合: 直接 GetDifferences/GetFolder を呼び出す。 */
+    /* Same-account case: call GetDifferences/GetFolder directly. */
     filterFn.addToRolePolicy(
       new iam.PolicyStatement({
         sid: 'AllowCodeCommitDiff',
@@ -193,7 +193,7 @@ export function createPathFilterTrigger(
     true
   );
 
-  /* ── EventBridge トリガールール ───────────────────────────────────*/
+  /* ── EventBridge trigger rule ───────────────────────────────────*/
   const rule = new events.Rule(this, `${id}TriggerRule`, {
     ruleName: props.ruleName,
     eventPattern: {

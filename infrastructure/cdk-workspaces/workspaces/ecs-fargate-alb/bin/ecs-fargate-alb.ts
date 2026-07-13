@@ -6,7 +6,7 @@ import { Environment } from "@common/parameters/environments";
 import { validateDeployment } from '@common/helpers/validate-deployment';
 import { getMyGlobalIpCidr } from "@common/helpers/get-my-ip";
 import { params } from 'parameters/environments';
-import 'parameters'
+import { codecommitParams } from 'parameters';
 
 const app = new cdk.App();
 
@@ -47,6 +47,7 @@ const stage = new EcsFargateAlbStage(app, `EcsFargateAlb${pascalCase(envName)}`,
   terminationProtection: isTerminationProtection, // Enabling deletion protection
   isAutoDeleteObject: isAutoDeleteObject,
   params: envParams,
+  codecommitParams: codecommitParams,
   allowedIpsforAlb: [getMyGlobalIpCidr()],
 });
 

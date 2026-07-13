@@ -39,7 +39,8 @@
     "change-case-commonjs": "^5.4.4",
     "cdk-ecr-deployment": "^4.1.0",
     "deploy-time-build": "^0.4.8",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "yaml": "^2.8.2"
   },
   "private": "true",
   "workspaces": [

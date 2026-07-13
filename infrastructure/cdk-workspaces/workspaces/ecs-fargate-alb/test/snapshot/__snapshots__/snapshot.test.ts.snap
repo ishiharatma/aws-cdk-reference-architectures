@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Stack Snapshot Tests BaseStack Snapshot should match snapshot 1`] = `
 {
@@ -1562,6 +1562,18 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
                 "Name": "ENVIRONMENT",
                 "Value": "test",
               },
+              {
+                "Name": "OTEL_EXPORTER_OTLP_ENDPOINT",
+                "Value": "http://localhost:4317",
+              },
+              {
+                "Name": "OTEL_EXPORTER_OTLP_PROTOCOL",
+                "Value": "grpc",
+              },
+              {
+                "Name": "OTEL_SERVICE_NAME",
+                "Value": "backend",
+              },
             ],
             "Essential": true,
             "Image": {
@@ -1576,7 +1588,7 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
                   {
                     "Fn::ImportValue": "Ecr:ExportsOutputRefEcrBackend5381CB878086E981",
                   },
-                  ":latest",
+                  ":snapshot-test",
                 ],
               ],
             },
@@ -1602,7 +1614,76 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
           },
           {
             "Cpu": 32,
+            "Environment": [
+              {
+                "Name": "AOT_CONFIG_CONTENT",
+                "Value": "extensions:
+  health_check: {}
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  memory_limiter:
+    limit_mib: 100
+    check_interval: 5s
+  batch:
+    timeout: 5s
+    send_batch_size: 256
+  resource:
+    attributes:
+      - key: service.name
+        value: backend
+        action: upsert
+      - key: deployment.environment
+        value: test
+        action: upsert
+exporters:
+  awsxray:
+    region: ap-northeast-1
+  awsemf:
+    region: ap-northeast-1
+    namespace: backend
+    log_group_name: /ecs/testproject/otel-metrics
+service:
+  extensions:
+    - health_check
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - batch
+        - resource
+      exporters:
+        - awsxray
+    metrics:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - batch
+        - resource
+      exporters:
+        - awsemf
+",
+              },
+            ],
             "Essential": false,
+            "HealthCheck": {
+              "Command": [
+                "CMD-SHELL",
+                "curl -f http://localhost:13133/ || exit 1",
+              ],
+              "Interval": 30,
+              "Retries": 3,
+              "StartPeriod": 10,
+              "Timeout": 5,
+            },
             "Image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
             "LogConfiguration": {
               "LogDriver": "awslogs",
@@ -1618,8 +1699,12 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
             "Name": "adot-collector",
             "PortMappings": [
               {
-                "ContainerPort": 2000,
-                "Protocol": "udp",
+                "ContainerPort": 4317,
+                "Protocol": "tcp",
+              },
+              {
+                "ContainerPort": 4318,
+                "Protocol": "tcp",
               },
             ],
             "StopTimeout": 100,

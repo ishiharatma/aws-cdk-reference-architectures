@@ -54,20 +54,27 @@ ecs-fargate-alb/
 │   ├── stacks/
 │   │   ├── base-stack.ts                   # VPC and Security Groups
 │   │   ├── ecr-stack.ts                    # ECR repositories
-│   │   └── ecs-fargate-alb-stack.ts        # ECS Fargate and ALB
+│   │   ├── ecs-fargate-alb-stack.ts        # ECS Fargate and ALB
+│   │   └── cicd-stack.ts                   # CodePipeline for infra CI/CD
 │   └── stages/
 │       └── ecs-fargate-alb-stage.ts        # Deployment orchestration
 ├── parameters/
 │   ├── environments.ts                     # Environment type definitions
-│   └── dev-params.ts                       # Development environment parameters
-├── src/
-│   └── (Sample application code in backend/example-nodejs-api)
+│   ├── dev-params.ts                       # Development environment parameters
+│   ├── shared-params.ts                    # Shared parameters (e.g. CodeCommit)
+│   └── index.ts                            # Parameter exports
 └── test/
     ├── snapshot/
     │   └── snapshot.test.ts                # Snapshot test
-    └── unit/
-        └── ecs-fargate-alb.test.ts         # Unit tests
+    ├── unit/
+    │   ├── base-stack.test.ts              # BaseStack unit tests
+    │   ├── ecr-stack.test.ts               # EcrStack unit tests
+    │   └── ecs-fargate-alb-stack.test.ts   # EcsFargateAlbStack unit tests
+    └── compliance/
+        └── cdk-nag.test.ts                 # cdk-nag compliance checks
 ```
+
+> Sample application code (used by the ECR bootstrap build) lives outside this workspace, in `backend/example-nodejs-api`.
 
 ---
 
@@ -105,7 +112,7 @@ Observability (X-Ray, CloudWatch)
 
 ### 1. Multi-Stack Architecture
 
-The architecture is organized into three separate stacks for better modularity and deployment flexibility:
+The architecture is organized into four separate stacks for better modularity and deployment flexibility:
 
 ```typescript
 // Base Stack - VPC and Security Groups
@@ -128,6 +135,11 @@ const ecsFargateStack = new EcsFargateAlbStack(this, 'EcsFargateAlb', {
   ecsSecurityGroups: [baseStack.ecsSecurityGroup],
   albSecurityGroup: baseStack.albSecurityGroup,
   repositories: ecrStack.repositories,
+});
+
+// CICD Stack - CodePipeline that redeploys this infrastructure on future commits
+const cicdStack = new CICDStack(this, 'Cicd', {
+  codecommitAccountId: codecommitParams.codecommitAccountId,
 });
 ```
 
@@ -248,17 +260,23 @@ startstopSchedulerConfig: {
 Optional HTTPS support with automatic certificate management:
 
 ```typescript
-// With HTTPS (requires hostedZoneId)
-hostedZoneId: 'Z0123456789ABCDEFGHIJ'  // Route53 Hosted Zone ID
+// With HTTPS (hostedZoneId and domainName must be set together)
+hostedZoneId: 'Z0123456789ABCDEFGHIJ',  // Route53 Hosted Zone ID
+domainName: 'your-project.dev.example.com',
 
 // HTTP only (for testing)
 // hostedZoneId: undefined
+// domainName: undefined
 ```
 
-When `hostedZoneId` is provided:
-- ACM certificate is automatically created
-- HTTP (port 80) redirects to HTTPS (port 443)
+When `hostedZoneId`/`domainName` are provided:
+- ACM certificate is automatically created (DNS validation via the hosted zone)
+- ALB listens on HTTPS (443); the HTTP (80) listener redirects to HTTPS
 - Recommended SSL policy applied
+
+> **Note**: `hostedZoneId` and `domainName` must always be set together — `EcsFargateAlbStack` throws a validation error if only one is provided.
+
+> **Note**: When `allowedIpsforAlb` is set, the ALB security group only opens the port actually in use (443 for HTTPS, 80 for HTTP-only) to those IPs — port 80 is not opened alongside 443. This means the HTTP→HTTPS redirect listener is only reachable when the ALB is fully open (no IP restriction). With IP restriction and HTTPS enabled, connect directly via HTTPS.
 
 <details>
 <summary>📝 ALB Security Group Configuration</summary>
@@ -335,7 +353,8 @@ const devParams: EnvParams = {
   vpcConfig: { /* VPC settings */ },
   ecsFargateConfig: { /* ECS settings */ },
   ecrConfig: { /* ECR settings */ },
-  hostedZoneId: 'Z0123...',  // Optional: for HTTPS
+  hostedZoneId: 'Z0123...',  // Optional: for HTTPS (must be set together with domainName)
+  domainName: 'your-project.dev.example.com',  // Optional: for HTTPS
 };
 ```
 
@@ -661,7 +680,7 @@ Manual cleanup may be required for:
 
 Key learnings from this pattern:
 
-1. **Multi-Stack Architecture**: Separation of VPC, ECR, and ECS for modularity
+1. **Multi-Stack Architecture**: Separation of VPC, ECR, ECS/ALB, and CI/CD (CodePipeline) for modularity
 2. **Bootstrap vs CI/CD Mode**: Flexibility in deployment approach
 3. **Cost Optimization**: Fargate Spot + NAT Instance + Schedulers
 4. **Security-First**: Network isolation, security groups, HTTPS

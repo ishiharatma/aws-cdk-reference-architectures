@@ -56,12 +56,6 @@ export class EcrStack extends cdk.Stack {
         imageTag: commitHash,
       });
       this.repositories[key] = ecr;
-      /*
-      // Update task definition with ECR repository name
-      taskDefinitions.forEach((taskDef) => {
-        taskDef.containerDefinitions[key].repositoryName = ecr.ecr.repositoryName;
-      });
-      */
     });
   }
 }

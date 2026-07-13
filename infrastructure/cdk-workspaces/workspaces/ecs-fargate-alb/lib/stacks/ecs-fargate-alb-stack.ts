@@ -26,6 +26,7 @@ export interface StackProps extends cdk.StackProps {
     readonly commitHash: string;
     readonly isALBOpen: boolean;
     readonly hostedZoneId?: string;
+    readonly domainName?: string;
 }
 export class EcsFargateAlbStack extends cdk.Stack {
   public readonly loadBalancer: elbv2.IApplicationLoadBalancer;
@@ -34,12 +35,19 @@ export class EcsFargateAlbStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
+    if (props.hostedZoneId && !props.domainName) {
+      throw new Error("If hostedZoneId is provided, domainName must also be provided for ALB SSL certificate creation.");
+    }
+
+    if (props.domainName && !props.hostedZoneId) {
+      throw new Error("If domainName is provided, hostedZoneId must also be provided for ALB SSL certificate creation.");
+    }
+
     // Create ACM for ALB SSL certificate if certificateArn is not provided
     let certificate;
-    if (props.hostedZoneId) {
-      const domainName = `${props.project}.${props.environment}.example.com`; // Adjust domain as needed
+    if (props.hostedZoneId && props.domainName) {
       certificate = new acm.Certificate(this, 'AlbCertificate', {
-        domainName,
+        domainName: props.domainName,
         validation: acm.CertificateValidation.fromDns(),
       });
       new cdk.CfnOutput(this, 'CertificateArn', {
@@ -57,53 +65,7 @@ export class EcsFargateAlbStack extends cdk.Stack {
       certificate,
     });
     this.loadBalancer = alb.alb;
-/*
-    // Create ECR Construct
-    // Bootstrap mode: Build and push initial Docker image from CDK
-    // After initial deployment, CI/CD pipeline handles image deployment
-    const isBootstrapMode = process.env.CDK_ECR_BOOTSTRAP === 'true';
 
-    if (isBootstrapMode) {
-      console.log('🚀 Bootstrap mode enabled: CDK will build and push Docker images');
-    } else {
-      console.log('📦 Normal mode: Expecting images to be pushed by CI/CD pipeline');
-    }
-
-    const commitHash = process.env.COMMIT_HASH || 'latest';
-    const repositories: Record<string, EcrConstruct> = {};
-
-    // Validate ECR configuration before creating resources
-    const ecrKeys = Object.keys(props.config.ecrConfig);
-    const taskDefinitions = props.config.ecsFargateConfig.createConfig?.taskDefinition ?? [];
-    
-    // Validate all container definitions exist
-    taskDefinitions.forEach((taskDef) => {
-      ecrKeys.forEach((key) => {
-        if (!taskDef.containerDefinitions.hasOwnProperty(key)) {
-          throw new Error(
-            `Container definition for ECR key '${key}' not found in task definition. ` +
-            `Available containers: ${Object.keys(taskDef.containerDefinitions).join(', ')}`
-          );
-        }
-      });
-    });
-
-    // Create ECR repositories and update container definitions
-    Object.keys(props.config.ecrConfig).forEach((key) => {
-      const ecr = new EcrConstruct(this, `Ecr${pascalCase(key)}`, {
-        project: props.project,
-        environment: props.environment,
-        ecrConfig: props.config.ecrConfig[key],
-        isImageSourceBuild: isBootstrapMode,
-        tag: commitHash,
-      });
-      repositories[key] = ecr;
-      // Update task definition with ECR repository name
-      taskDefinitions.forEach((taskDef) => {
-        taskDef.containerDefinitions[key].repositoryName = ecr.ecr.repositoryName;
-      });
-    });
-*/
      // Update container definitions with ECR repository names
     Object.keys(props.repositories).forEach((key) => {
       const ecr = props.repositories[key];

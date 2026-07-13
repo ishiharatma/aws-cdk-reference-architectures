@@ -7,6 +7,7 @@ import { Environment, EnvironmentConfig  } from "@common/parameters/environments
 export interface EnvParams extends EnvironmentConfig {
     readonly vpcConfig: VpcConfig;
     readonly hostedZoneId?: string; // Optional: Route53 Hosted Zone ID for ALB DNS record
+    readonly domainName?: string; // Optional: Custom domain name for ALB
     readonly ecsFargateConfig: EcsFargateConfig;
     readonly ecrConfig: Record<string, EcrConfig>;
 }

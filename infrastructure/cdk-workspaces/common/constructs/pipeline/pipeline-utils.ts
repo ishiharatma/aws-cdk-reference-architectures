@@ -105,7 +105,7 @@ export function createPathFilterTrigger(
     description: `Lambda that triggers ${props.pipeline.pipelineName} when ${props.repository.repositoryName}/${props.branchName} changes`,
     runtime: lambda.Runtime.PYTHON_3_13,
     handler: 'index.handler',
-    code: lambda.Code.fromAsset(path.join(__dirname, '../../../src/lambda/path-filter')),
+    code: lambda.Code.fromAsset(path.join(__dirname, '../../src/python-lambda/path-filter')),
     environment: {
       PIPELINE_NAME: props.pipeline.pipelineName,
       PATH_PREFIXES: props.pathPrefixes.join(','),

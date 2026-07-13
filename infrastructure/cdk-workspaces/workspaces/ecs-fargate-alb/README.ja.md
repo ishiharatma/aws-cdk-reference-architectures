@@ -56,20 +56,27 @@ ecs-fargate-alb/
 │   ├── stacks/
 │   │   ├── base-stack.ts                   # VPCとセキュリティグループ
 │   │   ├── ecr-stack.ts                    # ECRリポジトリ
-│   │   └── ecs-fargate-alb-stack.ts        # ECS FargateとALB
+│   │   ├── ecs-fargate-alb-stack.ts        # ECS FargateとALB
+│   │   └── cicd-stack.ts                   # インフラCI/CD用CodePipeline
 │   └── stages/
 │       └── ecs-fargate-alb-stage.ts        # デプロイオーケストレーション
 ├── parameters/
 │   ├── environments.ts                     # 環境タイプ定義
-│   └── dev-params.ts                       # 開発環境パラメータ
-├── src/
-│   └── (サンプルアプリケーションコードは backend/example-nodejs-api)
+│   ├── dev-params.ts                       # 開発環境パラメータ
+│   ├── shared-params.ts                    # 共有パラメータ（CodeCommitなど）
+│   └── index.ts                            # パラメータのエクスポート
 └── test/
     ├── snapshot/
     │   └── snapshot.test.ts                # スナップショットテスト
-    └── unit/
-        └── ecs-fargate-alb.test.ts         # ユニットテスト
+    ├── unit/
+    │   ├── base-stack.test.ts              # BaseStackユニットテスト
+    │   ├── ecr-stack.test.ts               # EcrStackユニットテスト
+    │   └── ecs-fargate-alb-stack.test.ts   # EcsFargateAlbStackユニットテスト
+    └── compliance/
+        └── cdk-nag.test.ts                 # cdk-nagコンプライアンスチェック
 ```
+
+> サンプルアプリケーションコード（ECR Bootstrapビルドで使用）はこのワークスペース外の`backend/example-nodejs-api`にあります。
 
 ---
 
@@ -107,7 +114,7 @@ Observability (X-Ray, CloudWatch)
 
 ### 1. マルチスタックアーキテクチャ
 
-モジュール性とデプロイの柔軟性を向上させるため、アーキテクチャは3つの独立したスタックで構成されています。
+モジュール性とデプロイの柔軟性を向上させるため、アーキテクチャは4つの独立したスタックで構成されています。
 
 ```typescript
 // Base Stack - VPCとセキュリティグループ
@@ -130,6 +137,11 @@ const ecsFargateStack = new EcsFargateAlbStack(this, 'EcsFargateAlb', {
   ecsSecurityGroups: [baseStack.ecsSecurityGroup],
   albSecurityGroup: baseStack.albSecurityGroup,
   repositories: ecrStack.repositories,
+});
+
+// CICD Stack - 今後のコミットでこのインフラを再デプロイするCodePipeline
+const cicdStack = new CICDStack(this, 'Cicd', {
+  codecommitAccountId: codecommitParams.codecommitAccountId,
 });
 ```
 
@@ -250,17 +262,23 @@ startstopSchedulerConfig: {
 自動証明書管理によるHTTPSサポート（オプション）：
 
 ```typescript
-// HTTPS対応（hostedZoneIdが必要）
-hostedZoneId: 'Z0123456789ABCDEFGHIJ'  // Route53 Hosted Zone ID
+// HTTPS対応（hostedZoneIdとdomainNameは必ずセットで指定）
+hostedZoneId: 'Z0123456789ABCDEFGHIJ',  // Route53 Hosted Zone ID
+domainName: 'your-project.dev.example.com',
 
 // HTTPのみ（テスト用）
 // hostedZoneId: undefined
+// domainName: undefined
 ```
 
-`hostedZoneId`を指定した場合：
-- ACM証明書が自動的に作成される
-- HTTP (ポート80) はHTTPS (ポート443) にリダイレクト
+`hostedZoneId`/`domainName`を指定した場合：
+- ACM証明書が自動的に作成される（Hosted ZoneによるDNS検証）
+- ALBはHTTPS (443) でリッスンし、HTTP (80) リスナーはHTTPSへリダイレクト
 - 推奨SSLポリシーが適用される
+
+> **注意**: `hostedZoneId`と`domainName`は必ずセットで指定してください。どちらか一方のみの場合、`EcsFargateAlbStack`がバリデーションエラーをスローします。
+
+> **注意**: `allowedIpsforAlb`でIP制限をかけた場合、ALBのセキュリティグループは実際に使用するポート（HTTPS利用時は443、HTTPのみの場合は80）のみを指定IPに開放し、443と80を同時に開放することはありません。そのため、HTTP→HTTPSリダイレクトリスナーはALBを完全公開（IP制限なし）にした場合のみ到達可能です。IP制限とHTTPSを併用する場合は、HTTPSで直接アクセスしてください。
 
 <details>
 <summary>📝 ALBセキュリティグループ設定</summary>
@@ -337,7 +355,8 @@ const devParams: EnvParams = {
   vpcConfig: { /* VPC設定 */ },
   ecsFargateConfig: { /* ECS設定 */ },
   ecrConfig: { /* ECR設定 */ },
-  hostedZoneId: 'Z0123...',  // オプション: HTTPS用
+  hostedZoneId: 'Z0123...',  // オプション: HTTPS用（domainNameとセットで指定）
+  domainName: 'your-project.dev.example.com',  // オプション: HTTPS用
 };
 ```
 
@@ -663,7 +682,7 @@ npm run destroy:all -- --project=your-project --env=dev
 
 このパターンから学んだこと：
 
-1. **マルチスタックアーキテクチャ**: VPC、ECR、ECSを分離してモジュール性を向上
+1. **マルチスタックアーキテクチャ**: VPC、ECR、ECS/ALB、CI/CD（CodePipeline）を分離してモジュール性を向上
 2. **Bootstrap vs CI/CDモード**: デプロイアプローチの柔軟性
 3. **コスト最適化**: Fargate Spot + NAT Instance + スケジューラー
 4. **セキュリティファースト**: ネットワーク分離、セキュリティグループ、HTTPS

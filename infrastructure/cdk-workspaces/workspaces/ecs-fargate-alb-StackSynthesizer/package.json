@@ -1,8 +1,8 @@
 {
-  "name": "ecs-fargate-alb",
+  "name": "ecs-fargate-alb-stacksynthesizer",
   "version": "0.1.0",
   "bin": {
-    "ecs-fargate-alb": "bin/ecs-fargate-alb.js"
+    "ecs-fargate-alb-stacksynthesizer": "bin/ecs-fargate-alb.js"
   },
   "scripts": {
     "build": "tsc",

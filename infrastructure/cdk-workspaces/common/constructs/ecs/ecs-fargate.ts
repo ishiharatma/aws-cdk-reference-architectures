@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { kebabCase, pascalCase } from 'change-case-commonjs';
+import * as YAML from 'yaml';
 import { EcsFargateConfig, 
     EcsFargateCreateConfig,
     xrayRepositoryUri,
@@ -15,14 +16,15 @@ import * as cw from 'aws-cdk-lib/aws-cloudwatch';
 import * as cwActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as events from 'aws-cdk-lib/aws-events';
 import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
-import * as scheduler from 'aws-cdk-lib/aws-scheduler';
-import * as schedulerTargets from 'aws-cdk-lib/aws-scheduler-targets';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as appscaling from 'aws-cdk-lib/aws-applicationautoscaling';
 
+/**
+ *
+ */
 interface ValidationResult {
     isValid: boolean;
     errors: string[];
@@ -48,10 +50,16 @@ export interface EcsFargateConstructProps {
 
     readonly enableSsmParameterOutput?: boolean;
 }
+/**
+ *
+ */
 export class EcsFargateConstruct extends Construct {
     public readonly cluster: ecs.ICluster;
     public readonly services: ecs.IFargateService[] = [];
 
+    /**
+     *
+     */
     constructor(scope: Construct, id: string, props: EcsFargateConstructProps) {
         super(scope, id);
 
@@ -100,7 +108,13 @@ export class EcsFargateConstruct extends Construct {
                             ...containerDef.environment,
                             ...props.containerEnvironment,
                             PROJECT: props.project,
-                            ENVIRONMENT: props.environment
+                            ENVIRONMENT: props.environment,
+                            ...(containerDef.enabledOtelSidecar ?
+                                {
+                                    OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4317",
+                                    OTEL_EXPORTER_OTLP_PROTOCOL: "grpc",
+                                    OTEL_SERVICE_NAME:containerName,
+                                } : {}),
                         },
                         secrets: containerDef.secrets,
                         logging: ecs.LogDrivers.awsLogs({
@@ -127,7 +141,85 @@ export class EcsFargateConstruct extends Construct {
                                 logGroup,
                                 streamPrefix: 'otel'
                             }),
-                            portMappings: [{ containerPort: 2000, protocol: ecs.Protocol.UDP }]
+                            environment: {
+                                AOT_CONFIG_CONTENT: YAML.stringify({
+                                    extensions: {
+                                        health_check: {},
+                                    },
+                                    receivers: {
+                                        otlp: {
+                                            protocols: {
+                                                grpc: {
+                                                    endpoint: '0.0.0.0:4317',
+                                                },
+                                                http: {
+                                                    endpoint: '0.0.0.0:4318',
+                                                },
+                                            },
+                                        },
+                                    },
+                                    processors: {
+                                        memory_limiter: {
+                                            limit_mib: 100,
+                                            check_interval: '5s',
+                                        },
+                                        batch: {
+                                            timeout: '5s',
+                                            send_batch_size: 256,
+                                        },
+                                        resource: {
+                                            attributes: [
+                                                {
+                                                    key: 'service.name',
+                                                    value: containerName,
+                                                    action: 'upsert',
+                                                },
+                                                {
+                                                    key: 'deployment.environment',
+                                                    value: props.environment,
+                                                    action: 'upsert',
+                                                },
+                                            ],
+                                        },
+                                    },
+                                    exporters: {
+                                        awsxray: {
+                                            region: cdk.Stack.of(this).region,
+                                        },
+                                        awsemf: {
+                                            region: cdk.Stack.of(this).region,
+                                            namespace: containerName,
+                                            log_group_name: `/ecs/${props.project}/otel-metrics`,
+                                        },
+                                    },
+                                    service: {
+                                        extensions: ['health_check'],
+                                        pipelines: {
+                                            traces: {
+                                                receivers: ['otlp'],
+                                                processors: ['memory_limiter', 'batch', 'resource'],
+                                                exporters: ['awsxray'],
+                                            },
+                                            metrics: {
+                                                receivers: ['otlp'],
+                                                processors: ['memory_limiter', 'batch', 'resource'],
+                                                exporters: ['awsemf'],
+                                            },
+                                        },
+                                    },
+                                }),
+                            },
+                            portMappings: [
+                                { containerPort: 4317, protocol: ecs.Protocol.TCP },
+                                { containerPort: 4318, protocol: ecs.Protocol.TCP },
+                            ],
+                            healthCheck: {
+                                command: ["CMD-SHELL", "curl -f http://localhost:13133/ || exit 1"],
+                                interval: cdk.Duration.seconds(30),
+                                timeout: cdk.Duration.seconds(5),
+                                retries: 3,
+                                startPeriod: cdk.Duration.seconds(10),
+                            },
                         });
                     } else if (containerDef.enabledXraySidecar) {
                         taskDef.addContainer(kebabCase(`xray-${containerName}`), {
@@ -600,7 +692,7 @@ export class EcsFargateConstruct extends Construct {
      * @param ecsServiceName
      * @param enableSsmParameterOutput - Whether to output SSM Parameters (default: false)
      */
-    private _createSSMParameter(project: string, environment: string, ecsSg: ec2.ISecurityGroup, taskExecutionRole: iam.IRole, taskRole: iam.IRole, ecsServiceName: string, enableSsmParameterOutput: boolean = false) {
+    private _createSSMParameter(project: string, environment: string, ecsSg: ec2.ISecurityGroup, taskExecutionRole: iam.IRole, taskRole: iam.IRole, ecsServiceName: string, enableSsmParameterOutput = false) {
         if (!enableSsmParameterOutput) {
             return;
         }

@@ -16,20 +16,17 @@ export interface StackProps extends cdk.StackProps {
     readonly project: string;
     readonly environment: Environment;
     readonly isAutoDeleteObject: boolean;
-    /** CodeCommit リポジトリが存在する AWS アカウント ID */
-    readonly codecommitAccountId: string;
-    /** パイプライン通知トピック ARN */
+    /** AWS account ID where the CodeCommit repository lives 
+     * If not specified, the current account is used.
+    */
+    readonly codecommitAccountId?: string;
+    /** Pipeline notification topic ARN */
     readonly notificationTopicArn?: string;
-    /** S3 バケットライフサイクル設定 */
+    /** S3 bucket lifecycle configuration */
     readonly artifactLifecycle?: S3LifecycleConfig;
     /**
-     * ソースアクションに使用する IAM ロール ARN
-     * @default `arn:aws:iam::<codecommitAccountId>:role/<project>-pipeline-source-action-<accountId>`
-     */
-    readonly sourceRoleArn?: string;
-    /**
-     * パイプライン実行に使用する IAM ロール名
-     * @default <project>-<env>-pipeline-role 
+     * IAM role name used for pipeline execution
+     * @default <project>-<env>-pipeline-role
      */
     readonly pipelineRoleName?: string;
 }
@@ -40,34 +37,30 @@ export class CICDStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
     const logRetentionDays = logs.RetentionDays.ONE_MONTH;
-    const regionShort = this.region.replace(/-/g, '');
-    const isRepositoryCrossAccount = props.codecommitAccountId !== this.account;
-    const sourceRoleArn = props.sourceRoleArn ?? 
-                        `arn:aws:iam::${props.codecommitAccountId}:role/${props.project}-pipeline-source-action-${this.account}`;
+    const accountId = cdk.Stack.of(this).account;
+    const region = cdk.Stack.of(this).region;
+    const regionShort = region.replace(/-/g, '');
     const pipelineRoleName = props.pipelineRoleName ?? `${props.project}-${props.environment}-pipeline-role`;
-    const artifactBucketName = `${props.project}-${props.environment}-pipeline-artifact-${this.account}-${regionShort}`.toLowerCase();
+    const artifactBucketName = `${props.project}-${props.environment}-artifact-${accountId}-${regionShort}`.toLowerCase();
 
-    /* ─── SNS 通知トピック ─────────────────────────────────────────────*/
+    /* ─── SNS notification topic ─────────────────────────────────────────────*/
     const notificationTopic: sns.ITopic = props.notificationTopicArn
       ? sns.Topic.fromTopicArn(this, 'NotificationTopic', props.notificationTopicArn)
       : new sns.Topic(this, 'NotificationTopic', {
           topicName: `${props.project}-${props.environment}-pipeline-notification`,
-          displayName: `${props.project}-${props.environment} パイプライン失敗通知`,
+          displayName: `${props.project}-${props.environment} pipeline failure notification`,
         });
 
-    /* ─── S3 アーティファクトバケット ──────────────────────────────────
-     * クロスアカウント CodePipeline Source アクションには KMS キーが必須。
-     * BucketEncryption.KMS を指定することで CMK が自動生成される。
-     */
+    /* ─── S3 artifact bucket ────────────────────────────────── */
     const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
       bucketName: artifactBucketName,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.KMS,
+      encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       removalPolicy: props.isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
       autoDeleteObjects: props.isAutoDeleteObject,
     });
-    /* ── アーティファクトバケット ライフサイクルルール ────────────────*/
+    /* ── Artifact bucket lifecycle rules ────────────────*/
     if (props.artifactLifecycle) {
       const lc = props.artifactLifecycle;
       const transitions: s3.Transition[] = [];
@@ -99,61 +92,22 @@ export class CICDStack extends cdk.Stack {
         });
       }
     }
-    /* ─── IAM Pipeline ロール ──────────────────────────────────────────*/
-    /**
-     * ロール名は <project>-<env>-pipeline-role に固定する。
-     * クロスアカウント CodeCommit 参照にはリポジトリアカウント側でこのロール ARN を
-     * CodeCommit ポリシーの Principal として追加すること。
-     */
+    /* ─── IAM pipeline role ──────────────────────────────────────────*/
     const pipelineRole = new iam.Role(this, 'PipelineRole', {
       roleName: pipelineRoleName,
       assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
       description: `${props.project}-${props.environment} CodePipeline execution role`,
     });
-    /* ─── クロスアカウント Source Action 用バケット / KMS ポリシー ────────
-     * PipelineSourceRole（リポジトリアカウント）が
-     * S3 アーティファクトバケットと KMS キーへアクセスできるよう
-     * リソースポリシーを追加する。
-     * CodeCommitSourceAction.role に リポジトリアカウントのロールを指定することで CDK の
-     * クロスアカウントサポートスタック自動生成が抑止される。
-     */
-    if (props.codecommitAccountId && isRepositoryCrossAccount) {
-      /* ── デフォルトイベントバス リソースポリシー ─────────────────────
-       * リポジトリアカウントの EventBridge（<project>-to-dev-rule 等）が
-       * このリソースアカウントのデフォルトイベントバスへ PutEvents できるよう許可する。
-       * これがないとリポジトリアカウント → リソースアカウント のクロスアカウント転送がサイレントに破棄される。
-       */
-      new events.CfnEventBusPolicy(this, 'AllowProdEventBridgePutEvents', {
-        statementId: 'AllowProdAccountEventBridgePutEvents',
-        action: 'events:PutEvents',
-        principal: props.codecommitAccountId,
-      });
-
-      artifactBucket.addToResourcePolicy(
-        new iam.PolicyStatement({
-          sid: 'AllowCrossAccountSourceActionS3',
-          principals: [new iam.ArnPrincipal(sourceRoleArn)],
-          actions: ['s3:PutObject', 's3:GetObject', 's3:GetObjectVersion', 's3:GetBucketVersioning'],
-          resources: [artifactBucket.bucketArn, artifactBucket.arnForObjects('*')],
-        })
-      );
-      artifactBucket.encryptionKey?.addToResourcePolicy(
-        new iam.PolicyStatement({
-          sid: 'AllowCrossAccountSourceActionKms',
-          principals: [new iam.ArnPrincipal(sourceRoleArn)],
-          actions: ['kms:Decrypt', 'kms:GenerateDataKey*', 'kms:DescribeKey', 'kms:Encrypt', 'kms:ReEncrypt*'],
-          resources: ['*'],
-        })
-      );
-    }
     this.infraPipeline = new InfraPipelineConstruct(this, 'InfraPipeline', {
       project: props.project,
       environment: props.environment,
-      codecommitAccountId: props.codecommitAccountId,
+      codecommitAccountId: props.codecommitAccountId ?? accountId,
       pipelineRole,
       artifactBucket,
       notificationTopic,
       logRetentionDays,
+      buildSpecPath: 'infra',
+      buildSpecFileName: 'buildspec-ci.yml',
     });
 
 

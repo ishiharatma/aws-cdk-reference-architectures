@@ -29,6 +29,7 @@ export class EcrConstruct extends Construct {
         const anytagImageAge: number = props.ecrConfig?.createConfig?.anytagDurationDays ?? 180;
 
         let repository: ecr.IRepository;
+        this.imageTag = props.imageTag || 'latest';
 
         if (props.ecrConfig?.createConfig && !props.ecrConfig?.existingEcrArn) {
             // If we want to create a new ECR repo, existingEcrArn must not be specified
@@ -109,8 +110,6 @@ export class EcrConstruct extends Construct {
                 );
             }
             console.log(`📦 Building Docker image from: ${props.ecrConfig.createConfig.imageSourcePath}`);
-            const imageTag = props.imageTag || 'latest';
-            this.imageTag = imageTag;
             const dockerImageAsset = new ecr_assets.DockerImageAsset(this, "DockerImageAsset", {
                 directory: props.ecrConfig.createConfig.imageSourcePath,
                 platform: ecr_assets.Platform.LINUX_AMD64,

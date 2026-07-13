@@ -6,6 +6,9 @@ import { Construct } from 'constructs';
 import { Environment } from "../parameters/environments";
 import { C_RESOURCE } from '../constants';
 
+/**
+ *
+ */
 interface AlbProps {
     readonly project: string;
     readonly environment: Environment;
@@ -17,10 +20,16 @@ interface AlbProps {
     readonly isALBOpen: boolean;
 }
 
+/**
+ *
+ */
 export class AlbConstruct extends Construct {
     public readonly alb: elbv2.IApplicationLoadBalancer;
     public readonly listener: elbv2.IApplicationListener;
 
+    /**
+     *
+     */
     constructor(scope: Construct, id: string, props: AlbProps) {
         super(scope, id);
 
@@ -67,7 +76,7 @@ export class AlbConstruct extends Construct {
         if (props.certificate) {
             const httpsListener = alb.addListener('HttpsListener', {
                 port: albPort,
-                open: true,
+                open: props.isALBOpen,
                 protocol: albProtocol,
                 sslPolicy: elbv2.SslPolicy.RECOMMENDED_TLS,
                 certificates: [props.certificate],

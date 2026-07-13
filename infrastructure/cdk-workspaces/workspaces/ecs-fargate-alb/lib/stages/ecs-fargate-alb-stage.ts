@@ -4,9 +4,11 @@ import { Construct } from "constructs";
 import { BaseStack } from "lib/stacks/base-stack";
 import { EcrStack } from "lib/stacks/ecr-stack";
 import { EcsFargateAlbStack } from "lib/stacks/ecs-fargate-alb-stack";
+import { CICDStack } from "lib/stacks/cicd-stack";
 import { pascalCase } from "change-case-commonjs";
 import { Environment } from "@common/parameters/environments";
 import { EnvParams } from "parameters/environments";
+import { CodeCommitConfig } from '@common/types';
 import { containerDefinition } from "@common/types";
 
 export interface StageProps extends cdk.StageProps {
@@ -15,12 +17,14 @@ export interface StageProps extends cdk.StageProps {
     readonly isAutoDeleteObject: boolean;
     readonly terminationProtection: boolean;
     readonly params: EnvParams;
+    readonly codecommitParams: CodeCommitConfig;
     readonly allowedIpsforAlb?: string[];
 }
 
 export class EcsFargateAlbStage extends cdk.Stage {
   constructor(scope: Construct, id: string, props: StageProps) {
     super(scope, id, props);
+
     const baseStack = new BaseStack(this, `${pascalCase(props.project)}Base`, {
       project: props.project,
       environment: props.environment,
@@ -78,9 +82,25 @@ export class EcsFargateAlbStage extends cdk.Stage {
       commitHash: commitHash,
       isALBOpen: props.allowedIpsforAlb && props.allowedIpsforAlb.length > 0 ? false : true,
       hostedZoneId: props.params.hostedZoneId,
+      domainName: props.params.domainName,
     });
     ecsFargateStack.addDependency(baseStack);
     ecsFargateStack.addDependency(ecrStack);
+
+    const cicdStack = new CICDStack(this, `${pascalCase(props.project)}Cicd`, {
+      project: props.project,
+      environment: props.environment,
+      env: {
+        account: props.params.accountId,
+        region: props.params.region || props.env?.region,
+      },
+      terminationProtection: props.terminationProtection,
+      isAutoDeleteObject: props.isAutoDeleteObject,
+      codecommitAccountId: props.codecommitParams.codecommitAccountId,
+    });
+    cicdStack.addDependency(baseStack);
+    cicdStack.addDependency(ecrStack);
+    cicdStack.addDependency(ecsFargateStack);
 
   }
 }
