@@ -124,8 +124,9 @@ function createPatternCard(pattern) {
                 ${imageHTML}
                 
                 <!-- Difficulty Badge -->
-                <div class="mb-3">
+                <div class="mb-3 flex items-center justify-between">
                     <span class="difficulty-badge ${difficultyClass}">${difficultyLabel}</span>
+                    <span class="text-xs text-gray-400">${pattern.date}</span>
                 </div>
                 
                 <div class="pattern-card-body">
