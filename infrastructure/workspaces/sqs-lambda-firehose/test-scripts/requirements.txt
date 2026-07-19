@@ -1,0 +1,4 @@
+# Python requirements for SQS test scripts
+
+# AWS SDK for Python
+boto3>=1.26.0

@@ -1,0 +1,43 @@
+{
+  "name": "sqs-lambda-firehose",
+  "version": "0.1.0",
+  "bin": {
+    "sqs-lambda-firehose": "bin/sqs-lambda-firehose.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest test/unit",
+    "test:snapshot": "jest test/snapshot",
+    "test:snapshot:update": "jest test/snapshot --updateSnapshot",
+    "test:integration": "jest test/integration",
+    "test:compliance": "jest test/compliance",
+    "bootstrap": "COMMIT_HASH=$(git rev-parse --short HEAD) cdk bootstrap  --version-reporting false --asset-metadata false -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "diff": "COMMIT_HASH=$(git rev-parse --short HEAD) cdk diff --version-reporting false --asset-metadata false -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "synth": "COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth  --version-reporting false --asset-metadata false -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "deploy:all": "COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy --all --version-reporting false --asset-metadata false -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "destroy:all": "cdk destroy --all -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "stage:deploy:all": "COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "stage:destroy:all": "cdk destroy '**' -c project=${npm_config_project} -c env=${npm_config_env} --profile ${npm_config_project}-${npm_config_env}",
+    "lint": "eslint \"**/*.ts\"",
+    "lint:fix": "eslint \"**/*.ts\" --fix",
+    "format": "prettier --write \"**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^24.10.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "aws-cdk": "2.1100.1",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.232.1",
+    "constructs": "^10.0.0"
+  }
+}

@@ -1,0 +1,3042 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots CDKDefaultStack Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 3,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 3,
+  "AWS::EC2::Route": 6,
+  "AWS::EC2::RouteTable": 6,
+  "AWS::EC2::Subnet": 6,
+  "AWS::EC2::SubnetRouteTableAssociation": 6,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AllowSSHFromInstanceConnect": {
+      "Properties": {
+        "Description": "Allow SSH from Instance Connect SG",
+        "FromPort": 22,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EC2SG244E8056",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EC2InstanceConnectSG697BC6D2",
+            "GroupId",
+          ],
+        },
+        "ToPort": 22,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "AllowSSHToEC2SG": {
+      "Properties": {
+        "Description": "Allow SSH to EC2 SG",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EC2SG244E8056",
+            "GroupId",
+          ],
+        },
+        "FromPort": 22,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EC2InstanceConnectSG697BC6D2",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 22,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FlowLogBucket0863ACCA",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomVPC616E3387": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "CustomVPCApplicationSubnet1DefaultRoute467D815C": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet1RouteTableEF6A4952",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCApplicationSubnet1RouteTableAssociation96EF341B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet1RouteTableEF6A4952",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCApplicationSubnet1Subnet1D23AB0D",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCApplicationSubnet1RouteTableEF6A4952": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCApplicationSubnet1Subnet1D23AB0D": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.16.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCApplicationSubnet2DefaultRoute8A1BA27C": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet2RouteTable8B4DB101",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCApplicationSubnet2RouteTable8B4DB101": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCApplicationSubnet2RouteTableAssociation72A4D2A6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet2RouteTable8B4DB101",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCApplicationSubnet2Subnet04D01C6F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCApplicationSubnet2Subnet04D01C6F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.20.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCApplicationSubnet3DefaultRouteBDB8EE4A": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet3RouteTableE5C9A8A3",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCApplicationSubnet3RouteTableAssociationDCA23E00": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCApplicationSubnet3RouteTableE5C9A8A3",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCApplicationSubnet3SubnetB1EFB937",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCApplicationSubnet3RouteTableE5C9A8A3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCApplicationSubnet3SubnetB1EFB937": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.24.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Application",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ApplicationSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCDynamoDbEndpoint1714E259": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "CustomVPCExternalSubnet1DefaultRoute58CF8397": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet1RouteTable27A8D829",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCExternalSubnet1EIP4AFB1584": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "CustomVPCExternalSubnet1NATGatewayD57D2161": {
+      "DependsOn": [
+        "CustomVPCExternalSubnet1DefaultRoute58CF8397",
+        "CustomVPCExternalSubnet1RouteTableAssociation2572058C",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "CustomVPCExternalSubnet1EIP4AFB1584",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet1Subnet32ADE41E",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "CustomVPCExternalSubnet1RouteTable27A8D829": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCExternalSubnet1RouteTableAssociation2572058C": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet1RouteTable27A8D829",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet1Subnet32ADE41E",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet1Subnet32ADE41E": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCExternalSubnet2DefaultRouteFBEC75E0": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet2RouteTable9C445024",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCExternalSubnet2RouteTable9C445024": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCExternalSubnet2RouteTableAssociationCEB23F9D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet2RouteTable9C445024",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet2Subnet0FE9E45B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet2Subnet0FE9E45B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.64/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCExternalSubnet3DefaultRouteDE5A7826": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet3RouteTableBCD1F3A2",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCExternalSubnet3RouteTableAssociation43BAE4B8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCExternalSubnet3RouteTableBCD1F3A2",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCExternalSubnet3SubnetFE7D113B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCExternalSubnet3RouteTableBCD1F3A2": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCExternalSubnet3SubnetFE7D113B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.0.128/26",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "External",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ExternalSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCFlowLogF6835569": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "CustomVPCFlowLogIAMRoleE936B5A8",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "FlowLogGroup3E25AA51",
+        },
+        "ResourceId": {
+          "Ref": "CustomVPC616E3387",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/FlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "TrafficType": "REJECT",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "CustomVPCFlowLogIAMRoleDefaultPolicy80C5D709": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FlowLogGroup3E25AA51",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomVPCFlowLogIAMRoleDefaultPolicy80C5D709",
+        "Roles": [
+          {
+            "Ref": "CustomVPCFlowLogIAMRoleE936B5A8",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomVPCFlowLogIAMRoleE936B5A8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/FlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomVPCFlowLogToS3FlowLogDF2B7606": {
+      "DependsOn": [
+        "FlowLogBucketAutoDeleteObjectsCustomResource77AF9EB3",
+        "FlowLogBucketPolicyD22C263C",
+      ],
+      "Properties": {
+        "DestinationOptions": {
+          "fileFormat": "plain-text",
+          "hiveCompatiblePartitions": true,
+          "perHourPartition": true,
+        },
+        "LogDestination": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Fn::GetAtt": [
+                  "FlowLogBucket0863ACCA",
+                  "Arn",
+                ],
+              },
+              "/vpcFlowLog/",
+            ],
+          ],
+        },
+        "LogDestinationType": "s3",
+        "ResourceId": {
+          "Ref": "CustomVPC616E3387",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/FlowLogToS3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "TrafficType": "ALL",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "CustomVPCIGWCB65EB6B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "CustomVPCInternalSubnet1DefaultRouteFF3D60B3": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCInternalSubnet1RouteTable2EBE9CDF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCInternalSubnet1RouteTableAssociation8CEF9C21": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCInternalSubnet1Subnet377C8961": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.4.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCInternalSubnet2DefaultRoute99983E57": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCInternalSubnet2RouteTableAssociation9434EB0E": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCInternalSubnet2RouteTableE7BA652B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCInternalSubnet2SubnetC5E749D3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.8.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCInternalSubnet3DefaultRouteCDDBA1B5": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CustomVPCExternalSubnet1NATGatewayD57D2161",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCInternalSubnet3RouteTable9E53CAEA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCInternalSubnet3RouteTableAssociation1159D7B1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCInternalSubnet3SubnetEB09D8D9": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.12.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Internal",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/InternalSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCIsolatedSubnet1RouteTable340905CB": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCIsolatedSubnet1RouteTableAssociationF25187ED": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCIsolatedSubnet1RouteTable340905CB",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCIsolatedSubnet1Subnet9658DD90",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCIsolatedSubnet1Subnet9658DD90": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.28.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCIsolatedSubnet2RouteTable9716169C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCIsolatedSubnet2RouteTableAssociation93A0ABE4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCIsolatedSubnet2RouteTable9716169C",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCIsolatedSubnet2Subnet78DF72B5",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCIsolatedSubnet2Subnet78DF72B5": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.29.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCIsolatedSubnet3RouteTable21001961": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCIsolatedSubnet3RouteTableAssociationDEE8BF6E": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCIsolatedSubnet3RouteTable21001961",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCIsolatedSubnet3Subnet258944CB",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCIsolatedSubnet3Subnet258944CB": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.30.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/IsolatedSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCManagementSubnet1DefaultRoute8CBDE50D": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet1RouteTable45009174",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCManagementSubnet1RouteTable45009174": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCManagementSubnet1RouteTableAssociation811FB87B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet1RouteTable45009174",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCManagementSubnet1SubnetA7D3E56B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCManagementSubnet1SubnetA7D3E56B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.192/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCManagementSubnet2DefaultRouteCBC05167": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet2RouteTable335D958A",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCManagementSubnet2RouteTable335D958A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCManagementSubnet2RouteTableAssociation9EE3BDCD": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet2RouteTable335D958A",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCManagementSubnet2Subnet59305DC1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCManagementSubnet2Subnet59305DC1": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.224/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCManagementSubnet3DefaultRoute13008D6B": {
+      "DependsOn": [
+        "CustomVPCVPCGW9371D645",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet3RouteTable79B0EBBE",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CustomVPCManagementSubnet3RouteTable79B0EBBE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCManagementSubnet3RouteTableAssociation7DAAF2F1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCManagementSubnet3RouteTable79B0EBBE",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCManagementSubnet3Subnet43F55756",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCManagementSubnet3Subnet43F55756": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.1.0/27",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/ManagementSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCS3Endpoint4FA5C8D5": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "CustomVPCInternalSubnet1RouteTable2EBE9CDF",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet2RouteTableE7BA652B",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet3RouteTable9E53CAEA",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "CustomVPCSSMEndpointD94644D3": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "CustomVPCSSMEndpointSecurityGroup03B1119D",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "CustomVPCSSMEndpointSecurityGroup03B1119D": {
+      "Properties": {
+        "GroupDescription": "VpcBasics/CustomVPC/SSMEndpoint/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "CustomVPC616E3387",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "CustomVPC616E3387",
+                      "CidrBlock",
+                    ],
+                  },
+                  ":443",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "CustomVPCSSMMessagesEndpoint4130ABF4": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "CustomVPCSSMMessagesEndpointSecurityGroup1B9D09D6",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet2SubnetC5E749D3",
+          },
+          {
+            "Ref": "CustomVPCInternalSubnet3SubnetEB09D8D9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "CustomVPCSSMMessagesEndpointSecurityGroup1B9D09D6": {
+      "Properties": {
+        "GroupDescription": "VpcBasics/CustomVPC/SSMMessagesEndpoint/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "CustomVPC616E3387",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "CustomVPC616E3387",
+                      "CidrBlock",
+                    ],
+                  },
+                  ":443",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/Test/CustomVPC",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "CustomVPCTransitGatewaySubnet1RouteTable998584CE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCTransitGatewaySubnet1RouteTableAssociation867F89F2": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCTransitGatewaySubnet1RouteTable998584CE",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCTransitGatewaySubnet1SubnetA065BA3F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCTransitGatewaySubnet1SubnetA065BA3F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.31.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCTransitGatewaySubnet2RouteTableAssociationEBE6223F": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCTransitGatewaySubnet2RouteTableB70DE7E3",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCTransitGatewaySubnet2Subnet5C892112",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCTransitGatewaySubnet2RouteTableB70DE7E3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCTransitGatewaySubnet2Subnet5C892112": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.31.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCTransitGatewaySubnet3RouteTable0A47419F": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVPCTransitGatewaySubnet3RouteTableAssociationEE4567AC": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CustomVPCTransitGatewaySubnet3RouteTable0A47419F",
+        },
+        "SubnetId": {
+          "Ref": "CustomVPCTransitGatewaySubnet3Subnet9E34CF55",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CustomVPCTransitGatewaySubnet3Subnet9E34CF55": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.1.31.32/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "TransitGateway",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBasics/CustomVPC/TransitGatewaySubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CustomVPCVPCGW9371D645": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "CustomVPCIGWCB65EB6B",
+        },
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "EC2InstanceConnectEndpoint": {
+      "Properties": {
+        "PreserveClientIp": false,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EC2InstanceConnectSG697BC6D2",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "CustomVPCInternalSubnet1Subnet377C8961",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InstanceConnectEndpoint",
+    },
+    "EC2InstanceConnectSG697BC6D2": {
+      "Properties": {
+        "GroupDescription": "Security group for EC2 Instance Connect Endpoint",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EC2SG244E8056": {
+      "Properties": {
+        "GroupDescription": "Security group for EC2 instances",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CustomVPC616E3387",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "FlowLogBucket0863ACCA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FlowLogBucketAutoDeleteObjectsCustomResource77AF9EB3": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FlowLogBucketPolicyD22C263C",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FlowLogBucket0863ACCA",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FlowLogBucketPolicyD22C263C": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FlowLogBucket0863ACCA",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FlowLogBucket0863ACCA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FlowLogBucket0863ACCA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FlowLogBucket0863ACCA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FlowLogBucket0863ACCA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FlowLogGroup3E25AA51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 2`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CDKDefaultE8B73DAC": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "CDKDefaultIGWB78F88DA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "CDKDefaultPrivateSubnet1DefaultRoute73296F2B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CDKDefaultPublicSubnet1NATGateway1F53DB52",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet1RouteTable94B9280D",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPrivateSubnet1RouteTable94B9280D": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPrivateSubnet1RouteTableAssociationD93992FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet1RouteTable94B9280D",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPrivateSubnet1Subnet65861593",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPrivateSubnet1Subnet65861593": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.96.0/19",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultPrivateSubnet2DefaultRouteDC112088": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CDKDefaultPublicSubnet2NATGateway15191243",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet2RouteTableB5EB1BC7",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPrivateSubnet2RouteTableAssociationF6A14AEC": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet2RouteTableB5EB1BC7",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPrivateSubnet2Subnet9DA98ED3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPrivateSubnet2RouteTableB5EB1BC7": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPrivateSubnet2Subnet9DA98ED3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.128.0/19",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultPrivateSubnet3DefaultRoute81BE29E3": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "CDKDefaultPublicSubnet3NATGateway55EF3453",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet3RouteTableA95109FB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPrivateSubnet3RouteTableA95109FB": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPrivateSubnet3RouteTableAssociationBAC8E061": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPrivateSubnet3RouteTableA95109FB",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPrivateSubnet3Subnet8085A54F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPrivateSubnet3Subnet8085A54F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.0.160.0/19",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PrivateSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultPublicSubnet1DefaultRouteBBCCDEC6": {
+      "DependsOn": [
+        "CDKDefaultVPCGW5F5BBD52",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CDKDefaultIGWB78F88DA",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet1RouteTable4702BFCE",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPublicSubnet1EIP4046263D": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "CDKDefaultPublicSubnet1NATGateway1F53DB52": {
+      "DependsOn": [
+        "CDKDefaultPublicSubnet1DefaultRouteBBCCDEC6",
+        "CDKDefaultPublicSubnet1RouteTableAssociation81342925",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "CDKDefaultPublicSubnet1EIP4046263D",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet1Subnet10439377",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "CDKDefaultPublicSubnet1RouteTable4702BFCE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPublicSubnet1RouteTableAssociation81342925": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet1RouteTable4702BFCE",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet1Subnet10439377",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPublicSubnet1Subnet10439377": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/19",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultPublicSubnet2DefaultRoute07E6A173": {
+      "DependsOn": [
+        "CDKDefaultVPCGW5F5BBD52",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CDKDefaultIGWB78F88DA",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet2RouteTableECA4BAFF",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPublicSubnet2EIPBDCEBA6A": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "CDKDefaultPublicSubnet2NATGateway15191243": {
+      "DependsOn": [
+        "CDKDefaultPublicSubnet2DefaultRoute07E6A173",
+        "CDKDefaultPublicSubnet2RouteTableAssociationE25F98A5",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "CDKDefaultPublicSubnet2EIPBDCEBA6A",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet2Subnet56B00993",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "CDKDefaultPublicSubnet2RouteTableAssociationE25F98A5": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet2RouteTableECA4BAFF",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet2Subnet56B00993",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPublicSubnet2RouteTableECA4BAFF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPublicSubnet2Subnet56B00993": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.32.0/19",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultPublicSubnet3DefaultRoute6BF89D40": {
+      "DependsOn": [
+        "CDKDefaultVPCGW5F5BBD52",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "CDKDefaultIGWB78F88DA",
+        },
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet3RouteTableB35DA19C",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "CDKDefaultPublicSubnet3EIP77680CF9": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "CDKDefaultPublicSubnet3NATGateway55EF3453": {
+      "DependsOn": [
+        "CDKDefaultPublicSubnet3DefaultRoute6BF89D40",
+        "CDKDefaultPublicSubnet3RouteTableAssociationCCC4E383",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "CDKDefaultPublicSubnet3EIP77680CF9",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet3Subnet4B0FAAD3",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "CDKDefaultPublicSubnet3RouteTableAssociationCCC4E383": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "CDKDefaultPublicSubnet3RouteTableB35DA19C",
+        },
+        "SubnetId": {
+          "Ref": "CDKDefaultPublicSubnet3Subnet4B0FAAD3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "CDKDefaultPublicSubnet3RouteTableB35DA19C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CDKDefaultPublicSubnet3Subnet4B0FAAD3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.0.64.0/19",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCDKDefault/CDKDefault/PublicSubnet3",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "CDKDefaultVPCGW5F5BBD52": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "CDKDefaultIGWB78F88DA",
+        },
+        "VpcId": {
+          "Ref": "CDKDefaultE8B73DAC",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots VpcBasicsStack Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::FlowLog": 2,
+  "AWS::EC2::InstanceConnectEndpoint": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 12,
+  "AWS::EC2::RouteTable": 18,
+  "AWS::EC2::SecurityGroup": 4,
+  "AWS::EC2::SecurityGroupEgress": 1,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 18,
+  "AWS::EC2::SubnetRouteTableAssociation": 18,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 4,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
