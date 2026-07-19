@@ -32,7 +32,8 @@
     "typedoc": "^0.28.16",
     "rimraf": "^6.1.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript-eslint": "^8.48.1"
+    "typescript-eslint": "^8.48.1",
+    "aws-cdk": "^2.1132.0"
   },
   "dependencies": {
     "@aws-cdk/aws-lambda-python-alpha": "^2.231.0-alpha.0",

@@ -6,11 +6,13 @@ AWS CDKで実装されたリファレンスアーキテクチャ集 - AWS CDKを
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-*他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
+*他の言語で読む(Read this in other languages):* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
 ## 概要
 
 このリポジトリは、AWS CDK（Cloud Development Kit）を使用して実装されたAWSのリファレンスアーキテクチャを提供します。各アーキテクチャパターンには、詳細なドキュメント、アーキテクチャ図、およびTypeScript/PythonによるCDK実装が含まれています。
+
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://ishiharatma.github.io/aws-cdk-reference-architectures/)
 
 ## はじめに
 
@@ -110,8 +112,7 @@ aws-cdk-reference-architectures/
 ├── docs/                                    # ドキュメント用のルートフォルダ
 ├── scripts/                                 # Workspace Initialize Scripts
 ├── templates/                               # Workspace templates
-├── infrastructure/
-│   └─── cdk/                                # CDK project root folder
+├── infrastructure/                          # CDK project root folder                           
 │       ├── common                           # Common
 │       └── workspaces                       # CDKワークスペース 
 │           └──<pattern-name>
@@ -152,7 +153,7 @@ aws-cdk-reference-architectures/
 シェルを利用して初期化します。
 
 ```sh
-./scripts/init-cdk.sh infrastructure/cdk-workspaces
+./scripts/init-cdk.sh infrastructure
 ```
 
 ### 実行方法
@@ -160,7 +161,7 @@ aws-cdk-reference-architectures/
 1. 全ワークスペースの依存関係をインストール
 
 ```bash
-cd infrastructure/cdk-workspaces
+cd infrastructure
 npm install
 ```
 

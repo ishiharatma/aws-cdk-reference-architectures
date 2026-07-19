@@ -19,7 +19,11 @@
 - CloudFront Functionによるエッジでのビューアーアクセス元IP許可リスト（任意）と、拒否されたリクエストをCloudFront標準ログ（v2）経由でCloudWatch Logsに記録
 - ビューアーに対する最小プロトコルバージョンとしてのTLS 1.3（2025）
 
-### なぜCloudFront VPC Originなのか？
+## アーキテクチャ概要
+
+![overview](overview.drawio.svg)
+
+### 設計上の主な利点
 
 | 機能 | メリット |
 | ---- | -------- |
@@ -28,10 +32,6 @@
 | エッジでのIP許可リスト | 許可されていないIPからのリクエストは、ALBやS3に到達する前にエッジで拒否される |
 | ジオ制限 | 明示的に許可した国からのアクセスのみにコンテンツ配信を制限できる |
 | OACで保護されたS3オリジン | WebsiteBucketとErrorBucketはいずれも完全に非公開のまま。読み取れるのはCloudFrontのみ |
-
-## アーキテクチャ概要
-
-![overview](overview.drawio.svg)
 
 ## 前提条件
 

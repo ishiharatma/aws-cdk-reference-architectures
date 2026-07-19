@@ -111,5 +111,27 @@
     "difficulty": "advanced",
     "date": "2026-05-16",
     "articles": {}
+  },
+  {
+    "id": "cloudfront-vpc-origin",
+    "title": "CloudFront with VPC Origin",
+    "description": "Configure CloudFront distribution with VPC origin using AWS CDK.",
+    "image": "cloudfront-vpc-origin/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CloudFront", "VPC"],
+    "link": "cloudfront-vpc-origin",
+    "difficulty": "advanced",
+    "date": "2026-07-19",
+    "articles": {}
+  },
+  {
+    "id": "cloudwatch-logs-s3-archive",
+    "title": "CloudWatch Logs to S3 Archive",
+    "description": "Archive CloudWatch Logs to S3 using AWS CDK.",
+    "image": "cloudwatch-logs-s3-archive/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CloudWatch", "S3"],
+    "link": "cloudwatch-logs-s3-archive",
+    "difficulty": "intermediate",
+    "date": "2026-06-06",
+    "articles": {}
   }
 ]

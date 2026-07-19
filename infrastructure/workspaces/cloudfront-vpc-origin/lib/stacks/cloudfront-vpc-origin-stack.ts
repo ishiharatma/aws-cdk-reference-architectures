@@ -171,7 +171,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
     });
     // upload a sample index.html file to the bucket
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
-      sources: [s3deploy.Source.asset('../../../../frontend/static-web')],
+      sources: [s3deploy.Source.asset('../../../frontend/static-web')],
       destinationBucket: websiteBucket,
     });
     const errorBucket = new s3.Bucket(this, 'ErrorBucket', {
@@ -183,7 +183,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
     });
     // upload a sample error.html file to the bucket
     new s3deploy.BucketDeployment(this, 'DeployErrorPage', {
-      sources: [s3deploy.Source.asset('../../../../frontend/error-website')],
+      sources: [s3deploy.Source.asset('../../../frontend/error-website')],
       destinationBucket: errorBucket,
     });
 

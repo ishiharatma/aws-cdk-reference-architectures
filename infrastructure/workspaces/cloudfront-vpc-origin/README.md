@@ -19,7 +19,11 @@ This architecture demonstrates the following implementations:
 - Optional viewer IP allow-listing at the edge with a CloudFront Function, with denied requests logged to CloudWatch Logs through CloudFront standard logging (v2)
 - TLS 1.3 (2025) as the minimum viewer protocol
 
-### Why CloudFront VPC Origin?
+## Architecture Overview
+
+![Architecture Overview](overview.drawio.svg)
+
+### Key Design Benefits
 
 | Feature | Benefit |
 | ------- | ------- |
@@ -28,10 +32,6 @@ This architecture demonstrates the following implementations:
 | Edge IP allow-listing | Requests from disallowed IPs are rejected at the edge, before they ever reach the ALB or S3 |
 | Geo restriction | Content is only served to an explicit allow-list of countries |
 | OAC-secured S3 origins | Both the website and error buckets stay fully private; only CloudFront can read them |
-
-## Architecture Overview
-
-![Architecture Overview](overview.drawio.svg)
 
 ## Prerequisites
 

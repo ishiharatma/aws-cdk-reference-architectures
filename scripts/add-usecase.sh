@@ -12,7 +12,7 @@ if [ -z "$1" ]; then
 fi
 
 workspaces_name=$1
-cdkDir=${PARENT_DIR}/infrastructure/cdk-workspaces
+cdkDir=${PARENT_DIR}/infrastructure
 workspacesDir=${cdkDir}/workspaces/${workspaces_name}
 
 # Check if workspaces directory already exists
@@ -41,7 +41,7 @@ mv test/${workspaces_name}.test.ts test/unit/
 
 # Add necessary scripts to the main package.json
 cd ${SCRIPT_DIR}
-node ./add-scripts.js infrastructure/cdk-workspaces/workspaces/${workspaces_name}
+node ./add-scripts.js infrastructure/workspaces/${workspaces_name}
 
 echo "Usecase '${workspaces_name}' has been created successfully."
 echo "Next steps:"
