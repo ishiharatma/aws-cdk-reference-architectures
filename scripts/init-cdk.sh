@@ -3,7 +3,7 @@
 # Usage: ./init-cdk.sh [optional-cdk-directory]
 # Example:
 #   ./init-cdk.sh (initialize in default infrastructure/cdk)
-#   ./init-cdk.sh infrastructure/cdk-workspaces (initialize in specified directory)
+#   ./init-cdk.sh infrastructure (initialize in specified directory)
 # Description: Initialize a new CDK project
 SCRIPT_DIR=$(cd $(dirname $0) ; pwd)/
 PARENT_DIR=$(cd ${SCRIPT_DIR}/.. ; pwd)
@@ -53,6 +53,7 @@ npm install --save-dev eslint \
 	typescript-eslint \
 	@typescript-eslint/eslint-plugin \
 	@typescript-eslint/parser \
+	aws-cdk \
 	cdk-nag \
 	cross-env \
 	@aws-cdk/aws-lambda-python-alpha

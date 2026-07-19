@@ -8,15 +8,15 @@ const fs = require('fs');
 const path = require('path');
 
 try {
-  // Get workspace directory from command line arguments or default to 'infrastructure/cdk-workspaces'
-  const workspaceDir = process.argv[2] || 'infrastructure/cdk-workspaces';
+  // Get workspace directory from command line arguments or default to 'infrastructure'
+  const workspaceDir = process.argv[2] || 'infrastructure';
   const packageJsonPath = path.join(__dirname, '..', workspaceDir, 'package.json');
   const cdkJsonPath = path.join(__dirname, '..', workspaceDir, 'cdk.json');
 
   if (!fs.existsSync(packageJsonPath)) {
     console.error('Error: package.json not found at', packageJsonPath);
     console.error('Usage: node add-scripts.js [workspace-directory]');
-    console.error('Example: node add-scripts.js infrastructure/cdk-workspaces');
+    console.error('Example: node add-scripts.js infrastructure');
     console.error('Example: node add-scripts.js workspaces/my-usecase');
     process.exit(1);
   }

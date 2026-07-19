@@ -1,10 +1,10 @@
 // Base URL configuration
 const IMAGE_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '../'  // Local development
-    : 'https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/cdk-workspaces/workspaces/';  // GitHub リポジトリ
+    : 'https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/workspaces/';  // GitHub リポジトリ
 const REPO_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '../'  // Local development
-    : 'https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/cdk-workspaces/workspaces/';  // GitHub リポジトリ
+    : 'https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/';  // GitHub リポジトリ
 
 // Convert relative path to absolute URL
 function toAbsoluteImageUrl(relativePath) {

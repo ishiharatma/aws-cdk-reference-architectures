@@ -6,11 +6,13 @@ AWS Reference Architectures implemented with CDK - Collection of cloud architect
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-*Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
+*他の言語で読む(Read this in other languages):* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
 ## Overview
 
 This repository provides reference architectures for AWS implemented using AWS Cloud Development Kit (CDK). Each architecture pattern includes detailed documentation, architecture diagrams, and CDK implementation in TypeScript/Python.
+
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://ishiharatma.github.io/aws-cdk-reference-architectures/)
 
 ## Getting Started
 
@@ -110,8 +112,7 @@ aws-cdk-reference-architectures/
 ├── docs/                                    # Documentation Root Folder
 ├── scripts/                                 # Workspace Initialize Scripts
 ├── templates/                               # Workspace templates
-├── infrastructure/
-│   └─── cdk/                                # CDK project root folder
+├── infrastructure/                          # CDK project root folder
 │       ├── common                           # Common
 │       └── workspaces                       # CDK Workspace
 │           └──<pattern-name>
@@ -152,7 +153,7 @@ This project uses a workspace structure based on [npm workspaces](https://docs.n
 Initialize the workspace using the provided shell script:
 
 ```sh
-./scripts/init-cdk.sh infrastructure/cdk-workspaces
+./scripts/init-cdk.sh infrastructure
 ```
 
 ### Deployment Instructions
@@ -160,7 +161,7 @@ Initialize the workspace using the provided shell script:
 1. Install dependencies for all workspaces
 
 ```bash
-cd infrastructure/cdk-workspaces
+cd infrastructure
 npm install
 ```
 
