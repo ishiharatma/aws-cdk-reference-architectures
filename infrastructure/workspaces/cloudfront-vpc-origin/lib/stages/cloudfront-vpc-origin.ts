@@ -28,7 +28,9 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
       vpcConfig: props.params.vpcConfig,
       cloudfrontManagedPrefixList: props.params.cloudfrontManagedPrefixList,
       publicAlbFailover: props.params.publicAlbFailover,
-      allowedIps: props.allowedIps,
+      useWAF: true, // WAF is not used in this stack; if needed, it can be added later
+      allowedIpsAfterRules: props.allowedIps,
+      //allowedIpsBeforeRules: props.allowedIps,
       env: props.env,
       terminationProtection: props.terminationProtection, // Enabling deletion protection
       isAutoDeleteObject: props.isAutoDeleteObject,

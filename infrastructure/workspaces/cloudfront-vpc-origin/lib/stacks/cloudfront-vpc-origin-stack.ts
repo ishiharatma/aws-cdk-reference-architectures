@@ -7,6 +7,7 @@ import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import { Construct } from 'constructs';
 import { VpcConfig } from '@common/types';
 import { Environment } from '@common/parameters/environments';
@@ -19,7 +20,10 @@ export interface StackProps extends cdk.StackProps {
     readonly environment: Environment;
     readonly isAutoDeleteObject: boolean;
     readonly vpcConfig: VpcConfig;
-    readonly allowedIps?: string[];
+    readonly useWAF?: boolean;
+    readonly allowedIpsBeforeRules?: string[];
+    readonly allowedIpsAfterRules?: string[];
+    readonly allowedCloudFunctionIps?: string[];
     /**
      * CloudFront managed prefix list ID (e.g. com.amazonaws.<region>.cloudfront.origin-facing)
      * to allow ALB access from. If omitted, falls back to allowing the VPC's own CIDR block,
@@ -188,7 +192,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
     });
 
     let denyAccessFunction: cloudfront.Function | undefined = undefined;
-    if (props.allowedIps && props.allowedIps.length > 0) {
+    if (props.allowedCloudFunctionIps && props.allowedCloudFunctionIps.length > 0) {
       // Create a CloudFront Function Denying access to ALB for non-allowed IPs
       denyAccessFunction = new cloudfront.Function(this, 'DenyAccessFunction', {
         runtime: cloudfront.FunctionRuntime.JS_2_0,
@@ -197,7 +201,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
 
           function handler(event) {
             var request = event.request;
-            var allowedIps = ${JSON.stringify(props.allowedIps)};
+            var allowedIps = ${JSON.stringify(props.allowedCloudFunctionIps)};
             var clientIp = event.viewer.ip;
 
             if (!allowedIps.includes(clientIp)) {
@@ -248,6 +252,113 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
       logFilePrefix: `${props.project}-${props.environment}/cloudfront-logs/`,
       logIncludesCookies: true,
     });
+
+    // Create WAFv2 Web ACL for CloudFront distribution to block non-allowed IPs
+    // Note: WAFv2 is not available in all regions, so this is a placeholder for the actual implementation.
+    // You would need to create a WAFv2 Web ACL and associate it with the CloudFront distribution.
+    if (props.useWAF) {
+      const useBeforeWhitelist = props.allowedIpsBeforeRules && props.allowedIpsBeforeRules.length > 0;
+      const useAfterWhitelist = props.allowedIpsAfterRules && props.allowedIpsAfterRules.length > 0;
+
+      const wafAcl = new wafv2.CfnWebACL(this, 'WafAcl', {
+        scope: 'CLOUDFRONT',
+        defaultAction:  { block: {} },
+        visibilityConfig: {
+          sampledRequestsEnabled: true,
+          cloudWatchMetricsEnabled: true,
+          metricName: `${props.project}-${props.environment}-WafAcl`,
+        },
+        rules: [
+          useBeforeWhitelist ? {
+            // Specify the IP addresses to allow before evaluating the management rules.
+            name: 'AllowSpecificIPsBeforeRules',
+            priority: 1,
+            action: { allow: {} },
+            statement: {
+              ipSetReferenceStatement: {
+                arn: new wafv2.CfnIPSet(this, 'AllowedIpsSet', {
+                  addresses: (props.allowedIpsBeforeRules).map(ip => `${ip}/32`),
+                  ipAddressVersion: 'IPV4',
+                  scope: 'CLOUDFRONT',
+                  name: `${props.project}-${props.environment}-AllowedIpsSetBeforeRules`,
+                }).attrArn,
+              },
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: `${props.project}-${props.environment}-AllowSpecificIPsBeforeRules`,
+            },
+          }: undefined,
+          {
+            name: 'CoreRuleSet',
+            priority: 2,
+            overrideAction: { none: {} },
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesCommonRuleSet',
+              },
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: `${props.project}-${props.environment}-CoreRuleSet`,
+            },
+          },
+          {
+            name: 'KnownBadInputsRuleSet',
+            priority: 3,
+            overrideAction: { none: {} },
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: 'AWS',
+                name: 'AWSManagedRulesKnownBadInputsRuleSet',
+              },
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: `${props.project}-${props.environment}-KnownBadInputsRuleSet`,
+            },
+          },
+          // Additional managed rule groups can be added here as needed
+
+          // Allow specific IPs after the managed rules have been applied
+          // IP restrictions are applied after the managed rules are evaluated. 
+          // If no restrictions are specified, all connections will be allowed.
+          {
+            name: 'AllowSpecificIPsAfterRules',
+            priority: 100,
+            action: { allow: {} },
+            statement: {
+              ipSetReferenceStatement: {
+                arn: new wafv2.CfnIPSet(this, 'AllowedIpsSetAfterRules', {
+                  addresses: (props.allowedIpsAfterRules || ['0.0.0.0/1', '128.0.0.0/1']).map(ip => `${ip}/32`),
+                  ipAddressVersion: 'IPV4',
+                  scope: 'CLOUDFRONT',
+                  name: `${props.project}-${props.environment}-AllowedIpsSetAfterRules`,
+                }).attrArn,
+              },
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: `${props.project}-${props.environment}-AllowSpecificIPsAfterRules`,
+            },
+          }
+        ].filter(rule => rule !== undefined),
+      });
+
+      // Associate WAFv2 Web ACL with CloudFront distribution
+      new cdk.CfnResource(this, 'WafAclAssociation', {
+        type: 'AWS::WAFv2::WebACLAssociation',
+        properties: {
+          ResourceArn: this.distribution.distributionArn,
+          WebACLArn: wafAcl.getAtt('Arn').toString(),
+        },
+      });
+    }
 
     // Always registered, regardless of `publicAlbFailover` — so the VPC Origin stays in place
     // and ready to route back to instantly (no need to recreate it, which can take a while) once
