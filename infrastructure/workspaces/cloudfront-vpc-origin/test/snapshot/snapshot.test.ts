@@ -44,7 +44,7 @@ describe("Stack Snapshot Tests", () => {
     isAutoDeleteObject: true,
     terminationProtection: false,
     vpcConfig: envParams.vpcConfig,
-    allowedIps: ['192.0.2.10'],
+    allowedCloudFunctionIps: ['192.0.2.10'],
   });
   const stackTemplate = Template.fromStack(stack);
   cdk.Tags.of(app).add('Project', projectName);

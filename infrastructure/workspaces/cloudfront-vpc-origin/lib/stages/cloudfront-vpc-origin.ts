@@ -7,6 +7,7 @@ import { EnvParams } from "parameters/environments";
 import { CloudfrontVpcOriginStack } from 'lib/stacks/cloudfront-vpc-origin-stack';
 import { CloudfrontLogDeliveryStack } from 'lib/stacks/cloudfront-log-delivery-stack';
 import { CloudfrontMonitoringStack } from 'lib/stacks/cloudfront-monitoring-stack';
+import { CloudfrontWafStack } from 'lib/stacks/cloudfront-waf-stack';
 
 export interface StageProps extends cdk.StageProps {
     readonly project: string;
@@ -21,6 +22,21 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
   constructor(scope: Construct, id: string, props: StageProps) {
     super(scope, id, props);
 
+    // WAFv2 Web ACLs scoped to CLOUDFRONT can only be created in us-east-1, regardless of the
+    // distribution's own region, so this is a separate stack forced into us-east-1. Its Web ACL
+    // ARN is then handed to the main stack to associate with the distribution.
+    const wafStack = new CloudfrontWafStack(this, pascalCase(`${props.project}Waf`), {
+      project: props.project,
+      description: `${pascalCase(props.project)} CloudFront WAF Stack for ${props.environment}`,
+      environment: props.environment,
+      allowedIpsAfterRules: props.allowedIps,
+      //allowedIpsBeforeRules: props.allowedIps,
+      env: { account: props.params.accountId, region: 'us-east-1' },
+      terminationProtection: props.terminationProtection,
+      isAutoDeleteObject: props.isAutoDeleteObject,
+      crossRegionReferences: true,
+    });
+
     const mainStack = new CloudfrontVpcOriginStack(this, pascalCase(`${props.project}Main`), {
       project: props.project,
       description: `${pascalCase(props.project)} Cloudfront VPC Origin Stack for ${props.environment}`,
@@ -28,14 +44,13 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
       vpcConfig: props.params.vpcConfig,
       cloudfrontManagedPrefixList: props.params.cloudfrontManagedPrefixList,
       publicAlbFailover: props.params.publicAlbFailover,
-      useWAF: true, // WAF is not used in this stack; if needed, it can be added later
-      allowedIpsAfterRules: props.allowedIps,
-      //allowedIpsBeforeRules: props.allowedIps,
+      webAclArn: wafStack.webAclArn,
       env: props.env,
       terminationProtection: props.terminationProtection, // Enabling deletion protection
       isAutoDeleteObject: props.isAutoDeleteObject,
       crossRegionReferences: true,
     });
+    mainStack.addDependency(wafStack);
 
     // CloudFront standard logging (v2) delivery (log group + source + destination + pairing) must
     // all live in us-east-1: PutDeliverySource for CloudFront only works there, and CloudWatch Logs

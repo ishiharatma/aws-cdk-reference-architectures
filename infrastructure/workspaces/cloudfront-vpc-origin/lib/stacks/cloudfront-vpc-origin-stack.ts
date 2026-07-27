@@ -7,7 +7,6 @@ import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as wafv2 from 'aws-cdk-lib/aws-wafv2';
 import { Construct } from 'constructs';
 import { VpcConfig } from '@common/types';
 import { Environment } from '@common/parameters/environments';
@@ -20,9 +19,12 @@ export interface StackProps extends cdk.StackProps {
     readonly environment: Environment;
     readonly isAutoDeleteObject: boolean;
     readonly vpcConfig: VpcConfig;
-    readonly useWAF?: boolean;
-    readonly allowedIpsBeforeRules?: string[];
-    readonly allowedIpsAfterRules?: string[];
+    /**
+     * ARN of the WAFv2 Web ACL (scope CLOUDFRONT) to associate with the distribution, created by
+     * `CloudfrontWafStack` in us-east-1 — see that stack for why it can't live here. Omit to
+     * deploy the distribution without a Web ACL.
+     */
+    readonly webAclArn?: string;
     readonly allowedCloudFunctionIps?: string[];
     /**
      * CloudFront managed prefix list ID (e.g. com.amazonaws.<region>.cloudfront.origin-facing)
@@ -64,6 +66,12 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
       description: 'Security group for Application Load Balancer',
       allowAllOutbound: true,
     });
+    const publicAlbSecurityGroup = new ec2.SecurityGroup(this, 'PublicAlbSecurityGroup', {
+      vpc: this.vpc.vpc,
+      securityGroupName: `${props.project}-${props.environment}-PublicAlbSecurityGroup`,
+      description: 'Security group for Public Application Load Balancer',
+      allowAllOutbound: true,
+    });
 
     // CloudFront VPC origin traffic reaches the ALB from ENIs inside this VPC. AWS docs say the
     // CloudFront managed prefix list is sufficient, but in testing it wasn't — the ENIs use
@@ -76,6 +84,11 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
         ec2.Peer.prefixList(props.cloudfrontManagedPrefixList),
         ec2.Port.tcp(80),
         'Allow inbound HTTP traffic from the CloudFront managed prefix list'
+      );
+      publicAlbSecurityGroup.addIngressRule(
+        ec2.Peer.prefixList(props.cloudfrontManagedPrefixList),
+        ec2.Port.tcp(443),
+        'Allow inbound HTTPS traffic from the CloudFront managed prefix list'
       );
     } else {
       albSecurityGroup.addIngressRule(
@@ -110,9 +123,17 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
       vpc: this.vpc.vpc,
       internetFacing: publicAlbFailoverEnabled,
       securityGroup: albSecurityGroup,
-      vpcSubnets: { subnetType: publicAlbFailoverEnabled ? ec2.SubnetType.PUBLIC : ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       loadBalancerName: `${props.project}-${props.environment}-Alb`,
     });
+    const publicAlb = publicAlbFailoverEnabled ? 
+    new elbv2.ApplicationLoadBalancer(this, 'PublicAlb', {
+      vpc: this.vpc.vpc,
+      internetFacing: true,
+      securityGroup: publicAlbSecurityGroup,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      loadBalancerName: `${props.project}-${props.environment}-PublicAlb`,
+    }) : undefined;
 
     // Bucket for ALB access logs
     const albLogBucket = new s3.Bucket(this, 'AlbLogBucket', {
@@ -122,6 +143,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
       enforceSSL: true,
     });
     alb.logAccessLogs(albLogBucket);
+    publicAlb?.logAccessLogs(albLogBucket, 'public-alb');
     // add a listener to the ALB
     const listener = alb.addListener('Listener', {
       port: 80,
@@ -251,114 +273,10 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
       }),
       logFilePrefix: `${props.project}-${props.environment}/cloudfront-logs/`,
       logIncludesCookies: true,
+      // Web ACL (scope CLOUDFRONT) created in us-east-1 by `CloudfrontWafStack` — see that
+      // stack's doc comment for why it can't be created here alongside the rest of this stack.
+      webAclId: props.webAclArn,
     });
-
-    // Create WAFv2 Web ACL for CloudFront distribution to block non-allowed IPs
-    // Note: WAFv2 is not available in all regions, so this is a placeholder for the actual implementation.
-    // You would need to create a WAFv2 Web ACL and associate it with the CloudFront distribution.
-    if (props.useWAF) {
-      const useBeforeWhitelist = props.allowedIpsBeforeRules && props.allowedIpsBeforeRules.length > 0;
-      const useAfterWhitelist = props.allowedIpsAfterRules && props.allowedIpsAfterRules.length > 0;
-
-      const wafAcl = new wafv2.CfnWebACL(this, 'WafAcl', {
-        scope: 'CLOUDFRONT',
-        defaultAction:  { block: {} },
-        visibilityConfig: {
-          sampledRequestsEnabled: true,
-          cloudWatchMetricsEnabled: true,
-          metricName: `${props.project}-${props.environment}-WafAcl`,
-        },
-        rules: [
-          useBeforeWhitelist ? {
-            // Specify the IP addresses to allow before evaluating the management rules.
-            name: 'AllowSpecificIPsBeforeRules',
-            priority: 1,
-            action: { allow: {} },
-            statement: {
-              ipSetReferenceStatement: {
-                arn: new wafv2.CfnIPSet(this, 'AllowedIpsSet', {
-                  addresses: (props.allowedIpsBeforeRules).map(ip => `${ip}/32`),
-                  ipAddressVersion: 'IPV4',
-                  scope: 'CLOUDFRONT',
-                  name: `${props.project}-${props.environment}-AllowedIpsSetBeforeRules`,
-                }).attrArn,
-              },
-            },
-            visibilityConfig: {
-              sampledRequestsEnabled: true,
-              cloudWatchMetricsEnabled: true,
-              metricName: `${props.project}-${props.environment}-AllowSpecificIPsBeforeRules`,
-            },
-          }: undefined,
-          {
-            name: 'CoreRuleSet',
-            priority: 2,
-            overrideAction: { none: {} },
-            statement: {
-              managedRuleGroupStatement: {
-                vendorName: 'AWS',
-                name: 'AWSManagedRulesCommonRuleSet',
-              },
-            },
-            visibilityConfig: {
-              sampledRequestsEnabled: true,
-              cloudWatchMetricsEnabled: true,
-              metricName: `${props.project}-${props.environment}-CoreRuleSet`,
-            },
-          },
-          {
-            name: 'KnownBadInputsRuleSet',
-            priority: 3,
-            overrideAction: { none: {} },
-            statement: {
-              managedRuleGroupStatement: {
-                vendorName: 'AWS',
-                name: 'AWSManagedRulesKnownBadInputsRuleSet',
-              },
-            },
-            visibilityConfig: {
-              sampledRequestsEnabled: true,
-              cloudWatchMetricsEnabled: true,
-              metricName: `${props.project}-${props.environment}-KnownBadInputsRuleSet`,
-            },
-          },
-          // Additional managed rule groups can be added here as needed
-
-          // Allow specific IPs after the managed rules have been applied
-          // IP restrictions are applied after the managed rules are evaluated. 
-          // If no restrictions are specified, all connections will be allowed.
-          {
-            name: 'AllowSpecificIPsAfterRules',
-            priority: 100,
-            action: { allow: {} },
-            statement: {
-              ipSetReferenceStatement: {
-                arn: new wafv2.CfnIPSet(this, 'AllowedIpsSetAfterRules', {
-                  addresses: (props.allowedIpsAfterRules || ['0.0.0.0/1', '128.0.0.0/1']).map(ip => `${ip}/32`),
-                  ipAddressVersion: 'IPV4',
-                  scope: 'CLOUDFRONT',
-                  name: `${props.project}-${props.environment}-AllowedIpsSetAfterRules`,
-                }).attrArn,
-              },
-            },
-            visibilityConfig: {
-              sampledRequestsEnabled: true,
-              cloudWatchMetricsEnabled: true,
-              metricName: `${props.project}-${props.environment}-AllowSpecificIPsAfterRules`,
-            },
-          }
-        ].filter(rule => rule !== undefined),
-      });
-
-      // Associate WAFv2 Web ACL with CloudFront distribution
-      new cdk.CfnResource(this, 'WafAclAssociation', {
-        type: 'AWS::WAFv2::WebACLAssociation',
-        properties: {
-          ResourceArn: this.distribution.distributionArn,
-          WebACLArn: wafAcl.getAtt('Arn').toString(),
-        },
-      });
-    }
 
     // Always registered, regardless of `publicAlbFailover` — so the VPC Origin stays in place
     // and ready to route back to instantly (no need to recreate it, which can take a while) once
@@ -379,10 +297,11 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
     // Incident-response escape hatch: reach the same ALB as a plain public HTTP origin, bypassing
     // VPC Origin connectivity entirely (only relevant once `publicAlbFailoverEnabled` has also
     // made the ALB internet-facing, above).
-    const publicAlbOrigin = new cloudfront_origins.HttpOrigin(alb.loadBalancerDnsName, {
-      httpPort: 80,
-      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-    });
+    const publicAlbOrigin = publicAlbFailoverEnabled ?
+      new cloudfront_origins.HttpOrigin(publicAlb!.loadBalancerDnsName, {
+        httpsPort: 443,
+        protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+      }) : undefined;
 
     // Create Origin Group for CloudFront to route traffic to the ALB. Normally the VPC Origin is
     // primary and the S3 error page is the fallback. While `publicAlbFailover` is enabled, the
@@ -391,7 +310,7 @@ export class CloudfrontVpcOriginStack extends cdk.Stack {
     // temporarily losing the friendly static-page fallback, which is an acceptable trade during
     // a short-lived incident.
     const originGroup = new cloudfront_origins.OriginGroup({
-      primaryOrigin: publicAlbFailoverEnabled ? publicAlbOrigin : vpcOriginAlb,
+      primaryOrigin: publicAlbFailoverEnabled ? publicAlbOrigin! : vpcOriginAlb,
       fallbackOrigin: publicAlbFailoverEnabled
         ? vpcOriginAlb
         : cloudfront_origins.S3BucketOrigin.withOriginAccessControl(errorBucket),

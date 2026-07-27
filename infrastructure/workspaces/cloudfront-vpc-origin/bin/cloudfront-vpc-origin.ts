@@ -41,6 +41,10 @@ const isAutoDeleteObject = true;
 // Since it is a test, it can be deleted
 const isTerminationProtection = false;
 
+if (envParams.publicAlbFailover?.enabled) {
+  console.warn(`WARNING: Public ALB failover is enabled for environment ${envName}. This is intended only for emergency use during VPC Origin connectivity issues.`);
+}
+
 const stage = new CloudfrontVpcOriginStage(app, `CloudfrontVpcOrigin${pascalCase(envName)}`, {
   project: pjName,
   environment: envName,

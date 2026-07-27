@@ -19,7 +19,7 @@ if (!params[envName]) {
 const envParams = params[envName];
 
 interface BuildStackOptions {
-  readonly allowedIps?: string[];
+  readonly allowedCloudFunctionIps?: string[];
   readonly cloudfrontManagedPrefixList?: string;
   readonly publicAlbFailover?: PublicAlbFailoverConfig;
 }
@@ -33,7 +33,7 @@ function buildStack(options: BuildStackOptions = {}) {
     isAutoDeleteObject: true,
     terminationProtection: false,
     vpcConfig: envParams.vpcConfig,
-    allowedIps: options.allowedIps,
+    allowedCloudFunctionIps: options.allowedCloudFunctionIps,
     cloudfrontManagedPrefixList: options.cloudfrontManagedPrefixList,
     publicAlbFailover: options.publicAlbFailover,
   });
@@ -41,7 +41,7 @@ function buildStack(options: BuildStackOptions = {}) {
 }
 
 describe('CloudfrontVpcOriginStack', () => {
-  const template = buildStack({ allowedIps: ['192.0.2.10'] });
+  const template = buildStack({ allowedCloudFunctionIps: ['192.0.2.10'] });
 
   test('ALB is internal, not internet-facing', () => {
     template.hasResourceProperties('AWS::ElasticLoadBalancingV2::LoadBalancer', {
@@ -169,7 +169,7 @@ describe('CloudfrontVpcOriginStack', () => {
     template.hasOutput('CloudFrontURL', {});
   });
 
-  describe('when allowedIps is not provided', () => {
+  describe('when allowedCloudFunctionIps is not provided', () => {
     const templateWithoutAllowlist = buildStack({});
 
     test('no CloudFront Function / IP allowlist is created', () => {
@@ -177,7 +177,7 @@ describe('CloudfrontVpcOriginStack', () => {
     });
   });
 
-  describe('when allowedIps is provided', () => {
+  describe('when allowedCloudFunctionIps is provided', () => {
     test('a CloudFront Function denies non-allowed viewer IPs', () => {
       template.resourceCountIs('AWS::CloudFront::Function', 1);
       template.hasResourceProperties('AWS::CloudFront::Function', {
@@ -226,7 +226,16 @@ describe('CloudfrontVpcOriginStack', () => {
         IpProtocol: 'tcp',
         SourcePrefixListId: 'pl-00000000',
       });
-      failoverTemplate.resourceCountIs('AWS::EC2::SecurityGroupIngress', 1);
+      // The internal ALB's port-80 rule (VPC Origin path, kept regardless of publicAlbFailover)
+      // plus the now-internet-facing public ALB's port-443 rule — both scoped to the CloudFront
+      // managed prefix list, neither open to 0.0.0.0/0 (checked above).
+      failoverTemplate.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
+        FromPort: 443,
+        ToPort: 443,
+        IpProtocol: 'tcp',
+        SourcePrefixListId: 'pl-00000000',
+      });
+      failoverTemplate.resourceCountIs('AWS::EC2::SecurityGroupIngress', 2);
     });
 
     test('the VPC Origin is still registered, as the origin group fallback, not deleted', () => {

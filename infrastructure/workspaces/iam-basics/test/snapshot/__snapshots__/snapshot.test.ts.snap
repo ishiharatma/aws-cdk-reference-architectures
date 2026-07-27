@@ -1,0 +1,386 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "SwitchRoleUserSecretsPasswordUserSecretArn494DE317": {
+      "Description": "The ARN of the Secrets Manager secret for SecretsPasswordUser",
+      "Value": {
+        "Ref": "SwitchRoleUserPasswordSecrets6E5F525E",
+      },
+    },
+    "UserGroupSecretsPasswordUserSecretArn0810DD39": {
+      "Description": "The ARN of the Secrets Manager secret for SecretsPasswordUser",
+      "Value": {
+        "Ref": "UserGroupPasswordSecretsD9578A34",
+      },
+    },
+    "UserWithPasswordPasswordUserName46B28CF3": {
+      "Description": "The user name of the IAM User with Password",
+      "Value": {
+        "Ref": "UserWithPasswordPasswordUserA5E8EDB8",
+      },
+    },
+    "UserWithPasswordSecretsPasswordUserNameA88E71CE": {
+      "Description": "The user name of the IAM User with Secrets Manager password",
+      "Value": {
+        "Ref": "UserWithPasswordSecretsPasswordUserCFEF7855",
+      },
+    },
+    "UserWithPasswordSecretsPasswordUserSecretArn43E09A5C": {
+      "Description": "The ARN of the Secrets Manager secret for SecretsPasswordUser",
+      "Value": {
+        "Ref": "UserWithPasswordPasswordSecrets430B0ABA",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CDKDefaultUserF7AAA71A": {
+      "Type": "AWS::IAM::User",
+    },
+    "SwitchRoleUser6999F8A5": {
+      "Properties": {
+        "Groups": [
+          {
+            "Ref": "SwitchRoleUserIamGroup51729A03",
+          },
+        ],
+        "LoginProfile": {
+          "Password": {
+            "Fn::Join": [
+              "",
+              [
+                "{{resolve:secretsmanager:",
+                {
+                  "Ref": "SwitchRoleUserPasswordSecrets6E5F525E",
+                },
+                ":SecretString:password::}}",
+              ],
+            ],
+          },
+          "PasswordResetRequired": true,
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/IAMUserChangePassword",
+              ],
+            ],
+          },
+        ],
+        "UserName": "SwitchRoleUser",
+      },
+      "Type": "AWS::IAM::User",
+    },
+    "SwitchRoleUserAssumeRoleReadOnlyPolicyB89B15EC": {
+      "Properties": {
+        "Groups": [
+          {
+            "Ref": "SwitchRoleUserIamGroup51729A03",
+          },
+        ],
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SwitchRoleUserReadOnlyRole660C7C3B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SwitchRoleUserAssumeRoleReadOnlyPolicyB89B15EC",
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SwitchRoleUserIamGroup51729A03": {
+      "Type": "AWS::IAM::Group",
+    },
+    "SwitchRoleUserPasswordSecrets6E5F525E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "GenerateStringKey": "password",
+          "SecretStringTemplate": "{"username":"SwitchRoleUser"}",
+        },
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SwitchRoleUserReadOnlyRole660C7C3B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "Bool": {
+                  "aws:MultiFactorAuthPresent": "true",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/ReadOnlyAccess",
+              ],
+            ],
+          },
+        ],
+        "MaxSessionDuration": 14400,
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "UserGroupIamGroup1BC47039": {
+      "Properties": {
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/ReadOnlyAccess",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Group",
+    },
+    "UserGroupPasswordSecretsD9578A34": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "GenerateStringKey": "password",
+          "SecretStringTemplate": "{"username":"SwitchRoleUser"}",
+        },
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UserGroupUser10CAFCD8": {
+      "Properties": {
+        "Groups": [
+          {
+            "Ref": "UserGroupIamGroup1BC47039",
+          },
+        ],
+        "LoginProfile": {
+          "Password": {
+            "Fn::Join": [
+              "",
+              [
+                "{{resolve:secretsmanager:",
+                {
+                  "Ref": "UserGroupPasswordSecretsD9578A34",
+                },
+                ":SecretString:password::}}",
+              ],
+            ],
+          },
+          "PasswordResetRequired": true,
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/IAMUserChangePassword",
+              ],
+            ],
+          },
+        ],
+        "UserName": "SwitchRoleUser",
+      },
+      "Type": "AWS::IAM::User",
+    },
+    "UserWithPasswordPasswordSecrets430B0ABA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "GenerateStringKey": "password",
+          "SecretStringTemplate": "{"username":"SecretsPasswordUser"}",
+        },
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UserWithPasswordPasswordUserA5E8EDB8": {
+      "Properties": {
+        "LoginProfile": {
+          "Password": "InitialPassword123!",
+          "PasswordResetRequired": true,
+        },
+      },
+      "Type": "AWS::IAM::User",
+    },
+    "UserWithPasswordSecretsPasswordUserCFEF7855": {
+      "Properties": {
+        "LoginProfile": {
+          "Password": {
+            "Fn::Join": [
+              "",
+              [
+                "{{resolve:secretsmanager:",
+                {
+                  "Ref": "UserWithPasswordPasswordSecrets430B0ABA",
+                },
+                ":SecretString:password::}}",
+              ],
+            ],
+          },
+          "PasswordResetRequired": true,
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/IAMUserChangePassword",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/ReadOnlyAccess",
+              ],
+            ],
+          },
+        ],
+        "UserName": "SecretsPasswordUser",
+      },
+      "Type": "AWS::IAM::User",
+    },
+    "UserWithPasswordSecretsPasswordUserDefaultPolicy6A5FC9BF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:ListAllMyBuckets",
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::*",
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "UserWithPasswordPasswordSecrets430B0ABA",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "UserWithPasswordSecretsPasswordUserDefaultPolicy6A5FC9BF",
+        "Users": [
+          {
+            "Ref": "UserWithPasswordSecretsPasswordUserCFEF7855",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::IAM::Group": 2,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 1,
+  "AWS::IAM::User": 5,
+  "AWS::SecretsManager::Secret": 3,
+}
+`;
