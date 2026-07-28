@@ -221,23 +221,20 @@ describe('CloudwatchLogsS3ArchiveBasicStack Fine-grained Assertions', () => {
         });
 
         test('should grant CWL-to-Firehose role PutRecord permissions', () => {
-            template.hasResourceProperties('AWS::IAM::Role', {
-                Policies: Match.arrayWith([
-                    Match.objectLike({
-                        PolicyName: 'AllowPutToFirehose',
-                        PolicyDocument: {
-                            Statement: Match.arrayWith([
-                                Match.objectLike({
-                                    Action: Match.arrayWith([
-                                        'firehose:PutRecord',
-                                        'firehose:PutRecordBatch',
-                                    ]),
-                                    Effect: 'Allow',
-                                }),
+            // Granted via FirehoseDestination.bind() -> deliveryStream.grantPutRecords(role),
+            // which attaches a standalone AWS::IAM::Policy rather than an inline Role policy.
+            template.hasResourceProperties('AWS::IAM::Policy', {
+                PolicyDocument: {
+                    Statement: Match.arrayWith([
+                        Match.objectLike({
+                            Action: Match.arrayWith([
+                                'firehose:PutRecord',
+                                'firehose:PutRecordBatch',
                             ]),
-                        },
-                    }),
-                ]),
+                            Effect: 'Allow',
+                        }),
+                    ]),
+                },
             });
         });
     });

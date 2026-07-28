@@ -29,7 +29,7 @@
 
 ```text
 CloudWatch Log Group
-  → サブスクリプションフィルター  (CfnSubscriptionFilter、roleArn = CwlToFirehoseRole)
+  → サブスクリプションフィルター  (SubscriptionFilter + FirehoseDestination、role = CwlToFirehoseRole)
   → Kinesis Data Firehose (GZIP圧縮、日付パーティションプレフィックス)
   → S3 アーカイブバケット
 ```
@@ -120,34 +120,33 @@ cloudwatch-logs-s3-archive/
 
 CloudWatch LogsはFirehoseへの配信に明示的なIAMロールが必要です。2つのロールを使用します。
 
-- **CwlToFirehoseRole** — `logs.amazonaws.com`が引き受けるロール。`SourceArn`条件でスコープを絞り、特定の配信ストリームに対して`firehose:PutRecord`と`firehose:PutRecordBatch`を許可します。
+- **CwlToFirehoseRole** — `logs.amazonaws.com`が引き受けるロール。`SourceArn`条件でスコープを絞ります。ここで定義するのは信頼ポリシーのみで、実際の`firehose:PutRecord`/`PutRecordBatch`許可は後述のL2コンストラクトが自動的に付与します。
 - **FirehoseRole** — `firehose.amazonaws.com`が引き受けるロール。アーカイブバケットへのS3書き込み権限を付与します。
 
 ```typescript
-// CWL → Firehose 信頼ポリシーとアクセスポリシー
+// CWL → Firehose 信頼ポリシーのみを定義。権限付与はFirehoseDestination側で行う
 const cwlToFirehoseRole = new iam.Role(this, 'CwlToFirehoseRole', {
     assumedBy: new iam.ServicePrincipal('logs.amazonaws.com', {
         conditions: {
-            ArnLike: { 'aws:SourceArn': this.logGroup.logGroupArn },
+            StringLike: { 'aws:SourceArn': `arn:${this.partition}:logs:${this.region}:${this.account}:log-group:*` },
         },
     }),
 });
-cwlToFirehoseRole.addToPolicy(new iam.PolicyStatement({
-    actions: ['firehose:PutRecord', 'firehose:PutRecordBatch'],
-    resources: [deliveryStream.deliveryStreamArn],
-}));
 
-// サブスクリプションフィルター（roleArnを明示的に指定するためL1を使用）
-new logs.CfnSubscriptionFilter(this, 'SubscriptionFilter', {
-    logGroupName: this.logGroup.logGroupName,
-    destinationArn: deliveryStream.deliveryStreamArn,
-    filterPattern: filterPattern,
-    roleArn: cwlToFirehoseRole.roleArn,
+// L2の SubscriptionFilter + FirehoseDestination(role: cwlToFirehoseRole)
+new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
+    logGroup: this.logGroup,
+    destination: new logs_destinations.FirehoseDestination(deliveryStream, {
+        role: cwlToFirehoseRole,
+    }),
+    filterPattern: filterPattern
+        ? logs.FilterPattern.literal(filterPattern)
+        : logs.FilterPattern.allEvents(),
 });
 ```
 
-> **なぜL2の`SubscriptionFilter`ではなく`CfnSubscriptionFilter`を使うのか？**
-> L2コンストラクトは`roleArn`パラメータを公開していません。FirehoseデスティネーションではロールのARNが必須のため、L1リソースを使用する必要があります。
+> **なぜL1の`CfnSubscriptionFilter`を使わないのか？**
+> 以前はこのスタックも「L2の`SubscriptionFilter`はFirehose向けのロールARNを受け取れない」という前提でL1 + 手動インラインポリシーを使っていました。しかし実際には`aws-logs-destinations`に`FirehoseDestination`クラスがあり、その`bind()`が指定（または自動生成）したロールのARNを`CfnSubscriptionFilter`に配線し、`deliveryStream.grantPutRecords(role)`で必要な権限も自動的に付与してくれます。信頼ポリシーだけを定義した`cwlToFirehoseRole`をこのL2コンストラクトに渡すことで、`SourceArn`によるスコープの絞り込みは維持しつつ、権限付与はL2に任せられます（自前でインラインポリシーも足すと`AWS::IAM::Policy`が重複するため注意してください）。
 
 ### 2. 階層型S3ライフサイクル（スタック2 – Lifecycle）
 
@@ -341,7 +340,7 @@ npm run test:compliance -w cloudwatch-logs-s3-archive
 | コンポーネント | 推奨 | 避けるべき |
 | ------------- | ---- | ---------- |
 | パターンA IAM | 2つの分離したロール（CWL→Firehose、Firehose→S3）と`SourceArn`条件 | 過度に広い信頼を持つ単一ロール |
-| パターンA サブスクリプション | L1 `CfnSubscriptionFilter` + 明示的な`roleArn` | L2 `SubscriptionFilter`（FirehoseへのroleArn未サポート） |
+| パターンA サブスクリプション | L2 `SubscriptionFilter` + `FirehoseDestination`（`role`で信頼ポリシーのみのロールを渡し、権限付与はL2に任せる） | 自前のインラインポリシーとL2の`grantPutRecords`を両方使う（`AWS::IAM::Policy`が重複する） |
 | パターンB 同時実行 | Lambda内で実行中タスクを確認してから`CreateExportTask`を呼び出す | 確認なし（`LimitExceededException`のリスク） |
 | パターンB バケットポリシー | `aws:SourceArn`をアカウントのロググループにスコープする | 条件なし（任意のCWLプリンシパルが書き込み可能） |
 | パターンC デスティネーション | `LambdaDestination`（CDKが呼び出し許可を自動管理） | 手動での`Lambda::Permission`リソース作成 |
@@ -373,7 +372,7 @@ npm run test:compliance -w cloudwatch-logs-s3-archive
 
 このパターンから学んだこと：
 
-1. **パターンA（Firehose）**: コードが少なくほぼリアルタイムのアーカイブに最適。2つのIAMロールとL1の`CfnSubscriptionFilter`が必要です。
+1. **パターンA（Firehose）**: コードが少なくほぼリアルタイムのアーカイブに最適。2つのIAMロールと、L2の`SubscriptionFilter`+`FirehoseDestination`の組み合わせが必要です。
 2. **パターンB（エクスポートタスク）**: バッチユースケースで最もコストが低い。アカウントあたり同時実行1件の制限あり。`logs.amazonaws.com`への書き込みを許可するバケットポリシーが必須です。
 3. **パターンC（Lambda）**: カスタム出力フォーマットに最大の柔軟性。`LambdaDestination`で呼び出し許可が簡略化。高スループットロググループではLambdaの同時実行数を適切に管理してください。
 

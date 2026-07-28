@@ -12,6 +12,7 @@ import * as firehose from 'aws-cdk-lib/aws-kinesisfirehose';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as logs_destinations from 'aws-cdk-lib/aws-logs-destinations';
 
 export interface CloudwatchLogsS3ArchiveBasicStackProps extends cdk.StackProps {
     readonly project: string;
@@ -140,6 +141,8 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         // -----------------------------------------------------------------------
         // IAM Role: CloudWatch Logs → Firehose
         // SourceArn condition restricts trust to log groups in this account/region.
+        // Only the trust policy is defined here; FirehoseDestination.bind() grants
+        // firehose:PutRecord/PutRecordBatch on this role via grantPutRecords().
         // -----------------------------------------------------------------------
         const cwlToFirehoseRole = new iam.Role(this, 'CwlToFirehoseRole', {
             assumedBy: new iam.ServicePrincipal('logs.amazonaws.com', {
@@ -149,31 +152,22 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
                     },
                 },
             }),
-            inlinePolicies: {
-                AllowPutToFirehose: new iam.PolicyDocument({
-                    statements: [
-                        new iam.PolicyStatement({
-                            actions: [
-                                'firehose:PutRecord',
-                                'firehose:PutRecordBatch',
-                            ],
-                            resources: [this.deliveryStream.deliveryStreamArn],
-                        }),
-                    ],
-                }),
-            },
         });
 
         // -----------------------------------------------------------------------
         // Subscription Filter: CloudWatch Logs → Firehose
-        // CfnSubscriptionFilter is used here because we need to supply an explicit
-        // IAM roleArn that grants CWL permission to deliver to Firehose.
+        // FirehoseDestination.bind() wires cwlToFirehoseRole in as the roleArn
+        // passed to the underlying CfnSubscriptionFilter.
         // -----------------------------------------------------------------------
-        new logs.CfnSubscriptionFilter(this, 'CwlSubscriptionFilter', {
-            logGroupName: this.logGroup.logGroupName,
-            filterPattern: logGroupParams.filterPattern ?? defaultLogGroupArchiveConfig.filterPattern,
-            destinationArn: this.deliveryStream.deliveryStreamArn,
-            roleArn: cwlToFirehoseRole.roleArn,
+        const filterPattern = logGroupParams.filterPattern ?? defaultLogGroupArchiveConfig.filterPattern;
+        new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
+            logGroup: this.logGroup,
+            destination: new logs_destinations.FirehoseDestination(this.deliveryStream, {
+                role: cwlToFirehoseRole,
+            }),
+            filterPattern: filterPattern
+                ? logs.FilterPattern.literal(filterPattern)
+                : logs.FilterPattern.allEvents(),
         });
 
         // -----------------------------------------------------------------------

@@ -311,7 +311,10 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
       },
       "Type": "AWS::IAM::Role",
     },
-    "CwlSubscriptionFilter": {
+    "CwlSubscriptionFilter1C4C480C": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
       "Properties": {
         "DestinationArn": {
           "Fn::GetAtt": [
@@ -362,31 +365,37 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
           ],
           "Version": "2012-10-17",
         },
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "firehose:PutRecord",
-                    "firehose:PutRecordBatch",
-                  ],
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "ArchiveDeliveryStream497AB609",
-                      "Arn",
-                    ],
-                  },
-                },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwlToFirehoseRoleDefaultPolicy51C34CD1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
               ],
-              "Version": "2012-10-17",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ArchiveDeliveryStream497AB609",
+                  "Arn",
+                ],
+              },
             },
-            "PolicyName": "AllowPutToFirehose",
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+        "Roles": [
+          {
+            "Ref": "CwlToFirehoseRole124D1583",
           },
         ],
       },
-      "Type": "AWS::IAM::Role",
+      "Type": "AWS::IAM::Policy",
     },
     "FirehoseRoleAA67C190": {
       "Properties": {
@@ -548,7 +557,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
 
 exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Resource types and counts 1`] = `
 {
-  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Policy": 2,
   "AWS::IAM::Role": 3,
   "AWS::KinesisFirehose::DeliveryStream": 1,
   "AWS::Lambda::Function": 1,
@@ -861,7 +870,10 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExistingStack Complete Clou
       },
       "Type": "AWS::IAM::Role",
     },
-    "CwlSubscriptionFilter": {
+    "CwlSubscriptionFilter1C4C480C": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
       "Properties": {
         "DestinationArn": {
           "Fn::GetAtt": [
@@ -910,31 +922,37 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExistingStack Complete Clou
           ],
           "Version": "2012-10-17",
         },
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "firehose:PutRecord",
-                    "firehose:PutRecordBatch",
-                  ],
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "ArchiveDeliveryStream497AB609",
-                      "Arn",
-                    ],
-                  },
-                },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwlToFirehoseRoleDefaultPolicy51C34CD1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
               ],
-              "Version": "2012-10-17",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ArchiveDeliveryStream497AB609",
+                  "Arn",
+                ],
+              },
             },
-            "PolicyName": "AllowPutToFirehose",
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+        "Roles": [
+          {
+            "Ref": "CwlToFirehoseRole124D1583",
           },
         ],
       },
-      "Type": "AWS::IAM::Role",
+      "Type": "AWS::IAM::Policy",
     },
     "FirehoseRoleAA67C190": {
       "Properties": {
@@ -1096,7 +1114,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExistingStack Complete Clou
 
 exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExistingStack Resource types and counts 1`] = `
 {
-  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Policy": 2,
   "AWS::IAM::Role": 3,
   "AWS::KinesisFirehose::DeliveryStream": 1,
   "AWS::Lambda::Function": 1,
@@ -2439,7 +2457,10 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLifecycleStack Complete Clo
       },
       "Type": "AWS::IAM::Role",
     },
-    "CwlSubscriptionFilter": {
+    "CwlSubscriptionFilter1C4C480C": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
       "Properties": {
         "DestinationArn": {
           "Fn::GetAtt": [
@@ -2490,31 +2511,37 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLifecycleStack Complete Clo
           ],
           "Version": "2012-10-17",
         },
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "firehose:PutRecord",
-                    "firehose:PutRecordBatch",
-                  ],
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "ArchiveDeliveryStream497AB609",
-                      "Arn",
-                    ],
-                  },
-                },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwlToFirehoseRoleDefaultPolicy51C34CD1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
               ],
-              "Version": "2012-10-17",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ArchiveDeliveryStream497AB609",
+                  "Arn",
+                ],
+              },
             },
-            "PolicyName": "AllowPutToFirehose",
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+        "Roles": [
+          {
+            "Ref": "CwlToFirehoseRole124D1583",
           },
         ],
       },
-      "Type": "AWS::IAM::Role",
+      "Type": "AWS::IAM::Policy",
     },
     "FirehoseRoleAA67C190": {
       "Properties": {
@@ -2676,7 +2703,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLifecycleStack Complete Clo
 
 exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLifecycleStack Resource types and counts 1`] = `
 {
-  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Policy": 2,
   "AWS::IAM::Role": 3,
   "AWS::KinesisFirehose::DeliveryStream": 1,
   "AWS::Lambda::Function": 1,

@@ -29,7 +29,7 @@ This architecture demonstrates the following implementations:
 
 ```text
 CloudWatch Log Group
-  → Subscription Filter  (CfnSubscriptionFilter, roleArn = CwlToFirehoseRole)
+  → Subscription Filter  (SubscriptionFilter + FirehoseDestination, role = CwlToFirehoseRole)
   → Kinesis Data Firehose (GZIP compression, date-partitioned prefix)
   → S3 Archive Bucket
 ```
@@ -120,34 +120,33 @@ cloudwatch-logs-s3-archive/
 
 CloudWatch Logs cannot deliver to Firehose without an explicit IAM role. Two roles are required:
 
-- **CwlToFirehoseRole** — assumed by `logs.amazonaws.com`; grants `firehose:PutRecord` and `firehose:PutRecordBatch` scoped to the specific delivery stream and log group via `SourceArn` conditions.
+- **CwlToFirehoseRole** — assumed by `logs.amazonaws.com`, scoped via a `SourceArn` condition. Only the trust policy is defined explicitly; the actual `firehose:PutRecord`/`PutRecordBatch` grant is added automatically (see below).
 - **FirehoseRole** — assumed by `firehose.amazonaws.com`; grants S3 write permissions on the archive bucket.
 
 ```typescript
-// CWL → Firehose trust + policy
+// CWL → Firehose trust policy only — permissions are granted below via FirehoseDestination
 const cwlToFirehoseRole = new iam.Role(this, 'CwlToFirehoseRole', {
     assumedBy: new iam.ServicePrincipal('logs.amazonaws.com', {
         conditions: {
-            ArnLike: { 'aws:SourceArn': this.logGroup.logGroupArn },
+            StringLike: { 'aws:SourceArn': `arn:${this.partition}:logs:${this.region}:${this.account}:log-group:*` },
         },
     }),
 });
-cwlToFirehoseRole.addToPolicy(new iam.PolicyStatement({
-    actions: ['firehose:PutRecord', 'firehose:PutRecordBatch'],
-    resources: [deliveryStream.deliveryStreamArn],
-}));
 
-// Subscription filter (L1 used so roleArn can be supplied explicitly)
-new logs.CfnSubscriptionFilter(this, 'SubscriptionFilter', {
-    logGroupName: this.logGroup.logGroupName,
-    destinationArn: deliveryStream.deliveryStreamArn,
-    filterPattern: filterPattern,
-    roleArn: cwlToFirehoseRole.roleArn,
+// L2 SubscriptionFilter + FirehoseDestination(role: cwlToFirehoseRole)
+new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
+    logGroup: this.logGroup,
+    destination: new logs_destinations.FirehoseDestination(deliveryStream, {
+        role: cwlToFirehoseRole,
+    }),
+    filterPattern: filterPattern
+        ? logs.FilterPattern.literal(filterPattern)
+        : logs.FilterPattern.allEvents(),
 });
 ```
 
-> **Why `CfnSubscriptionFilter` instead of the L2 `SubscriptionFilter`?**
-> The L2 construct does not expose a `roleArn` parameter.  For a Firehose destination the role ARN is mandatory, so the L1 resource must be used.
+> **Why not the L1 `CfnSubscriptionFilter`?**
+> Earlier revisions of this stack used `CfnSubscriptionFilter` with a manually-attached inline policy, on the assumption that the L2 `SubscriptionFilter` couldn't accept a Firehose role ARN. That's no longer true: `aws-logs-destinations` ships a `FirehoseDestination` class whose `bind()` method wires a supplied (or auto-created) role's ARN into the underlying `CfnSubscriptionFilter`, and calls `deliveryStream.grantPutRecords(role)` to attach the required permissions. Passing our own `cwlToFirehoseRole` — with only the trust policy defined — keeps the tighter, explicit `SourceArn` scoping while letting the L2 construct manage the permission grant, avoiding a duplicate `AWS::IAM::Policy` resource.
 
 ### 2. Tiered S3 Lifecycle (Stack 2 – Lifecycle)
 
@@ -341,7 +340,7 @@ npm run test:compliance -w cloudwatch-logs-s3-archive
 | Component | Recommended | Avoid |
 | --------- | ----------- | ----- |
 | Pattern A IAM | Two separate roles (CWL→Firehose, Firehose→S3) with `SourceArn` conditions | Single role with overly broad trust |
-| Pattern A subscription | L1 `CfnSubscriptionFilter` with explicit `roleArn` | L2 `SubscriptionFilter` (no `roleArn` support for Firehose) |
+| Pattern A subscription | L2 `SubscriptionFilter` + `FirehoseDestination` (pass a trust-only `role`; the L2 construct grants permissions) | Duplicating the grant with your own inline policy (produces a redundant `AWS::IAM::Policy`) |
 | Pattern B concurrency | Check for running tasks before calling `CreateExportTask` | Fire-and-forget (risks `LimitExceededException`) |
 | Pattern B bucket policy | Scope `aws:SourceArn` to your account's log groups | Omit conditions (allows any CWL principal to write) |
 | Pattern C destination | `LambdaDestination` (CDK manages invoke permission automatically) | Manual `Lambda::Permission` resource |
@@ -373,7 +372,7 @@ Total (Pattern A): ~$2–3/month for 1 GB/day log volume
 
 What we learned from this pattern:
 
-1. **Pattern A (Firehose)**: Best for near-real-time archiving with minimal code; requires two IAM roles and L1 `CfnSubscriptionFilter`.
+1. **Pattern A (Firehose)**: Best for near-real-time archiving with minimal code; requires two IAM roles and the L2 `SubscriptionFilter` + `FirehoseDestination` combination.
 2. **Pattern B (Export Task)**: Lowest cost for batch use cases; limited to one concurrent task per account; bucket policy must explicitly grant write access to `logs.amazonaws.com`.
 3. **Pattern C (Lambda)**: Maximum flexibility for custom output formats; `LambdaDestination` simplifies invoke permissions; manage Lambda concurrency carefully for high-throughput log groups.
 
