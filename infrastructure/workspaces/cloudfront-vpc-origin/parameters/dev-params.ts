@@ -44,7 +44,7 @@ const devParams: EnvParams = {
     // 2026-07-16 AWS CloudFront VPC Origins outage. Traffic still flows only through CloudFront.
     // Revert to `false` and redeploy once AWS resolves the underlying issue.
     publicAlbFailover: {
-        enabled: true,
+        enabled: false,
     },
 
     // Set this to receive the CloudFront 5xx error rate alarm by email (see CloudfrontMonitoringStack).

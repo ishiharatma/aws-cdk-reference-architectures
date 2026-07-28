@@ -121,7 +121,9 @@
     "link": "cloudfront-vpc-origin",
     "difficulty": "advanced",
     "date": "2026-07-19",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-008-cloudfront-vpc-origin-reaching-an-internal-alb-directly-and-1cd1"
+    }
   },
   {
     "id": "cloudwatch-logs-s3-archive",
