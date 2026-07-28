@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
 {
@@ -97,7 +97,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Value": "",
           },
         ],
-        "Name": "test-project-test-Alb",
         "Scheme": "internal",
         "SecurityGroups": [
           {
@@ -113,6 +112,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Ref": "VpcPrivateSubnet2Subnet55040997",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
           },
         ],
         "Type": "application",
@@ -244,6 +249,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "AlbLambdaFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HY08990B13",
       ],
       "Properties": {
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
+          },
+        ],
         "TargetType": "lambda",
         "Targets": [
           {
@@ -641,7 +652,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "3423a042b818e31c1e34a19d6689ab2e5f9b70fcbe9e71df66f241b20a200bd9.zip",
+          "S3Key": "97e9ebf0b174a5c8f7faa505739022b7f509edddffcab9211dcd08b759944c4f.zip",
         },
         "Environment": {
           "Variables": {
@@ -849,7 +860,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Arn",
           ],
         },
-        "Runtime": "nodejs22.x",
+        "Runtime": "nodejs24.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -911,7 +922,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "c49d356cac773d491c5f7ac148995a1181498a8e289429f8612a7f7e3814f535.zip",
+          "S3Key": "a72522445441e9b66c2f16956c54d4786af8c61c156b80c48a6e7c32fcc49023.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -946,7 +957,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "c49d356cac773d491c5f7ac148995a1181498a8e289429f8612a7f7e3814f535.zip",
+          "S3Key": "a72522445441e9b66c2f16956c54d4786af8c61c156b80c48a6e7c32fcc49023.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -982,7 +993,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "DistributionConfig": {
           "CacheBehaviors": [
             {
-              "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+              "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
               "Compress": true,
               "FunctionAssociations": [
                 {
@@ -1094,7 +1105,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
               "VpcOriginConfig": {
                 "VpcOriginId": {
                   "Fn::GetAtt": [
-                    "DistributionAlbVpcOriginV2",
+                    "DistributionOrigin2VpcOrigin9CDFA022",
                     "Id",
                   ],
                 },
@@ -1137,22 +1148,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::CloudFront::Distribution",
     },
-    "DistributionAlbVpcOriginV2": {
-      "Properties": {
-        "VpcOriginEndpointConfig": {
-          "Arn": {
-            "Ref": "Alb16C2F182",
-          },
-          "HTTPPort": 80,
-          "Name": "test-project-test-alb-vpc-origin-v2",
-          "OriginProtocolPolicy": "http-only",
-          "OriginSSLProtocols": [
-            "TLSv1.2",
-          ],
-        },
-      },
-      "Type": "AWS::CloudFront::VpcOrigin",
-    },
     "DistributionOrigin1S3OriginAccessControlEB606076": {
       "Properties": {
         "OriginAccessControlConfig": {
@@ -1163,6 +1158,22 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
       },
       "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "DistributionOrigin2VpcOrigin9CDFA022": {
+      "Properties": {
+        "VpcOriginEndpointConfig": {
+          "Arn": {
+            "Ref": "Alb16C2F182",
+          },
+          "HTTPPort": 80,
+          "Name": "CloudfrontVpcOriginStackDistributionOrigin2VpcOrigin1947DC1A",
+          "OriginProtocolPolicy": "http-only",
+          "OriginSSLProtocols": [
+            "TLSv1.2",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::VpcOrigin",
     },
     "DistributionOrigin3S3OriginAccessControl9DA31435": {
       "Properties": {
@@ -1341,6 +1352,23 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
       },
       "Type": "AWS::S3::BucketPolicy",
+    },
+    "PublicAlbSecurityGroupC0549052": {
+      "Properties": {
+        "GroupDescription": "Security group for Public Application Load Balancer",
+        "GroupName": "test-project-test-PublicAlbSecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
     },
     "Vpc49347EA9": {
       "Properties": {
@@ -1992,7 +2020,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::EC2::InternetGateway": 1,
   "AWS::EC2::Route": 2,
   "AWS::EC2::RouteTable": 4,
-  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroup": 2,
   "AWS::EC2::Subnet": 4,
   "AWS::EC2::SubnetRouteTableAssociation": 4,
   "AWS::EC2::VPC": 1,

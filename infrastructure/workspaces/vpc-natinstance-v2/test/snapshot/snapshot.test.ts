@@ -36,6 +36,7 @@ describe("Stack Snapshot Tests", () => {
     env: defaultEnv,
     isAutoDeleteObject: true,
     terminationProtection: false,
+    isEIPAssociation: true,
   });
   const stackTemplate = Template.fromStack(stack);
   cdk.Tags.of(app).add('Project', projectName);

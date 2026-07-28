@@ -23,7 +23,11 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    // TypeScript 6.x no longer auto-includes every package under `typeRoots` as ambient globals
+    // when `types` is omitted (5.x did) — without this, `process`/`console`/`__dirname` (node)
+    // and `describe`/`test`/`expect` (jest) all fail to resolve across every workspace.
+    "types": ["node", "jest"]
   },
   "exclude": [
     "node_modules",

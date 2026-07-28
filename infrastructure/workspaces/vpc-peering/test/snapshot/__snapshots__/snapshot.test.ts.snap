@@ -42,6 +42,21 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Description": "Availability Zones for TestProject/test/VpcA",
       "Value": "dummy1a,dummy1b",
     },
+    "VpcACidr684E3B0A": {
+      "Description": "VPC CIDR for TestProject/test/VpcA",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcAF30F05C4",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcAId35E2A6DA": {
+      "Description": "VPC ID for TestProject/test/VpcA",
+      "Value": {
+        "Ref": "VpcAF30F05C4",
+      },
+    },
     "VpcAInstanceId": {
       "Description": "Test EC2 Instance ID in VPC A",
       "Value": {
@@ -79,24 +94,18 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
       },
     },
-    "VpcAVpcCidrCCA5B10B": {
-      "Description": "VPC CIDR for TestProject/test/VpcA",
-      "Value": {
-        "Fn::GetAtt": [
-          "VpcAF30F05C4",
-          "CidrBlock",
-        ],
-      },
-    },
-    "VpcAVpcId95A206E5": {
-      "Description": "VPC ID for TestProject/test/VpcA",
-      "Value": {
-        "Ref": "VpcAF30F05C4",
-      },
-    },
     "VpcBAvailabilityZonesFEC6D26E": {
       "Description": "Availability Zones for TestProject/test/VpcB",
       "Value": "dummy1a,dummy1b",
+    },
+    "VpcBCidr6E307F64": {
+      "Description": "VPC CIDR for TestProject/test/VpcB",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcB165FAAA0",
+          "CidrBlock",
+        ],
+      },
     },
     "VpcBCidrParamName": {
       "Description": "SSM Parameter Store name for VPC B CIDR",
@@ -105,6 +114,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Value": {
         "Ref": "VpcBCidrParam63F78863",
+      },
+    },
+    "VpcBIdF7B17369": {
+      "Description": "VPC ID for TestProject/test/VpcB",
+      "Value": {
+        "Ref": "VpcB165FAAA0",
       },
     },
     "VpcBIdParamName": {
@@ -149,21 +164,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
       },
     },
-    "VpcBVpcCidr58D7EC8B": {
-      "Description": "VPC CIDR for TestProject/test/VpcB",
-      "Value": {
-        "Fn::GetAtt": [
-          "VpcB165FAAA0",
-          "CidrBlock",
-        ],
-      },
-    },
-    "VpcBVpcIdAE4E1254": {
-      "Description": "VPC ID for TestProject/test/VpcB",
-      "Value": {
-        "Ref": "VpcB165FAAA0",
-      },
-    },
   },
   "Parameters": {
     "BootstrapVersion": {
@@ -184,7 +184,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
         },
         "Handler": "index.handler",
         "Role": {
@@ -193,7 +193,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Arn",
           ],
         },
-        "Runtime": "nodejs22.x",
+        "Runtime": "nodejs24.x",
         "Tags": [
           {
             "Key": "Environment",
@@ -256,6 +256,114 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
       },
       "Type": "AWS::IAM::Role",
+    },
+    "ParameterStoreReadRole3E2A1596": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::222222222222:root",
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Role to allow Account 222222222222 to read VPC C parameters from Parameter Store",
+        "RoleName": "TestProject-test-ParameterStoreReadRole",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "vpc-peering-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ParameterStoreReadRoleDefaultPolicyF9F2A5ED": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "VpcBIdParam54FF0999",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "VpcBCidrParam63F78863",
+                    },
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ParameterStoreReadRoleDefaultPolicyF9F2A5ED",
+        "Roles": [
+          {
+            "Ref": "ParameterStoreReadRole3E2A1596",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "VpcABPeeringEnableVpcPeeringDnsResolution0AF8995F": {
       "DeletionPolicy": "Delete",
@@ -2278,6 +2386,15 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Description": "Availability Zones for TestProject/test/VpcC",
       "Value": "dummy1a,dummy1b",
     },
+    "CidrFB7836FA": {
+      "Description": "VPC CIDR for TestProject/test/VpcC",
+      "Value": {
+        "Fn::GetAtt": [
+          "0C09860A",
+          "CidrBlock",
+        ],
+      },
+    },
     "ExportsOutputRef0C09860A19F6A434": {
       "Export": {
         "Name": "VpcC:ExportsOutputRef0C09860A19F6A434",
@@ -2300,6 +2417,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Value": {
         "Ref": "PrivateSubnet2RouteTableDADD895C",
+      },
+    },
+    "IdBEE84DF7": {
+      "Description": "VPC ID for TestProject/test/VpcC",
+      "Value": {
+        "Ref": "0C09860A",
       },
     },
     "ParameterStoreReadRoleArn": {
@@ -2384,21 +2507,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Description": "Test EC2 Instance ID in VPC C",
       "Value": {
         "Ref": "TestInstanceD022F56C",
-      },
-    },
-    "VpcCidr58DC1BFB": {
-      "Description": "VPC CIDR for TestProject/test/VpcC",
-      "Value": {
-        "Fn::GetAtt": [
-          "0C09860A",
-          "CidrBlock",
-        ],
-      },
-    },
-    "VpcIdD42015E1": {
-      "Description": "VPC ID for TestProject/test/VpcC",
-      "Value": {
-        "Ref": "0C09860A",
       },
     },
   },
@@ -3174,7 +3282,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
         },
         "Handler": "index.handler",
         "Role": {
@@ -3183,7 +3291,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Arn",
           ],
         },
-        "Runtime": "nodejs22.x",
+        "Runtime": "nodejs24.x",
         "Tags": [
           {
             "Key": "Environment",
@@ -3606,7 +3714,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "bc8ef58951f4c88e641dd23090e9d2e2e61c7530a07960e767522941e959b625.zip",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
         },
         "Handler": "index.handler",
         "Role": {
@@ -3615,7 +3723,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Arn",
           ],
         },
-        "Runtime": "nodejs22.x",
+        "Runtime": "nodejs24.x",
         "Tags": [
           {
             "Key": "Environment",
@@ -3931,8 +4039,8 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::EC2::VPCGatewayAttachment": 2,
   "AWS::EC2::VPCPeeringConnection": 1,
   "AWS::IAM::InstanceProfile": 2,
-  "AWS::IAM::Policy": 1,
-  "AWS::IAM::Role": 3,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 4,
   "AWS::Lambda::Function": 1,
   "AWS::SSM::Parameter": 2,
   "Custom::AWS": 1,

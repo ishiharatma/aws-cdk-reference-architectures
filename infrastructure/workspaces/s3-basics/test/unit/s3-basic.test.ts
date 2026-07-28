@@ -40,12 +40,13 @@ describe("S3BasicStack Fine-grained Assertions", () => {
     });
     stackTemplate = Template.fromStack(stack);
     bucketName =
-      `${projectName}-${envName}-${defaultEnv.account}-apnortheast1`.toLowerCase();
+      `${projectName}-${envName}-namedbucket-${defaultEnv.account}-apnortheast1`.toLowerCase();
   });
 
   test("S3 Buckets are created", () => {
-    // Multiple S3 buckets created: Default, AutoDelete, BlockPublicAccess, EncryptionSSEKMSManaged, EncryptionSSEKMSCustomer, LifecycleRules, Versioning
-    stackTemplate.resourceCountIs("AWS::S3::Bucket", 7);
+    // Multiple S3 buckets created: Default, NamedBucket, AutoDelete, BlockPublicAccessOff,
+    // EncryptionSSEKMSManaged, EncryptionSSEKMSCustomer, LifecycleRules, Versioning
+    stackTemplate.resourceCountIs("AWS::S3::Bucket", 8);
   });
 
   test("S3 Bucket with custom name has correct name", () => {
@@ -68,13 +69,12 @@ describe("S3BasicStack Fine-grained Assertions", () => {
     });
   });
 
-  test("S3 Bucket with block public access has all blocks enabled", () => {
+  test("S3 Bucket with block public access explicitly disables the public-policy block", () => {
+    // BlockPublicAccessOff demonstrates the effect of turning off blockPublicPolicy —
+    // the other blocks are left at their (unset) default rather than forced on.
     stackTemplate.hasResourceProperties("AWS::S3::Bucket", {
       PublicAccessBlockConfiguration: {
-        BlockPublicAcls: true,
-        BlockPublicPolicy: true,
-        IgnorePublicAcls: true,
-        RestrictPublicBuckets: true,
+        BlockPublicPolicy: false,
       },
     });
   });

@@ -19,7 +19,7 @@ if (!params[envName]) {
 const envParams = params[envName];
 
 interface BuildStackOptions {
-  readonly allowedIps?: string[];
+  readonly allowedCloudFunctionIps?: string[];
   readonly cloudfrontManagedPrefixList?: string;
   readonly publicAlbFailover?: PublicAlbFailoverConfig;
 }
@@ -33,7 +33,7 @@ function buildStack(options: BuildStackOptions = {}) {
     isAutoDeleteObject: true,
     terminationProtection: false,
     vpcConfig: envParams.vpcConfig,
-    allowedIps: options.allowedIps,
+    allowedCloudFunctionIps: options.allowedCloudFunctionIps,
     cloudfrontManagedPrefixList: options.cloudfrontManagedPrefixList,
     publicAlbFailover: options.publicAlbFailover,
   });
@@ -41,7 +41,7 @@ function buildStack(options: BuildStackOptions = {}) {
 }
 
 describe('CloudfrontVpcOriginStack', () => {
-  const template = buildStack({ allowedIps: ['192.0.2.10'] });
+  const template = buildStack({ allowedCloudFunctionIps: ['192.0.2.10'] });
 
   test('ALB is internal, not internet-facing', () => {
     template.hasResourceProperties('AWS::ElasticLoadBalancingV2::LoadBalancer', {
@@ -159,6 +159,14 @@ describe('CloudfrontVpcOriginStack', () => {
     expect(albBehavior.TargetOriginId).toEqual(originGroup.Id);
   });
 
+  test('/alb/* behavior has caching disabled, so a stale response can never mask an origin/failover change', () => {
+    const distributions = template.findResources('AWS::CloudFront::Distribution');
+    const config = Object.values(distributions)[0].Properties.DistributionConfig;
+    const albBehavior = config.CacheBehaviors.find((b: { PathPattern: string }) => b.PathPattern === '/alb/*');
+    // Managed "CachingDisabled" policy ID — see https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
+    expect(albBehavior.CachePolicyId).toEqual('4135ea2d-6df8-44a3-9df3-4b5a84be39ad');
+  });
+
   test('CloudFront connects to the ALB through a VPC origin', () => {
     template.resourceCountIs('AWS::CloudFront::VpcOrigin', 1);
   });
@@ -169,7 +177,7 @@ describe('CloudfrontVpcOriginStack', () => {
     template.hasOutput('CloudFrontURL', {});
   });
 
-  describe('when allowedIps is not provided', () => {
+  describe('when allowedCloudFunctionIps is not provided', () => {
     const templateWithoutAllowlist = buildStack({});
 
     test('no CloudFront Function / IP allowlist is created', () => {
@@ -177,7 +185,7 @@ describe('CloudfrontVpcOriginStack', () => {
     });
   });
 
-  describe('when allowedIps is provided', () => {
+  describe('when allowedCloudFunctionIps is provided', () => {
     test('a CloudFront Function denies non-allowed viewer IPs', () => {
       template.resourceCountIs('AWS::CloudFront::Function', 1);
       template.hasResourceProperties('AWS::CloudFront::Function', {
@@ -226,16 +234,61 @@ describe('CloudfrontVpcOriginStack', () => {
         IpProtocol: 'tcp',
         SourcePrefixListId: 'pl-00000000',
       });
-      failoverTemplate.resourceCountIs('AWS::EC2::SecurityGroupIngress', 1);
+      // The internal ALB's port-80 rule (VPC Origin path, kept regardless of publicAlbFailover)
+      // plus the now-internet-facing public ALB's port-80 rule — both scoped to the CloudFront
+      // managed prefix list, neither open to 0.0.0.0/0 (checked above).
+      failoverTemplate.resourceCountIs('AWS::EC2::SecurityGroupIngress', 2);
     });
 
-    test('the VPC Origin is still registered, as the origin group fallback, not deleted', () => {
-      failoverTemplate.resourceCountIs('AWS::CloudFront::VpcOrigin', 1);
+    test('while enabled, the origin group falls back to the S3 error page, and the VPC Origin is not kept around', () => {
+      // Accepted trade-off of this escape hatch (see the stack's comments): the VPC Origin isn't
+      // kept bound while publicAlbFailover is enabled, so it doesn't exist in this state and gets
+      // recreated (~15 min) when reverting to normal mode — not an instant, zero-recreation switch.
+      failoverTemplate.resourceCountIs('AWS::CloudFront::VpcOrigin', 0);
 
       const distributions = failoverTemplate.findResources('AWS::CloudFront::Distribution');
       const config = Object.values(distributions)[0].Properties.DistributionConfig;
       const originGroup = config.OriginGroups.Items[0];
       expect(originGroup.Members.Items).toHaveLength(2);
+    });
+
+    test('the public ALB origin sends a secret custom header, and the listener rejects requests without it', () => {
+      const distributions = failoverTemplate.findResources('AWS::CloudFront::Distribution');
+      const config = Object.values(distributions)[0].Properties.DistributionConfig;
+      const originGroup = config.OriginGroups.Items[0];
+      const publicOriginId = originGroup.Members.Items[0].OriginId;
+      const publicOrigin = config.Origins.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (origin: any) => origin.Id === publicOriginId
+      );
+      expect(publicOrigin.OriginCustomHeaders).toEqual([
+        { HeaderName: 'X-Origin-Verify', HeaderValue: expect.any(String) },
+      ]);
+      const secret = publicOrigin.OriginCustomHeaders[0].HeaderValue;
+      expect(secret.length).toBeGreaterThanOrEqual(32);
+
+      // Default action (no matching header-gated rule) rejects the request.
+      failoverTemplate.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
+        DefaultActions: Match.arrayWith([
+          Match.objectLike({
+            FixedResponseConfig: Match.objectLike({ StatusCode: '403' }),
+          }),
+        ]),
+      });
+
+      // At least one listener rule requires that same secret via an http-header condition before
+      // forwarding/responding — i.e. the header CloudFront sends is actually enforced, not just sent.
+      failoverTemplate.hasResourceProperties('AWS::ElasticLoadBalancingV2::ListenerRule', {
+        Conditions: Match.arrayWith([
+          Match.objectLike({
+            Field: 'http-header',
+            HttpHeaderConfig: Match.objectLike({
+              HttpHeaderName: 'X-Origin-Verify',
+              Values: [secret],
+            }),
+          }),
+        ]),
+      });
     });
   });
 });

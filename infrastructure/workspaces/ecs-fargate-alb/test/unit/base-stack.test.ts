@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import { Template, Match } from "aws-cdk-lib/assertions";
 import { BaseStack } from "lib/stacks/base-stack";
 import { Environment } from '@common/parameters/environments';
+import { NatType } from '@common/types';
 import 'test/parameters';
 import { params } from "parameters/environments";
 import '../parameters';
@@ -100,7 +101,7 @@ describe("BaseStack Fine-grained Assertions", () => {
     // ========================================
     describe("NAT Configuration", () => {
         test("should create NAT instance when natType is INSTANCE", () => {
-            if (envParams.vpcConfig.createConfig?.natType === 'INSTANCE') {
+            if (envParams.vpcConfig.createConfig?.natType === NatType.INSTANCE) {
                 stackTemplate.hasResourceProperties("AWS::EC2::Instance", {
                     InstanceType: Match.anyValue(),
                     SourceDestCheck: false,

@@ -6,7 +6,7 @@ import {
     aws_iam as iam
 } from 'aws-cdk-lib';
 import { Environment } from '../../parameters/environments';
-import { C_RESOURCE } from '../../types';
+import { C_RESOURCE } from '../../constants';
 
 /**
  * Properties for TestEC2Instance
