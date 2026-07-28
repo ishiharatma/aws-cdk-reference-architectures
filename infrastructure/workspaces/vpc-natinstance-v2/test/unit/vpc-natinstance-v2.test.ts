@@ -37,6 +37,7 @@ describe("VpcNatInstanceV2Stack Fine-grained Assertions", () => {
       environment: envName,
       env: defaultEnv,
       isAutoDeleteObject: true,
+      isEIPAssociation: true,
     });
     stackTemplate = Template.fromStack(stack);
   });
@@ -144,7 +145,10 @@ describe("VpcNatInstanceV2Stack Fine-grained Assertions", () => {
 
   describe("CloudWatch Logs", () => {
     test("should create log group for Flow Logs", () => {
-      stackTemplate.resourceCountIs("AWS::Logs::LogGroup", 1);
+      // Not an exact count: the NAT instance patch management feature also creates its own
+      // log group, so this only checks that at least the Flow Logs one exists.
+      const logGroups = stackTemplate.findResources("AWS::Logs::LogGroup");
+      expect(Object.keys(logGroups).length).toBeGreaterThanOrEqual(1);
     });
 
     test("log group should have 1 week retention", () => {
@@ -569,7 +573,13 @@ describe("VpcNatInstanceV2Stack Fine-grained Assertions", () => {
 
   describe("SNS Topic", () => {
     test("should create SNS topic for NAT instance state change", () => {
-      stackTemplate.resourceCountIs("AWS::SNS::Topic", 1);
+      // Not an exact count: the NAT instance patch management feature also creates its own
+      // notification topic, so this checks specifically for the state-change topic.
+      const topics = stackTemplate.findResources("AWS::SNS::Topic");
+      const matching = Object.values(topics).filter(
+        (t: any) => t.Properties?.DisplayName === `${projectName}-${envName}-NatInstanceStateChange`
+      );
+      expect(matching.length).toBeGreaterThanOrEqual(1);
     });
 
     test("SNS topic should have correct display name", () => {

@@ -186,7 +186,9 @@ describe("VpcAStack Fine-grained Assertions", () => {
         test("VPC IDs should be exported", () => {
             const template = stackTemplate.toJSON();
             const outputs = template.Outputs || {};
-            const vpcIdOutputs = Object.keys(outputs).filter(key => key.includes('VpcId'));
+            // The VPC B ID is exported as an SSM parameter *name* (e.g. "VpcBIdParamName"), not
+            // as a literal "VpcId"-keyed output, so match "Vpc" and "Id" independently.
+            const vpcIdOutputs = Object.keys(outputs).filter(key => key.includes('Vpc') && key.includes('Id'));
             expect(vpcIdOutputs.length).toBeGreaterThan(0);
         });
 

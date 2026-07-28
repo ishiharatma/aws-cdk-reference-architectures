@@ -97,7 +97,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Value": "",
           },
         ],
-        "Name": "test-project-test-Alb",
         "Scheme": "internal",
         "SecurityGroups": [
           {
@@ -113,6 +112,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           },
           {
             "Ref": "VpcPrivateSubnet2Subnet55040997",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
           },
         ],
         "Type": "application",
@@ -244,6 +249,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "AlbLambdaFunctionInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HY08990B13",
       ],
       "Properties": {
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
+          },
+        ],
         "TargetType": "lambda",
         "Targets": [
           {
@@ -982,7 +993,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "DistributionConfig": {
           "CacheBehaviors": [
             {
-              "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+              "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
               "Compress": true,
               "FunctionAssociations": [
                 {
@@ -1094,7 +1105,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
               "VpcOriginConfig": {
                 "VpcOriginId": {
                   "Fn::GetAtt": [
-                    "DistributionAlbVpcOriginV2",
+                    "DistributionOrigin2VpcOrigin9CDFA022",
                     "Id",
                   ],
                 },
@@ -1137,22 +1148,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::CloudFront::Distribution",
     },
-    "DistributionAlbVpcOriginV2": {
-      "Properties": {
-        "VpcOriginEndpointConfig": {
-          "Arn": {
-            "Ref": "Alb16C2F182",
-          },
-          "HTTPPort": 80,
-          "Name": "test-project-test-alb-vpc-origin-v2",
-          "OriginProtocolPolicy": "http-only",
-          "OriginSSLProtocols": [
-            "TLSv1.2",
-          ],
-        },
-      },
-      "Type": "AWS::CloudFront::VpcOrigin",
-    },
     "DistributionOrigin1S3OriginAccessControlEB606076": {
       "Properties": {
         "OriginAccessControlConfig": {
@@ -1163,6 +1158,22 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
       },
       "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "DistributionOrigin2VpcOrigin9CDFA022": {
+      "Properties": {
+        "VpcOriginEndpointConfig": {
+          "Arn": {
+            "Ref": "Alb16C2F182",
+          },
+          "HTTPPort": 80,
+          "Name": "CloudfrontVpcOriginStackDistributionOrigin2VpcOrigin1947DC1A",
+          "OriginProtocolPolicy": "http-only",
+          "OriginSSLProtocols": [
+            "TLSv1.2",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::VpcOrigin",
     },
     "DistributionOrigin3S3OriginAccessControl9DA31435": {
       "Properties": {

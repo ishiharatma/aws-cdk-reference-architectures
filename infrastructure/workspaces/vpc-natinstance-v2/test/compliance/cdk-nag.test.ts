@@ -113,7 +113,16 @@ function applySuppressions(stack: VpcNatInstanceV2Stack): void {
       {
         id: 'AwsSolutions-EC29',
         reason: 'NAT Instances require a public IP address to function as intended.',
-      }
+      },
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'NAT instances and the patch maintenance window role require these SSM-managed ' +
+          'policies to support Session Manager access and automated patch management.',
+        appliesTo: [
+          'Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore',
+          'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole',
+        ],
+      },
     ],
     true,
   );

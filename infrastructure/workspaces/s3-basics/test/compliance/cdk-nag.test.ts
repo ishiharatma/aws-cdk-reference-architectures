@@ -107,4 +107,18 @@ function applySuppressions(stack: S3BasicStack): void {
     ],
     true,
   );
+
+  // BlockPublicAccessOff deliberately disables the public-policy block to demonstrate the
+  // setting's effect for teaching purposes — it is not meant to be a secure configuration.
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `/${stackName}/BlockPublicAccessOff/Resource`,
+    [
+      {
+        id: "AwsSolutions-S2",
+        reason:
+          "This bucket intentionally demonstrates blockPublicPolicy: false for teaching purposes.",
+      },
+    ],
+  );
 }

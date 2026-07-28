@@ -105,7 +105,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Arn",
           ],
         },
-        "Runtime": "nodejs22.x",
+        "Runtime": "nodejs24.x",
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -636,6 +636,101 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
     },
+    "MaintenanceWindowRole523D40AB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com",
+              },
+            },
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "TestProject-test-MaintenanceWindowRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MaintenanceWindowRoleDefaultPolicyF4DDB6A8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "iam:PassRole",
+              "Condition": {
+                "StringEquals": {
+                  "iam:PassedToService": "ssm.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MaintenanceWindowRole523D40AB",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NatInstancePatchLogGroupBA8514B4",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MaintenanceWindowRoleDefaultPolicyF4DDB6A8",
+        "Roles": [
+          {
+            "Ref": "MaintenanceWindowRole523D40AB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "NatEip1": {
       "DeletionPolicy": "Delete",
       "Properties": {
@@ -677,7 +772,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     },
     "NatEipAssociation1": {
       "Properties": {
-        "EIP": {
+        "AllocationId": {
           "Fn::GetAtt": [
             "NatEip1",
             "AllocationId",
@@ -691,7 +786,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     },
     "NatEipAssociation2": {
       "Properties": {
-        "EIP": {
+        "AllocationId": {
           "Fn::GetAtt": [
             "NatEip2",
             "AllocationId",
@@ -705,7 +800,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     },
     "NatEipAssociation3": {
       "Properties": {
-        "EIP": {
+        "AllocationId": {
           "Fn::GetAtt": [
             "NatEip3",
             "AllocationId",
@@ -716,6 +811,292 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
       },
       "Type": "AWS::EC2::EIPAssociation",
+    },
+    "NatInstance1CPUUtilizationAlarm026F43BC": {
+      "Properties": {
+        "AlarmName": "TestProject-test-NatInstance1HighCPUUtilization",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "VpcNatInstanceV2ExternalSubnet1NatInstanceF20A0380",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "NatInstance2CPUUtilizationAlarm84C47A7C": {
+      "Properties": {
+        "AlarmName": "TestProject-test-NatInstance2HighCPUUtilization",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "VpcNatInstanceV2ExternalSubnet2NatInstanceD2E9B2C7",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "NatInstance3CPUUtilizationAlarm203245F6": {
+      "Properties": {
+        "AlarmName": "TestProject-test-NatInstance3HighCPUUtilization",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "InstanceId",
+            "Value": {
+              "Ref": "VpcNatInstanceV2ExternalSubnet3NatInstance096DF720",
+            },
+          },
+        ],
+        "EvaluationPeriods": 3,
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Period": 300,
+        "Statistic": "Average",
+        "Threshold": 80,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "NatInstanceMaintenanceWindow": {
+      "Properties": {
+        "AllowUnassociatedTargets": false,
+        "Cutoff": 1,
+        "Description": "Maintenance window for NAT instance patching",
+        "Duration": 4,
+        "Name": "TestProject-test-NatInstancePatch",
+        "Schedule": "cron(15 * ? * * *)",
+        "ScheduleTimezone": "UTC",
+      },
+      "Type": "AWS::SSM::MaintenanceWindow",
+    },
+    "NatInstanceMaintenanceWindowTarget": {
+      "Properties": {
+        "Name": "TestProject-test-NatInstances",
+        "ResourceType": "INSTANCE",
+        "Targets": [
+          {
+            "Key": "tag:PatchGroup",
+            "Values": [
+              "/NatInstance/TestProject/test",
+            ],
+          },
+          {
+            "Key": "tag:AutoPatch",
+            "Values": [
+              "true",
+            ],
+          },
+        ],
+        "WindowId": {
+          "Ref": "NatInstanceMaintenanceWindow",
+        },
+      },
+      "Type": "AWS::SSM::MaintenanceWindowTarget",
+    },
+    "NatInstancePatchBaseline": {
+      "Properties": {
+        "ApprovalRules": {
+          "PatchRules": [
+            {
+              "ApproveAfterDays": 7,
+              "ComplianceLevel": "CRITICAL",
+              "EnableNonSecurity": false,
+              "PatchFilterGroup": {
+                "PatchFilters": [
+                  {
+                    "Key": "CLASSIFICATION",
+                    "Values": [
+                      "Security",
+                    ],
+                  },
+                  {
+                    "Key": "SEVERITY",
+                    "Values": [
+                      "Critical",
+                      "Important",
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              "ApproveAfterDays": 7,
+              "EnableNonSecurity": false,
+              "PatchFilterGroup": {
+                "PatchFilters": [
+                  {
+                    "Key": "CLASSIFICATION",
+                    "Values": [
+                      "Bugfix",
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        "Name": "TestProject-test-NatInstancePatchBaseline",
+        "OperatingSystem": "AMAZON_LINUX_2023",
+        "PatchGroups": [
+          "/NatInstance/TestProject/test",
+        ],
+      },
+      "Type": "AWS::SSM::PatchBaseline",
+    },
+    "NatInstancePatchLogGroupBA8514B4": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/PatchManager/NatInstance",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NatInstancePatchNotificationTopic397623D8": {
+      "Properties": {
+        "DisplayName": "TestProject-test-NatInstancePatchNotification",
+        "TopicName": "TestProject-test-NatInstancePatchNotification",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "NatInstancePatchNotificationTopicPolicyD10E7113": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "NatInstancePatchNotificationTopic397623D8",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "NatInstancePatchNotificationTopic397623D8",
+              },
+              "Sid": "1",
+            },
+            {
+              "Action": "SNS:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "NatInstancePatchNotificationTopic397623D8",
+              },
+              "Sid": "AllowSSMPublish",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "NatInstancePatchNotificationTopic397623D8",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "NatInstancePatchTask": {
+      "DependsOn": [
+        "NatInstancePatchLogGroupBA8514B4",
+      ],
+      "Properties": {
+        "Description": "Patch NAT instances using SSM Patch Manager",
+        "MaxConcurrency": "1",
+        "MaxErrors": "1",
+        "Priority": 1,
+        "ServiceRoleArn": {
+          "Fn::GetAtt": [
+            "MaintenanceWindowRole523D40AB",
+            "Arn",
+          ],
+        },
+        "Targets": [
+          {
+            "Key": "WindowTargetIds",
+            "Values": [
+              {
+                "Ref": "NatInstanceMaintenanceWindowTarget",
+              },
+            ],
+          },
+        ],
+        "TaskArn": "AWS-RunPatchBaseline",
+        "TaskInvocationParameters": {
+          "MaintenanceWindowRunCommandParameters": {
+            "CloudWatchOutputConfig": {
+              "CloudWatchLogGroupName": "/TestProject/test/PatchManager/NatInstance",
+              "CloudWatchOutputEnabled": true,
+            },
+            "Comment": "Apply security patches to NAT instances",
+            "DocumentVersion": "$DEFAULT",
+            "NotificationConfig": {
+              "NotificationArn": {
+                "Ref": "NatInstancePatchNotificationTopic397623D8",
+              },
+              "NotificationEvents": [
+                "All",
+              ],
+              "NotificationType": "Command",
+            },
+            "Parameters": {
+              "Operation": [
+                "Install",
+              ],
+              "RebootOption": [
+                "RebootIfNeeded",
+              ],
+            },
+            "ServiceRoleArn": {
+              "Fn::GetAtt": [
+                "MaintenanceWindowRole523D40AB",
+                "Arn",
+              ],
+            },
+            "TimeoutSeconds": 3600,
+          },
+        },
+        "TaskType": "RUN_COMMAND",
+        "WindowId": {
+          "Ref": "NatInstanceMaintenanceWindow",
+        },
+      },
+      "Type": "AWS::SSM::MaintenanceWindowTask",
     },
     "NatInstanceScheduleRoleA02CA26E": {
       "Properties": {
@@ -848,6 +1229,91 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
       },
       "Type": "AWS::SNS::TopicPolicy",
+    },
+    "PatchComplianceAlarm52B8FCE0": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "NatInstancePatchNotificationTopic397623D8",
+          },
+        ],
+        "AlarmName": "TestProject-test-NatInstancePatchNonCompliant",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "PatchGroup",
+            "Value": "/NatInstance/TestProject/test",
+          },
+        ],
+        "EvaluationPeriods": 2,
+        "MetricName": "PatchComplianceNonCompliantCount",
+        "Namespace": "AWS/SSM",
+        "Period": 3600,
+        "Statistic": "Average",
+        "Threshold": 0,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "PatchComplianceRuleF8C550E4": {
+      "Properties": {
+        "Description": "Notify patch compliance status changes",
+        "EventPattern": {
+          "detail": {
+            "document-name": [
+              "AWS-RunPatchBaseline",
+            ],
+            "status": [
+              "Success",
+              "Failed",
+              "TimedOut",
+            ],
+          },
+          "detail-type": [
+            "EC2 Command Status-change Notification",
+          ],
+          "source": [
+            "aws.ssm",
+          ],
+        },
+        "Name": "TestProject-test-NatInstancePatchCompliance",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "NatInstancePatchNotificationTopic397623D8",
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "detail": "$.detail",
+                "detail-command-id": "$.detail.command-id",
+                "detail-document-name": "$.detail.document-name",
+                "detail-instance-id": "$.detail.instance-id",
+                "detail-status": "$.detail.status",
+              },
+              "InputTemplate": "{"default":<detail>,"subject":"[TESTPROJECT-TEST] NAT Instance Patch Status","message":{"summary":"Patch operation <detail-status>","details":{"commandId":<detail-command-id>,"instanceId":<detail-instance-id>,"status":<detail-status>,"documentName":<detail-document-name>}}}",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "TestSecurityGroup880B57C0": {
+      "Properties": {
+        "GroupDescription": "Security group for test",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcNatInstanceV2A3505E8A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
     },
     "VpcNatInstanceV2A3505E8A": {
       "Properties": {
@@ -1130,8 +1596,20 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
         "Tags": [
           {
+            "Key": "AutoPatch",
+            "Value": "true",
+          },
+          {
             "Key": "Name",
             "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet1/NatInstance",
+          },
+          {
+            "Key": "PatchGroup",
+            "Value": "/NatInstance/TestProject/test",
+          },
+          {
+            "Key": "Role",
+            "Value": "NAT Instance",
           },
         ],
         "UserData": {
@@ -1172,6 +1650,20 @@ sudo service iptables save",
           ],
           "Version": "2012-10-17",
         },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
         "Tags": [
           {
             "Key": "Name",
@@ -1273,8 +1765,20 @@ sudo service iptables save",
         },
         "Tags": [
           {
+            "Key": "AutoPatch",
+            "Value": "true",
+          },
+          {
             "Key": "Name",
             "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet2/NatInstance",
+          },
+          {
+            "Key": "PatchGroup",
+            "Value": "/NatInstance/TestProject/test",
+          },
+          {
+            "Key": "Role",
+            "Value": "NAT Instance",
           },
         ],
         "UserData": {
@@ -1315,6 +1819,20 @@ sudo service iptables save",
           ],
           "Version": "2012-10-17",
         },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
         "Tags": [
           {
             "Key": "Name",
@@ -1416,8 +1934,20 @@ sudo service iptables save",
         },
         "Tags": [
           {
+            "Key": "AutoPatch",
+            "Value": "true",
+          },
+          {
             "Key": "Name",
             "Value": "VpcNatInstanceV2Stack/VpcNatInstanceV2/ExternalSubnet3/NatInstance",
+          },
+          {
+            "Key": "PatchGroup",
+            "Value": "/NatInstance/TestProject/test",
+          },
+          {
+            "Key": "Role",
+            "Value": "NAT Instance",
           },
         ],
         "UserData": {
@@ -1458,6 +1988,20 @@ sudo service iptables save",
           ],
           "Version": "2012-10-17",
         },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
         "Tags": [
           {
             "Key": "Name",
@@ -2616,6 +3160,7 @@ sudo service iptables save",
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
 {
+  "AWS::CloudWatch::Alarm": 4,
   "AWS::EC2::EIP": 3,
   "AWS::EC2::EIPAssociation": 3,
   "AWS::EC2::FlowLog": 2,
@@ -2624,7 +3169,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::EC2::InternetGateway": 1,
   "AWS::EC2::Route": 12,
   "AWS::EC2::RouteTable": 18,
-  "AWS::EC2::SecurityGroup": 5,
+  "AWS::EC2::SecurityGroup": 6,
   "AWS::EC2::SecurityGroupEgress": 1,
   "AWS::EC2::SecurityGroupIngress": 1,
   "AWS::EC2::Subnet": 18,
@@ -2632,16 +3177,20 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::EC2::VPC": 1,
   "AWS::EC2::VPCEndpoint": 4,
   "AWS::EC2::VPCGatewayAttachment": 1,
-  "AWS::Events::Rule": 7,
+  "AWS::Events::Rule": 8,
   "AWS::IAM::InstanceProfile": 3,
-  "AWS::IAM::Policy": 1,
-  "AWS::IAM::Role": 6,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 7,
   "AWS::Lambda::Function": 1,
-  "AWS::Logs::LogGroup": 1,
+  "AWS::Logs::LogGroup": 2,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
-  "AWS::SNS::Topic": 1,
-  "AWS::SNS::TopicPolicy": 1,
+  "AWS::SNS::Topic": 2,
+  "AWS::SNS::TopicPolicy": 2,
+  "AWS::SSM::MaintenanceWindow": 1,
+  "AWS::SSM::MaintenanceWindowTarget": 1,
+  "AWS::SSM::MaintenanceWindowTask": 1,
+  "AWS::SSM::PatchBaseline": 1,
   "Custom::S3AutoDeleteObjects": 1,
 }
 `;

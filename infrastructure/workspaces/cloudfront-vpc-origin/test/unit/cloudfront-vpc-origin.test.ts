@@ -159,6 +159,14 @@ describe('CloudfrontVpcOriginStack', () => {
     expect(albBehavior.TargetOriginId).toEqual(originGroup.Id);
   });
 
+  test('/alb/* behavior has caching disabled, so a stale response can never mask an origin/failover change', () => {
+    const distributions = template.findResources('AWS::CloudFront::Distribution');
+    const config = Object.values(distributions)[0].Properties.DistributionConfig;
+    const albBehavior = config.CacheBehaviors.find((b: { PathPattern: string }) => b.PathPattern === '/alb/*');
+    // Managed "CachingDisabled" policy ID — see https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
+    expect(albBehavior.CachePolicyId).toEqual('4135ea2d-6df8-44a3-9df3-4b5a84be39ad');
+  });
+
   test('CloudFront connects to the ALB through a VPC origin', () => {
     template.resourceCountIs('AWS::CloudFront::VpcOrigin', 1);
   });
@@ -227,24 +235,60 @@ describe('CloudfrontVpcOriginStack', () => {
         SourcePrefixListId: 'pl-00000000',
       });
       // The internal ALB's port-80 rule (VPC Origin path, kept regardless of publicAlbFailover)
-      // plus the now-internet-facing public ALB's port-443 rule — both scoped to the CloudFront
+      // plus the now-internet-facing public ALB's port-80 rule — both scoped to the CloudFront
       // managed prefix list, neither open to 0.0.0.0/0 (checked above).
-      failoverTemplate.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
-        FromPort: 443,
-        ToPort: 443,
-        IpProtocol: 'tcp',
-        SourcePrefixListId: 'pl-00000000',
-      });
       failoverTemplate.resourceCountIs('AWS::EC2::SecurityGroupIngress', 2);
     });
 
-    test('the VPC Origin is still registered, as the origin group fallback, not deleted', () => {
-      failoverTemplate.resourceCountIs('AWS::CloudFront::VpcOrigin', 1);
+    test('while enabled, the origin group falls back to the S3 error page, and the VPC Origin is not kept around', () => {
+      // Accepted trade-off of this escape hatch (see the stack's comments): the VPC Origin isn't
+      // kept bound while publicAlbFailover is enabled, so it doesn't exist in this state and gets
+      // recreated (~15 min) when reverting to normal mode — not an instant, zero-recreation switch.
+      failoverTemplate.resourceCountIs('AWS::CloudFront::VpcOrigin', 0);
 
       const distributions = failoverTemplate.findResources('AWS::CloudFront::Distribution');
       const config = Object.values(distributions)[0].Properties.DistributionConfig;
       const originGroup = config.OriginGroups.Items[0];
       expect(originGroup.Members.Items).toHaveLength(2);
+    });
+
+    test('the public ALB origin sends a secret custom header, and the listener rejects requests without it', () => {
+      const distributions = failoverTemplate.findResources('AWS::CloudFront::Distribution');
+      const config = Object.values(distributions)[0].Properties.DistributionConfig;
+      const originGroup = config.OriginGroups.Items[0];
+      const publicOriginId = originGroup.Members.Items[0].OriginId;
+      const publicOrigin = config.Origins.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (origin: any) => origin.Id === publicOriginId
+      );
+      expect(publicOrigin.OriginCustomHeaders).toEqual([
+        { HeaderName: 'X-Origin-Verify', HeaderValue: expect.any(String) },
+      ]);
+      const secret = publicOrigin.OriginCustomHeaders[0].HeaderValue;
+      expect(secret.length).toBeGreaterThanOrEqual(32);
+
+      // Default action (no matching header-gated rule) rejects the request.
+      failoverTemplate.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
+        DefaultActions: Match.arrayWith([
+          Match.objectLike({
+            FixedResponseConfig: Match.objectLike({ StatusCode: '403' }),
+          }),
+        ]),
+      });
+
+      // At least one listener rule requires that same secret via an http-header condition before
+      // forwarding/responding — i.e. the header CloudFront sends is actually enforced, not just sent.
+      failoverTemplate.hasResourceProperties('AWS::ElasticLoadBalancingV2::ListenerRule', {
+        Conditions: Match.arrayWith([
+          Match.objectLike({
+            Field: 'http-header',
+            HttpHeaderConfig: Match.objectLike({
+              HttpHeaderName: 'X-Origin-Verify',
+              Values: [secret],
+            }),
+          }),
+        ]),
+      });
     });
   });
 });

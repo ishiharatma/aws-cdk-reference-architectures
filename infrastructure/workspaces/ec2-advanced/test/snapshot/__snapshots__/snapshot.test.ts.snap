@@ -878,7 +878,7 @@ exports[`Stack Snapshot Tests Ec2AsgMultiWarmStack full template snapshot 1`] = 
           "ReuseOnScaleIn": true,
         },
         "MaxGroupPreparedCapacity": 1,
-        "MinSize": 0,
+        "MinSize": 1,
         "PoolState": "Hibernated",
       },
       "Type": "AWS::AutoScaling::WarmPool",
@@ -1008,10 +1008,10 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
         ],
       },
     },
-    "Ec2AsgSingleAsgName160BB899": {
+    "Ec2AsgSingleStackAsgNameF68D30F1": {
       "Description": "Auto Scaling Group Name (always 1 instance)",
       "Value": {
-        "Ref": "Ec2AsgSingleASG847FACE8",
+        "Ref": "Ec2AsgSingleStackASGD4043332",
       },
     },
   },
@@ -1154,18 +1154,18 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "Ec2AsgSingleASG847FACE8": {
+    "Ec2AsgSingleStackASGD4043332": {
       "Properties": {
         "DesiredCapacity": "1",
         "HealthCheckGracePeriod": 60,
         "HealthCheckType": "ELB",
         "LaunchTemplate": {
           "LaunchTemplateId": {
-            "Ref": "Ec2AsgSingleLaunchTemplate997BB34C",
+            "Ref": "Ec2AsgSingleStackLaunchTemplate1287CDF4",
           },
           "Version": {
             "Fn::GetAtt": [
-              "Ec2AsgSingleLaunchTemplate997BB34C",
+              "Ec2AsgSingleStackLaunchTemplate1287CDF4",
               "LatestVersionNumber",
             ],
           },
@@ -1215,7 +1215,7 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
         },
       },
     },
-    "Ec2AsgSingleInstanceRole8078D04D": {
+    "Ec2AsgSingleStackInstanceRole8A5B8BB3": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -1257,9 +1257,9 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
       },
       "Type": "AWS::IAM::Role",
     },
-    "Ec2AsgSingleLaunchTemplate997BB34C": {
+    "Ec2AsgSingleStackLaunchTemplate1287CDF4": {
       "DependsOn": [
-        "Ec2AsgSingleInstanceRole8078D04D",
+        "Ec2AsgSingleStackInstanceRole8A5B8BB3",
       ],
       "Properties": {
         "LaunchTemplateData": {
@@ -1277,7 +1277,7 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
           "IamInstanceProfile": {
             "Arn": {
               "Fn::GetAtt": [
-                "Ec2AsgSingleLaunchTemplateProfile6E8B7A0A",
+                "Ec2AsgSingleStackLaunchTemplateProfile93D61502",
                 "Arn",
               ],
             },
@@ -1307,7 +1307,7 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
                 },
                 {
                   "Key": "Name",
-                  "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+                  "Value": "Ec2AsgSingleStack/Ec2AsgSingleStack/LaunchTemplate",
                 },
                 {
                   "Key": "Project",
@@ -1324,7 +1324,7 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
                 },
                 {
                   "Key": "Name",
-                  "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+                  "Value": "Ec2AsgSingleStack/Ec2AsgSingleStack/LaunchTemplate",
                 },
                 {
                   "Key": "Project",
@@ -1347,7 +1347,7 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
               },
               {
                 "Key": "Name",
-                "Value": "Ec2AsgSingleStack/Ec2AsgSingle/LaunchTemplate",
+                "Value": "Ec2AsgSingleStack/Ec2AsgSingleStack/LaunchTemplate",
               },
               {
                 "Key": "Project",
@@ -1359,11 +1359,11 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
       },
       "Type": "AWS::EC2::LaunchTemplate",
     },
-    "Ec2AsgSingleLaunchTemplateProfile6E8B7A0A": {
+    "Ec2AsgSingleStackLaunchTemplateProfile93D61502": {
       "Properties": {
         "Roles": [
           {
-            "Ref": "Ec2AsgSingleInstanceRole8078D04D",
+            "Ref": "Ec2AsgSingleStackInstanceRole8A5B8BB3",
           },
         ],
       },
