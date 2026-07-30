@@ -30,7 +30,7 @@ This architecture demonstrates the following implementations:
 ```text
 CloudWatch Log Group
   → Subscription Filter  (SubscriptionFilter + FirehoseDestination, role = CwlToFirehoseRole)
-  → Kinesis Data Firehose (GZIP compression, date-partitioned prefix)
+  → Kinesis Data Firehose (GZIP compression)
   → S3 Archive Bucket
 ```
 
@@ -38,9 +38,11 @@ Three stacks illustrate increasing S3 lifecycle complexity and the "existing log
 
 | Stack | Description |
 | ----- | ----------- |
-| **Basic** (Stack 1) | New log group, minimal lifecycle (abort multipart + expire non-current versions) |
-| **Lifecycle** (Stack 2) | Same as Basic + tiered transitions: Standard → IA (30 d) → Glacier IR (90 d) → Deep Archive (365 d) → Expire (7 yr) |
+| **Basic** (Stack 1) | 5 log groups sharing one Firehose stream, with **dynamic partitioning** by `owner`/`logGroup` so each log group lands under its own S3 prefix; minimal lifecycle (abort multipart + expire non-current versions) |
+| **Lifecycle** (Stack 2) | Single log group, plain date-partitioned prefix (no dynamic partitioning) + tiered transitions: Standard → IA (30 d) → Glacier IR (90 d) → Deep Archive (365 d) → Expire (7 yr) |
 | **Existing** (Stack 3) | Attaches a Firehose subscription to a pre-existing log group (imported by name) |
+
+> Only **Stack 1 (Basic)** uses dynamic partitioning — see [1a. Dynamic Partitioning by Log Group (Stack 1 – Basic)](#1a-dynamic-partitioning-by-log-group-stack-1--basic) below.
 
 ### Pattern B — Scheduled Export Task (Stack 4)
 
@@ -103,13 +105,15 @@ cloudwatch-logs-s3-archive/
 │       │   └── index.py                        # Pattern B – CreateExportTask handler
 │       └── cwl-to-s3/
 │           └── index.py                        # Pattern C – CWL payload → S3 writer
-└── test/
-    ├── compliance/
-    │   └── cdk-nag.test.ts                     # CDK Nag AwsSolutions compliance tests
-    ├── snapshot/
-    │   └── snapshot.test.ts                    # CloudFormation template snapshot tests
-    └── unit/
-        └── cloudwatch-logs-s3-archive.test.ts  # Fine-grained assertion tests
+├── test/
+│   ├── compliance/
+│   │   └── cdk-nag.test.ts                     # CDK Nag AwsSolutions compliance tests
+│   ├── snapshot/
+│   │   └── snapshot.test.ts                    # CloudFormation template snapshot tests
+│   └── unit/
+│       └── cloudwatch-logs-s3-archive.test.ts  # Fine-grained assertion tests
+├── write-test-logs.sh                          # Writes test data to Stack 1 (Basic)'s 5 log groups
+└── write-test-logs-lifecycle.sh                # Writes test data to Stack 2 (Lifecycle)'s log group
 ```
 
 ---
@@ -147,6 +151,37 @@ new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
 
 > **Why not the L1 `CfnSubscriptionFilter`?**
 > Earlier revisions of this stack used `CfnSubscriptionFilter` with a manually-attached inline policy, on the assumption that the L2 `SubscriptionFilter` couldn't accept a Firehose role ARN. That's no longer true: `aws-logs-destinations` ships a `FirehoseDestination` class whose `bind()` method wires a supplied (or auto-created) role's ARN into the underlying `CfnSubscriptionFilter`, and calls `deliveryStream.grantPutRecords(role)` to attach the required permissions. Passing our own `cwlToFirehoseRole` — with only the trust policy defined — keeps the tighter, explicit `SourceArn` scoping while letting the L2 construct manage the permission grant, avoiding a duplicate `AWS::IAM::Policy` resource.
+
+### 1a. Dynamic Partitioning by Log Group (Stack 1 – Basic)
+
+Stack 1 creates **5 log groups** that all subscribe to the same Firehose delivery stream. Without partitioning, events from all 5 would be interleaved in the same S3 objects. Dynamic partitioning routes each log group's events to its own prefix instead:
+
+```typescript
+const s3Destination = new firehose.S3Bucket(archiveBucket, {
+    dataOutputPrefix:
+        'AWSLogs/!{partitionKeyFromQuery:owner}/CWLogGroup/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/',
+    dynamicPartitioning: { enabled: true },
+    bufferingInterval: cdk.Duration.seconds(60), // dynamic partitioning requires >= 60s
+    bufferingSize: cdk.Size.mebibytes(64),        // and >= 64 MiB
+    processors: [
+        new firehose.DecompressionProcessor({
+            compressionFormat: firehose.DecompressionProcessorCompressionFormat.GZIP,
+        }),
+        firehose.MetadataExtractionProcessor.jq16({
+            owner: '(if (.owner // "") == "" then "controlmessages" else .owner end)',
+            logGroup:
+                '(if (.logGroup // "") == "" then "controlmessages" else (.logGroup | ltrimstr("/")) end)',
+        }),
+        new firehose.AppendDelimiterToRecordProcessor(),
+    ],
+});
+```
+
+> **Do not add `CloudWatchLogProcessor` (message extraction) to this pipeline.** It strips `owner`/`logGroup`/`logStream` from the decompressed record and keeps only the raw `message` content, which breaks the `MetadataExtractionProcessor` jq queries above with `DynamicPartitioning.MetadataExtractionFailed`. Once `DecompressionProcessor` runs, the record already has `owner`/`logGroup` at the top level (see [Fig. 1 in the Firehose "message extraction" docs](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)), so `MetadataExtractionProcessor` can read them directly — no message-extraction processor is needed.
+
+> **CloudWatch Logs periodically sends `CONTROL_MESSAGE` health-check records** to verify the destination is reachable. These have `owner`/`logGroup` set to `""` (empty string), which fails dynamic partitioning with `partitionKeys values must not be null or empty` unless the jq query supplies a fallback (`"controlmessages"` above). The fallback must use jq's `if/then/else`, not the `//` alternative operator — `//` only substitutes for `null`/`false`, not for an empty string.
+
+As a trade-off, each S3 record is the **full decompressed CWL envelope** (with a nested `logEvents` array of possibly multiple events), not one flattened line per log event — flattening (`CloudWatchLogProcessor`) is incompatible with metadata-based partitioning, as noted above. To read individual messages downstream (e.g. in Athena), `UNNEST`/`json_extract` the `logEvents` array.
 
 ### 2. Tiered S3 Lifecycle (Stack 2 – Lifecycle)
 
@@ -262,6 +297,7 @@ def lambda_handler(event, context):
 | **FirehoseRole** | Grants `s3:PutObject` on `bucket/*`; wildcard is intentional and required for Firehose |
 | **Lifecycle rules** | Abort incomplete multipart (7 d) and expire non-current versions (90 d, keep 3) applied to all stacks |
 | **Tiered lifecycle** | Stack 2 adds Standard→IA→Glacier IR→Deep Archive→Expire transitions for cost optimization |
+| **Dynamic partitioning (Stack 1)** | Firehose partitions by `owner`/`logGroup` via jq so the 5 shared log groups land under distinct S3 prefixes; `CloudWatchLogProcessor` must be omitted (it strips those fields), and `CONTROL_MESSAGE` health-check records need a jq fallback to avoid `MetadataExtractionFailed` |
 | **Import existing LG** | Stack 3 uses `LogGroup.fromLogGroupName()` — no `AWS::Logs::LogGroup` resource is created |
 | **Export Task** | Single-concurrency guard in Lambda; bucket policy grants CWL service principal write access |
 | **LambdaDestination** | CDK L2 automatically manages the `Lambda::Permission` resource for CWL invoke |
@@ -285,14 +321,22 @@ npm run stage:deploy -w workspaces/cloudwatch-logs-s3-archive -- --project=mypro
 
 ### Verify Pattern A (Firehose)
 
-```bash
-# Write a test log entry
-aws logs put-log-events \
-  --log-group-name /<project>/<env>/app \
-  --log-stream-name test-stream \
-  --log-events timestamp=$(date +%s000),message="hello firehose"
+Stack 1 (Basic) spreads test data across 5 log groups and needs dynamic-partitioning-aware buffering (≥ 60 s / ≥ 64 MiB), so use the bundled helper script instead of a single `put-log-events` call:
 
-# After ~60 seconds, check the archive bucket
+```bash
+# Write test events to all 5 Stack 1 log groups (/<project>/<env>/basic-*)
+./write-test-logs.sh --project <project> --env <env>
+
+# After ~60 seconds, check the archive bucket — events are partitioned under
+# AWSLogs/<owner>/CWLogGroup/<logGroup>/...
+aws s3 ls s3://<archive-bucket>/AWSLogs/ --recursive
+```
+
+Stack 2 (Lifecycle) uses a single, non-partitioned log group:
+
+```bash
+./write-test-logs-lifecycle.sh --project <project> --env <env>
+
 aws s3 ls s3://<archive-bucket>/ --recursive
 ```
 

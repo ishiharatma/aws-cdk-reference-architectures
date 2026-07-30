@@ -15,10 +15,33 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
         "Ref": "ArchiveDeliveryStream497AB609",
       },
     },
-    "LogGroupName": {
+    "LogGroupNames": {
       "Description": "Name of the CloudWatch Log Group",
       "Value": {
-        "Ref": "ArchiveLogGroup397AA1AB",
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Ref": "LogGroup106AAD846",
+            },
+            ", ",
+            {
+              "Ref": "LogGroup2477F707C",
+            },
+            ", ",
+            {
+              "Ref": "LogGroup34356AF39",
+            },
+            ", ",
+            {
+              "Ref": "LogGroup4A4E5F7C0",
+            },
+            ", ",
+            {
+              "Ref": "LogGroup5823665DB",
+            },
+          ],
+        ],
       },
     },
   },
@@ -203,7 +226,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
           },
           "BufferingHints": {
             "IntervalInSeconds": 60,
-            "SizeInMBs": 1,
+            "SizeInMBs": 64,
           },
           "CloudWatchLoggingOptions": {
             "Enabled": true,
@@ -216,8 +239,42 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
           },
           "CompressionFormat": "GZIP",
           "CustomTimeZone": "Asia/Tokyo",
+          "DynamicPartitioningConfiguration": {
+            "Enabled": true,
+          },
           "ErrorOutputPrefix": "!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/",
-          "Prefix": "!{timestamp:yyyy/MM/dd/HH}/",
+          "Prefix": "AWSLogs/!{partitionKeyFromQuery:owner}/CWLogGroup/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/",
+          "ProcessingConfiguration": {
+            "Enabled": true,
+            "Processors": [
+              {
+                "Parameters": [
+                  {
+                    "ParameterName": "CompressionFormat",
+                    "ParameterValue": "GZIP",
+                  },
+                ],
+                "Type": "Decompression",
+              },
+              {
+                "Parameters": [
+                  {
+                    "ParameterName": "MetadataExtractionQuery",
+                    "ParameterValue": "{"owner":(if (.owner // "") == "" then "controlmessages" else .owner end),"logGroup":(if (.logGroup // "") == "" then "controlmessages" else (.logGroup | ltrimstr("/")) end)}",
+                  },
+                  {
+                    "ParameterName": "JsonParsingEngine",
+                    "ParameterValue": "JQ-1.6",
+                  },
+                ],
+                "Type": "MetadataExtraction",
+              },
+              {
+                "Parameters": [],
+                "Type": "AppendDelimiterToRecord",
+              },
+            ],
+          },
           "RoleARN": {
             "Fn::GetAtt": [
               "FirehoseRoleAA67C190",
@@ -245,15 +302,6 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
       },
       "Type": "AWS::Logs::LogStream",
       "UpdateReplacePolicy": "Retain",
-    },
-    "ArchiveLogGroup397AA1AB": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "LogGroupName": "/TestProject/test/app",
-        "RetentionInDays": 7,
-      },
-      "Type": "AWS::Logs::LogGroup",
-      "UpdateReplacePolicy": "Delete",
     },
     "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
       "DependsOn": [
@@ -311,7 +359,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
       },
       "Type": "AWS::IAM::Role",
     },
-    "CwlSubscriptionFilter1C4C480C": {
+    "CwlSubscriptionFilter1C707C724": {
       "DependsOn": [
         "CwlToFirehoseRoleDefaultPolicy51C34CD1",
       ],
@@ -324,7 +372,103 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
         },
         "FilterPattern": "",
         "LogGroupName": {
-          "Ref": "ArchiveLogGroup397AA1AB",
+          "Ref": "LogGroup106AAD846",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CwlToFirehoseRole124D1583",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "CwlSubscriptionFilter23DC2451A": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "ArchiveDeliveryStream497AB609",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": {
+          "Ref": "LogGroup2477F707C",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CwlToFirehoseRole124D1583",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "CwlSubscriptionFilter3D39F9BF2": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "ArchiveDeliveryStream497AB609",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": {
+          "Ref": "LogGroup34356AF39",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CwlToFirehoseRole124D1583",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "CwlSubscriptionFilter4E60CD400": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "ArchiveDeliveryStream497AB609",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": {
+          "Ref": "LogGroup4A4E5F7C0",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CwlToFirehoseRole124D1583",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "CwlSubscriptionFilter536DFDDAF": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "ArchiveDeliveryStream497AB609",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": {
+          "Ref": "LogGroup5823665DB",
         },
         "RoleArn": {
           "Fn::GetAtt": [
@@ -524,6 +668,51 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFo
       },
       "Type": "AWS::IAM::Policy",
     },
+    "LogGroup106AAD846": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/basic-app-1",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogGroup2477F707C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/basic-app-2",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogGroup34356AF39": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/basic-app-3",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogGroup4A4E5F7C0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/basic-app-4",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogGroup5823665DB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject/test/basic-app-5",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
   },
   "Rules": {
     "CheckBootstrapVersion": {
@@ -561,9 +750,9 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Resource types a
   "AWS::IAM::Role": 3,
   "AWS::KinesisFirehose::DeliveryStream": 1,
   "AWS::Lambda::Function": 1,
-  "AWS::Logs::LogGroup": 2,
+  "AWS::Logs::LogGroup": 6,
   "AWS::Logs::LogStream": 1,
-  "AWS::Logs::SubscriptionFilter": 1,
+  "AWS::Logs::SubscriptionFilter": 5,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
   "Custom::S3AutoDeleteObjects": 1,
@@ -1388,7 +1577,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
     "ArchiveLogGroup397AA1AB": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/TestProject/test/app-export",
+        "LogGroupName": "/TestProject/test/export-app-export",
         "RetentionInDays": 7,
       },
       "Type": "AWS::Logs::LogGroup",
@@ -1953,7 +2142,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLambdaStack Complete CloudF
     "ArchiveLogGroup397AA1AB": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/TestProject/test/app-lambda",
+        "LogGroupName": "/TestProject/test/lambda-app-lambda",
         "RetentionInDays": 7,
       },
       "Type": "AWS::Logs::LogGroup",
@@ -2395,7 +2584,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLifecycleStack Complete Clo
     "ArchiveLogGroup397AA1AB": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/TestProject/test/app-lifecycle",
+        "LogGroupName": "/TestProject/test/lifecycle-app",
         "RetentionInDays": 7,
       },
       "Type": "AWS::Logs::LogGroup",

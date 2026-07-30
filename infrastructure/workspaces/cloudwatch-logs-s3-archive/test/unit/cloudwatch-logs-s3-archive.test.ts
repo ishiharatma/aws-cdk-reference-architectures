@@ -53,9 +53,9 @@ describe('CloudwatchLogsS3ArchiveBasicStack Fine-grained Assertions', () => {
             });
         });
 
-        test('should create a log group for the archive (plus one for S3 auto-delete Lambda)', () => {
+        test('should create 5 log groups for the archive (plus one for S3 auto-delete Lambda)', () => {
             // isAutoDeleteObject:true adds a CDK-managed log group for the S3 custom resource Lambda
-            template.resourceCountIs('AWS::Logs::LogGroup', 2);
+            template.resourceCountIs('AWS::Logs::LogGroup', 6);
         });
     });
 
@@ -140,11 +140,13 @@ describe('CloudwatchLogsS3ArchiveBasicStack Fine-grained Assertions', () => {
         });
 
         test('should configure buffering interval and size', () => {
+            // Dynamic partitioning requires bufferingSize >= 64 MiB and bufferingInterval
+            // >= 60s, so the requested (lower) test-env values are clamped up.
             template.hasResourceProperties('AWS::KinesisFirehose::DeliveryStream', {
                 ExtendedS3DestinationConfiguration: Match.objectLike({
                     BufferingHints: {
                         IntervalInSeconds: 60,
-                        SizeInMBs: 1,
+                        SizeInMBs: 64,
                     },
                 }),
             });
@@ -240,8 +242,8 @@ describe('CloudwatchLogsS3ArchiveBasicStack Fine-grained Assertions', () => {
     });
 
     describe('Subscription Filter', () => {
-        test('should create exactly one subscription filter', () => {
-            template.resourceCountIs('AWS::Logs::SubscriptionFilter', 1);
+        test('should create one subscription filter per log group', () => {
+            template.resourceCountIs('AWS::Logs::SubscriptionFilter', 5);
         });
 
         test('should point the subscription filter to the Firehose stream', () => {
@@ -257,15 +259,15 @@ describe('CloudwatchLogsS3ArchiveBasicStack Fine-grained Assertions', () => {
         test('should attach the subscription filter to the log group', () => {
             template.hasResourceProperties('AWS::Logs::SubscriptionFilter', {
                 LogGroupName: Match.objectLike({
-                    Ref: Match.stringLikeRegexp('ArchiveLogGroup'),
+                    Ref: Match.stringLikeRegexp('LogGroup'),
                 }),
             });
         });
     });
 
     describe('Stack Outputs', () => {
-        test('should output the log group name', () => {
-            template.hasOutput('LogGroupName', {
+        test('should output the log group names', () => {
+            template.hasOutput('LogGroupNames', {
                 Description: 'Name of the CloudWatch Log Group',
             });
         });

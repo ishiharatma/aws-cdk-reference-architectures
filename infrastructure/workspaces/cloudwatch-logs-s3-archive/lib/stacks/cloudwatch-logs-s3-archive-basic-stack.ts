@@ -53,7 +53,7 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         for (let i = 1; i <= createLogGroups; i++) {
             const logGroup = new logs.LogGroup(this, `LogGroup${i}`, {
                 logGroupName: logGroupParams.logGroupNameSuffix
-                    ? `/${props.project}/${props.environment}/${logGroupParams.logGroupNameSuffix}-${i}`
+                    ? `/${props.project}/${props.environment}/basic-${logGroupParams.logGroupNameSuffix}-${i}`
                     : undefined,
                 retention: logGroupParams.retention ?? defaultLogGroupArchiveConfig.retention,
                 removalPolicy: props.isAutoDeleteObject
@@ -123,12 +123,21 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         // -----------------------------------------------------------------------
         // Kinesis Data Firehose → S3
         // Dynamic partitioning: CWL delivers gzip-compressed JSON envelopes
-        // ({owner, logGroup, logStream, logEvents:[...]}); these processors run
-        // in order to decompress, flatten each log event into {owner, logGroup, message},
-        // extract `owner` (account ID) and `logGroup` as partition keys, and append
-        // a newline delimiter so events aren't concatenated without separation in
-        // the S3 object. This lets the 5 shared log groups land under distinct S3
-        // prefixes instead of being interleaved in the same object.
+        // ({owner, logGroup, logStream, logEvents:[...]}); DecompressionProcessor
+        // unzips this envelope, which already has `owner`/`logGroup` at the top
+        // level, so MetadataExtractionProcessor can read them directly to extract
+        // partition keys. AppendDelimiterToRecordProcessor adds a newline so
+        // records aren't concatenated without separation in the S3 object.
+        // This lets the 5 shared log groups land under distinct S3 prefixes
+        // instead of being interleaved in the same object.
+        //
+        // Note: CloudWatchLogProcessor (message extraction) is deliberately NOT
+        // used here — it strips `owner`/`logGroup` from the record (keeping only
+        // the raw `message` content), which breaks the MetadataExtractionProcessor
+        // jq queries below with DynamicPartitioning.MetadataExtractionFailed.
+        // As a result, each S3 record is the full CWL envelope (with a nested
+        // `logEvents` array of possibly multiple events), not one flattened
+        // line per log event.
         // -----------------------------------------------------------------------
         // The prefix must reference the `owner`/`logGroup` partition keys produced
         // by the MetadataExtractionProcessor below, so it is fixed here rather than
@@ -168,10 +177,14 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
                 new firehose.DecompressionProcessor({
                     compressionFormat: firehose.DecompressionProcessorCompressionFormat.GZIP,
                 }),
-                new firehose.CloudWatchLogProcessor({ dataMessageExtraction: true }),
+                // CWL periodically sends CONTROL_MESSAGE health-check records to verify
+                // the destination is reachable; these have `owner`/`logGroup` set to "",
+                // which fails dynamic partitioning ("partitionKeys values must not be
+                // null or empty") unless a fallback value is supplied here.
                 firehose.MetadataExtractionProcessor.jq16({
-                    owner: '.owner',
-                    logGroup: '.logGroup | ltrimstr("/")',
+                    owner: '(if (.owner // "") == "" then "controlmessages" else .owner end)',
+                    logGroup:
+                        '(if (.logGroup // "") == "" then "controlmessages" else (.logGroup | ltrimstr("/")) end)',
                 }),
                 new firehose.AppendDelimiterToRecordProcessor(),
             ],

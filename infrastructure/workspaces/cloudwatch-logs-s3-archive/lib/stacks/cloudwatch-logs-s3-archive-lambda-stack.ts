@@ -61,7 +61,7 @@ export class CloudwatchLogsS3ArchiveLambdaStack extends cdk.Stack {
         // CloudWatch Log Group (source)
         // -----------------------------------------------------------------------
         this.logGroup = new logs.LogGroup(this, 'ArchiveLogGroup', {
-            logGroupName: `/${props.project}/${props.environment}/${logGroupNameSuffix}`,
+            logGroupName: `/${props.project}/${props.environment}/lambda-${logGroupNameSuffix}`,
             retention,
             removalPolicy: props.isAutoDeleteObject
                 ? cdk.RemovalPolicy.DESTROY

@@ -30,7 +30,7 @@
 ```text
 CloudWatch Log Group
   → サブスクリプションフィルター  (SubscriptionFilter + FirehoseDestination、role = CwlToFirehoseRole)
-  → Kinesis Data Firehose (GZIP圧縮、日付パーティションプレフィックス)
+  → Kinesis Data Firehose (GZIP圧縮)
   → S3 アーカイブバケット
 ```
 
@@ -38,9 +38,11 @@ CloudWatch Log Group
 
 | スタック | 説明 |
 | -------- | ---- |
-| **Basic**（スタック1） | 新規ロググループ、最小ライフサイクル（マルチパートアップロード中断 + 非現行バージョン失効） |
-| **Lifecycle**（スタック2） | Basicに加えてストレージクラス移行: Standard → IA (30日) → Glacier IR (90日) → Deep Archive (365日) → 失効 (7年) |
+| **Basic**（スタック1） | 1つのFirehoseストリームを共有する5つのロググループ。`owner`/`logGroup`による**動的パーティショニング**でロググループごとに別々のS3プレフィックスに振り分け。最小ライフサイクル（マルチパートアップロード中断 + 非現行バージョン失効） |
+| **Lifecycle**（スタック2） | 単一ロググループ、動的パーティショニングなしのシンプルな日付プレフィックス + ストレージクラス移行: Standard → IA (30日) → Glacier IR (90日) → Deep Archive (365日) → 失効 (7年) |
 | **Existing**（スタック3） | 既存ロググループ（名前でインポート）へFirehoseサブスクリプションをアタッチ |
+
+> 動的パーティショニングを使うのは**スタック1（Basic）のみ**です。詳細は後述の[1a. ロググループ単位の動的パーティショニング（スタック1 – Basic）](#1a-ロググループ単位の動的パーティショニングスタック1--basic)を参照してください。
 
 ### パターンB — スケジュールエクスポートタスク（スタック4）
 
@@ -103,13 +105,15 @@ cloudwatch-logs-s3-archive/
 │       │   └── index.py                        # パターンB – CreateExportTaskハンドラー
 │       └── cwl-to-s3/
 │           └── index.py                        # パターンC – CWLペイロード → S3書き込み
-└── test/
-    ├── compliance/
-    │   └── cdk-nag.test.ts                     # CDK Nag AwsSolutionsコンプライアンステスト
-    ├── snapshot/
-    │   └── snapshot.test.ts                    # CloudFormationテンプレートスナップショットテスト
-    └── unit/
-        └── cloudwatch-logs-s3-archive.test.ts  # 細粒度アサーションテスト
+├── test/
+│   ├── compliance/
+│   │   └── cdk-nag.test.ts                     # CDK Nag AwsSolutionsコンプライアンステスト
+│   ├── snapshot/
+│   │   └── snapshot.test.ts                    # CloudFormationテンプレートスナップショットテスト
+│   └── unit/
+│       └── cloudwatch-logs-s3-archive.test.ts  # 細粒度アサーションテスト
+├── write-test-logs.sh                          # スタック1(Basic)の5つのロググループへテストデータを書き込む
+└── write-test-logs-lifecycle.sh                # スタック2(Lifecycle)のロググループへテストデータを書き込む
 ```
 
 ---
@@ -147,6 +151,37 @@ new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
 
 > **なぜL1の`CfnSubscriptionFilter`を使わないのか？**
 > 以前はこのスタックも「L2の`SubscriptionFilter`はFirehose向けのロールARNを受け取れない」という前提でL1 + 手動インラインポリシーを使っていました。しかし実際には`aws-logs-destinations`に`FirehoseDestination`クラスがあり、その`bind()`が指定（または自動生成）したロールのARNを`CfnSubscriptionFilter`に配線し、`deliveryStream.grantPutRecords(role)`で必要な権限も自動的に付与してくれます。信頼ポリシーだけを定義した`cwlToFirehoseRole`をこのL2コンストラクトに渡すことで、`SourceArn`によるスコープの絞り込みは維持しつつ、権限付与はL2に任せられます（自前でインラインポリシーも足すと`AWS::IAM::Policy`が重複するため注意してください）。
+
+### 1a. ロググループ単位の動的パーティショニング（スタック1 – Basic）
+
+スタック1は同じFirehose配信ストリームを共有する**5つのロググループ**を作成します。パーティショニングなしでは5つ分のイベントが同じS3オブジェクトに混在してしまうため、動的パーティショニングでロググループごとに別々のプレフィックスへ振り分けます。
+
+```typescript
+const s3Destination = new firehose.S3Bucket(archiveBucket, {
+    dataOutputPrefix:
+        'AWSLogs/!{partitionKeyFromQuery:owner}/CWLogGroup/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/',
+    dynamicPartitioning: { enabled: true },
+    bufferingInterval: cdk.Duration.seconds(60), // 動的パーティショニングは60秒以上が必須
+    bufferingSize: cdk.Size.mebibytes(64),        // 同じく64MiB以上が必須
+    processors: [
+        new firehose.DecompressionProcessor({
+            compressionFormat: firehose.DecompressionProcessorCompressionFormat.GZIP,
+        }),
+        firehose.MetadataExtractionProcessor.jq16({
+            owner: '(if (.owner // "") == "" then "controlmessages" else .owner end)',
+            logGroup:
+                '(if (.logGroup // "") == "" then "controlmessages" else (.logGroup | ltrimstr("/")) end)',
+        }),
+        new firehose.AppendDelimiterToRecordProcessor(),
+    ],
+});
+```
+
+> **このパイプラインに`CloudWatchLogProcessor`（メッセージ抽出）を追加してはいけません。** 解凍後のレコードから`owner`/`logGroup`/`logStream`を全て取り除き、生の`message`の中身だけを残してしまうため、上記の`MetadataExtractionProcessor`のjqクエリが`DynamicPartitioning.MetadataExtractionFailed`で失敗します。`DecompressionProcessor`を実行した時点で、レコードには既にトップレベルに`owner`/`logGroup`が存在する（[Firehoseの「メッセージ抽出」ドキュメントのFig.1](https://docs.aws.amazon.com/firehose/latest/dev/Message_extraction.html)を参照）ため、`MetadataExtractionProcessor`はそれを直接読み取れます。メッセージ抽出プロセッサは不要です。
+
+> **CloudWatch Logsは疎通確認用の`CONTROL_MESSAGE`を定期的に送信します。** このレコードは`owner`/`logGroup`が空文字`""`になっており、jqクエリでフォールバック値（上記の`"controlmessages"`）を用意しないと「`partitionKeys values must not be null or empty`」で失敗します。フォールバックには`//`（alternative operator）ではなくjqの`if/then/else`を使う必要があります — `//`は`null`/`false`のときだけ代替され、空文字には効きません。
+
+このトレードオフとして、S3に出力される各レコードは**CWLのenvelope全体**（複数イベントを含みうる`logEvents`配列付き）になり、ログイベント1件ずつのフラットな行にはなりません。フラット化（`CloudWatchLogProcessor`）はメタデータベースのパーティショニングと両立しないためです。個々のメッセージを取り出す場合は、Athenaなどで`logEvents`配列を`UNNEST`/`json_extract`してください。
 
 ### 2. 階層型S3ライフサイクル（スタック2 – Lifecycle）
 
@@ -262,6 +297,7 @@ def lambda_handler(event, context):
 | **FirehoseRole** | `bucket/*`に対して`s3:PutObject`を許可（ワイルドカードはFirehoseの動作に必須） |
 | **ライフサイクルルール** | マルチパートアップロード中断（7日）と非現行バージョン失効（90日、3件保持）を全スタックに適用 |
 | **階層型ライフサイクル** | スタック2はStandard→IA→Glacier IR→Deep Archive→失効の移行ルールを追加 |
+| **動的パーティショニング（スタック1）** | jqで`owner`/`logGroup`によりパーティショニングし、5つの共有ロググループを別々のS3プレフィックスに振り分け。`CloudWatchLogProcessor`はこれらのフィールドを消してしまうため使用不可。`CONTROL_MESSAGE`の疎通確認レコード対策としてjqにフォールバックが必要（`MetadataExtractionFailed`回避） |
 | **既存LGインポート** | スタック3は`LogGroup.fromLogGroupName()`を使用（`AWS::Logs::LogGroup`リソースは作成されない） |
 | **エクスポートタスク** | Lambda内で同時実行ガードを実装。バケットポリシーでCWLサービスプリンシパルの書き込みを許可 |
 | **LambdaDestination** | CDK L2がCWL呼び出し用の`Lambda::Permission`リソースを自動管理 |
@@ -285,14 +321,22 @@ npm run stage:deploy -w workspaces/cloudwatch-logs-s3-archive -- --project=mypro
 
 ### パターンAの動作確認（Firehose）
 
-```bash
-# テストログを書き込む
-aws logs put-log-events \
-  --log-group-name /<project>/<env>/app \
-  --log-stream-name test-stream \
-  --log-events timestamp=$(date +%s000),message="hello firehose"
+スタック1（Basic）は5つのロググループにテストデータを分散させる必要があり、動的パーティショニング対応のバッファリング（60秒以上・64MiB以上）も踏まえる必要があるため、単発の`put-log-events`ではなく同梱のヘルパースクリプトを使います。
 
-# 約60秒後にアーカイブバケットを確認
+```bash
+# スタック1の5つのロググループ（/<project>/<env>/basic-*）にテストイベントを書き込む
+./write-test-logs.sh --project <project> --env <env>
+
+# 約60秒後にアーカイブバケットを確認 — イベントは
+# AWSLogs/<owner>/CWLogGroup/<logGroup>/... の下にパーティショニングされる
+aws s3 ls s3://<archive-bucket>/AWSLogs/ --recursive
+```
+
+スタック2（Lifecycle）は動的パーティショニングなしの単一ロググループです。
+
+```bash
+./write-test-logs-lifecycle.sh --project <project> --env <env>
+
 aws s3 ls s3://<archive-bucket>/ --recursive
 ```
 

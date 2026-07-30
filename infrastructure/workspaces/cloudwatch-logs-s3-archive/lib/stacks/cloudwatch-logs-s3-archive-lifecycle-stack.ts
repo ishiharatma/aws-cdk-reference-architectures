@@ -73,7 +73,7 @@ export class CloudwatchLogsS3ArchiveLifecycleStack extends cdk.Stack {
         // -----------------------------------------------------------------------
         this.logGroup = new logs.LogGroup(this, 'ArchiveLogGroup', {
             logGroupName: logGroupParams.logGroupNameSuffix
-                ? `/${props.project}/${props.environment}/${logGroupParams.logGroupNameSuffix}-lifecycle`
+                ? `/${props.project}/${props.environment}/lifecycle-${logGroupParams.logGroupNameSuffix}`
                 : undefined,
             retention: logGroupParams.retention ?? defaultLogGroupArchiveConfig.retention,
             removalPolicy: props.isAutoDeleteObject
