@@ -9,13 +9,14 @@ Notes:
   This function checks for in-progress tasks before creating a new one.
 - The export is asynchronous; completion may take minutes to hours.
 """
+
 import boto3
 import datetime
 import os
 
 LOG_GROUP_NAME = os.environ["LOG_GROUP_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
-S3_PREFIX = os.environ.get("S3_PREFIX", "exports")
+S3_PREFIX = os.environ.get("S3_PREFIX", "AWSLogs/exports")
 
 
 def lambda_handler(event, context):
@@ -51,5 +52,7 @@ def lambda_handler(event, context):
     )
 
     task_id = response["taskId"]
-    print(f"Export task created: {task_id} → s3://{S3_BUCKET_NAME}/{destination_prefix}")
+    print(
+        f"Export task created: {task_id} → s3://{S3_BUCKET_NAME}/{destination_prefix}"
+    )
     return {"status": "created", "taskId": task_id}

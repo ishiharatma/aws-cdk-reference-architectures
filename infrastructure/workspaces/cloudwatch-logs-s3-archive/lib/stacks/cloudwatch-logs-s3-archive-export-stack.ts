@@ -13,6 +13,8 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as scheduler from 'aws-cdk-lib/aws-scheduler';
+import * as scheduler_targets from 'aws-cdk-lib/aws-scheduler-targets';
 
 export interface CloudwatchLogsS3ArchiveExportStackProps extends cdk.StackProps {
     readonly project: string;
@@ -53,6 +55,7 @@ export class CloudwatchLogsS3ArchiveExportStack extends cdk.Stack {
 
         const scheduleExpression =
             exportParams.scheduleExpression ?? defaultExportTaskConfig.scheduleExpression;
+        const timeZone = exportParams.timeZone ?? cdk.TimeZone.ETC_UTC;
         const s3Prefix = exportParams.s3Prefix ?? defaultExportTaskConfig.s3Prefix;
         const retention = exportParams.retention ?? defaultExportTaskConfig.retention;
         const memorySize = exportParams.memorySize ?? defaultExportTaskConfig.memorySize;
@@ -139,7 +142,7 @@ export class CloudwatchLogsS3ArchiveExportStack extends cdk.Stack {
         this.exportFunction = new lambda.Function(this, 'ExportTaskFunction', {
             functionName: `${props.project}-${props.environment}-cwl-export-task`,
             description: 'Schedules a CloudWatch Logs export task to S3',
-            runtime: lambda.Runtime.PYTHON_3_12,
+            runtime: lambda.Runtime.PYTHON_3_14,
             handler: 'index.lambda_handler',
             code: lambda.Code.fromAsset(
                 path.join(__dirname, '../../src/lambda/export-task'),
@@ -155,6 +158,8 @@ export class CloudwatchLogsS3ArchiveExportStack extends cdk.Stack {
                 retention: logs.RetentionDays.ONE_WEEK,
                 removalPolicy: cdk.RemovalPolicy.DESTROY,
             }),
+            logFormat: lambda.LogFormat.JSON,
+            applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
         });
 
         // Grant Lambda permission to create and describe export tasks for this log group
@@ -171,12 +176,22 @@ export class CloudwatchLogsS3ArchiveExportStack extends cdk.Stack {
         // -----------------------------------------------------------------------
         // EventBridge Rule – triggers Lambda on the configured schedule
         // -----------------------------------------------------------------------
+        /*
+        // Scheduled rules (legacy)
         const exportRule = new events.Rule(this, 'ExportScheduleRule', {
             ruleName: `${props.project}-${props.environment}-cwl-export-schedule`,
             description: 'Triggers CloudWatch Logs export task to S3 on schedule',
             schedule: events.Schedule.expression(scheduleExpression),
         });
         exportRule.addTarget(new targets.LambdaFunction(this.exportFunction));
+        */
+
+        const exportSchedule = new scheduler.Schedule(this, 'ExportSchedule', {
+            scheduleName: `${props.project}-${props.environment}-cwl-export-schedule`,
+            schedule: scheduler.ScheduleExpression.expression(scheduleExpression, timeZone),
+            description: 'Triggers CloudWatch Logs export task to S3 on schedule',
+            target: new scheduler_targets.LambdaInvoke(this.exportFunction),
+        });
 
         // -----------------------------------------------------------------------
         // Stack Outputs

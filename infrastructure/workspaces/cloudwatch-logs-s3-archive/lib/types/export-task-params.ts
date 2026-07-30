@@ -22,6 +22,11 @@ export interface ExportTaskParams {
      */
     readonly scheduleExpression?: string;
     /**
+     * EventBridge schedule time zone (for cron expressions)
+     * @default TimeZone.UTC
+     */
+    readonly timeZone?: cdk.TimeZone;
+    /**
      * S3 key prefix for exported log files
      * @default "exports"
      */

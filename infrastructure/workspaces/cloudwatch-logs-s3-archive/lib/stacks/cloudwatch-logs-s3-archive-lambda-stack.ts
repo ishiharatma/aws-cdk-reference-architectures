@@ -100,7 +100,7 @@ export class CloudwatchLogsS3ArchiveLambdaStack extends cdk.Stack {
         this.archiveFunction = new lambda.Function(this, 'ArchiveFunction', {
             functionName: `${props.project}-${props.environment}-cwl-to-s3`,
             description: 'Receives CloudWatch Logs events and writes them to S3',
-            runtime: lambda.Runtime.PYTHON_3_12,
+            runtime: lambda.Runtime.PYTHON_3_14,
             handler: 'index.lambda_handler',
             code: lambda.Code.fromAsset(
                 path.join(__dirname, '../../src/lambda/cwl-to-s3'),
@@ -115,6 +115,8 @@ export class CloudwatchLogsS3ArchiveLambdaStack extends cdk.Stack {
                 retention: logs.RetentionDays.ONE_WEEK,
                 removalPolicy: cdk.RemovalPolicy.DESTROY,
             }),
+            logFormat: lambda.LogFormat.JSON,
+            applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
         });
 
         // Grant Lambda write access to the archive bucket

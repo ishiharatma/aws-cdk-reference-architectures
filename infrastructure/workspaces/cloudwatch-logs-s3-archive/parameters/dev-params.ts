@@ -48,7 +48,9 @@ const devParams: EnvParams = {
 
     // Pattern B – Scheduled export task (Stack 4)
     exportTask: {
-        scheduleExpression: 'rate(1 day)',
+        //scheduleExpression: 'rate(1 day)',
+        scheduleExpression: 'cron(0 0 * * ? *)', // daily at 00:00
+        timeZone: cdk.TimeZone.ASIA_TOKYO,
         s3Prefix: 'exports',
         logGroupNameSuffix: 'app-export',
         retention: logs.RetentionDays.ONE_WEEK,
