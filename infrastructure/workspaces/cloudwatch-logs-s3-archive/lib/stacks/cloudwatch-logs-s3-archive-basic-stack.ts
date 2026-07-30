@@ -124,18 +124,18 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         // Kinesis Data Firehose → S3
         // Dynamic partitioning: CWL delivers gzip-compressed JSON envelopes
         // ({owner, logGroup, logStream, logEvents:[...]}); these processors run
-        // in order to decompress, flatten each log event into {logGroup, message},
-        // extract `logGroup` as a partition key, and append a newline delimiter
-        // so events aren't concatenated without separation in the S3 object.
-        // This lets the 5 shared log groups land under distinct S3 prefixes
-        // instead of being interleaved in the same object.
+        // in order to decompress, flatten each log event into {owner, logGroup, message},
+        // extract `owner` (account ID) and `logGroup` as partition keys, and append
+        // a newline delimiter so events aren't concatenated without separation in
+        // the S3 object. This lets the 5 shared log groups land under distinct S3
+        // prefixes instead of being interleaved in the same object.
         // -----------------------------------------------------------------------
-        // The prefix must reference the `logGroup` partition key produced by the
-        // MetadataExtractionProcessor below, so it is fixed here rather than taken
-        // from `firehoseParams.dataOutputPrefix` (shared with the non-partitioned
-        // stacks, where it is just a timestamp prefix).
+        // The prefix must reference the `owner`/`logGroup` partition keys produced
+        // by the MetadataExtractionProcessor below, so it is fixed here rather than
+        // taken from `firehoseParams.dataOutputPrefix` (shared with the
+        // non-partitioned stacks, where it is just a timestamp prefix).
         const dynamicPartitioningDataOutputPrefix =
-            'AWSLogs/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/';
+            'AWSLogs/!{partitionKeyFromQuery:owner}/CWLogGroup/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/';
 
         // Dynamic partitioning requires bufferingSize >= 64 MiB and bufferingInterval
         // >= 60s. `firehoseParams` is shared with stacks that don't partition (e.g.
@@ -170,6 +170,7 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
                 }),
                 new firehose.CloudWatchLogProcessor({ dataMessageExtraction: true }),
                 firehose.MetadataExtractionProcessor.jq16({
+                    owner: '.owner',
                     logGroup: '.logGroup | ltrimstr("/")',
                 }),
                 new firehose.AppendDelimiterToRecordProcessor(),
