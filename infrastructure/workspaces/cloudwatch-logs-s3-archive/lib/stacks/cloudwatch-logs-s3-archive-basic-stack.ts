@@ -36,7 +36,7 @@ export interface CloudwatchLogsS3ArchiveBasicStackProps extends cdk.StackProps {
  *     → S3 Bucket (SSE-S3, versioning enabled)
  */
 export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
-    public readonly logGroup: logs.LogGroup;
+    public readonly logGroups: logs.LogGroup[] = [];
     public readonly archiveBucket: s3.Bucket;
     public readonly deliveryStream: firehose.DeliveryStream;
 
@@ -49,15 +49,19 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         // -----------------------------------------------------------------------
         // CloudWatch Log Group
         // -----------------------------------------------------------------------
-        this.logGroup = new logs.LogGroup(this, 'ArchiveLogGroup', {
-            logGroupName: logGroupParams.logGroupNameSuffix
-                ? `/${props.project}/${props.environment}/${logGroupParams.logGroupNameSuffix}`
-                : undefined,
-            retention: logGroupParams.retention ?? defaultLogGroupArchiveConfig.retention,
-            removalPolicy: props.isAutoDeleteObject
-                ? cdk.RemovalPolicy.DESTROY
-                : cdk.RemovalPolicy.RETAIN,
-        });
+        const createLogGroups:number = 5;
+        for (let i = 1; i <= createLogGroups; i++) {
+            const logGroup = new logs.LogGroup(this, `LogGroup${i}`, {
+                logGroupName: logGroupParams.logGroupNameSuffix
+                    ? `/${props.project}/${props.environment}/${logGroupParams.logGroupNameSuffix}-${i}`
+                    : undefined,
+                retention: logGroupParams.retention ?? defaultLogGroupArchiveConfig.retention,
+                removalPolicy: props.isAutoDeleteObject
+                    ? cdk.RemovalPolicy.DESTROY
+                    : cdk.RemovalPolicy.RETAIN,
+            });
+            this.logGroups.push(logGroup);
+        }
 
         // -----------------------------------------------------------------------
         // S3 Archive Bucket
@@ -118,19 +122,58 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
 
         // -----------------------------------------------------------------------
         // Kinesis Data Firehose → S3
+        // Dynamic partitioning: CWL delivers gzip-compressed JSON envelopes
+        // ({owner, logGroup, logStream, logEvents:[...]}); these processors run
+        // in order to decompress, flatten each log event into {logGroup, message},
+        // extract `logGroup` as a partition key, and append a newline delimiter
+        // so events aren't concatenated without separation in the S3 object.
+        // This lets the 5 shared log groups land under distinct S3 prefixes
+        // instead of being interleaved in the same object.
         // -----------------------------------------------------------------------
+        // The prefix must reference the `logGroup` partition key produced by the
+        // MetadataExtractionProcessor below, so it is fixed here rather than taken
+        // from `firehoseParams.dataOutputPrefix` (shared with the non-partitioned
+        // stacks, where it is just a timestamp prefix).
+        const dynamicPartitioningDataOutputPrefix =
+            'AWSLogs/!{partitionKeyFromQuery:logGroup}/!{timestamp:yyyy/MM/dd/HH}/';
+
+        // Dynamic partitioning requires bufferingSize >= 64 MiB and bufferingInterval
+        // >= 60s. `firehoseParams` is shared with stacks that don't partition (e.g.
+        // dev/test use 1 MiB), so clamp up rather than failing synth.
+        const requestedBufferingSize =
+            firehoseParams.bufferingSize ?? defaultFirehoseS3Config.bufferingSize;
+        const bufferingSize =
+            requestedBufferingSize.toMebibytes() < 64 ? cdk.Size.mebibytes(64) : requestedBufferingSize;
+
+        const requestedBufferingInterval =
+            firehoseParams.bufferingInterval ?? defaultFirehoseS3Config.bufferingInterval;
+        const bufferingInterval =
+            requestedBufferingInterval.toSeconds() < 60
+                ? cdk.Duration.seconds(60)
+                : requestedBufferingInterval;
+
         const s3Destination = new firehose.S3Bucket(this.archiveBucket, {
-            dataOutputPrefix:
-                firehoseParams.dataOutputPrefix ?? defaultFirehoseS3Config.dataOutputPrefix,
+            dataOutputPrefix: dynamicPartitioningDataOutputPrefix,
             errorOutputPrefix:
                 firehoseParams.errorOutputPrefix ?? defaultFirehoseS3Config.errorOutputPrefix,
             timeZone: firehoseParams.timeZone ?? defaultFirehoseS3Config.timeZone,
-            bufferingInterval:
-                firehoseParams.bufferingInterval ?? defaultFirehoseS3Config.bufferingInterval,
-            bufferingSize:
-                firehoseParams.bufferingSize ?? defaultFirehoseS3Config.bufferingSize,
+            bufferingInterval,
+            bufferingSize,
             role: firehoseRole,
             compression: firehose.Compression.GZIP,
+            dynamicPartitioning: {
+                enabled: true,
+            },
+            processors: [
+                new firehose.DecompressionProcessor({
+                    compressionFormat: firehose.DecompressionProcessorCompressionFormat.GZIP,
+                }),
+                new firehose.CloudWatchLogProcessor({ dataMessageExtraction: true }),
+                firehose.MetadataExtractionProcessor.jq16({
+                    logGroup: '.logGroup | ltrimstr("/")',
+                }),
+                new firehose.AppendDelimiterToRecordProcessor(),
+            ],
         });
 
         this.deliveryStream = new firehose.DeliveryStream(this, 'ArchiveDeliveryStream', {
@@ -160,21 +203,23 @@ export class CloudwatchLogsS3ArchiveBasicStack extends cdk.Stack {
         // passed to the underlying CfnSubscriptionFilter.
         // -----------------------------------------------------------------------
         const filterPattern = logGroupParams.filterPattern ?? defaultLogGroupArchiveConfig.filterPattern;
-        new logs.SubscriptionFilter(this, 'CwlSubscriptionFilter', {
-            logGroup: this.logGroup,
-            destination: new logs_destinations.FirehoseDestination(this.deliveryStream, {
-                role: cwlToFirehoseRole,
-            }),
-            filterPattern: filterPattern
-                ? logs.FilterPattern.literal(filterPattern)
-                : logs.FilterPattern.allEvents(),
+        this.logGroups.forEach((logGroup, index) => {
+            new logs.SubscriptionFilter(this, `CwlSubscriptionFilter${index + 1}`, {
+                logGroup: logGroup,
+                destination: new logs_destinations.FirehoseDestination(this.deliveryStream, {
+                    role: cwlToFirehoseRole,
+                }),
+                filterPattern: filterPattern
+                    ? logs.FilterPattern.literal(filterPattern)
+                    : logs.FilterPattern.allEvents(),
+            });
         });
 
         // -----------------------------------------------------------------------
         // Stack Outputs
         // -----------------------------------------------------------------------
-        new cdk.CfnOutput(this, 'LogGroupName', {
-            value: this.logGroup.logGroupName,
+        new cdk.CfnOutput(this, 'LogGroupNames', {
+            value: this.logGroups.map((lg) => lg.logGroupName).join(', '),
             description: 'Name of the CloudWatch Log Group',
         });
         new cdk.CfnOutput(this, 'ArchiveDeliveryStreamName', {
