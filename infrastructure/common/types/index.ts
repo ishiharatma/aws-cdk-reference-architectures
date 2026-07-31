@@ -6,3 +6,4 @@ export * from './ecs-fargate';
 export * from './alb';
 export * from './s3';
 export * from './codecommit';
+export * from './cost';

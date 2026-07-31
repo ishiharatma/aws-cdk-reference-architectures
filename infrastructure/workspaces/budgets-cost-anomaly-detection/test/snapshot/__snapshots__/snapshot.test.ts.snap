@@ -1,0 +1,1111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionAnomalyStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CostAnomalyTopic52C535D8": {
+      "Properties": {
+        "TopicName": "TestProject-test-cost-anomaly-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "CostAnomalyTopicPolicy9E3ABD02": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "CostAnomalyTopic52C535D8",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "costalerts.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "CostAnomalyTopic52C535D8",
+              },
+              "Sid": "AllowCostAnomalyDetectionToPublish",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "CostAnomalyTopic52C535D8",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "CostAnomalyTopictestexamplecomBEEA52D2": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "CostAnomalyTopic52C535D8",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "ServiceAnomalyDetectionMonitorF07CDA4A": {
+      "Properties": {
+        "MonitorDimension": "SERVICE",
+        "MonitorName": "TestProject-test-service-anomaly-monitor",
+        "MonitorType": "DIMENSIONAL",
+      },
+      "Type": "AWS::CE::AnomalyMonitor",
+    },
+    "ServiceAnomalyDetectionSubscription9BC411F7": {
+      "Properties": {
+        "Frequency": "IMMEDIATE",
+        "MonitorArnList": [
+          {
+            "Fn::GetAtt": [
+              "ServiceAnomalyDetectionMonitorF07CDA4A",
+              "MonitorArn",
+            ],
+          },
+        ],
+        "Subscribers": [
+          {
+            "Address": {
+              "Ref": "CostAnomalyTopic52C535D8",
+            },
+            "Type": "SNS",
+          },
+        ],
+        "SubscriptionName": "TestProject-test-service-anomaly-subscription",
+        "ThresholdExpression": "{"And":[{"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_PERCENTAGE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["20"]}},{"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_ABSOLUTE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["5"]}}]}",
+      },
+      "Type": "AWS::CE::AnomalySubscription",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionAnomalyStack Resource types and counts 1`] = `
+{
+  "AWS::CE::AnomalyMonitor": 1,
+  "AWS::CE::AnomalySubscription": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionBillingAlarmStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "BillingAlarmTopicE6143245": {
+      "Properties": {
+        "TopicName": "TestProject-test-billing-alarm",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "BillingAlarmTopicPolicy408D26CE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "BillingAlarmTopicE6143245",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "BillingAlarmTopicE6143245",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "BillingAlarmTopicE6143245",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "BillingAlarmTopictestexamplecom81B3FDFB": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "BillingAlarmTopicE6143245",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "EstimatedChargesAlarmCF13320B": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "BillingAlarmTopicE6143245",
+          },
+        ],
+        "AlarmDescription": "Cumulative estimated AWS charges for the current billing period exceed $10",
+        "AlarmName": "TestProject-test-estimated-charges",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "Currency",
+            "Value": "USD",
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "EstimatedCharges",
+        "Namespace": "AWS/Billing",
+        "Period": 21600,
+        "Statistic": "Maximum",
+        "Threshold": 10,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionBillingAlarmStack Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionBudgetStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "BudgetAlertTopicE4C25452": {
+      "Properties": {
+        "TopicName": "TestProject-test-budget-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "BudgetAlertTopicPolicyE6579BE1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "BudgetAlertTopicE4C25452",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":budgets::123456789012:*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "budgets.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "BudgetAlertTopicE4C25452",
+              },
+              "Sid": "AllowBudgetsToPublish",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "BudgetAlertTopicE4C25452",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "BudgetAlertTopictestexamplecom673CC52E": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "BudgetAlertTopicE4C25452",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "MonthlyCostBudgetDBB992B6": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 10,
+            "Unit": "USD",
+          },
+          "BudgetName": "TestProject-test-monthly-cost",
+          "BudgetType": "COST",
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "FORECASTED",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+    "ServiceCostBudgetA2F716FF": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 10,
+            "Unit": "USD",
+          },
+          "BudgetName": "TestProject-test-service-cost",
+          "BudgetType": "COST",
+          "CostFilters": {
+            "Service": [
+              "Amazon Elastic Compute Cloud - Compute",
+            ],
+          },
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "FORECASTED",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "BudgetAlertTopicE4C25452",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionBudgetStack Resource types and counts 1`] = `
+{
+  "AWS::Budgets::Budget": 2,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionCostDigestStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CostDigestSchedule202EDAFA": {
+      "Properties": {
+        "Description": "Posts a rolling AWS cost digest to the configured chat channel(s)",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "Name": "TestProject-test-cost-digest",
+        "ScheduleExpression": "cron(0 10 * * ? *)",
+        "ScheduleExpressionTimezone": "Etc/UTC",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Ref": "CostDigestStateMachine86404ADA",
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget2f5474F958C018",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "CostDigestStateMachine86404ADA": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "CostDigestStateMachineRoleDefaultPolicy00E5533C",
+        "CostDigestStateMachineRole1251210A",
+      ],
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Join": [
+            "",
+            [
+              "{"StartAt":"GetCostAndUsage","States":{"GetCostAndUsage":{"Next":"PublishCostDigest","Type":"Task","Resource":"arn:aws:states:::aws-sdk:costexplorer:getCostAndUsage","Arguments":{"Granularity":"MONTHLY","Metrics":["UnblendedCost"],"TimePeriod":{"Start":"{% ($millis() - 86400000 * 7) ~> $fromMillis('[Y0001]-[M01]-[D01]') %}","End":"{% $millis() ~> $fromMillis('[Y0001]-[M01]-[D01]') %}"},"GroupBy":[{"Key":"SERVICE","Type":"DIMENSION"}],"Filter":{"Not":{"Dimensions":{"Key":"SERVICE","Values":["Tax"]}}}},"Assign":{"AngryThreshold":10,"AccountId":"",
+              {
+                "Ref": "AWS::AccountId",
+              },
+              "","Project":"TestProject","Environment":"test"},"Output":{"Start":"{% $states.result.ResultsByTime[0].TimePeriod.Start %}","End":"{% $states.result.ResultsByTime[0].TimePeriod.End %}","CostSum":"{% $states.result.ResultsByTime[].Groups[].Metrics.UnblendedCost.Amount.$number() ~> $sum() ~> $round(1) %}","CostSorted":"{% ($all_entries := $map($zip($states.result.ResultsByTime[].Groups[].Keys[0],$states.result.ResultsByTime[].Groups[].Metrics.UnblendedCost.Amount.$number()),function($v) { {\\"Service\\": $v[0], \\"Amount\\": $v[1]} });$services := $all_entries.Service ~> $distinct();$cost_per_service := $map($services,function($s){{\\"Service\\": $s, \\"Total\\": $all_entries[Service=$s].Amount ~> $sum() ~> $round(1)}});$sort($cost_per_service, function($l, $r){ $l.Total < $r.Total });) %}"}},"PublishCostDigest":{"End":true,"Type":"Task","Resource":"arn:aws:states:::sns:publish","Arguments":{"Message":{"version":"1.0","source":"custom","content":{"textType":"client-markdown","title":"{% $states.input.CostSum > $AngryThreshold ? \\"😱 Costs are spiking\\" : \\"😊 Costs are steady\\" %}","description":"{% \\"AWS Account ID: \\" & $AccountId & \\" (\\" & $Project & \\"/\\" & $Environment & \\")\\" & \\"\\\\n\\" & ( $states.input.CostSum > $AngryThreshold ? \\"🚨\\" : \\"✅\\" ) & \\"Cost over the last 7 days: \\" & $string($states.input.CostSum) & \\" USD.\\" & \\"\\\\n\\" & \\"👁‍🗨 7-day threshold: \\" & $AngryThreshold & \\" USD\\" & \\"📅 Period: \\" & $states.input.Start & \\" to \\" & $states.input.End & \\"\\\\n\\" & \\"💸 Top 5 services by cost\\" & \\"\\\\n\\" & \\"\\\\n:one: \\" & ( $states.input.CostSorted[0].Service ~> $replace(/^(AWS|Amazon)\\\\s*/, \\"\\") ) & \\": \\" & $states.input.CostSorted[0].Total & \\" USD\\" & \\"\\\\n:two: \\" & ( $states.input.CostSorted[1].Service ~> $replace(/^(AWS|Amazon)\\\\s*/, \\"\\") ) & \\": \\" & $states.input.CostSorted[1].Total & \\" USD\\" & \\"\\\\n:three: \\" & ( $states.input.CostSorted[2].Service ~> $replace(/^(AWS|Amazon)\\\\s*/, \\"\\") ) & \\": \\" & $states.input.CostSorted[2].Total & \\" USD\\" & \\"\\\\n:four: \\" & ( $states.input.CostSorted[3].Service ~> $replace(/^(AWS|Amazon)\\\\s*/, \\"\\") ) & \\": \\" & $states.input.CostSorted[3].Total & \\" USD\\" & \\"\\\\n:five: \\" & ( $states.input.CostSorted[4].Service ~> $replace(/^(AWS|Amazon)\\\\s*/, \\"\\") ) & \\": \\" & $states.input.CostSorted[4].Total & \\" USD\\" & \\"\\\\n\\" & \\"* Note: cost data has a reporting lag and may not reflect the most recent charges.\\" %}"}},"TopicArn":"",
+              {
+                "Ref": "CostDigestTopic5AAB33D8",
+              },
+              ""}}},"QueryLanguage":"JSONata"}",
+            ],
+          ],
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "CostDigestStateMachineLogGroup5A666B5C",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+          ],
+          "IncludeExecutionData": true,
+          "Level": "ALL",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CostDigestStateMachineRole1251210A",
+            "Arn",
+          ],
+        },
+        "StateMachineName": "TestProject-test-cost-digest",
+        "TracingConfiguration": {
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CostDigestStateMachineLogGroup5A666B5C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/vendedlogs/states/TestProject-test-cost-digest",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CostDigestStateMachineRole1251210A": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CostDigestStateMachineRoleDefaultPolicy00E5533C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+                "xray:GetSamplingRules",
+                "xray:GetSamplingTargets",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "ce:GetCostAndUsage",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CostDigestTopic5AAB33D8",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CostDigestStateMachineRoleDefaultPolicy00E5533C",
+        "Roles": [
+          {
+            "Ref": "CostDigestStateMachineRole1251210A",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CostDigestTopic5AAB33D8": {
+      "Properties": {
+        "TopicName": "TestProject-test-cost-digest",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "CostDigestTopicPolicy0C3FC9D7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "CostDigestTopic5AAB33D8",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "CostDigestTopic5AAB33D8",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "CostDigestTopictestexamplecomA9CD2FC1": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "CostDigestTopic5AAB33D8",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "SchedulerRoleForTarget2f5474DefaultPolicy07B13684": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CostDigestStateMachine86404ADA",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget2f5474DefaultPolicy07B13684",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTarget2f5474F958C018",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SchedulerRoleForTarget2f5474F958C018": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionCostDigestStack Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::Scheduler::Schedule": 1,
+  "AWS::StepFunctions::StateMachine": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionUnifiedStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "FinOpsAlertTopic8952334D": {
+      "Properties": {
+        "TopicName": "TestProject-test-finops-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "FinOpsAlertTopicPolicyDA7FEB1A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "FinOpsAlertTopic8952334D",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":budgets::123456789012:*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "budgets.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "FinOpsAlertTopic8952334D",
+              },
+              "Sid": "AllowBudgetsToPublish",
+            },
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "costalerts.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "FinOpsAlertTopic8952334D",
+              },
+              "Sid": "AllowCostAnomalyDetectionToPublish",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "FinOpsAlertTopic8952334D",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "FinOpsAlertTopictestexamplecomC551B138": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "FinOpsAlertTopic8952334D",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "UnifiedAnomalyDetectionSubscription3171110F": {
+      "Properties": {
+        "Frequency": "IMMEDIATE",
+        "MonitorArnList": [
+          "arn:aws:ce::123456789012:anomalymonitor/test-monitor-id",
+        ],
+        "Subscribers": [
+          {
+            "Address": {
+              "Ref": "FinOpsAlertTopic8952334D",
+            },
+            "Type": "SNS",
+          },
+        ],
+        "SubscriptionName": "TestProject-test-unified-anomaly-subscription",
+        "ThresholdExpression": "{"And":[{"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_PERCENTAGE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["50"]}},{"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_ABSOLUTE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["20"]}}]}",
+      },
+      "Type": "AWS::CE::AnomalySubscription",
+    },
+    "UnifiedMonthlyCostBudgetAEF16EB0": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 10,
+            "Unit": "USD",
+          },
+          "BudgetName": "TestProject-test-unified-monthly-cost",
+          "BudgetType": "COST",
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "FORECASTED",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "FinOpsAlertTopic8952334D",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "FinOpsAlertTopic8952334D",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": {
+                  "Ref": "FinOpsAlertTopic8952334D",
+                },
+                "SubscriptionType": "SNS",
+              },
+              {
+                "Address": "test@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionUnifiedStack Resource types and counts 1`] = `
+{
+  "AWS::Budgets::Budget": 1,
+  "AWS::CE::AnomalySubscription": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+}
+`;

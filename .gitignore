@@ -2,8 +2,8 @@
 _draft*
 .draft/
 
-# Claude Code skills (local dev tool, not project code)
-.github/skills/
+# skills (local dev tool, not project code)
+.claude/skills/
 
 # AWS Credentials
 .aws/
@@ -15,7 +15,6 @@ _draft*
 !YourRootCA.cer
 
 # github
-
 .github/copilot-instructions.md
 .github/instructions/
 .github/skills/

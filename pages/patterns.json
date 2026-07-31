@@ -7,6 +7,7 @@
     "tags": ["CDK", "TypeScript"],
     "link": "sqs-lambda-firehose",
     "difficulty": "intermediate",
+    "level": 200,
     "date": "2026-01-26",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-007-sqs-lambda-firehose-building-event-driven-data-pipelines-2ki8"
@@ -20,6 +21,7 @@
     "tags": ["CDK", "TypeScript", "Networking"],
     "link": "vpc-basics",
     "difficulty": "beginner",
+    "level": 200,
     "date": "2025-12-21",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-003-vpc-basics-from-network-configuration-to-security-4a43"
@@ -33,6 +35,7 @@
     "tags": ["CDK", "TypeScript", "Networking"],
     "link": "vpc-peering",
     "difficulty": "intermediate",
+    "level": 300,
     "date": "2025-12-31",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-006-vpc-peering-cross-account-network-integration-and-dns-546"
@@ -46,6 +49,7 @@
     "tags": ["CDK", "TypeScript", "Storage"],
     "link": "s3-basics",
     "difficulty": "beginner",
+    "level": 100,
     "date": "2025-12-07",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-001-s3-bucket-fundamentals-from-default-settings-to-practical-1hmd"
@@ -59,6 +63,7 @@
     "tags": ["CDK", "TypeScript", "Security"],
     "link": "iam-basics",
     "difficulty": "beginner",
+    "level": 200,
     "date": "2025-12-09",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-002-iam-basics-users-roles-and-secure-password-management-1npa"
@@ -72,6 +77,7 @@
     "tags": ["CDK", "TypeScript", "Networking"],
     "link": "vpc-natinstance-v2",
     "difficulty": "intermediate",
+    "level": 300,
     "date": "2025-12-24",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-004-nat-instance-v2-cost-effective-nat-with-automated-scheduling-49li"
@@ -85,6 +91,7 @@
     "tags": ["CDK", "TypeScript", "Best Practices"],
     "link": "cdk-parameters",
     "difficulty": "beginner",
+    "level": 100,
     "date": "2025-12-25",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-005-cdk-parameters-managing-parameters-with-typescript-vs-cdkjson-12b9"
@@ -98,6 +105,7 @@
     "tags": ["CDK", "TypeScript", "ECS", "Fargate", "ALB"],
     "link": "ecs-fargate-alb",
     "difficulty": "intermediate",
+    "level": 300,
     "date": "2026-04-20",
     "articles": {}
   },
@@ -109,6 +117,7 @@
     "tags": ["CDK", "TypeScript", "EC2", "ASG", "ALB"],
     "link": "ec2-advanced",
     "difficulty": "advanced",
+    "level": 300,
     "date": "2026-05-16",
     "articles": {}
   },
@@ -120,6 +129,7 @@
     "tags": ["CDK", "TypeScript", "CloudFront", "VPC"],
     "link": "cloudfront-vpc-origin",
     "difficulty": "advanced",
+    "level": 200,
     "date": "2026-07-19",
     "articles": {
       "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-008-cloudfront-vpc-origin-reaching-an-internal-alb-directly-and-1cd1"
@@ -133,7 +143,20 @@
     "tags": ["CDK", "TypeScript", "CloudWatch", "S3"],
     "link": "cloudwatch-logs-s3-archive",
     "difficulty": "intermediate",
+    "level": 300,
     "date": "2026-06-06",
+    "articles": {}
+  },
+  {
+    "id": "budgets-cost-anomaly-detection",
+    "title": "Budgets & Cost Anomaly Detection",
+    "description": "Five FinOps alerting patterns with AWS CDK: threshold-based Budget alerts, ML-based Cost Anomaly Detection, a unified SNS topic with optional Slack delivery, the classic CloudWatch billing alarm, and a scheduled Step Functions cost digest to Slack/Microsoft Teams via AWS Chatbot.",
+    "image": "budgets-cost-anomaly-detection/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FinOps", "Cost Management", "Step Functions"],
+    "link": "budgets-cost-anomaly-detection",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-07-31",
     "articles": {}
   }
 ]

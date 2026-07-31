@@ -102,7 +102,10 @@ function createPatternCard(pattern) {
     
     const difficultyClass = `difficulty-${pattern.difficulty}`;
     const difficultyLabel = difficultyLabels[pattern.difficulty] || pattern.difficulty;
-    
+    const levelBadgeHTML = pattern.level
+        ? `<span class="level-badge level-${pattern.level}">Lv.${pattern.level}</span>`
+        : '';
+
     // Convert paths to absolute URLs
     const imageUrl = toAbsoluteImageUrl(pattern.image);
     const linkUrl = toAbsoluteLinkUrl(pattern.link);
@@ -123,9 +126,12 @@ function createPatternCard(pattern) {
                 <!-- Pattern Image -->
                 ${imageHTML}
                 
-                <!-- Difficulty Badge -->
+                <!-- Difficulty / Level Badges -->
                 <div class="mb-3 flex items-center justify-between">
-                    <span class="difficulty-badge ${difficultyClass}">${difficultyLabel}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="difficulty-badge ${difficultyClass}">${difficultyLabel}</span>
+                        ${levelBadgeHTML}
+                    </div>
                     <span class="text-xs text-gray-400">${pattern.date}</span>
                 </div>
                 
