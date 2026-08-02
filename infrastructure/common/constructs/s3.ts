@@ -121,6 +121,56 @@ export function createAccountRegionalBucket(options: CreateAccountRegionalBucket
   return bucket;
 }
 
+
+/**
+ *
+ */
+export function createAccountRegionalBucketWebSite(options: CreateAccountRegionalBucketOptions): s3.Bucket {
+  if (options.serverAccessLogsPrefix !== undefined && options.serverAccessLogsBucket === undefined) {
+    // Omitting serverAccessLogsBucket would cause CDK to fall back to the bucket logging to itself,
+    // so this helper explicitly disallows that to avoid unintended self-logging.
+    throw new Error(
+      `createAccountRegionalBucket(${options.id}): serverAccessLogsBucket must also be specified when serverAccessLogsPrefix is set (omitting it would cause the bucket to deliver access logs to itself).`
+    );
+  }
+
+  const stack = cdk.Stack.of(options.scope);
+  const accountId = stack.account;
+  const region = stack.region;
+  const explicitBucketName =
+    !options.skipAccountRegionalNaming && /^[0-9]{12}$/.test(accountId) && region
+      ? normalizeBucketName(
+          options.bucketNameOverride ??
+            buildPurposeBucketName(options.project, options.environment, options.purpose, accountId, region)
+        )
+      : undefined;
+
+  const bucket = new s3.Bucket(options.scope, options.id, {
+    ...(explicitBucketName ? { bucketName: explicitBucketName } : {}),
+    blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    enforceSSL: false,
+    versioned: options.versioned ?? true,
+    accessControl: options.accessControl,
+    objectOwnership: options.objectOwnership,
+    encryption: options.encryption ?? s3.BucketEncryption.S3_MANAGED,
+    encryptionKey: options.encryptionKey,
+    removalPolicy: options.removalPolicy ?? (options.autoDeleteObjects ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN),
+    autoDeleteObjects: options.autoDeleteObjects,
+    serverAccessLogsBucket: options.serverAccessLogsBucket,
+    serverAccessLogsPrefix: options.serverAccessLogsPrefix,
+    websiteIndexDocument: 'index.html',
+    websiteErrorDocument: 'error.html',
+  });
+  if (explicitBucketName) {
+    // Add BucketNamespace via escape hatch (replace once a native L2 API becomes available)
+    const cfnBucket = bucket.node.defaultChild as s3.CfnBucket;
+    cfnBucket.addPropertyOverride('BucketNamespace', 'account-regional');
+  }
+
+  return bucket;
+}
+
+
 /**
  * Builds S3 lifecycle rules from {@link S3LifecycleConfig}.
  * Returns `undefined` (adding no lifecycle rules) if none of the config values are set.

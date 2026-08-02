@@ -35,14 +35,16 @@ export class CloudfrontS3StaticWebsiteStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: CloudfrontS3StaticWebsiteStackProps) {
     super(scope, id, props);
 
-    // Create Access Logging bucket for CloudFront distribution logs. The "aws-logs-" prefix is mandatory: AWS refuses to create the logging configuration below against a bucket whose name doesn't start with it.
+    // Create Access Logging bucket for CloudFront distribution logs. CloudFront's log delivery
+    // service (awslogsdelivery) requires ACLs to be enabled on the bucket, hence the
+    // LOG_DELIVERY_WRITE access control and BUCKET_OWNER_PREFERRED ownership below.
     const accessLogBucket = createAccountRegionalBucket(
       {
         scope: this,
         id: 'AccessLogBucket',
         project: props.project,
         environment: props.environment,
-        purpose: 'access-logs',
+        purpose: `access-logs-${id}`,
         removalPolicy: props.isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
         autoDeleteObjects: props.isAutoDeleteObject,
         accessControl: cdk.aws_s3.BucketAccessControl.LOG_DELIVERY_WRITE,
