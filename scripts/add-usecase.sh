@@ -27,6 +27,12 @@ cd ${workspacesDir}
 # Initialize new CDK app
 cdk init app --language typescript
 
+# Remove aws-cdk from this workspace's devDependencies.
+# It is already managed as a devDependency at the workspaces root
+# (infrastructure/package.json) and hoisted via npm workspaces,
+# so keeping it here would only cause version drift between workspaces.
+npm pkg delete devDependencies.aws-cdk
+
 # Create directory structure
 mkdir -p lib/{aspects,constructs,stacks,stages,types}
 #mkdir -p test/{snapshot,unit,integration,validation,compliance}
@@ -36,7 +42,7 @@ mkdir -p parameters src
 # Copy templates/init-workspace files 
 cp -r ${PARENT_DIR}/templates/init-workspace/. ${workspacesDir}/
 
-mv ${workspaces_name}.ts lib/stacks/
+mv lib/${workspaces_name}-stack.ts lib/stacks/
 mv test/${workspaces_name}.test.ts test/unit/
 
 # Add necessary scripts to the main package.json

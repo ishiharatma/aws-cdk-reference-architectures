@@ -1,54 +1,54 @@
 # AWS CDK Reference Architectures - Pattern Gallery
 
-このディレクトリには、AWS CDKアーキテクチャパターンを表示するGitHub Pagesのサイトが含まれています。
+This directory contains the GitHub Pages site that showcases AWS CDK architecture patterns.
 
-## 📁 ファイル構成
+## 📁 File Structure
 
-- `index.html` - メインのHTMLファイル
-- `app.js` - パターンの動的レンダリング用JavaScript
-- `patterns.json` - アーキテクチャパターンのデータ
+- `index.html` - Main HTML file
+- `app.js` - JavaScript for dynamic pattern rendering
+- `patterns.json` - Architecture pattern data
 
-## 🚀 使い方
+## 🚀 Usage
 
-### ローカルでの確認
+### Local Preview
 
-ローカルで確認する場合は、HTTPサーバーを起動してください：
+To preview locally, start an HTTP server:
 
 ```bash
-# Python 3の場合
+# With Python 3
 cd pages
 python -m http.server 8000
 
-# Node.jsの場合
+# With Node.js
 npx http-server pages -p 8000
 ```
 
-ブラウザで `http://localhost:8000` にアクセスしてください。
+Then open `http://localhost:8000` in your browser.
 
-### GitHub Pagesへのデプロイ
+### Deploying to GitHub Pages
 
-1. GitHubリポジトリの Settings > Pages に移動
-2. Source を `main` ブランチの `/pages` フォルダに設定
-3. Save をクリック
+1. Go to Settings > Pages in the GitHub repository
+2. Set Source to the `/pages` folder on the `main` branch
+3. Click Save
 
-数分後、GitHub PagesのURLでサイトが公開されます。
+The site will be published at the GitHub Pages URL within a few minutes.
 
-## ✨ 機能
+## ✨ Features
 
-- **検索機能**: タイトル、説明、タグで検索可能
-- **フィルタリング**: 難易度やタグでフィルタリング
-- **レスポンシブデザイン**: モバイル、タブレット、デスクトップに対応
-- **AWS風デザイン**: Tailwind CSSを使用したAWSスタイルのUI
+- **Search**: Search by title, description, and tags
+- **Filtering**: Filter by difficulty and tags
+- **Responsive Design**: Supports mobile, tablet, and desktop
+- **AWS-style Design**: AWS-style UI built with Tailwind CSS
 
-## 📝 新しいパターンの追加方法
+## 📝 How to Add a New Pattern
 
-`patterns.json` に新しいエントリを追加してください：
+Add a new entry to `patterns.json`:
 
 ```json
 {
   "id": "unique-pattern-id",
-  "title": "パターンのタイトル",
-  "description": "パターンの説明文",
+  "title": "Pattern title",
+  "description": "Pattern description",
   "image": "your-pattern/overview.png",
   "tags": ["CDK", "TypeScript"],
   "link": "your-pattern",
@@ -62,57 +62,57 @@ npx http-server pages -p 8000
 }
 ```
 
-### 画像について
+### About Images
 
-各パターンには `overview.png` を配置してください。画像は以下のように表示されます：
-- カードの上部に200pxの高さで表示
-- アスペクト比を保持して縮小表示（`object-fit: contain`）
-- 背景色：ライトグレー（`#f8f9fa`）
-- 画像をクリックするとモーダルで拡大表示されます
+Place an `overview.png` for each pattern. Images are displayed as follows:
+- Shown at the top of the card with a height of 200px
+- Scaled down while preserving aspect ratio (`object-fit: contain`)
+- Background color: light gray (`#f8f9fa`)
+- Clicking an image opens it enlarged in a modal
 
-### 記事リンクについて
+### About Article Links
 
-各パターンに関連する記事がある場合、`articles` フィールドでリンクを追加できます：
+If a pattern has related articles, you can add links via the `articles` field:
 
-- **dev.to**: DEV Communityの記事URL
-- **zenn**: Zennの記事URL
-- **qiita**: Qiitaの記事URL
+- **dev.to**: DEV Community article URL
+- **zenn**: Zenn article URL
+- **qiita**: Qiita article URL
 
-記事リンクが設定されている場合、カード内に各プラットフォームのアイコンリンクが表示されます。
-リンクがないプラットフォームは非表示になります（全て省略可能）。
+When article links are set, icon links for each platform are shown on the card.
+Platforms without a link are hidden (all fields are optional).
 
-**表示されるアイコン:**
-- **DEV** - 黒いアイコン（dev.to）
-- **Z** - 青いアイコン（Zenn）
-- **Q** - 緑のアイコン（Qiita）
+**Icons displayed:**
+- **DEV** - black icon (dev.to)
+- **Z** - blue icon (Zenn)
+- **Q** - green icon (Qiita)
 
-## 🎨 デザインのカスタマイズ
+## 🎨 Design Customization
 
-### カラーパレット
+### Color Palette
 
-AWS風のカラーパレットを使用しています：
+Uses an AWS-style color palette:
 
 - AWS Orange: `#FF9900`
-- AWS Squid (ダーク): `#232F3E`
+- AWS Squid (dark): `#232F3E`
 - AWS Squid Light: `#37475A`
 
-### 難易度バッジ
+### Difficulty Badges
 
-- **初級（beginner）**: 緑色
-- **中級（intermediate）**: 黄色
-- **上級（advanced）**: 赤色
+- **beginner**: green
+- **intermediate**: yellow
+- **advanced**: red
 
-## 🔧 開発
+## 🔧 Development
 
-サイトは純粋なHTML/CSS/JavaScriptで構築されており、ビルドプロセスは不要です。
+The site is built with plain HTML/CSS/JavaScript and requires no build process.
 
-### 技術スタック
+### Tech Stack
 
 - HTML5
 - Tailwind CSS (CDN)
 - Vanilla JavaScript
 - JSON for data storage
 
-## 📄 ライセンス
+## 📄 License
 
-このプロジェクトのライセンスについては、リポジトリのルートディレクトリにある LICENSE ファイルを参照してください。
+For the license of this project, see the LICENSE file in the repository root.

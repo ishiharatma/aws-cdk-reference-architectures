@@ -4,6 +4,7 @@ _draft*
 
 # skills (local dev tool, not project code)
 .claude/skills/
+.claude/CLAUDE.md
 
 # AWS Credentials
 .aws/

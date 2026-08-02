@@ -1,8 +1,8 @@
 {
-  "name": "budgets-cost-anomaly-detection",
+  "name": "cloudfront-s3-static-website",
   "version": "0.1.0",
   "bin": {
-    "budgets-cost-anomaly-detection": "bin/budgets-cost-anomaly-detection.js"
+    "cloudfront-s3-static-website": "bin/cloudfront-s3-static-website.js"
   },
   "scripts": {
     "build": "tsc",

@@ -104,7 +104,12 @@ export class CloudfrontWafStack extends cdk.Stack {
           statement: {
             ipSetReferenceStatement: {
               arn: new wafv2.CfnIPSet(this, 'AllowedIpsSetAfterRules', {
-                addresses: (props.allowedIpsAfterRules || ['0.0.0.0/1', '128.0.0.0/1']).map(ip => `${ip}/32`),
+                // Default (no restriction configured): allow the entire IPv4 range, split into two
+                // /1 blocks since WAF rejects a /0 CIDR. These are already full CIDRs, unlike the
+                // explicit list below, so they must not be narrowed to /32 host addresses.
+                addresses: props.allowedIpsAfterRules
+                  ? props.allowedIpsAfterRules.map(ip => `${ip}/32`)
+                  : ['0.0.0.0/1', '128.0.0.0/1'],
                 ipAddressVersion: 'IPV4',
                 scope: 'CLOUDFRONT',
                 name: `${props.project}-${props.environment}-AllowedIpsSetAfterRules`,
