@@ -1,0 +1,316 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AmplifyAppId": {
+      "Description": "Amplify App ID",
+      "Value": {
+        "Fn::GetAtt": [
+          "AmplifyApp",
+          "AppId",
+        ],
+      },
+    },
+    "AmplifyAppUrl": {
+      "Description": "Website URL served by Amplify Hosting",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://main.",
+            {
+              "Fn::GetAtt": [
+                "AmplifyApp",
+                "DefaultDomain",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "AmplifyConsoleUrl": {
+      "Description": "AWS Console URL for the Amplify app",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://ap-northeast-1.console.aws.amazon.com/amplify/apps/",
+            {
+              "Fn::GetAtt": [
+                "AmplifyApp",
+                "AppId",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AmplifyApp": {
+      "Properties": {
+        "IAMServiceRole": {
+          "Fn::GetAtt": [
+            "AmplifyServiceRole1EB3E935",
+            "Arn",
+          ],
+        },
+        "Name": "TestProject-test-website",
+        "Platform": "WEB",
+      },
+      "Type": "AWS::Amplify::App",
+    },
+    "AmplifyBranch": {
+      "Properties": {
+        "AppId": {
+          "Fn::GetAtt": [
+            "AmplifyApp",
+            "AppId",
+          ],
+        },
+        "BranchName": "main",
+        "EnableAutoBuild": false,
+        "EnablePullRequestPreview": false,
+      },
+      "Type": "AWS::Amplify::Branch",
+    },
+    "AmplifyDeploymentCustomResourcePolicy31203C06": {
+      "DependsOn": [
+        "AmplifyBranch",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "amplify:StartDeployment",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AmplifyDeploymentCustomResourcePolicy31203C06",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AmplifyDeploymentDC385B5B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AmplifyBranch",
+        "AmplifyDeploymentCustomResourcePolicy31203C06",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"Amplify","action":"startDeployment","parameters":{"appId":"",
+              {
+                "Fn::GetAtt": [
+                  "AmplifyApp",
+                  "AppId",
+                ],
+              },
+              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/b192cb917222170e1480b1beba8ab9d5d09e2171ba72b3d5f28a8c107c0c3587.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"Amplify","action":"startDeployment","parameters":{"appId":"",
+              {
+                "Fn::GetAtt": [
+                  "AmplifyApp",
+                  "AppId",
+                ],
+              },
+              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/b192cb917222170e1480b1beba8ab9d5d09e2171ba72b3d5f28a8c107c0c3587.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AmplifyServiceRole1EB3E935": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "amplify.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AmplifyServiceRoleDefaultPolicyA4A29B19": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AmplifyServiceRoleDefaultPolicyA4A29B19",
+        "Roles": [
+          {
+            "Ref": "AmplifyServiceRole1EB3E935",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::Amplify::App": 1,
+  "AWS::Amplify::Branch": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "Custom::AWS": 1,
+}
+`;
