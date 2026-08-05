@@ -107,256 +107,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::S3::BucketPolicy",
     },
-    "BuildProject097C5DB7": {
-      "Properties": {
-        "Artifacts": {
-          "Type": "CODEPIPELINE",
-        },
-        "Cache": {
-          "Type": "NO_CACHE",
-        },
-        "EncryptionKey": "alias/aws/s3",
-        "Environment": {
-          "ComputeType": "BUILD_GENERAL1_SMALL",
-          "EnvironmentVariables": [
-            {
-              "Name": "PROJECT_NAME",
-              "Type": "PLAINTEXT",
-              "Value": "TestProject",
-            },
-            {
-              "Name": "ENVIRONMENT",
-              "Type": "PLAINTEXT",
-              "Value": "test",
-            },
-          ],
-          "Image": "aws/codebuild/standard:7.0",
-          "ImagePullCredentialsType": "CODEBUILD",
-          "PrivilegedMode": true,
-          "Type": "LINUX_CONTAINER",
-        },
-        "LogsConfig": {
-          "CloudWatchLogs": {
-            "GroupName": {
-              "Ref": "BuildProjectLogGroup95010AEB",
-            },
-            "Status": "ENABLED",
-          },
-        },
-        "Name": "TestProject-test-build",
-        "ServiceRole": {
-          "Fn::GetAtt": [
-            "BuildProjectRoleAA92C755",
-            "Arn",
-          ],
-        },
-        "Source": {
-          "BuildSpec": "buildspec.yml",
-          "Type": "CODEPIPELINE",
-        },
-        "Tags": [
-          {
-            "Key": "Branch",
-            "Value": "main",
-          },
-          {
-            "Key": "DeploymentTargetBucket",
-            "Value": "test-deployment-bucket",
-          },
-          {
-            "Key": "Repository",
-            "Value": "test-repo",
-          },
-        ],
-      },
-      "Type": "AWS::CodeBuild::Project",
-    },
-    "BuildProjectLogGroup95010AEB": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "RetentionInDays": 7,
-        "Tags": [
-          {
-            "Key": "Branch",
-            "Value": "main",
-          },
-          {
-            "Key": "DeploymentTargetBucket",
-            "Value": "test-deployment-bucket",
-          },
-          {
-            "Key": "Repository",
-            "Value": "test-repo",
-          },
-        ],
-      },
-      "Type": "AWS::Logs::LogGroup",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "BuildProjectRoleAA92C755": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "codebuild.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "Tags": [
-          {
-            "Key": "Branch",
-            "Value": "main",
-          },
-          {
-            "Key": "DeploymentTargetBucket",
-            "Value": "test-deployment-bucket",
-          },
-          {
-            "Key": "Repository",
-            "Value": "test-repo",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "BuildProjectRoleDefaultPolicy3E9F248C": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::GetAtt": [
-                  "BuildProjectLogGroup95010AEB",
-                  "Arn",
-                ],
-              },
-            },
-            {
-              "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":logs:ap-northeast-1:123456789012:log-group:/aws/codebuild/",
-                      {
-                        "Ref": "BuildProject097C5DB7",
-                      },
-                    ],
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":logs:ap-northeast-1:123456789012:log-group:/aws/codebuild/",
-                      {
-                        "Ref": "BuildProject097C5DB7",
-                      },
-                      ":*",
-                    ],
-                  ],
-                },
-              ],
-            },
-            {
-              "Action": [
-                "codebuild:CreateReportGroup",
-                "codebuild:CreateReport",
-                "codebuild:UpdateReport",
-                "codebuild:BatchPutTestCases",
-                "codebuild:BatchPutCodeCoverages",
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":codebuild:ap-northeast-1:123456789012:report-group/",
-                    {
-                      "Ref": "BuildProject097C5DB7",
-                    },
-                    "-*",
-                  ],
-                ],
-              },
-            },
-            {
-              "Action": [
-                "s3:GetObject*",
-                "s3:GetBucket*",
-                "s3:List*",
-                "s3:DeleteObject*",
-                "s3:PutObject",
-                "s3:PutObjectLegalHold",
-                "s3:PutObjectRetention",
-                "s3:PutObjectTagging",
-                "s3:PutObjectVersionTagging",
-                "s3:Abort*",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ArtifactBucket7410C9EF",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      {
-                        "Fn::GetAtt": [
-                          "ArtifactBucket7410C9EF",
-                          "Arn",
-                        ],
-                      },
-                      "/*",
-                    ],
-                  ],
-                },
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "BuildProjectRoleDefaultPolicy3E9F248C",
-        "Roles": [
-          {
-            "Ref": "BuildProjectRoleAA92C755",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
     "CloudfrontInvalidationLambda97AA78B6": {
       "DependsOn": [
         "CloudfrontInvalidationLambdaServiceRoleDefaultPolicy5408C705",
@@ -628,72 +378,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::IAM::Role",
     },
-    "PipelineBuildCodeBuildBuildCodePipelineActionRole8F901CF6": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": {
-                  "Fn::GetAtt": [
-                    "PipelineRoleD68726F7",
-                    "Arn",
-                  ],
-                },
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "Tags": [
-          {
-            "Key": "Branch",
-            "Value": "main",
-          },
-          {
-            "Key": "DeploymentTargetBucket",
-            "Value": "test-deployment-bucket",
-          },
-          {
-            "Key": "Repository",
-            "Value": "test-repo",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "PipelineBuildCodeBuildBuildCodePipelineActionRoleDefaultPolicy92C965E2": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "codebuild:BatchGetBuilds",
-                "codebuild:StartBuild",
-                "codebuild:StopBuild",
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::GetAtt": [
-                  "BuildProject097C5DB7",
-                  "Arn",
-                ],
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "PipelineBuildCodeBuildBuildCodePipelineActionRoleDefaultPolicy92C965E2",
-        "Roles": [
-          {
-            "Ref": "PipelineBuildCodeBuildBuildCodePipelineActionRole8F901CF6",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
     "PipelineC660917D": {
       "DependsOn": [
         "PipelineRoleDefaultPolicyC7A05455",
@@ -750,42 +434,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
             "Actions": [
               {
                 "ActionTypeId": {
-                  "Category": "Build",
-                  "Owner": "AWS",
-                  "Provider": "CodeBuild",
-                  "Version": "1",
-                },
-                "Configuration": {
-                  "ProjectName": {
-                    "Ref": "BuildProject097C5DB7",
-                  },
-                },
-                "InputArtifacts": [
-                  {
-                    "Name": "SourceOutput",
-                  },
-                ],
-                "Name": "CodeBuild_Build",
-                "OutputArtifacts": [
-                  {
-                    "Name": "BuildOutput",
-                  },
-                ],
-                "RoleArn": {
-                  "Fn::GetAtt": [
-                    "PipelineBuildCodeBuildBuildCodePipelineActionRole8F901CF6",
-                    "Arn",
-                  ],
-                },
-                "RunOrder": 2,
-              },
-            ],
-            "Name": "Build",
-          },
-          {
-            "Actions": [
-              {
-                "ActionTypeId": {
                   "Category": "Deploy",
                   "Owner": "AWS",
                   "Provider": "S3",
@@ -797,7 +445,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
                 },
                 "InputArtifacts": [
                   {
-                    "Name": "BuildOutput",
+                    "Name": "SourceOutput",
                   },
                 ],
                 "Name": "S3_Deploy",
@@ -829,7 +477,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
                 },
                 "InputArtifacts": [
                   {
-                    "Name": "BuildOutput",
+                    "Name": "SourceOutput",
                   },
                 ],
                 "Name": "Lambda_S3_Sync",
@@ -1236,16 +884,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
               "Resource": {
                 "Fn::GetAtt": [
                   "PipelineSourceCodeCommitSourceCodePipelineActionRole89AB8DD5",
-                  "Arn",
-                ],
-              },
-            },
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::GetAtt": [
-                  "PipelineBuildCodeBuildBuildCodePipelineActionRole8F901CF6",
                   "Arn",
                 ],
               },
@@ -1687,13 +1325,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
 {
-  "AWS::CodeBuild::Project": 1,
   "AWS::CodePipeline::Pipeline": 1,
   "AWS::Events::Rule": 1,
-  "AWS::IAM::Policy": 10,
-  "AWS::IAM::Role": 11,
+  "AWS::IAM::Policy": 8,
+  "AWS::IAM::Role": 9,
   "AWS::Lambda::Function": 3,
-  "AWS::Logs::LogGroup": 3,
+  "AWS::Logs::LogGroup": 2,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
   "Custom::S3AutoDeleteObjects": 1,

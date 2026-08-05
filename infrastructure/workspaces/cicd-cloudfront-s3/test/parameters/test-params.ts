@@ -11,6 +11,7 @@ const testParams: EnvParams = {
 
     repositoryName: 'test-repo',
     repositoryBranch: 'main',
+    enableBuild: true,
     deploymentTargetBucketName: 'test-deployment-bucket',
     cloudfrontDistributionId: 'EXXXXXXXXXXXXX',
 };

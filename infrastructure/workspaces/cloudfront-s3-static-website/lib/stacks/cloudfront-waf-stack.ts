@@ -280,7 +280,7 @@ export class CloudfrontWafStack extends cdk.Stack {
       autoDeleteObjects: props.isAutoDeleteObject,
       accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
-      bucketNameOverride: `aws-waf-logs-${props.project}-${props.environment}-${id}-${accountId}-${region}-an`,
+      bucketNameOverride: `aws-waf-logs-${props.project}-${props.environment}-${accountId}-${region}-an`,
       purpose: 'waf-logs',
       lifecycle: {
         intelligentTieringDays: 0,

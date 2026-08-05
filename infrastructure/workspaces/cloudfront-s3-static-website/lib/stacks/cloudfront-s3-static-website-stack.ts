@@ -59,7 +59,7 @@ export class CloudfrontS3StaticWebsiteStack extends cdk.Stack {
         project: props.project,
         environment: props.environment,
         autoDeleteObjects: props.isAutoDeleteObject,
-        purpose: 'static-website-content',
+        purpose: 'website-content',
         serverAccessLogsBucket: accessLogBucket,
         serverAccessLogsPrefix: 'website-bucket-logs/',
       }
@@ -178,6 +178,11 @@ export class CloudfrontS3StaticWebsiteStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'WebsiteDistributionDomainName', {
       value: distribution.distributionDomainName,
       description: 'The domain name of the CloudFront distribution for the static website.',
+    });
+    // CloudFront Distribution ID (for use in invalidation commands, etc.)
+    new cdk.CfnOutput(this, 'WebsiteDistributionId', {
+      value: distribution.distributionId,
+      description: 'The ID of the CloudFront distribution for the static website.',
     });
     // CloudFront URL (https://<distributionDomainName>/)
     new cdk.CfnOutput(this, 'WebsiteDistributionUrl', {

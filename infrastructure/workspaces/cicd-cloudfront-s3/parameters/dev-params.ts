@@ -14,10 +14,11 @@ const devParams: EnvParams = {
     // Common tags
     tags: {},
 
-    repositoryName: 'my-repo',
+    repositoryName: 'cloudfront-s3',
     repositoryBranch: 'main',
-    deploymentTargetBucketName: 'my-deployment-bucket',
-    cloudfrontDistributionId: 'EXXXXXXXXXXXXX',
+    enableBuild: false, // Set to true if you want to enable the build stage in the pipeline
+    deploymentTargetBucketName: 'drillexercises-dev-webs-e70af7f9-904233092792-ap-northeast-1-an',
+    cloudfrontDistributionId: 'ECIA2062UBKDO',
 
 };
 

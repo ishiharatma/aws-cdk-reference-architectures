@@ -26,13 +26,17 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
 
     const s3SyncLambdaPath = path.join(__dirname, '../../../../common/src/python-lambda/codedeploy-s3-sync');
     const cloudfrontInvalidationLambdaPath = path.join(__dirname, '../../../../common/src/python-lambda/cloudfront-create-invalidation');
+    const InvalidationCompleteSnsTopic = new sns.Topic(this, 'InvalidationCompleteSnsTopic', {
+      topicName: `${props.project}-${props.environment}-invalidation-complete-topic`.toLowerCase(),
+      displayName: 'CloudFront Invalidation Complete Notification Topic',
+    });
 
     const s3SyncLambda = new lambda.Function(this, 'S3SyncLambda', {
       runtime: lambda.Runtime.PYTHON_3_14,
-      handler: 'index.handler',
+      handler: 'index.lambda_handler',
       code: lambda.Code.fromAsset(s3SyncLambdaPath),
       environment: {
-        BUCKET_NAME: props.envParams.deploymentTargetBucketName,
+        DEST_BUCKET_NAME: props.envParams.deploymentTargetBucketName,
       },
       logGroup: new logs.LogGroup(this, 'S3SyncLambdaLogGroup', {
           retention: logs.RetentionDays.ONE_WEEK,
@@ -41,12 +45,20 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
       loggingFormat: lambda.LoggingFormat.JSON,
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
     });
+    s3SyncLambda.role?.addToPrincipalPolicy(new cdk.aws_iam.PolicyStatement({
+      actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: [
+        `arn:aws:s3:::${props.envParams.deploymentTargetBucketName}`,
+        `arn:aws:s3:::${props.envParams.deploymentTargetBucketName}/*`,
+      ],
+    }));
     const cloudfrontInvalidationLambda = new lambda.Function(this, 'CloudfrontInvalidationLambda', {
       runtime: lambda.Runtime.PYTHON_3_14,
-      handler: 'index.handler',
+      handler: 'index.lambda_handler',
       code: lambda.Code.fromAsset(cloudfrontInvalidationLambdaPath),
       environment: {
         DISTRIBUTION_ID: props.envParams.cloudfrontDistributionId,
+        TOPIC_ARN: InvalidationCompleteSnsTopic.topicArn,
       },
       logGroup: new logs.LogGroup(this, 'CloudfrontInvalidationLambdaLogGroup', {
           retention: logs.RetentionDays.ONE_WEEK,
@@ -55,6 +67,16 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
       loggingFormat: lambda.LoggingFormat.JSON,
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
     });
+    cloudfrontInvalidationLambda.role?.addToPrincipalPolicy(new cdk.aws_iam.PolicyStatement({
+      actions: ['cloudfront:CreateInvalidation', 'cloudfront:GetInvalidation '],
+      resources: [`arn:aws:cloudfront::${this.account}:distribution/${props.envParams.cloudfrontDistributionId}`],
+    }));
+    cloudfrontInvalidationLambda.role?.addToPrincipalPolicy(new cdk.aws_iam.PolicyStatement({
+      actions: ['sns:Publish'],
+      resources: [InvalidationCompleteSnsTopic.topicArn],
+    }));
+    InvalidationCompleteSnsTopic.grantPublish(cloudfrontInvalidationLambda);
+
     const repository = codecommit.Repository.fromRepositoryName(this, 'CodeCommitRepo', props.envParams.repositoryName);
 
     // Create Artifact Bucket
@@ -63,11 +85,18 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
       removalPolicy: props.isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
       autoDeleteObjects: props.isAutoDeleteObject,
     });
+
+    // LambdaInvokeAction only grants the pipeline role read access to the artifact
+    // bucket, not the invoked Lambda's own execution role. The Lambda code itself
+    // fetches the input artifact object from S3, so it needs read access too.
+    artifactBucket.grantRead(s3SyncLambda);
     // Create Artifact for the source output
     const sourceOutput = new codepipeline.Artifact('SourceOutput');
 
     // Create Artifact for the build output
-    const buildOutput = new codepipeline.Artifact('BuildOutput');
+    // When the Build stage is disabled, no artifact is produced for it, so
+    // downstream Deploy/Sync stages fall back to consuming the source artifact directly.
+    const buildOutput = props.envParams.enableBuild ? new codepipeline.Artifact('BuildOutput') : sourceOutput;
 
     // Fixed (non-token) pipeline name, reused below instead of `pipeline.pipelineName` —
     // referencing the Pipeline's own `Ref` from inside one of its own stage configurations
@@ -83,6 +112,9 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
       restartExecutionOnUpdate: true,
       artifactBucket: artifactBucket,
     });
+
+    // add Lambda Environment Variables for the Invalidation Lambda
+    cloudfrontInvalidationLambda.addEnvironment('PIPELINE_NAME', pipelineName);
 
     // Source stage to pull code from CodeCommit repository
     pipeline.addStage({
@@ -100,47 +132,49 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
 
     // CodeBuild project to build the static website
     // Deployment to S3 is handled by the later Deploy/Sync pipeline stages, not here.
-    const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
-      projectName: `${props.project}-${props.environment}-build`,
-      environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-        computeType: codebuild.ComputeType.SMALL,
-        privileged: true,
-        environmentVariables: {
-          'PROJECT_NAME': { 
-            type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-            value: props.project
-          },
-          'ENVIRONMENT': { 
-            type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-            value: props.environment
+    if (props.envParams.enableBuild) {
+      const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
+        projectName: `${props.project}-${props.environment}-build`,
+        environment: {
+          buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+          computeType: codebuild.ComputeType.SMALL,
+          privileged: true,
+          environmentVariables: {
+            'PROJECT_NAME': { 
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: props.project
+            },
+            'ENVIRONMENT': { 
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: props.environment
+            },
           },
         },
-      },
-      logging: {
-        cloudWatch: {
-          logGroup: new logs.LogGroup(this, 'BuildProjectLogGroup', {
-            retention: logs.RetentionDays.ONE_WEEK,
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-          }),
+        logging: {
+          cloudWatch: {
+            logGroup: new logs.LogGroup(this, 'BuildProjectLogGroup', {
+              retention: logs.RetentionDays.ONE_WEEK,
+              removalPolicy: cdk.RemovalPolicy.DESTROY,
+            }),
+          },
         },
-      },
-      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
-    });
+        buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
+      });
 
-    // Build stage to build and deploy the static website to S3
-    pipeline.addStage({
-      stageName: 'Build',
-      actions: [
-        new codepipeline_action.CodeBuildAction({
-          runOrder: 2,
-          actionName: 'CodeBuild_Build',
-          project: buildProject,
-          input: sourceOutput,
-          outputs: [buildOutput],
-        }),
-      ],
-    });
+      // Build stage to build and deploy the static website to S3
+      pipeline.addStage({
+        stageName: 'Build',
+        actions: [
+          new codepipeline_action.CodeBuildAction({
+            runOrder: 2,
+            actionName: 'CodeBuild_Build',
+            project: buildProject,
+            input: sourceOutput,
+            outputs: [buildOutput],
+          }),
+        ],
+      });
+    }
 
     // Optional approval stage before deployment (skipped when no approval topic is configured)
     if (props.envParams.approvalTopicArn) {
