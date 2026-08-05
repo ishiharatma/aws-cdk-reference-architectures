@@ -27,8 +27,7 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
     const s3SyncLambdaPath = path.join(__dirname, '../../../../common/src/python-lambda/codedeploy-s3-sync');
     const cloudfrontInvalidationLambdaPath = path.join(__dirname, '../../../../common/src/python-lambda/cloudfront-create-invalidation');
     const InvalidationCompleteSnsTopic = new sns.Topic(this, 'InvalidationCompleteSnsTopic', {
-      topicName: `${props.project}-${props.environment}-invalidation-complete-topic`.toLowerCase(),
-      displayName: 'CloudFront Invalidation Complete Notification Topic',
+      enforceSSL: true,
     });
 
     const s3SyncLambda = new lambda.Function(this, 'S3SyncLambda', {
@@ -68,7 +67,7 @@ export class CicdCloudfrontS3Stack extends cdk.Stack {
       applicationLogLevelV2: lambda.ApplicationLogLevel.INFO,
     });
     cloudfrontInvalidationLambda.role?.addToPrincipalPolicy(new cdk.aws_iam.PolicyStatement({
-      actions: ['cloudfront:CreateInvalidation', 'cloudfront:GetInvalidation '],
+      actions: ['cloudfront:CreateInvalidation', 'cloudfront:GetInvalidation'],
       resources: [`arn:aws:cloudfront::${this.account}:distribution/${props.envParams.cloudfrontDistributionId}`],
     }));
     cloudfrontInvalidationLambda.role?.addToPrincipalPolicy(new cdk.aws_iam.PolicyStatement({
