@@ -152,5 +152,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nekto
 # https://github.com/go-to-k/delstack
 RUN curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/go-to-k/delstack/main/install.sh | bash
 
+# Install crit
+# https://github.com/tomasz-tomczyk/crit
+
+
 # Set PATH for container startup
 ENV PATH="/home/node/.local/bin:${PATH}"
