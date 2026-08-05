@@ -158,5 +158,17 @@
     "level": 300,
     "date": "2026-07-31",
     "articles": {}
+  },
+  {
+    "id": "cicd-cloudfront-s3",
+    "title": "CI/CD Pipeline for CloudFront & S3",
+    "description": "A CodePipeline/CodeBuild pipeline that builds a static site from CodeCommit and deploys it to S3/CloudFront, with an S3 sync Lambda, an async CloudFront invalidation Lambda driven by the CodePipeline continuation-token pattern, and an opt-in manual approval gate.",
+    "image": "cicd-cloudfront-s3/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CodePipeline", "CodeBuild", "Lambda"],
+    "link": "cicd-cloudfront-s3",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-02",
+    "articles": {}
   }
 ]
