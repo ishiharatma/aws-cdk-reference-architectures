@@ -154,7 +154,20 @@ RUN curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/go-t
 
 # Install crit
 # https://github.com/tomasz-tomczyk/crit
-
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+    export CRIT_ARCH="amd64"; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+    export CRIT_ARCH="arm64"; \
+    fi && \
+    if [ -n "$CRIT_ARCH" ]; then \
+    CRIT_VERSION=$(curl -s https://api.github.com/repos/tomasz-tomczyk/crit/releases/latest | grep '"tag_name"' | cut -d '"' -f4) && \
+    curl --proto '=https' --tlsv1.2 -fsSL "https://github.com/tomasz-tomczyk/crit/releases/download/${CRIT_VERSION}/crit-linux-${CRIT_ARCH}" -o /tmp/crit && \
+    chmod +x /tmp/crit && \
+    sudo mv /tmp/crit /usr/local/bin/crit; \
+    else \
+    echo "Unknown architecture for crit installation"; \
+    fi
 
 # Set PATH for container startup
 ENV PATH="/home/node/.local/bin:${PATH}"
