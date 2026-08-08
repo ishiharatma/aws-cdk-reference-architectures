@@ -1,0 +1,6 @@
+{
+  "id": "1",
+  "name": "Alice (updated)",
+  "email": "alice@example.com",
+  "message": "Updated (stub response - no data is actually persisted)"
+}

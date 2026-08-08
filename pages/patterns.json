@@ -1,5 +1,17 @@
 [
   {
+    "id": "apigw-s3-stub",
+    "title": "API Gateway + S3 Stub API",
+    "description": "Build a Lambda-free mock/stub HTTP API by wiring API Gateway directly to S3 via an AWS Service integration, returning canned JSON files.",
+    "image": "apigw-s3-stub/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "API Gateway", "S3"],
+    "link": "apigw-s3-stub",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-08-08",
+    "articles": {}
+  },
+  {
     "id": "sqs-lambda-firehose",
     "title": "SQS to Lambda to Kinesis Firehose",
     "description": "Process messages from SQS queue using Lambda function and stream to Kinesis Firehose for data lake storage.",
