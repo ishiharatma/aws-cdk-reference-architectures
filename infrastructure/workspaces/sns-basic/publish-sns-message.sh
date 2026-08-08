@@ -255,7 +255,15 @@ find_topic_arn() {
 # partition key.
 publish_messages() {
     for i in $(seq 1 "$COUNT"); do
-        local body="${MESSAGE:-"{\"source\":\"publish-sns-message.sh\",\"sequence\":${i}}"}"
+        # NOTE: the assignment is split from `local` on purpose. Combining
+        # `local body="${MESSAGE:-"...with an embedded \" quote..."}"` on a
+        # single line hits a bash parsing quirk where `local` mis-parses
+        # nested quotes inside a ${var:-default} default value, silently
+        # truncating the result (e.g. stripping everything up to the first
+        # embedded quote). Declaring first and assigning on a separate
+        # (non-`local`) line avoids it.
+        local body
+        body="${MESSAGE:-"{\"source\":\"publish-sns-message.sh\",\"sequence\":${i}}"}"
         body="${body} [run:${RUN_ID}]"
 
         print_message "$BLUE" "  -> publishing message ${i}/${COUNT}"
