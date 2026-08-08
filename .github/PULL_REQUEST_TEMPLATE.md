@@ -1,25 +1,48 @@
-<!-- Thank you for submitting a pull request to our repo -->
+<!-- Thanks for contributing! Fill in what's relevant and delete the rest. -->
 
-## Prerequisites
-- [ ] There is an open issue for the PR that you are making. If not, please open an issue to discuss the change or find an existing issue.
+## Summary
 
-## What kind of change does this PR introduce? (check one)
+<!-- What does this PR change, and why? A couple of sentences is enough. -->
+
+## Type of change
+
+- [ ] New reference architecture (new workspace under `infrastructure/workspaces/`)
+- [ ] Enhancement to an existing workspace
 - [ ] Bug fix
-- [ ] Feature Request
+- [ ] Documentation only
+- [ ] Chore / refactor / CI
 
-## Does this PR introduce a breaking change? (check one)
-- [ ] Yes
+## Affected workspace(s)
+
+<!-- e.g. infrastructure/workspaces/sns-basic -->
+
+## Testing
+
+- [ ] `npm run build -w workspaces/<name>`
+- [ ] `npm test -w workspaces/<name>` (unit / snapshot / compliance all pass)
+- [ ] `npm run lint -w workspaces/<name>`
+- [ ] `cdk synth` succeeds
+- [ ] Manually verified against a real AWS account
+
+<!-- If you deployed and exercised it manually (e.g. via a test script), briefly
+     describe what you ran and what you observed. -->
+
+## New-architecture checklist
+
+<!-- Skip this section entirely if this PR is not adding a new workspace. -->
+
+- [ ] `README.md` and `README.ja.md` are both present and cover the same sections
+- [ ] `pages/patterns.json` has an entry for this workspace (`id`/`link` match the
+      workspace directory name, `level` matches the README)
+- [ ] dev.to draft(s) added under `docs/.tmp/` (`published: false`)
+- [ ] CDK Nag (`AwsSolutionsChecks`) passes, with a documented reason for every suppression
+- [ ] README includes a cost estimate
+
+## Breaking changes
+
+- [ ] Yes — describe the impact and migration steps below
 - [ ] No
 
-## Description
-<!-- Please include a summary of the change and/or which issue is fixed  -->
-
-
----
-
 ## Additional context
-<!-- Add any other context or screenshots about the pull request here -->
 
----
-
-Fixes #{ISSUE_NUMBER}
+<!-- Architecture notes, screenshots, follow-up work, related issues, etc. -->
