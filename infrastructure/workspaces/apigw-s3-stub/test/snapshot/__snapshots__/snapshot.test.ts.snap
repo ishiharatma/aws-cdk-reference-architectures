@@ -1,0 +1,1261 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiKeyId": {
+      "Description": "API key ID; fetch the value with \`aws apigateway get-api-key --api-key <id> --include-value\`",
+      "Value": {
+        "Ref": "ApigwS3StubApiStubApiKey299591FA",
+      },
+    },
+    "ApiUrl": {
+      "Description": "Base URL of the stub API, e.g. curl "$ApiUrl users"",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApigwS3StubApiE615BE9B",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "ApigwS3StubApiDeploymentStagetestC420B544",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "ApigwS3StubApiEndpoint8269E981": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApigwS3StubApiE615BE9B",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "ApigwS3StubApiDeploymentStagetestC420B544",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "StubBucketName": {
+      "Description": "S3 bucket holding the stub JSON files -- add "<resource>/<method>_result.json" to extend the API",
+      "Value": {
+        "Ref": "StubBucket818927FA",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ApiAccessLogGroupCEA70788": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApiGatewayS3Role9D5CA7F9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ApiGatewayS3RoleDefaultPolicy6F560CAC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "StubBucket818927FA",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "StubBucket818927FA",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ApiGatewayS3RoleDefaultPolicy6F560CAC",
+        "Roles": [
+          {
+            "Ref": "ApiGatewayS3Role9D5CA7F9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8": {
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+        "ValidateRequestBody": true,
+        "ValidateRequestParameters": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "ApigwS3StubApiDeployment02D2D5C3c912708dd5501ba7cbe1e6fdef32d1b3": {
+      "DependsOn": [
+        "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        "ApigwS3StubApiresourceitemDELETEA9E77354",
+        "ApigwS3StubApiresourceitemGET617FC37C",
+        "ApigwS3StubApiresourceitemOPTIONS391B81D2",
+        "ApigwS3StubApiresourceitemPUTF5F6E028",
+        "ApigwS3StubApiresourceitemAA61D835",
+        "ApigwS3StubApiresourceGET5FCA1876",
+        "ApigwS3StubApiresourceOPTIONSB7E02C34",
+        "ApigwS3StubApiresourcePOST880F8EAD",
+        "ApigwS3StubApiresourceEC9A55D6",
+        "ApigwS3StubApiOPTIONS720B0735",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Mock/stub HTTP API returning canned JSON responses read directly from S3",
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "ApigwS3StubApiDeploymentStagetestC420B544": {
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogGroupCEA70788",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "ApigwS3StubApiDeployment02D2D5C3c912708dd5501ba7cbe1e6fdef32d1b3",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "ResourcePath": "/*",
+            "ThrottlingBurstLimit": 20,
+            "ThrottlingRateLimit": 10,
+          },
+        ],
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "ApigwS3StubApiE615BE9B": {
+      "Properties": {
+        "Description": "Mock/stub HTTP API returning canned JSON responses read directly from S3",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "TestProject-test-apigw-s3-stub-api",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "ApigwS3StubApiOPTIONS720B0735": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "ApigwS3StubApiE615BE9B",
+            "RootResourceId",
+          ],
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiStubApiKey299591FA": {
+      "Properties": {
+        "Enabled": true,
+        "Name": "TestProject-test-apigw-s3-stub-key",
+        "StageKeys": [
+          {
+            "RestApiId": {
+              "Ref": "ApigwS3StubApiE615BE9B",
+            },
+            "StageName": {
+              "Ref": "ApigwS3StubApiDeploymentStagetestC420B544",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::ApiKey",
+    },
+    "ApigwS3StubApiStubUsagePlan2B9AD3D8": {
+      "Properties": {
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "ApigwS3StubApiE615BE9B",
+            },
+            "Stage": {
+              "Ref": "ApigwS3StubApiDeploymentStagetestC420B544",
+            },
+            "Throttle": {},
+          },
+        ],
+        "Throttle": {
+          "BurstLimit": 20,
+          "RateLimit": 10,
+        },
+        "UsagePlanName": "TestProject-test-apigw-s3-stub-plan",
+      },
+      "Type": "AWS::ApiGateway::UsagePlan",
+    },
+    "ApigwS3StubApiStubUsagePlanUsagePlanKeyResourceApigwS3StubTestApigwS3StubApiStubApiKeyE2F8B439D294E81A": {
+      "Properties": {
+        "KeyId": {
+          "Ref": "ApigwS3StubApiStubApiKey299591FA",
+        },
+        "KeyType": "API_KEY",
+        "UsagePlanId": {
+          "Ref": "ApigwS3StubApiStubUsagePlan2B9AD3D8",
+        },
+      },
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+    },
+    "ApigwS3StubApiresourceEC9A55D6": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApigwS3StubApiE615BE9B",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "{resource}",
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "ApigwS3StubApiresourceGET5FCA1876": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "GET",
+        "Integration": {
+          "Credentials": {
+            "Fn::GetAtt": [
+              "ApiGatewayS3Role9D5CA7F9",
+              "Arn",
+            ],
+          },
+          "IntegrationHttpMethod": "GET",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"S3 denied access to this stub file"}",
+              },
+              "SelectionPattern": "403",
+              "StatusCode": "403",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"No stub file found for this path/method"}",
+              },
+              "SelectionPattern": "404",
+              "StatusCode": "404",
+            },
+          ],
+          "RequestParameters": {
+            "integration.request.path.resource": "method.request.path.resource",
+          },
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:s3:path/",
+                {
+                  "Ref": "StubBucket818927FA",
+                },
+                "/{resource}/get_result.json",
+              ],
+            ],
+          },
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+          },
+          {
+            "StatusCode": "403",
+          },
+          {
+            "StatusCode": "404",
+          },
+        ],
+        "RequestParameters": {
+          "method.request.path.resource": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        },
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceEC9A55D6",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourceOPTIONSB7E02C34": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceEC9A55D6",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourcePOST880F8EAD": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "Credentials": {
+            "Fn::GetAtt": [
+              "ApiGatewayS3Role9D5CA7F9",
+              "Arn",
+            ],
+          },
+          "IntegrationHttpMethod": "GET",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"S3 denied access to this stub file"}",
+              },
+              "SelectionPattern": "403",
+              "StatusCode": "403",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"No stub file found for this path/method"}",
+              },
+              "SelectionPattern": "404",
+              "StatusCode": "404",
+            },
+          ],
+          "RequestParameters": {
+            "integration.request.path.resource": "method.request.path.resource",
+          },
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:s3:path/",
+                {
+                  "Ref": "StubBucket818927FA",
+                },
+                "/{resource}/post_result.json",
+              ],
+            ],
+          },
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+          },
+          {
+            "StatusCode": "403",
+          },
+          {
+            "StatusCode": "404",
+          },
+        ],
+        "RequestParameters": {
+          "method.request.path.resource": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        },
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceEC9A55D6",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourceitemAA61D835": {
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApigwS3StubApiresourceEC9A55D6",
+        },
+        "PathPart": "{item}",
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "ApigwS3StubApiresourceitemDELETEA9E77354": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "DELETE",
+        "Integration": {
+          "Credentials": {
+            "Fn::GetAtt": [
+              "ApiGatewayS3Role9D5CA7F9",
+              "Arn",
+            ],
+          },
+          "IntegrationHttpMethod": "GET",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"S3 denied access to this stub file"}",
+              },
+              "SelectionPattern": "403",
+              "StatusCode": "403",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"No stub file found for this path/method"}",
+              },
+              "SelectionPattern": "404",
+              "StatusCode": "404",
+            },
+          ],
+          "RequestParameters": {
+            "integration.request.path.item": "method.request.path.item",
+            "integration.request.path.resource": "method.request.path.resource",
+          },
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:s3:path/",
+                {
+                  "Ref": "StubBucket818927FA",
+                },
+                "/{resource}/{item}/delete_result.json",
+              ],
+            ],
+          },
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+          },
+          {
+            "StatusCode": "403",
+          },
+          {
+            "StatusCode": "404",
+          },
+        ],
+        "RequestParameters": {
+          "method.request.path.item": true,
+          "method.request.path.resource": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        },
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceitemAA61D835",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourceitemGET617FC37C": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "GET",
+        "Integration": {
+          "Credentials": {
+            "Fn::GetAtt": [
+              "ApiGatewayS3Role9D5CA7F9",
+              "Arn",
+            ],
+          },
+          "IntegrationHttpMethod": "GET",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"S3 denied access to this stub file"}",
+              },
+              "SelectionPattern": "403",
+              "StatusCode": "403",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"No stub file found for this path/method"}",
+              },
+              "SelectionPattern": "404",
+              "StatusCode": "404",
+            },
+          ],
+          "RequestParameters": {
+            "integration.request.path.item": "method.request.path.item",
+            "integration.request.path.resource": "method.request.path.resource",
+          },
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:s3:path/",
+                {
+                  "Ref": "StubBucket818927FA",
+                },
+                "/{resource}/{item}/get_result.json",
+              ],
+            ],
+          },
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+          },
+          {
+            "StatusCode": "403",
+          },
+          {
+            "StatusCode": "404",
+          },
+        ],
+        "RequestParameters": {
+          "method.request.path.item": true,
+          "method.request.path.resource": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        },
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceitemAA61D835",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourceitemOPTIONS391B81D2": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceitemAA61D835",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApigwS3StubApiresourceitemPUTF5F6E028": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "PUT",
+        "Integration": {
+          "Credentials": {
+            "Fn::GetAtt": [
+              "ApiGatewayS3Role9D5CA7F9",
+              "Arn",
+            ],
+          },
+          "IntegrationHttpMethod": "GET",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"S3 denied access to this stub file"}",
+              },
+              "SelectionPattern": "403",
+              "StatusCode": "403",
+            },
+            {
+              "ResponseTemplates": {
+                "application/json": "{"message":"No stub file found for this path/method"}",
+              },
+              "SelectionPattern": "404",
+              "StatusCode": "404",
+            },
+          ],
+          "RequestParameters": {
+            "integration.request.path.item": "method.request.path.item",
+            "integration.request.path.resource": "method.request.path.resource",
+          },
+          "Type": "AWS",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:s3:path/",
+                {
+                  "Ref": "StubBucket818927FA",
+                },
+                "/{resource}/{item}/put_result.json",
+              ],
+            ],
+          },
+        },
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+          },
+          {
+            "StatusCode": "403",
+          },
+          {
+            "StatusCode": "404",
+          },
+        ],
+        "RequestParameters": {
+          "method.request.path.item": true,
+          "method.request.path.resource": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApigwS3StubApiApigwS3StubRequestValidator3B9BBBB8",
+        },
+        "ResourceId": {
+          "Ref": "ApigwS3StubApiresourceitemAA61D835",
+        },
+        "RestApiId": {
+          "Ref": "ApigwS3StubApiE615BE9B",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "97e9ebf0b174a5c8f7faa505739022b7f509edddffcab9211dcd08b759944c4f.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "DeployStubDataAwsCliLayer591957A2",
+          },
+        ],
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "StubBucket818927FA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "StubBucket818927FA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "StubBucket818927FA",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DeployStubDataAwsCliLayer591957A2": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "a72522445441e9b66c2f16956c54d4786af8c61c156b80c48a6e7c32fcc49023.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "DeployStubDataCustomResource97D9CE6D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "StubBucket818927FA",
+        },
+        "OutputObjectKeys": true,
+        "Prune": false,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+        ],
+        "SourceObjectKeys": [
+          "301eb6a79ea545f57001786b6b64edca84c8cc91cb1ceaf038bd3c546b6b5568.zip",
+        ],
+        "WaitForDistributionInvalidation": true,
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StubBucket818927FA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUploadsAfter7Days",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:f782001b",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StubBucketAutoDeleteObjectsCustomResource2C8C9C05": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "StubBucketPolicyEDDC7F2F",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "StubBucket818927FA",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StubBucketPolicyEDDC7F2F": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "StubBucket818927FA",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "StubBucket818927FA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "StubBucket818927FA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "StubBucket818927FA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "StubBucket818927FA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::ApiKey": 1,
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 8,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 2,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::ApiGateway::UsagePlan": 1,
+  "AWS::ApiGateway::UsagePlanKey": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::LayerVersion": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "Custom::CDKBucketDeployment": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
