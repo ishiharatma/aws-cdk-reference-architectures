@@ -237,7 +237,10 @@ npm run deploy:all -w workspaces/sns-basic
 # メイントピックにテストメッセージを発行(全サブスクリプションに一斉配信される)
 ./publish-sns-message.sh --project sns-basic --env dev
 
-# デモ用ロググループのサブスクリプションフィルタチェーンを確認(スクリプトがログを書き込む)
+# デモ用ロググループのサブスクリプションフィルタチェーンを確認:
+# テストイベントを書き込んだ後、cwlogs-to-snsとlog-alert-notifier自身の
+# CloudWatch Logsをポーリングし、CloudWatch Logs -> Lambda -> SNS -> Lambda が
+# 実際に動作したことを確認する
 ./write-test-logs.sh --project sns-basic --env dev
 
 # 保存された通知内容を確認

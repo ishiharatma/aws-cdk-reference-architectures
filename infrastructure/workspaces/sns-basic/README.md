@@ -237,7 +237,9 @@ npm run deploy:all -w workspaces/sns-basic
 # Publish test messages to the main topic (fans out to every subscription at once)
 ./publish-sns-message.sh --project sns-basic --env dev
 
-# Check the demo log group's subscription filter chain (writes events for you)
+# Check the demo log group's subscription filter chain: writes test events,
+# then polls cwlogs-to-sns's and log-alert-notifier's own CloudWatch Logs to
+# confirm CloudWatch Logs -> Lambda -> SNS -> Lambda actually fired
 ./write-test-logs.sh --project sns-basic --env dev
 
 # Inspect stored notifications
