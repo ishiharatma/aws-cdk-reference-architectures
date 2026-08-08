@@ -1,0 +1,1872 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiUrl": {
+      "Description": "API Gateway endpoint subscribed to the main SNS topic",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "SnsBasicApi2A0946F3",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "SnsBasicApiDeploymentStagetest057B86B2",
+            },
+            "/sns",
+          ],
+        ],
+      },
+    },
+    "AppLogGroupName": {
+      "Description": "Demo application log group name (use \`aws logs put-log-events\` to test)",
+      "Value": {
+        "Ref": "AppLogGroup7D8CD952",
+      },
+    },
+    "FirehoseArchiveBucketName": {
+      "Description": "S3 bucket receiving raw messages via Amazon Data Firehose",
+      "Value": {
+        "Ref": "FirehoseArchiveBucket537E6B7C",
+      },
+    },
+    "LogAlertTopicArn": {
+      "Description": "ARN of the log-alert SNS topic",
+      "Value": {
+        "Ref": "LogAlertTopic44A0DAD0",
+      },
+    },
+    "MainTopicArn": {
+      "Description": "ARN of the main SNS topic",
+      "Value": {
+        "Ref": "MainTopic810E8EA9",
+      },
+    },
+    "PayloadBucketName": {
+      "Description": "S3 bucket receiving notifications from the API Gateway backend",
+      "Value": {
+        "Ref": "PayloadBucket357F5869",
+      },
+    },
+    "PayloadTableName": {
+      "Description": "DynamoDB table receiving notifications from the API Gateway backend",
+      "Value": {
+        "Ref": "PayloadTableAFAF649A",
+      },
+    },
+    "SnsBasicApiEndpoint0C6AC271": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "SnsBasicApi2A0946F3",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "SnsBasicApiDeploymentStagetest057B86B2",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ApiAccessLogGroupCEA70788": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApiHandlerFunction9E589C02": {
+      "DependsOn": [
+        "ApiHandlerFunctionServiceRoleDefaultPolicy68C6CCC4",
+        "ApiHandlerFunctionServiceRole8E727DDA",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "1590acd03411d9ddb651d6adee8ec744f3cf76d3eb6f817f90031ca4824ff3c4.zip",
+        },
+        "Description": "API Gateway backend for the HTTPS subscription to the main SNS topic: confirms the subscription and stores notifications in S3/DynamoDB",
+        "Environment": {
+          "Variables": {
+            "DDB_TABLE_NAME": {
+              "Ref": "PayloadTableAFAF649A",
+            },
+            "EXPECTED_TOPIC_ARN": {
+              "Ref": "MainTopic810E8EA9",
+            },
+            "S3_BUCKET_NAME": {
+              "Ref": "PayloadBucket357F5869",
+            },
+          },
+        },
+        "FunctionName": "SnsBasicTest-test-sns-http-endpoint",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "ApiHandlerFunctionLogGroup68C4E094",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "ApiHandlerFunctionServiceRole8E727DDA",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ApiHandlerFunctionLogGroup68C4E094": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApiHandlerFunctionServiceRole8E727DDA": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ApiHandlerFunctionServiceRoleDefaultPolicy68C6CCC4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PayloadBucket357F5869",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "PayloadBucket357F5869",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PayloadTableAFAF649A",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ApiHandlerFunctionServiceRoleDefaultPolicy68C6CCC4",
+        "Roles": [
+          {
+            "Ref": "ApiHandlerFunctionServiceRole8E727DDA",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AppLogGroup7D8CD952": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/SnsBasicTest/test/sns-basic/app",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AppLogSubscriptionFilter925E8DDF": {
+      "DependsOn": [
+        "AppLogSubscriptionFilterCanInvokeLambda2F81B3E1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "CwLogsToSnsFunction0538BD17",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": {
+          "Ref": "AppLogGroup7D8CD952",
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "AppLogSubscriptionFilterCanInvokeLambda2F81B3E1": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "CwLogsToSnsFunction0538BD17",
+            "Arn",
+          ],
+        },
+        "Principal": "logs.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "AppLogGroup7D8CD952",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "PayloadBucket357F5869",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwLogsToSnsFunction0538BD17": {
+      "DependsOn": [
+        "CwLogsToSnsFunctionServiceRoleDefaultPolicy38865B0F",
+        "CwLogsToSnsFunctionServiceRole13BB58DE",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "99aabe5d9830ca8f8c1366bcea12c91b3f1f936a5bda63c51eb428da3fe7fe88.zip",
+        },
+        "Description": "Decodes CloudWatch Logs subscription filter events and publishes a summary to the log-alert SNS topic",
+        "Environment": {
+          "Variables": {
+            "TOPIC_ARN": {
+              "Ref": "LogAlertTopic44A0DAD0",
+            },
+          },
+        },
+        "FunctionName": "SnsBasicTest-test-cwlogs-to-sns",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "CwLogsToSnsFunctionLogGroupF4BD78FB",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CwLogsToSnsFunctionServiceRole13BB58DE",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CwLogsToSnsFunctionLogGroupF4BD78FB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CwLogsToSnsFunctionServiceRole13BB58DE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwLogsToSnsFunctionServiceRoleDefaultPolicy38865B0F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "LogAlertTopic44A0DAD0",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwLogsToSnsFunctionServiceRoleDefaultPolicy38865B0F",
+        "Roles": [
+          {
+            "Ref": "CwLogsToSnsFunctionServiceRole13BB58DE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "FirehoseArchiveBucket537E6B7C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUploadsAfter7Days",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FirehoseArchiveBucketAutoDeleteObjectsCustomResource10ED711C": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FirehoseArchiveBucketPolicy5B8EA233",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FirehoseArchiveBucket537E6B7C",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FirehoseArchiveBucketPolicy5B8EA233": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FirehoseArchiveBucket537E6B7C",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FirehoseArchiveBucket537E6B7C",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FirehoseArchiveBucket537E6B7C",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FirehoseArchiveBucket537E6B7C",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FirehoseArchiveBucket537E6B7C",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FirehoseRoleAA67C190": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "firehose.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "s3:AbortMultipartUpload",
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:ListBucketMultipartUploads",
+                    "s3:ListMultipartUploadParts",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "FirehoseArchiveBucket537E6B7C",
+                        "Arn",
+                      ],
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "FirehoseArchiveBucket537E6B7C",
+                              "Arn",
+                            ],
+                          },
+                          "/*",
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "AllowPutToS3",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FirehoseRoleDefaultPolicyF034DFF7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FirehoseArchiveBucket537E6B7C",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FirehoseArchiveBucket537E6B7C",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MainTopicDeliveryStreamLogGroup22A5A04B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "FirehoseRoleDefaultPolicyF034DFF7",
+        "Roles": [
+          {
+            "Ref": "FirehoseRoleAA67C190",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LogAlertNotifierFunction3627B431": {
+      "DependsOn": [
+        "LogAlertNotifierFunctionServiceRoleF2CDAD3E",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "fc7199ea21936a12e217daa72a5d511ef563d94831a11d5d32b78c0f7f663b1d.zip",
+        },
+        "Description": "Logs messages delivered via the direct Lambda subscription to the log-alert SNS topic",
+        "FunctionName": "SnsBasicTest-test-log-alert-notifier",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "LogAlertNotifierFunctionLogGroup1CD6544D",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "LogAlertNotifierFunctionServiceRoleF2CDAD3E",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogAlertNotifierFunctionAllowInvokeSnsBasicStackLogAlertTopic01F03FA0B614413D": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LogAlertNotifierFunction3627B431",
+            "Arn",
+          ],
+        },
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": {
+          "Ref": "LogAlertTopic44A0DAD0",
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "LogAlertNotifierFunctionLogAlertTopic02E4B733": {
+      "Properties": {
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "LogAlertNotifierFunction3627B431",
+            "Arn",
+          ],
+        },
+        "Protocol": "lambda",
+        "TopicArn": {
+          "Ref": "LogAlertTopic44A0DAD0",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "LogAlertNotifierFunctionLogGroup1CD6544D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogAlertNotifierFunctionServiceRoleF2CDAD3E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogAlertTopic44A0DAD0": {
+      "Properties": {
+        "DisplayName": "SNS Basic log-alert topic",
+        "KmsMasterKeyId": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":kms:ap-northeast-1:123456789012:alias/aws/sns",
+            ],
+          ],
+        },
+        "TopicName": "SnsBasicTest-test-sns-basic-log-alert",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "LogAlertTopicPolicy29CC1811": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "LogAlertTopic44A0DAD0",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "LogAlertTopic44A0DAD0",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "MainTopic810E8EA9": {
+      "Properties": {
+        "DisplayName": "SNS Basic main fan-out topic",
+        "KmsMasterKeyId": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":kms:ap-northeast-1:123456789012:alias/aws/sns",
+            ],
+          ],
+        },
+        "TopicName": "SnsBasicTest-test-sns-basic-main",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "MainTopicDeliveryStream290C56B8": {
+      "DependsOn": [
+        "FirehoseRoleDefaultPolicyF034DFF7",
+      ],
+      "Properties": {
+        "DeliveryStreamEncryptionConfigurationInput": {
+          "KeyType": "AWS_OWNED_CMK",
+        },
+        "DeliveryStreamName": "SnsBasicTest-test-sns-basic-main",
+        "DeliveryStreamType": "DirectPut",
+        "ExtendedS3DestinationConfiguration": {
+          "BucketARN": {
+            "Fn::GetAtt": [
+              "FirehoseArchiveBucket537E6B7C",
+              "Arn",
+            ],
+          },
+          "BufferingHints": {
+            "IntervalInSeconds": 60,
+            "SizeInMBs": 1,
+          },
+          "CloudWatchLoggingOptions": {
+            "Enabled": true,
+            "LogGroupName": {
+              "Ref": "MainTopicDeliveryStreamLogGroup22A5A04B",
+            },
+            "LogStreamName": {
+              "Ref": "MainTopicDeliveryStreamLogGroupS3Destination1830A60D",
+            },
+          },
+          "ErrorOutputPrefix": "sns-basic-errors/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/",
+          "Prefix": "sns-basic/!{timestamp:yyyy/MM/dd}/",
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::KinesisFirehose::DeliveryStream",
+    },
+    "MainTopicDeliveryStreamLogGroup22A5A04B": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 731,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "MainTopicDeliveryStreamLogGroupS3Destination1830A60D": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "LogGroupName": {
+          "Ref": "MainTopicDeliveryStreamLogGroup22A5A04B",
+        },
+      },
+      "Type": "AWS::Logs::LogStream",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "MainTopicDeliveryStreamSnsBasicStackMainTopic1B579DF0A8F26770": {
+      "Properties": {
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "MainTopicDeliveryStream290C56B8",
+            "Arn",
+          ],
+        },
+        "Protocol": "firehose",
+        "RawMessageDelivery": true,
+        "SubscriptionRoleArn": {
+          "Fn::GetAtt": [
+            "MainTopicDeliveryStreamTopicSubscriptionRole5F16820B",
+            "Arn",
+          ],
+        },
+        "TopicArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "MainTopicDeliveryStreamTopicSubscriptionRole5F16820B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "sns.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MainTopicDeliveryStreamTopicSubscriptionRoleDefaultPolicyB10CBFDB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "firehose:DescribeDeliveryStream",
+                "firehose:ListDeliveryStreams",
+                "firehose:ListTagsForDeliveryStream",
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MainTopicDeliveryStream290C56B8",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MainTopicDeliveryStreamTopicSubscriptionRoleDefaultPolicyB10CBFDB",
+        "Roles": [
+          {
+            "Ref": "MainTopicDeliveryStreamTopicSubscriptionRole5F16820B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MainTopicPolicy12DF503D": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "MainTopic810E8EA9",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "MainTopic810E8EA9",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "MainTopicTokenSubscription1DDD1EF8A": {
+      "Properties": {
+        "Endpoint": {
+          "Fn::Join": [
+            "",
+            [
+              "https://",
+              {
+                "Ref": "SnsBasicApi2A0946F3",
+              },
+              ".execute-api.ap-northeast-1.",
+              {
+                "Ref": "AWS::URLSuffix",
+              },
+              "/",
+              {
+                "Ref": "SnsBasicApiDeploymentStagetest057B86B2",
+              },
+              "/sns",
+            ],
+          ],
+        },
+        "Protocol": "https",
+        "TopicArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "MainTopictestexamplecomAB83392F": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "MessageQueue7A3BF959": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "QueueName": "SnsBasicTest-test-sns-basic-message",
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "MessageQueueDlq7D4FE6C8",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "SqsManagedSseEnabled": true,
+        "VisibilityTimeout": 30,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MessageQueueDlq7D4FE6C8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "SnsBasicTest-test-sns-basic-message-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MessageQueueDlqPolicy03A2907C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MessageQueueDlq7D4FE6C8",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "MessageQueueDlq7D4FE6C8",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "MessageQueuePolicyEA007D49": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MessageQueue7A3BF959",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Ref": "MainTopic810E8EA9",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "sns.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MessageQueue7A3BF959",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "MessageQueue7A3BF959",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "MessageQueueSnsBasicStackMainTopic1B579DF0893BAADA": {
+      "DependsOn": [
+        "MessageQueuePolicyEA007D49",
+      ],
+      "Properties": {
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "MessageQueue7A3BF959",
+            "Arn",
+          ],
+        },
+        "Protocol": "sqs",
+        "RawMessageDelivery": true,
+        "TopicArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "PayloadBucket357F5869": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUploadsAfter7Days",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PayloadBucketAutoDeleteObjectsCustomResourceEAE9D064": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "PayloadBucketPolicy68AC3959",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "PayloadBucket357F5869",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PayloadBucketPolicy68AC3959": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "PayloadBucket357F5869",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PayloadBucket357F5869",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "PayloadBucket357F5869",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PayloadBucket357F5869",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "PayloadBucket357F5869",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "PayloadTableAFAF649A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "messageId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "messageId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "SnsBasicTest-test-sns-basic-payload",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SnsBasicApi2A0946F3": {
+      "Properties": {
+        "Description": "Receives SNS HTTPS subscription confirmations/notifications for the main SNS topic",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "SnsBasicTest-test-sns-basic-api",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "SnsBasicApiDeployment2EAE1F7C0249125f5d0c5fcda57bbf8a011bb31e": {
+      "DependsOn": [
+        "SnsBasicApisnsPOST932A5A5A",
+        "SnsBasicApisns5BA12E9B",
+        "SnsBasicApiSnsBasicRequestValidatorC6940DA9",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Receives SNS HTTPS subscription confirmations/notifications for the main SNS topic",
+        "RestApiId": {
+          "Ref": "SnsBasicApi2A0946F3",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "SnsBasicApiDeploymentStagetest057B86B2": {
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogGroupCEA70788",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "SnsBasicApiDeployment2EAE1F7C0249125f5d0c5fcda57bbf8a011bb31e",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": {
+          "Ref": "SnsBasicApi2A0946F3",
+        },
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "SnsBasicApiSnsBasicRequestValidatorC6940DA9": {
+      "Properties": {
+        "RestApiId": {
+          "Ref": "SnsBasicApi2A0946F3",
+        },
+        "ValidateRequestBody": true,
+        "ValidateRequestParameters": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "SnsBasicApisns5BA12E9B": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "SnsBasicApi2A0946F3",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "sns",
+        "RestApiId": {
+          "Ref": "SnsBasicApi2A0946F3",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "SnsBasicApisnsPOST932A5A5A": {
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiHandlerFunction9E589C02",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "SnsBasicApiSnsBasicRequestValidatorC6940DA9",
+        },
+        "ResourceId": {
+          "Ref": "SnsBasicApisns5BA12E9B",
+        },
+        "RestApiId": {
+          "Ref": "SnsBasicApi2A0946F3",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "SnsBasicApisnsPOSTApiPermissionSnsBasicStackSnsBasicApi46E3D247POSTsnsB2E2EF02": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiHandlerFunction9E589C02",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "SnsBasicApi2A0946F3",
+              },
+              "/",
+              {
+                "Ref": "SnsBasicApiDeploymentStagetest057B86B2",
+              },
+              "/POST/sns",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SnsBasicApisnsPOSTApiPermissionTestSnsBasicStackSnsBasicApi46E3D247POSTsns8A392568": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiHandlerFunction9E589C02",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "SnsBasicApi2A0946F3",
+              },
+              "/test-invoke-stage/POST/sns",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SnsMessageLoggerFunction4DCC1453": {
+      "DependsOn": [
+        "SnsMessageLoggerFunctionServiceRoleC0FCB106",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "5165588399c03c686f414ede6cad0001581362d18d8663da57f0464590e9a144.zip",
+        },
+        "Description": "Logs messages delivered via the direct Lambda subscription to the main SNS topic",
+        "FunctionName": "SnsBasicTest-test-sns-message-logger",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "SnsMessageLoggerLogGroup7E586282",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "SnsMessageLoggerFunctionServiceRoleC0FCB106",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SnsMessageLoggerFunctionAllowInvokeSnsBasicStackMainTopic1B579DF00611E88E": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SnsMessageLoggerFunction4DCC1453",
+            "Arn",
+          ],
+        },
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SnsMessageLoggerFunctionMainTopic1B26A134": {
+      "Properties": {
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "SnsMessageLoggerFunction4DCC1453",
+            "Arn",
+          ],
+        },
+        "Protocol": "lambda",
+        "TopicArn": {
+          "Ref": "MainTopic810E8EA9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "SnsMessageLoggerFunctionServiceRoleC0FCB106": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SnsMessageLoggerLogGroup7E586282": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SqsMessageLoggerFunction8229CA87": {
+      "DependsOn": [
+        "SqsMessageLoggerFunctionServiceRoleDefaultPolicy62F1A1A8",
+        "SqsMessageLoggerFunctionServiceRole2D4B85E6",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "f77c989055df10b8dbeb343eb61834c187e1576e5dd1fcf7db1fcd33890b14cf.zip",
+        },
+        "Description": "Logs messages delivered via the SQS subscription to the main SNS topic",
+        "FunctionName": "SnsBasicTest-test-sqs-message-logger",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "SqsMessageLoggerLogGroup1F195E97",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "SqsMessageLoggerFunctionServiceRole2D4B85E6",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SqsMessageLoggerFunctionServiceRole2D4B85E6": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SqsMessageLoggerFunctionServiceRoleDefaultPolicy62F1A1A8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MessageQueue7A3BF959",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SqsMessageLoggerFunctionServiceRoleDefaultPolicy62F1A1A8",
+        "Roles": [
+          {
+            "Ref": "SqsMessageLoggerFunctionServiceRole2D4B85E6",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SqsMessageLoggerFunctionSqsEventSourceSnsBasicStackMessageQueueF130CAC3FF9293F3": {
+      "Properties": {
+        "BatchSize": 10,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "MessageQueue7A3BF959",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "SqsMessageLoggerFunction8229CA87",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "SqsMessageLoggerLogGroup1F195E97": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 1,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 1,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::IAM::Policy": 5,
+  "AWS::IAM::Role": 8,
+  "AWS::KinesisFirehose::DeliveryStream": 1,
+  "AWS::Lambda::EventSourceMapping": 1,
+  "AWS::Lambda::Function": 6,
+  "AWS::Lambda::Permission": 5,
+  "AWS::Logs::LogGroup": 8,
+  "AWS::Logs::LogStream": 1,
+  "AWS::Logs::SubscriptionFilter": 1,
+  "AWS::S3::Bucket": 2,
+  "AWS::S3::BucketPolicy": 2,
+  "AWS::SNS::Subscription": 6,
+  "AWS::SNS::Topic": 2,
+  "AWS::SNS::TopicPolicy": 2,
+  "AWS::SQS::Queue": 2,
+  "AWS::SQS::QueuePolicy": 2,
+  "Custom::S3AutoDeleteObjects": 2,
+}
+`;

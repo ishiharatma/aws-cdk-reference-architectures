@@ -170,5 +170,17 @@
     "level": 300,
     "date": "2026-08-02",
     "articles": {}
+  },
+  {
+    "id": "sns-basic",
+    "title": "SNS Basic Fan-Out Patterns",
+    "description": "A single SNS topic fanned out to Email, SQS, Lambda, HTTPS (API Gateway to S3/DynamoDB) and Firehose subscriptions, plus a CloudWatch Logs to Lambda to SNS to Lambda alerting chain.",
+    "image": "sns-basic/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "SNS", "SQS", "Lambda", "API Gateway", "DynamoDB", "Firehose"],
+    "link": "sns-basic",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-08-08",
+    "articles": {}
   }
 ]
