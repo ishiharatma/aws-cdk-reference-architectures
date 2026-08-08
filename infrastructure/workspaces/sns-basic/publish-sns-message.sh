@@ -276,6 +276,7 @@ publish_messages() {
             --output text)
 
         print_message "$GREEN" "     MessageId: ${LAST_MESSAGE_ID}"
+        print_message "$GREEN" "     RunId: ${RUN_ID}"
     done
 }
 
@@ -417,6 +418,10 @@ check_downstream_processing() {
         [payload-dynamodb]=false
         [firehose-s3]=false
     )
+    # Wait for 10 seconds
+    local startWaitSeconds=15
+    print_message "$YELLOW" "  ... still waiting ${startWaitSeconds}s"
+    sleep "$startWaitSeconds"
 
     local elapsed=0
     while [ "$elapsed" -lt "$TIMEOUT" ]; do
