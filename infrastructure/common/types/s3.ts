@@ -24,6 +24,12 @@ export interface S3LifecycleConfig {
    */
   readonly standardIaDays?: number;
   /**
+   * Number of days until transition to S3 Intelligent-Tiering
+   * If unspecified, no transition to S3 Intelligent-Tiering occurs.
+   * @example 30
+   */
+  readonly intelligentTieringDays?: number;
+  /**
    * Number of days until transition to S3 Glacier Flexible Retrieval (formerly S3 Glacier)
    * If unspecified, no transition occurs.
    * @example 90

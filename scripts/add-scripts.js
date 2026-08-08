@@ -39,7 +39,7 @@ try {
     "test:compliance": "jest test/compliance",
     "bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk bootstrap  --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk diff '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
-    "synth": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "synth": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth '**' --quiet --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
