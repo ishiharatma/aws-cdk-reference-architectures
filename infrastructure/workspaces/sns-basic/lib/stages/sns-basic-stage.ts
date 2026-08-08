@@ -20,6 +20,7 @@ export class SnsBasicStage extends cdk.Stage {
 
     new SnsBasicStack(this, pascalCase(`${props.project}SnsBasic`), {
       project: props.project,
+      stackName: `${props.project}-${props.environment}-sns-basic`,
       description: `${pascalCase(props.project)} SnsBasic Stack for ${props.environment}`,
       environment: props.environment,
       params: props.params,

@@ -234,8 +234,8 @@ npm run deploy:all -w workspaces/sns-basic
 ```bash
 # Email サブスクリプションを確認（受信トレイを確認し、確認リンクをクリック）
 
-# メイントピックにテストメッセージを発行
-aws sns publish --topic-arn <出力されたMainTopicArn> --message "hello from sns-basic"
+# メイントピックにテストメッセージを発行(全サブスクリプションに一斉配信される)
+./publish-sns-message.sh --project sns-basic --env dev
 
 # デモ用ロググループのサブスクリプションフィルタチェーンを確認(スクリプトがログを書き込む)
 ./write-test-logs.sh --project sns-basic --env dev

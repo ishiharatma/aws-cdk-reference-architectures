@@ -234,8 +234,8 @@ npm run deploy:all -w workspaces/sns-basic
 ```bash
 # Confirm the Email subscription (check your inbox and click the confirmation link)
 
-# Publish a test message to the main topic
-aws sns publish --topic-arn <MainTopicArn output> --message "hello from sns-basic"
+# Publish test messages to the main topic (fans out to every subscription at once)
+./publish-sns-message.sh --project sns-basic --env dev
 
 # Check the demo log group's subscription filter chain (writes events for you)
 ./write-test-logs.sh --project sns-basic --env dev
