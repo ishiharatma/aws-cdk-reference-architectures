@@ -241,12 +241,56 @@ write_test_logs() {
 
 # Resolves the CloudWatch Log Group actually attached to a Lambda function
 # (works whether the function uses its default log group or a custom one).
+# Prints a warning immediately (to stderr) if this fails, instead of
+# silently swallowing it -- an unresolved log group means the check for
+# that function can never succeed, and that's worth surfacing right away
+# rather than only as a generic timeout later.
 resolve_function_log_group() {
     local function_name=$1
-    aws_cmd lambda get-function-configuration \
+    local log_group
+    local err
+    err=$(mktemp)
+    log_group=$(aws_cmd lambda get-function-configuration \
         --function-name "$function_name" \
         --query 'LoggingConfig.LogGroup' \
-        --output text 2>/dev/null
+        --output text 2>"$err") || {
+        print_message "$RED" "  Warning: could not look up function '${function_name}':"
+        sed 's/^/    /' "$err" >&2
+        rm -f "$err"
+        return 0
+    }
+    rm -f "$err"
+
+    if [ -z "$log_group" ] || [ "$log_group" == "None" ]; then
+        print_message "$YELLOW" "  Warning: function '${function_name}' has no LoggingConfig.LogGroup"
+        print_message "$YELLOW" "  (its own log group could not be resolved -- checking it will be skipped)"
+        return 0
+    fi
+
+    echo "$log_group"
+}
+
+# Prints whatever this log group actually logged since $START_MS,
+# ignoring the filter pattern -- used on timeout to tell "the function was
+# never invoked" apart from "it was invoked but didn't log what we expected".
+dump_recent_log_events() {
+    local log_group=$1
+    local label=$2
+    local events
+
+    events=$(aws_cmd logs filter-log-events \
+        --log-group-name "$log_group" \
+        --start-time "$START_MS" \
+        --query 'events[].message' \
+        --output text 2>/dev/null || true)
+
+    if [ -z "$events" ]; then
+        print_message "$RED" "  [DEBUG] ${label}: log group '${log_group}' has NO events at all since this run started."
+        print_message "$RED" "          This points at the function never being invoked, not a text-matching problem."
+    else
+        print_message "$YELLOW" "  [DEBUG] ${label}: log group '${log_group}' DID log something, but not a match:"
+        echo "$events" | tr '\t' '\n' | sed 's/^/        /'
+    fi
 }
 
 # Polls a log group for a line matching $pattern with a timestamp at or
@@ -279,6 +323,7 @@ poll_log_group_for_pattern() {
     done
 
     print_message "$RED" "  [TIMEOUT] ${label}"
+    dump_recent_log_events "$log_group" "$label"
     return 1
 }
 

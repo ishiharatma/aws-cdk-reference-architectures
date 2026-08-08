@@ -273,12 +273,33 @@ publish_messages() {
 
 # Resolves the CloudWatch Log Group actually attached to a Lambda function
 # (works whether the function uses its default log group or a custom one).
+# Prints a warning immediately (to stderr) if this fails, instead of
+# silently swallowing it -- an unresolved log group means the check for
+# that function can never succeed, and that's worth surfacing right away
+# rather than only as a generic timeout 90 seconds later.
 resolve_function_log_group() {
     local function_name=$1
-    aws_cmd lambda get-function-configuration \
+    local log_group
+    local err
+    err=$(mktemp)
+    log_group=$(aws_cmd lambda get-function-configuration \
         --function-name "$function_name" \
         --query 'LoggingConfig.LogGroup' \
-        --output text 2>/dev/null
+        --output text 2>"$err") || {
+        print_message "$RED" "  Warning: could not look up function '${function_name}':"
+        sed 's/^/    /' "$err" >&2
+        rm -f "$err"
+        return 0
+    }
+    rm -f "$err"
+
+    if [ -z "$log_group" ] || [ "$log_group" == "None" ]; then
+        print_message "$YELLOW" "  Warning: function '${function_name}' has no LoggingConfig.LogGroup"
+        print_message "$YELLOW" "  (its own log group could not be resolved -- checking it will be skipped)"
+        return 0
+    fi
+
+    echo "$log_group"
 }
 
 # Returns 0 (true) if $log_group has a line matching $pattern timestamped
@@ -295,6 +316,30 @@ log_group_has_match() {
         --query 'events[].message' \
         --output text 2>/dev/null || true)
     [ -n "$matches" ]
+}
+
+# Prints whatever this log group actually logged since $START_MS,
+# ignoring the filter pattern -- used on timeout to tell "the function was
+# never invoked" apart from "it was invoked but didn't log what we expected".
+dump_recent_log_events() {
+    local log_group=$1
+    local label=$2
+    local events
+
+    events=$(aws_cmd logs filter-log-events \
+        --log-group-name "$log_group" \
+        --start-time "$START_MS" \
+        --query 'events[].message' \
+        --output text 2>/dev/null || true)
+
+    if [ -z "$events" ]; then
+        print_message "$RED" "  [DEBUG] ${label}: log group '${log_group}' has NO events at all since this run started."
+        print_message "$RED" "          This points at the function never being invoked (check the SNS"
+        print_message "$RED" "          subscription / event source mapping), not a text-matching problem."
+    else
+        print_message "$YELLOW" "  [DEBUG] ${label}: log group '${log_group}' DID log something, but not a match:"
+        echo "$events" | tr '\t' '\n' | sed 's/^/        /'
+    fi
 }
 
 # Returns 0 (true) if the given S3 object exists.
@@ -349,6 +394,11 @@ check_downstream_processing() {
     sqs_log_group=$(resolve_function_log_group "${PROJECT}-${ENVIRONMENT}-sqs-message-logger")
     sns_log_group=$(resolve_function_log_group "${PROJECT}-${ENVIRONMENT}-sns-message-logger")
     http_log_group=$(resolve_function_log_group "${PROJECT}-${ENVIRONMENT}-sns-http-endpoint")
+
+    print_message "$BLUE" "  sqs-message-logger log group:  ${sqs_log_group:-<unresolved>}"
+    print_message "$BLUE" "  sns-message-logger log group:  ${sns_log_group:-<unresolved>}"
+    print_message "$BLUE" "  sns-http-endpoint log group:   ${http_log_group:-<unresolved>}"
+    echo
 
     # label -> done flag
     local -A done_flags=(
@@ -411,6 +461,19 @@ check_downstream_processing() {
             print_message "$RED" "  [TIMEOUT] ${key} not confirmed within ${TIMEOUT}s"
         fi
     done
+
+    # For the three log-based checks specifically, show what (if anything)
+    # was actually logged, to tell "never invoked" apart from "invoked but
+    # didn't match the expected text".
+    if [ "${done_flags[sqs-message-logger]}" = false ] && [ -n "$sqs_log_group" ] && [ "$sqs_log_group" != "None" ]; then
+        dump_recent_log_events "$sqs_log_group" "sqs-message-logger"
+    fi
+    if [ "${done_flags[sns-message-logger]}" = false ] && [ -n "$sns_log_group" ] && [ "$sns_log_group" != "None" ]; then
+        dump_recent_log_events "$sns_log_group" "sns-message-logger"
+    fi
+    if [ "${done_flags[sns-http-endpoint-logs]}" = false ] && [ -n "$http_log_group" ] && [ "$http_log_group" != "None" ]; then
+        dump_recent_log_events "$http_log_group" "sns-http-endpoint"
+    fi
 
     if [ "$any_pending" = false ]; then
         print_message "$GREEN" "Confirmed: every subscriber processed the message."
