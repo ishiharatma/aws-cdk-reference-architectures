@@ -234,7 +234,9 @@ npm run deploy:all -w workspaces/sns-basic
 ```bash
 # Email サブスクリプションを確認（受信トレイを確認し、確認リンクをクリック）
 
-# メイントピックにテストメッセージを発行(全サブスクリプションに一斉配信される)
+# テストメッセージを発行し、各サブスクライバーで実際に処理されたかを確認:
+# sqs-message-logger/sns-message-loggerのログ、sns-http-endpointのログと
+# それが書き込んだS3オブジェクト・DynamoDBアイテム、Firehoseアーカイブバケット
 ./publish-sns-message.sh --project sns-basic --env dev
 
 # デモ用ロググループのサブスクリプションフィルタチェーンを確認:

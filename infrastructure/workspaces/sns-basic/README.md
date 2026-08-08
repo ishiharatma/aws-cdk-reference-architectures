@@ -234,7 +234,9 @@ npm run deploy:all -w workspaces/sns-basic
 ```bash
 # Confirm the Email subscription (check your inbox and click the confirmation link)
 
-# Publish test messages to the main topic (fans out to every subscription at once)
+# Publish a test message and confirm every subscriber actually processed it:
+# sqs-message-logger/sns-message-logger's logs, sns-http-endpoint's logs plus
+# the S3 object + DynamoDB item it wrote, and the Firehose archive bucket
 ./publish-sns-message.sh --project sns-basic --env dev
 
 # Check the demo log group's subscription filter chain: writes test events,
