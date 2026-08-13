@@ -41,7 +41,13 @@ const managementAllowedCidrs =
     ? envParams.managementAllowedCidrs
     : [getMyGlobalIpCidr()];
 
+// Resolve web-allowed CIDRs.
+// Default: deployer's own IP only (safety guard — prevents accidental full-internet exposure).
+// Set WEB_ALLOWED_CIDRS=0.0.0.0/0 to open to all internet as the pattern intends.
+const webAllowedCidrs = parseIpListEnv(process.env.WEB_ALLOWED_CIDRS) ?? [getMyGlobalIpCidr()];
+
 console.log(`Management allowed CIDRs: ${managementAllowedCidrs.join(', ')}`);
+console.log(`Web allowed CIDRs:        ${webAllowedCidrs.join(', ')}`);
 
 new Ec2DualEniStage(app, `Ec2DualEni${pascalCase(envName)}`, {
   project: pjName,
@@ -51,6 +57,7 @@ new Ec2DualEniStage(app, `Ec2DualEni${pascalCase(envName)}`, {
   isAutoDeleteObject: isAutoDeleteObject,
   params: envParams,
   managementAllowedCidrs,
+  webAllowedCidrs,
 });
 
 cdk.Tags.of(app).add('Project', pjName);

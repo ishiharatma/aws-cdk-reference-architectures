@@ -13,6 +13,8 @@ export interface StageProps extends cdk.StageProps {
   readonly params: EnvParams;
   /** CIDRs allowed to SSH to the management ENI. Overrides params.managementAllowedCidrs. */
   readonly managementAllowedCidrs?: string[];
+  /** CIDRs allowed to reach the web server (HTTP/HTTPS on eth0). */
+  readonly webAllowedCidrs: string[];
 }
 
 export class Ec2DualEniStage extends cdk.Stage {
@@ -28,6 +30,7 @@ export class Ec2DualEniStage extends cdk.Stage {
       isAutoDeleteObject: props.isAutoDeleteObject,
       envParams: props.params,
       managementAllowedCidrs: props.managementAllowedCidrs,
+      webAllowedCidrs: props.webAllowedCidrs,
     });
   }
 }

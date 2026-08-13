@@ -12,7 +12,10 @@ const envName: Environment = Environment.TEST;
 if (!params[envName]) throw new Error(`No parameters found for environment: ${envName}`);
 const envParams = params[envName]!;
 
-function buildStack(managementAllowedCidrs = ['203.0.113.0/24']) {
+function buildStack(
+  managementAllowedCidrs = ['203.0.113.0/24'],
+  webAllowedCidrs = ['192.0.2.1/32'],
+) {
   const app = new cdk.App();
   return new Ec2DualEniStack(app, 'Stack', {
     project: projectName,
@@ -22,6 +25,7 @@ function buildStack(managementAllowedCidrs = ['203.0.113.0/24']) {
     terminationProtection: false,
     envParams,
     managementAllowedCidrs,
+    webAllowedCidrs,
   });
 }
 
@@ -81,11 +85,21 @@ describe('Ec2DualEniStack', () => {
 
   // ── Security groups ───────────────────────────────────────────────────
 
-  test('web security group allows HTTP and HTTPS', () => {
+  test('web security group allows HTTP and HTTPS from webAllowedCidrs', () => {
     template.hasResourceProperties('AWS::EC2::SecurityGroup', {
       SecurityGroupIngress: Match.arrayWith([
+        Match.objectLike({ IpProtocol: 'tcp', FromPort: 80, ToPort: 80, CidrIp: '192.0.2.1/32' }),
+        Match.objectLike({ IpProtocol: 'tcp', FromPort: 443, ToPort: 443, CidrIp: '192.0.2.1/32' }),
+      ]),
+    });
+  });
+
+  test('web SG with 0.0.0.0/0 allows full internet (explicit open)', () => {
+    const openStack = buildStack(['203.0.113.0/24'], ['0.0.0.0/0']);
+    const openTemplate = Template.fromStack(openStack);
+    openTemplate.hasResourceProperties('AWS::EC2::SecurityGroup', {
+      SecurityGroupIngress: Match.arrayWith([
         Match.objectLike({ IpProtocol: 'tcp', FromPort: 80, ToPort: 80, CidrIp: '0.0.0.0/0' }),
-        Match.objectLike({ IpProtocol: 'tcp', FromPort: 443, ToPort: 443, CidrIp: '0.0.0.0/0' }),
       ]),
     });
   });

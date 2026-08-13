@@ -107,11 +107,28 @@ ec2-dual-eni/
 
 ## Deployment
 
-```bash
-# Specify management CIDRs via environment variable (defaults to this machine's IP)
-export MANAGEMENT_ALLOWED_CIDRS="203.0.113.0/24"
+### Environment Variables
 
-# Deploy
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WEB_ALLOWED_CIDRS` | Deployer's global IP | CIDRs (comma-separated) allowed to reach eth0 (HTTP/HTTPS) |
+| `MANAGEMENT_ALLOWED_CIDRS` | Deployer's global IP | CIDRs (comma-separated) allowed to SSH into eth1 |
+
+> **Important — Web access restriction**
+>
+> The intended architecture opens eth0 to all internet (`0.0.0.0/0`), but to prevent
+> accidentally exposing the EC2 instance when running the sample as-is,
+> **the default restricts web access to the deployer's own IP only**.
+>
+> To open to all internet as the pattern intends, explicitly set `WEB_ALLOWED_CIDRS=0.0.0.0/0`.
+
+```bash
+# Deploy with default (own IP only)
+PROJECT=myproject ENV=dev npm run deploy:all
+
+# Open to all internet (as the pattern intends)
+WEB_ALLOWED_CIDRS=0.0.0.0/0 \
+MANAGEMENT_ALLOWED_CIDRS=203.0.113.0/24 \
 PROJECT=myproject ENV=dev npm run deploy:all
 ```
 

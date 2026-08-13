@@ -107,11 +107,28 @@ ec2-dual-eni/
 
 ## デプロイ
 
-```bash
-# 管理CIDRを環境変数で指定（省略時は実行マシンのグローバルIPを自動取得）
-export MANAGEMENT_ALLOWED_CIDRS="203.0.113.0/24"
+### 環境変数
 
-# デプロイ
+| 変数名 | デフォルト | 説明 |
+|--------|-----------|------|
+| `WEB_ALLOWED_CIDRS` | 実行マシンのグローバルIP | eth0（Web）へのHTTP/HTTPSを許可するCIDR（カンマ区切り）|
+| `MANAGEMENT_ALLOWED_CIDRS` | 実行マシンのグローバルIP | eth1（管理）へのSSHを許可するCIDR（カンマ区切り）|
+
+> **重要 — Webアクセス制限について**
+>
+> このパターンの想定アーキテクチャでは eth0 は全インターネット（`0.0.0.0/0`）に開放しますが、
+> サンプルをそのままデプロイして意図せずEC2を全開放しないよう、
+> **デフォルトでは実行マシンの自IPのみ**に制限しています。
+>
+> 全インターネットに開放するには `WEB_ALLOWED_CIDRS=0.0.0.0/0` を明示的に指定してください。
+
+```bash
+# デフォルト（自IPのみ）でデプロイ
+PROJECT=myproject ENV=dev npm run deploy:all
+
+# 全インターネットに開放（想定アーキテクチャ通り）
+WEB_ALLOWED_CIDRS=0.0.0.0/0 \
+MANAGEMENT_ALLOWED_CIDRS=203.0.113.0/24 \
 PROJECT=myproject ENV=dev npm run deploy:all
 ```
 

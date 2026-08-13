@@ -569,7 +569,7 @@ systemctl start nginx",
     },
     "WebSecurityGroup73AF7387": {
       "Properties": {
-        "GroupDescription": "eth0 — allow HTTP/HTTPS from internet",
+        "GroupDescription": "eth0 — allow HTTP/HTTPS from webAllowedCidrs",
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -579,15 +579,15 @@ systemctl start nginx",
         ],
         "SecurityGroupIngress": [
           {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "HTTP from anywhere",
+            "CidrIp": "192.0.2.1/32",
+            "Description": "HTTP from 192.0.2.1/32",
             "FromPort": 80,
             "IpProtocol": "tcp",
             "ToPort": 80,
           },
           {
-            "CidrIp": "0.0.0.0/0",
-            "Description": "HTTPS from anywhere",
+            "CidrIp": "192.0.2.1/32",
+            "Description": "HTTPS from 192.0.2.1/32",
             "FromPort": 443,
             "IpProtocol": "tcp",
             "ToPort": 443,

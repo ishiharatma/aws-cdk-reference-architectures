@@ -45,6 +45,7 @@ describe('CDK Nag AwsSolutions Pack', () => {
       env: defaultEnv,
       envParams,
       managementAllowedCidrs: ['203.0.113.0/24'],
+      webAllowedCidrs: ['192.0.2.1/32'],
     });
 
     applySuppressions(stack);

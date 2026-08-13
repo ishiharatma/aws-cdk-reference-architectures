@@ -16,6 +16,12 @@ export interface Ec2DualEniStackProps extends cdk.StackProps {
    * Overrides envParams.managementAllowedCidrs when provided.
    */
   readonly managementAllowedCidrs?: string[];
+  /**
+   * CIDRs allowed to reach the web server on eth0 (HTTP/HTTPS).
+   * Defaults to the deployer's own IP for safety.
+   * Set to ["0.0.0.0/0"] to open to all internet (the intended architecture).
+   */
+  readonly webAllowedCidrs: string[];
 }
 
 /**
@@ -23,7 +29,7 @@ export interface Ec2DualEniStackProps extends cdk.StackProps {
  *
  * Creates a VPC with a public subnet and an isolated management subnet,
  * then deploys an EC2 instance with two ENIs:
- *   - eth0: internet-facing (HTTP/HTTPS from anywhere) + Elastic IP
+ *   - eth0: internet-facing (HTTP/HTTPS from webAllowedCidrs) + Elastic IP
  *   - eth1: management (SSH from specified CIDRs only)
  *
  * This pattern demonstrates traffic-plane separation on a single instance,
@@ -64,14 +70,16 @@ export class Ec2DualEniStack extends cdk.Stack {
     const publicSubnet = vpc.publicSubnets[0];
     const managementSubnet = vpc.isolatedSubnets[0];
 
-    // Security group for eth0: HTTP and HTTPS from anywhere
+    // Security group for eth0: HTTP and HTTPS from the specified web CIDRs
     const webSg = new ec2.SecurityGroup(this, 'WebSecurityGroup', {
       vpc,
-      description: 'eth0 — allow HTTP/HTTPS from internet',
+      description: 'eth0 — allow HTTP/HTTPS from webAllowedCidrs',
       allowAllOutbound: true,
     });
-    webSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP from anywhere');
-    webSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS from anywhere');
+    for (const cidr of props.webAllowedCidrs) {
+      webSg.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(80), `HTTP from ${cidr}`);
+      webSg.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(443), `HTTPS from ${cidr}`);
+    }
 
     // Security group for eth1: SSH only from the specified management CIDRs
     const mgmtSg = new ec2.SecurityGroup(this, 'ManagementSecurityGroup', {
