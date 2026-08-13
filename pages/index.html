@@ -286,6 +286,37 @@
                 transform: translateY(0);
             }
         }
+
+        .ribbon {
+            position: absolute;
+            width: 90px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #fff;
+            padding: 5px 0;
+            z-index: 10;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        .ribbon-new {
+            background: #16A34A;
+            top: 16px;
+            right: -24px;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 6px rgba(22, 163, 74, .4);
+        }
+
+        .ribbon-draft {
+            background: #64748B;
+            top: 16px;
+            left: -24px;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 6px rgba(100, 116, 139, .35);
+        }
     .header-nav { display: flex; align-items: center; gap: 4px; }
     .header-nav-link {
       display: inline-flex;
