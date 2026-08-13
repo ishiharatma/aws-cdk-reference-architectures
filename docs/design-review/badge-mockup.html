@@ -1,0 +1,764 @@
+<title>NEW / DRAFT Badges</title>
+<style>
+  :root {
+    --bg: #F1F3F5;
+    --surface: #FFFFFF;
+    --surface-2: #F8F9FA;
+    --border: #E2E6EA;
+    --text-primary: #1A2332;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --aws-orange: #FF9900;
+    --aws-navy: #232F3E;
+    --aws-navy-light: #37475A;
+    --ribbon-new: #16A34A;
+    --ribbon-new-dark: #15803D;
+    --ribbon-draft: #64748B;
+    --ribbon-draft-dark: #475569;
+    --tag-bg: #DBEAFE;
+    --tag-text: #1E40AF;
+    --ok-bg: #DCFCE7;
+    --ok-text: #15803D;
+    --info-bg: #EFF6FF;
+    --info-text: #1D4ED8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1923;
+      --surface: #1A2535;
+      --surface-2: #222F40;
+      --border: #2E3D52;
+      --text-primary: #E8EDF3;
+      --text-secondary: #9EB3C8;
+      --text-muted: #5D7A96;
+      --tag-bg: #1E3A5F;
+      --tag-text: #93C5FD;
+      --ok-bg: #14291E;
+      --ok-text: #4ADE80;
+      --info-bg: #0F2240;
+      --info-text: #60A5FA;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0F1923;
+    --surface: #1A2535;
+    --surface-2: #222F40;
+    --border: #2E3D52;
+    --text-primary: #E8EDF3;
+    --text-secondary: #9EB3C8;
+    --text-muted: #5D7A96;
+    --tag-bg: #1E3A5F;
+    --tag-text: #93C5FD;
+    --ok-bg: #14291E;
+    --ok-text: #4ADE80;
+    --info-bg: #0F2240;
+    --info-text: #60A5FA;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Amazon Ember', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--aws-navy);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 3px solid var(--aws-orange);
+  }
+  .header-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--aws-orange);
+    opacity: .9;
+  }
+  .header-sep { color: #4a6070; }
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #D0DCE8;
+    letter-spacing: .01em;
+  }
+  .header-badge {
+    margin-left: auto;
+    background: rgba(255,153,0,.18);
+    color: var(--aws-orange);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,153,0,.35);
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 24px;
+    align-items: start;
+  }
+
+  /* ── LEFT PANEL ── */
+  .panel {
+    position: sticky;
+    top: 24px;
+    padding-right: 36px;
+  }
+
+  .panel-section {
+    margin-bottom: 28px;
+  }
+
+  .panel-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .feasibility-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .feasibility-row + .feasibility-row {
+    margin-top: 8px;
+  }
+  .feasibility-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .feasibility-icon.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .feasibility-body {}
+  .feasibility-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+  .feasibility-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .impl-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .impl-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    line-height: 1.5;
+  }
+  .impl-list li::before {
+    content: attr(data-num);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--aws-orange);
+    background: rgba(255,153,0,.1);
+    border-radius: 3px;
+    padding: 1px 5px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .change-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .change-list li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--aws-orange);
+    border-radius: 0 6px 6px 0;
+    line-height: 1.5;
+  }
+  .change-list .file {
+    font-size: 11px;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  /* ── DIVIDER ── */
+  .panel-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* ── RIGHT: CARDS DEMO ── */
+  .demo-area {
+    border-left: 1px solid var(--border);
+    padding-left: 36px;
+  }
+
+  .demo-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* ── CARD (mirrors existing design) ── */
+  .pattern-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;   /* ← key for ribbon positioning */
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    transition: box-shadow .25s, transform .25s;
+    display: flex;
+    flex-direction: column;
+  }
+  .pattern-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(0,0,0,.12);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 130px;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  /* Faux architecture diagram SVG */
+  .diagram-svg {
+    opacity: .55;
+  }
+
+  .card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .badge-row { display: flex; gap: 6px; align-items: center; }
+
+  .diff-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .diff-intermediate { background: #FFF3CD; color: #856404; }
+  .diff-beginner     { background: #D4EDDA; color: #155724; }
+  .level-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #D0F0EC;
+    color: #0F6E60;
+  }
+  .date-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .card-tag {
+    font-size: 10px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  .card-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--aws-orange);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background .18s;
+  }
+  .card-btn:hover { background: #D67800; }
+
+  /* ── RIBBONS ── */
+  /* Common ribbon base */
+  .ribbon {
+    position: absolute;
+    width: 90px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 5px 0;
+    z-index: 10;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  /* NEW — top-right corner */
+  .ribbon-new {
+    background: var(--ribbon-new);
+    top: 16px;
+    right: -24px;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 6px rgba(22, 163, 74, .4);
+  }
+
+  /* DRAFT — top-left corner */
+  .ribbon-draft {
+    background: var(--ribbon-draft);
+    top: 16px;
+    left: -24px;
+    transform: rotate(-45deg);
+    box-shadow: 0 2px 6px rgba(100, 116, 139, .35);
+  }
+
+  /* ── CALLOUT (explanation under card) ── */
+  .card-callout {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding: 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-callout-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-new   { background: var(--ribbon-new); }
+  .dot-draft { background: var(--ribbon-draft); }
+  .dot-none  { background: var(--border); }
+
+  /* ── BOTTOM CODE SNIPPET ── */
+  .code-section {
+    grid-column: 1 / -1;
+    margin-top: 32px;
+  }
+  .code-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .code-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: -1px;
+  }
+  .code-tab {
+    font-size: 11px;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-weight: 600;
+    padding: 6px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color .15s, background .15s;
+  }
+  .code-tab.active {
+    background: var(--surface);
+    color: var(--aws-orange);
+    border-bottom: 1px solid var(--surface);
+  }
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 6px 6px 6px;
+    overflow-x: auto;
+    padding: 20px 24px;
+  }
+  pre {
+    font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+  .c-comment { color: var(--text-muted); font-style: italic; }
+  .c-key     { color: #7C3AED; }
+  .c-str     { color: #059669; }
+  .c-bool    { color: #D97706; }
+  .c-num     { color: #2563EB; }
+  .c-tag     { color: #B45309; }
+  .c-attr    { color: #7C3AED; }
+  .c-sel     { color: #1D4ED8; }
+  .c-prop    { color: #065F46; }
+  .c-val     { color: #BE185D; }
+</style>
+
+<!-- HEADER -->
+<header class="header">
+  <span class="header-logo">AWS CDK Ref Arch</span>
+  <span class="header-sep">/</span>
+  <span class="header-title">NEW &amp; DRAFT バッジ — 実施可否・実装イメージ</span>
+  <span class="header-badge">検討中</span>
+</header>
+
+<main class="main">
+
+  <!-- LEFT PANEL -->
+  <aside class="panel">
+
+    <div class="panel-section">
+      <p class="panel-label">実施可否</p>
+
+      <div class="feasibility-row">
+        <span class="feasibility-icon ok">✓</span>
+        <div class="feasibility-body">
+          <div class="feasibility-title">NEW リボン（右上）</div>
+          <div class="feasibility-desc">
+            <code>patterns.json</code> に既存の <strong>date</strong> フィールドがある。
+            ページ表示時に「今日 − 7日」と比較するだけで判定可能。追加データ不要。
+          </div>
+        </div>
+      </div>
+
+      <div class="feasibility-row" style="margin-top:8px">
+        <span class="feasibility-icon ok">✓</span>
+        <div class="feasibility-body">
+          <div class="feasibility-title">DRAFT リボン（左上）</div>
+          <div class="feasibility-desc">
+            <code>patterns.json</code> に <strong>draft: true</strong> フィールドを1行追加するだけ。
+            既存のカード生成ロジックをわずかに拡張する。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="panel-divider">
+
+    <div class="panel-section">
+      <p class="panel-label">実装ポイント</p>
+      <ul class="impl-list">
+        <li data-num="1">カード div はすでに <code>overflow-hidden</code> が付いているため、リボンは追加 CSS なしで角にクリップされる</li>
+        <li data-num="2">CSS <code>transform: rotate(±45deg)</code> で斜め帯を表現。position: absolute で角に固定</li>
+        <li data-num="3">NEW 判定は <code>Date.now() − new Date(pattern.date) ≤ 7日</code> をJSで計算</li>
+        <li data-num="4">DRAFT は <code>pattern.draft === true</code> のフラグチェックのみ</li>
+        <li data-num="5">リボンが重なる（NEW+DRAFT 同時）ケースもレイアウト崩れなし</li>
+      </ul>
+    </div>
+
+    <hr class="panel-divider">
+
+    <div class="panel-section">
+      <p class="panel-label">変更ファイル</p>
+      <ul class="change-list">
+        <li>
+          <div class="file">pages/index.html</div>
+          リボン用 CSS を2クラス追加（約20行）
+        </li>
+        <li>
+          <div class="file">pages/app.js</div>
+          <code>createPatternCard()</code> に NEW/DRAFT リボン HTML 生成を追加（約15行）
+        </li>
+        <li>
+          <div class="file">pages/patterns.json</div>
+          未完成エントリに <code>"draft": true</code> を追加
+        </li>
+      </ul>
+    </div>
+
+  </aside>
+
+  <!-- RIGHT: CARD DEMOS -->
+  <section class="demo-area">
+    <p class="demo-label">カードバリエーション プレビュー</p>
+
+    <div class="cards-grid">
+
+      <!-- Card 1: Normal -->
+      <div>
+        <div class="pattern-card">
+          <div class="card-image">
+            <!-- faux diagram -->
+            <svg class="diagram-svg" width="180" height="90" viewBox="0 0 180 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="30" width="40" height="28" rx="4" fill="#FF9900" opacity=".7"/>
+              <rect x="70" y="20" width="40" height="18" rx="4" fill="#4B9CD3" opacity=".6"/>
+              <rect x="70" y="48" width="40" height="18" rx="4" fill="#4B9CD3" opacity=".6"/>
+              <rect x="130" y="30" width="40" height="28" rx="4" fill="#59A14F" opacity=".7"/>
+              <line x1="50" y1="44" x2="70" y2="29" stroke="#94A3B8" stroke-width="1.5"/>
+              <line x1="50" y1="44" x2="70" y2="57" stroke="#94A3B8" stroke-width="1.5"/>
+              <line x1="110" y1="29" x2="130" y2="44" stroke="#94A3B8" stroke-width="1.5"/>
+              <line x1="110" y1="57" x2="130" y2="44" stroke="#94A3B8" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <div class="badge-row">
+                <span class="diff-badge diff-intermediate">Intermediate</span>
+                <span class="level-badge">Lv.200</span>
+              </div>
+              <span class="date-label">2026-06-06</span>
+            </div>
+            <h3 class="card-title">CloudWatch Logs to S3 Archive</h3>
+            <p class="card-desc">Archive CloudWatch Logs to S3 using AWS CDK.</p>
+            <div class="card-tags">
+              <span class="card-tag">CDK</span>
+              <span class="card-tag">CloudWatch</span>
+              <span class="card-tag">S3</span>
+            </div>
+            <a class="card-btn" href="#">View Pattern ↗</a>
+          </div>
+        </div>
+        <div class="card-callout">
+          <span class="card-callout-dot dot-none"></span>
+          通常カード（バッジなし）
+        </div>
+      </div>
+
+      <!-- Card 2: NEW ribbon -->
+      <div>
+        <div class="pattern-card">
+          <!-- NEW ribbon -->
+          <div class="ribbon ribbon-new">NEW</div>
+
+          <div class="card-image">
+            <svg class="diagram-svg" width="180" height="90" viewBox="0 0 180 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="20" width="35" height="50" rx="4" fill="#FF9900" opacity=".7"/>
+              <rect x="72" y="35" width="36" height="20" rx="4" fill="#4B9CD3" opacity=".6"/>
+              <rect x="135" y="30" width="35" height="28" rx="4" fill="#59A14F" opacity=".7"/>
+              <line x1="45" y1="44" x2="72" y2="45" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <line x1="108" y1="45" x2="135" y2="44" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 2"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <div class="badge-row">
+                <span class="diff-badge diff-intermediate">Intermediate</span>
+                <span class="level-badge">Lv.200</span>
+              </div>
+              <span class="date-label">2026-08-08</span>
+            </div>
+            <h3 class="card-title">API Gateway + S3 Stub API</h3>
+            <p class="card-desc">Build a Lambda-free mock/stub HTTP API by wiring API Gateway directly to S3.</p>
+            <div class="card-tags">
+              <span class="card-tag">CDK</span>
+              <span class="card-tag">API Gateway</span>
+              <span class="card-tag">S3</span>
+            </div>
+            <a class="card-btn" href="#">View Pattern ↗</a>
+          </div>
+        </div>
+        <div class="card-callout">
+          <span class="card-callout-dot dot-new"></span>
+          <strong style="color: var(--ribbon-new)">NEW</strong>：追加から7日以内（右上）
+        </div>
+      </div>
+
+      <!-- Card 3: DRAFT ribbon -->
+      <div>
+        <div class="pattern-card">
+          <!-- DRAFT ribbon -->
+          <div class="ribbon ribbon-draft">DRAFT</div>
+
+          <div class="card-image">
+            <svg class="diagram-svg" width="180" height="90" viewBox="0 0 180 90" fill="none" style="opacity:.45" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="30" width="40" height="28" rx="4" fill="#94A3B8"/>
+              <rect x="70" y="20" width="40" height="18" rx="4" fill="#94A3B8"/>
+              <rect x="70" y="50" width="40" height="18" rx="4" fill="#94A3B8"/>
+              <rect x="130" y="30" width="40" height="28" rx="4" fill="#94A3B8"/>
+              <line x1="50" y1="44" x2="70" y2="29" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <line x1="50" y1="44" x2="70" y2="59" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <line x1="110" y1="29" x2="130" y2="44" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <line x1="110" y1="59" x2="130" y2="44" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <text x="90" y="72" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="sans-serif">作成中...</text>
+            </svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <div class="badge-row">
+                <span class="diff-badge diff-beginner">Beginner</span>
+                <span class="level-badge">Lv.100</span>
+              </div>
+              <span class="date-label">2026-08-01</span>
+            </div>
+            <h3 class="card-title">Lambda Basics with CDK</h3>
+            <p class="card-desc">（準備中）AWS Lambda のデプロイパターン集。</p>
+            <div class="card-tags">
+              <span class="card-tag">CDK</span>
+              <span class="card-tag">Lambda</span>
+            </div>
+            <a class="card-btn" href="#">View Pattern ↗</a>
+          </div>
+        </div>
+        <div class="card-callout">
+          <span class="card-callout-dot dot-draft"></span>
+          <strong style="color: var(--ribbon-draft)">DRAFT</strong>：<code>draft: true</code> のエントリ（左上）
+        </div>
+      </div>
+
+      <!-- Card 4: BOTH -->
+      <div>
+        <div class="pattern-card">
+          <div class="ribbon ribbon-new">NEW</div>
+          <div class="ribbon ribbon-draft">DRAFT</div>
+
+          <div class="card-image">
+            <svg class="diagram-svg" width="180" height="90" viewBox="0 0 180 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="20" y="25" width="35" height="40" rx="4" fill="#94A3B8" opacity=".5"/>
+              <rect x="75" y="35" width="30" height="20" rx="4" fill="#94A3B8" opacity=".5"/>
+              <rect x="130" y="25" width="30" height="40" rx="4" fill="#94A3B8" opacity=".5"/>
+              <line x1="55" y1="45" x2="75" y2="45" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <line x1="105" y1="45" x2="130" y2="45" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="3 2"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <div class="badge-row">
+                <span class="diff-badge diff-intermediate">Intermediate</span>
+                <span class="level-badge">Lv.300</span>
+              </div>
+              <span class="date-label">2026-08-12</span>
+            </div>
+            <h3 class="card-title">Step Functions Workflow</h3>
+            <p class="card-desc">（準備中）Step Functions を使ったオーケストレーションパターン。</p>
+            <div class="card-tags">
+              <span class="card-tag">CDK</span>
+              <span class="card-tag">Step Functions</span>
+            </div>
+            <a class="card-btn" href="#">View Pattern ↗</a>
+          </div>
+        </div>
+        <div class="card-callout">
+          <span class="card-callout-dot dot-new" style="flex-shrink:0"></span>
+          <span class="card-callout-dot dot-draft" style="flex-shrink:0; margin-left:-4px"></span>
+          NEW + DRAFT 両立（重なり無し）
+        </div>
+      </div>
+
+    </div><!-- /cards-grid -->
+
+    <!-- CODE SNIPPET -->
+    <div class="code-section">
+      <p class="code-section-label">実装コードイメージ（抜粋）</p>
+      <div class="code-tabs">
+        <span class="code-tab active">app.js</span>
+        <span class="code-tab" style="color:var(--text-muted)">index.html (CSS)</span>
+        <span class="code-tab" style="color:var(--text-muted)">patterns.json</span>
+      </div>
+      <div class="code-block">
+<pre><span class="c-comment">// createPatternCard() 内に追加するリボン生成ロジック</span>
+
+<span class="c-key">const</span> ONE_WEEK_MS = <span class="c-num">7</span> * <span class="c-num">24</span> * <span class="c-num">60</span> * <span class="c-num">60</span> * <span class="c-num">1000</span>;
+<span class="c-key">const</span> isNew   = (Date.now() - <span class="c-key">new</span> Date(pattern.date).getTime()) &lt;= ONE_WEEK_MS;
+<span class="c-key">const</span> isDraft = pattern.draft === <span class="c-bool">true</span>;
+
+<span class="c-key">const</span> newRibbonHTML   = isNew   ? <span class="c-str">`&lt;div class="ribbon ribbon-new"&gt;NEW&lt;/div&gt;`</span>   : <span class="c-str">''</span>;
+<span class="c-key">const</span> draftRibbonHTML = isDraft ? <span class="c-str">`&lt;div class="ribbon ribbon-draft"&gt;DRAFT&lt;/div&gt;`</span> : <span class="c-str">''</span>;
+
+<span class="c-comment">// カード HTML テンプレート内 (先頭に挿入)</span>
+<span class="c-key">return</span> <span class="c-str">`
+  &lt;div class="pattern-card ..."&gt;
+    ${newRibbonHTML}
+    ${draftRibbonHTML}
+    ...
+  &lt;/div&gt;
+`</span>;</pre>
+      </div>
+    </div>
+
+  </section><!-- /demo-area -->
+
+</main>
