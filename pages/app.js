@@ -96,15 +96,23 @@ function renderPatterns() {
 
 // Create a pattern card HTML
 function createPatternCard(pattern) {
-    const tags = pattern.tags.map(tag => 
+    const tags = pattern.tags.map(tag =>
         `<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${tag}</span>`
     ).join('');
-    
+
     const difficultyClass = `difficulty-${pattern.difficulty}`;
     const difficultyLabel = difficultyLabels[pattern.difficulty] || pattern.difficulty;
     const levelBadgeHTML = pattern.level
         ? `<span class="level-badge level-${pattern.level}">Lv.${pattern.level}</span>`
         : '';
+
+    // NEW ribbon: within 7 days of date
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const isNew = (Date.now() - new Date(pattern.date).getTime()) <= ONE_WEEK_MS;
+    const newRibbonHTML = isNew ? `<div class="ribbon ribbon-new">NEW</div>` : '';
+
+    // DRAFT ribbon: draft flag
+    const draftRibbonHTML = pattern.draft ? `<div class="ribbon ribbon-draft">DRAFT</div>` : '';
 
     // Convert paths to absolute URLs
     const imageUrl = toAbsoluteImageUrl(pattern.image);
@@ -122,6 +130,8 @@ function createPatternCard(pattern) {
     
     return `
         <div class="pattern-card bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            ${newRibbonHTML}
+            ${draftRibbonHTML}
             <div class="pattern-card-content">
                 <!-- Pattern Image -->
                 ${imageHTML}
