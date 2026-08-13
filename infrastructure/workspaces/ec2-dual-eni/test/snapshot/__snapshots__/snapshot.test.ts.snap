@@ -1,0 +1,660 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests full template snapshot 1`] = `
+{
+  "Outputs": {
+    "Ec2DualEniElasticIPF6D1102D": {
+      "Description": "Elastic IP (eth0 — public web access)",
+      "Value": {
+        "Ref": "Ec2DualEniEIPD0D76C07",
+      },
+    },
+    "Ec2DualEniInstanceId93F06850": {
+      "Description": "EC2 instance ID",
+      "Value": {
+        "Ref": "Ec2DualEni2060757E",
+      },
+    },
+    "Ec2DualEniManagementPrivateIP2B450B0E": {
+      "Description": "Management ENI private IP (eth1 — SSH access)",
+      "Value": {
+        "Fn::GetAtt": [
+          "Ec2DualEniManagementENIE62F845F",
+          "PrimaryPrivateIpAddress",
+        ],
+      },
+    },
+    "WebUrl": {
+      "Description": "Web server URL (HTTP via eth0 EIP)",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Ref": "Ec2DualEniEIPD0D76C07",
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "Ec2DualEni2060757E": {
+      "Properties": {
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "Ec2DualEniInstanceProfile27F6B9E0",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.micro",
+        "MetadataOptions": {
+          "HttpEndpoint": "enabled",
+          "HttpPutResponseHopLimit": 1,
+          "HttpTokens": "required",
+        },
+        "NetworkInterfaces": [
+          {
+            "DeviceIndex": "0",
+            "NetworkInterfaceId": {
+              "Ref": "Ec2DualEniPrimaryENI79AF119C",
+            },
+          },
+          {
+            "DeviceIndex": "1",
+            "NetworkInterfaceId": {
+              "Ref": "Ec2DualEniManagementENIE62F845F",
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+dnf install -y nginx
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+HOSTNAME_VAL=$(hostname)
+ETH0_PRIVATE="N/A"
+ETH0_PUBLIC="N/A"
+ETH1_PRIVATE="N/A"
+MACS=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/network/interfaces/macs/)
+for MAC in $MACS; do
+  MAC_CLEAN=$(echo "$MAC" | tr -d "/")
+  DEVICE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/network/interfaces/macs/\${MAC_CLEAN}/device-number")
+  if [ "$DEVICE" = "0" ]; then
+    ETH0_PRIVATE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/network/interfaces/macs/\${MAC_CLEAN}/local-ipv4s")
+    ETH0_PUBLIC=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/network/interfaces/macs/\${MAC_CLEAN}/public-ipv4s" 2>/dev/null || echo "N/A")
+    [ -z "$ETH0_PUBLIC" ] && ETH0_PUBLIC="N/A"
+  elif [ "$DEVICE" = "1" ]; then
+    ETH1_PRIVATE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "http://169.254.169.254/latest/meta-data/network/interfaces/macs/\${MAC_CLEAN}/local-ipv4s")
+  fi
+done
+cat > /usr/share/nginx/html/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>EC2 Dual ENI Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 680px; margin: 60px auto; padding: 0 24px; background: #f0f2f5; }
+    .card { background: #fff; border-radius: 10px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,.1); margin-bottom: 20px; }
+    h1 { color: #232f3e; margin-top: 0; font-size: 1.4em; }
+    h2 { color: #555; font-size: 1em; margin: 24px 0 12px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    .row { margin-bottom: 14px; }
+    .label { color: #888; font-size: 0.75em; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .value { font-size: 1em; font-weight: 600; color: #111; word-break: break-all; }
+    .badge { display: inline-block; font-size: 0.7em; padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: normal; }
+    .badge-internet { background: #d4edda; color: #155724; }
+    .badge-mgmt { background: #fff3cd; color: #856404; }
+    .note { font-size: 0.78em; color: #888; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>&#x1F5A7; EC2 Dual ENI Demo</h1>
+    <h2>Instance Info</h2>
+    <div class="row"><div class="label">Hostname</div><div class="value">HOSTNAME_PLACEHOLDER</div></div>
+    <div class="row"><div class="label">Instance ID</div><div class="value">INSTANCE_ID_PLACEHOLDER</div></div>
+    <div class="row"><div class="label">Availability Zone</div><div class="value">AZ_PLACEHOLDER</div></div>
+    <h2>Network Interfaces</h2>
+    <div class="row">
+      <div class="label">eth0 <span class="badge badge-internet">Internet-facing</span></div>
+      <div class="value">Public IP (EIP): ETH0_PUBLIC_PLACEHOLDER</div>
+      <div class="value" style="color:#555;font-size:.9em">Private IP: ETH0_PRIVATE_PLACEHOLDER</div>
+      <div class="note">&#x2705; HTTP/HTTPS open to 0.0.0.0/0</div>
+    </div>
+    <div class="row">
+      <div class="label">eth1 <span class="badge badge-mgmt">Management</span></div>
+      <div class="value">Private IP: ETH1_PRIVATE_PLACEHOLDER</div>
+      <div class="note">&#x1F512; SSH (port 22) restricted to specific CIDR only</div>
+    </div>
+  </div>
+</body>
+</html>
+HTMLEOF
+sed -i "s/HOSTNAME_PLACEHOLDER/\${HOSTNAME_VAL}/g"        /usr/share/nginx/html/index.html
+sed -i "s/INSTANCE_ID_PLACEHOLDER/\${INSTANCE_ID}/g"      /usr/share/nginx/html/index.html
+sed -i "s/AZ_PLACEHOLDER/\${AZ}/g"                        /usr/share/nginx/html/index.html
+sed -i "s/ETH0_PUBLIC_PLACEHOLDER/\${ETH0_PUBLIC}/g"      /usr/share/nginx/html/index.html
+sed -i "s/ETH0_PRIVATE_PLACEHOLDER/\${ETH0_PRIVATE}/g"    /usr/share/nginx/html/index.html
+sed -i "s/ETH1_PRIVATE_PLACEHOLDER/\${ETH1_PRIVATE}/g"    /usr/share/nginx/html/index.html
+systemctl enable nginx
+systemctl start nginx",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "Ec2DualEniEIPAssociationB5A2D229": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "Ec2DualEniEIPD0D76C07",
+            "AllocationId",
+          ],
+        },
+        "NetworkInterfaceId": {
+          "Ref": "Ec2DualEniPrimaryENI79AF119C",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "Ec2DualEniEIPD0D76C07": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-eip",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "Ec2DualEniInstanceProfile27F6B9E0": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Ec2DualEniInstanceRole554E2B87",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "Ec2DualEniInstanceRole554E2B87": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Ec2DualEniManagementENIE62F845F": {
+      "Properties": {
+        "Description": "TestProject-test eth1 — management (SSH)",
+        "GroupSet": [
+          {
+            "Fn::GetAtt": [
+              "ManagementSecurityGroup76F04431",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": true,
+        "SubnetId": {
+          "Ref": "VpcManagementSubnet1SubnetFF944756",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-eth1-management",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NetworkInterface",
+    },
+    "Ec2DualEniPrimaryENI79AF119C": {
+      "Properties": {
+        "Description": "TestProject-test eth0 — internet-facing",
+        "GroupSet": [
+          {
+            "Fn::GetAtt": [
+              "WebSecurityGroup73AF7387",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": true,
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-eth0-internet",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NetworkInterface",
+    },
+    "ManagementSecurityGroup76F04431": {
+      "Properties": {
+        "GroupDescription": "eth1 — allow SSH from management CIDRs only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.0/24",
+            "Description": "SSH from 203.0.113.0/24",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcManagementSubnet1RouteTable1D56DADA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc/ManagementSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcManagementSubnet1RouteTableAssociation0A1AF5C5": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcManagementSubnet1RouteTable1D56DADA",
+        },
+        "SubnetId": {
+          "Ref": "VpcManagementSubnet1SubnetFF944756",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcManagementSubnet1SubnetFF944756": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Management",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc/ManagementSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute3DA9E72A": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1RouteTable6C95E38E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation97140677": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet5C2D37C4": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2DualEniStack/Vpc/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "WebSecurityGroup73AF7387": {
+      "Properties": {
+        "GroupDescription": "eth0 — allow HTTP/HTTPS from internet",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTP from anywhere",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS from anywhere",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests resource counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::EIPAssociation": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NetworkInterface": 2,
+  "AWS::EC2::Route": 1,
+  "AWS::EC2::RouteTable": 2,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::Subnet": 2,
+  "AWS::EC2::SubnetRouteTableAssociation": 2,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Role": 1,
+}
+`;

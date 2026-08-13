@@ -1,5 +1,17 @@
 [
   {
+    "id": "ec2-dual-eni",
+    "title": "EC2 Dual ENI",
+    "description": "Single EC2 instance with two network interfaces: eth0 for internet-facing HTTP/HTTPS traffic (with Elastic IP), and eth1 for SSH management access restricted to specific CIDRs.",
+    "image": "ec2-dual-eni/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "EC2", "Networking", "Security"],
+    "link": "ec2-dual-eni",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-08-13",
+    "articles": {}
+  },
+  {
     "id": "apigw-s3-stub",
     "title": "API Gateway + S3 Stub API",
     "description": "Build a Lambda-free mock/stub HTTP API by wiring API Gateway directly to S3 via an AWS Service integration, returning canned JSON files.",
