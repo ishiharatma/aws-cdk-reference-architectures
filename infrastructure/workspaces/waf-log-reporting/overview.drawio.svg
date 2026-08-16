@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 620" font-family="Helvetica, Arial, sans-serif" style="background:#ffffff">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333333"/>
+    </marker>
+    <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#888888"/>
+    </marker>
+  </defs>
+
+  <style>
+    .box { fill:#ffffff; stroke-width:1.6; rx:8; }
+    .neutral { stroke:#444444; }
+    .p1 { stroke:#3b6fd6; }
+    .p2 { stroke:#38761d; }
+    .existing { stroke:#888888; stroke-dasharray:5,4; }
+    .label { font-size:13px; fill:#222222; text-anchor:middle; }
+    .sublabel { font-size:11px; fill:#555555; text-anchor:middle; }
+    .edge { stroke:#333333; stroke-width:1.4; fill:none; marker-end:url(#arrow); }
+    .edgeDashed { stroke:#888888; stroke-width:1.3; fill:none; stroke-dasharray:5,4; marker-end:url(#arrowDashed); }
+    .edgeLabel { font-size:11px; fill:#444444; text-anchor:middle; }
+    .edgeLabelBg { fill:#ffffff; opacity:0.9; }
+    .laneTitle { font-size:14px; font-weight:bold; }
+    .p1Title { fill:#3b6fd6; }
+    .p2Title { fill:#38761d; }
+  </style>
+
+  <text x="20" y="24" font-size="17px" font-weight="bold" fill="#111111">WAF Log Reporting — two report patterns over the same WAF logs</text>
+
+  <!-- ============ Shared source ============ -->
+  <rect class="box neutral" x="40" y="46" width="220" height="60" rx="8"/>
+  <text class="label" x="150" y="72">Sample Web ACL</text>
+  <text class="sublabel" x="150" y="90">standalone, not attached to any resource</text>
+
+  <rect class="box neutral" x="340" y="46" width="220" height="60" rx="8"/>
+  <text class="label" x="450" y="72">CloudWatch Logs</text>
+  <text class="sublabel" x="450" y="90">log group "aws-waf-logs-*"</text>
+
+  <line class="edge" x1="260" y1="76" x2="336" y2="76"/>
+  <text class="edgeLabel" x="298" y="68">logs</text>
+
+  <!-- ============ Pattern 1 lane ============ -->
+  <text class="laneTitle p1Title" x="620" y="34">Pattern 1 — CloudWatch Logs Insights + Lambda + SNS</text>
+
+  <rect class="box p1" x="620" y="46" width="200" height="46" rx="8"/>
+  <text class="label" x="720" y="65">EventBridge Scheduler</text>
+  <text class="sublabel" x="720" y="80">cron (daily)</text>
+
+  <rect class="box p1" x="620" y="152" width="200" height="66" rx="8"/>
+  <text class="label" x="720" y="176">Lambda: cwlogs-report</text>
+  <text class="sublabel" x="720" y="192">CloudWatch Logs Insights query</text>
+  <text class="sublabel" x="720" y="206">(action/rule/IP/country top-N)</text>
+
+  <rect class="box p1" x="900" y="158" width="160" height="54" rx="8"/>
+  <text class="label" x="980" y="182">SNS Topic</text>
+  <text class="sublabel" x="980" y="197">waf-cwlogs-report</text>
+
+  <rect class="box p1" x="1140" y="158" width="160" height="54" rx="8"/>
+  <text class="label" x="1220" y="188">Email</text>
+
+  <!-- CW Logs -> Lambda1 (elbow) -->
+  <path class="edge" d="M 560 76 L 600 76 L 600 185 L 616 185"/>
+  <text class="edgeLabel" x="600" y="128">Logs Insights</text>
+  <text class="edgeLabel" x="600" y="141">query (daily)</text>
+
+  <!-- Scheduler1 -> Lambda1 -->
+  <line class="edge" x1="720" y1="92" x2="720" y2="148"/>
+  <text class="edgeLabel" x="757" y="115">triggers</text>
+
+  <!-- Lambda1 -> SNS1 -->
+  <line class="edge" x1="820" y1="185" x2="896" y2="185"/>
+  <text class="edgeLabel" x="858" y="177">publish</text>
+
+  <!-- SNS1 -> Email1 -->
+  <line class="edge" x1="1060" y1="185" x2="1136" y2="185"/>
+  <text class="edgeLabel" x="1098" y="177">email</text>
+
+  <!-- ============ Pattern 2 lane ============ -->
+  <text class="laneTitle p2Title" x="360" y="304">Pattern 2 — Amazon Athena + Lambda + SNS</text>
+
+  <rect class="box p2" x="360" y="320" width="180" height="60" rx="8"/>
+  <text class="label" x="450" y="346">Kinesis Data Firehose</text>
+  <text class="sublabel" x="450" y="362">subscribes to the log group</text>
+
+  <rect class="box p2" x="580" y="320" width="160" height="60" rx="8"/>
+  <text class="label" x="660" y="346">S3 bucket</text>
+  <text class="sublabel" x="660" y="362">Hive-style yyyy/MM/dd prefix</text>
+
+  <rect class="box p2" x="800" y="320" width="220" height="60" rx="8"/>
+  <text class="label" x="910" y="343">Glue Table + Athena Workgroup</text>
+  <text class="sublabel" x="910" y="359">partition projection (no crawler)</text>
+
+  <rect class="box p2" x="360" y="398" width="220" height="46" rx="8"/>
+  <text class="label" x="470" y="417">EventBridge Scheduler</text>
+  <text class="sublabel" x="470" y="432">cron (daily)</text>
+
+  <rect class="box p2" x="360" y="464" width="220" height="66" rx="8"/>
+  <text class="label" x="470" y="488">Lambda: athena-report</text>
+  <text class="sublabel" x="470" y="504">Athena SQL, CROSS JOIN UNNEST</text>
+  <text class="sublabel" x="470" y="518">(exact COUNT-rule match counts)</text>
+
+  <rect class="box p2" x="640" y="470" width="170" height="54" rx="8"/>
+  <text class="label" x="725" y="494">SNS Topic</text>
+  <text class="sublabel" x="725" y="509">waf-athena-report</text>
+
+  <rect class="box p2" x="870" y="470" width="160" height="54" rx="8"/>
+  <text class="label" x="950" y="500">Email</text>
+
+  <!-- CW Logs -> Firehose (elbow) -->
+  <path class="edge" d="M 450 106 L 450 320"/>
+  <text class="edgeLabel" x="450" y="270">subscription</text>
+  <text class="edgeLabel" x="450" y="283">filter</text>
+
+  <!-- Firehose -> S3 -->
+  <line class="edge" x1="540" y1="350" x2="576" y2="350"/>
+  <text class="edgeLabel" x="558" y="342">PUT (gzip)</text>
+
+  <!-- S3 -> Glue -->
+  <line class="edge" x1="740" y1="350" x2="796" y2="350"/>
+  <text class="edgeLabel" x="768" y="342">query</text>
+
+  <!-- Glue -> Lambda2 (elbow, enters the left side so it doesn't collide with the Scheduler2 -> Lambda2 arrow) -->
+  <path class="edge" d="M 910 380 L 910 452 L 340 452 L 340 497 L 356 497"/>
+  <text class="edgeLabel" x="700" y="446">SELECT ... WHERE day = :date</text>
+
+  <!-- Scheduler2 -> Lambda2 -->
+  <line class="edge" x1="470" y1="444" x2="470" y2="460"/>
+  <text class="edgeLabel" x="510" y="454">triggers</text>
+
+  <!-- Lambda2 -> SNS2 -->
+  <line class="edge" x1="580" y1="497" x2="636" y2="497"/>
+  <text class="edgeLabel" x="608" y="489">publish</text>
+
+  <!-- SNS2 -> Email2 -->
+  <line class="edge" x1="810" y1="497" x2="866" y2="497"/>
+  <text class="edgeLabel" x="838" y="489">email</text>
+
+  <!-- ============ Existing WAF (flexible target) ============ -->
+  <rect class="box existing" x="40" y="536" width="220" height="60" rx="8"/>
+  <text class="label" x="150" y="561">Existing WAF (your account)</text>
+  <text class="sublabel" x="150" y="578">log group or S3 logs already in place</text>
+
+  <path class="edgeDashed" d="M 150 536 L 150 202 L 616 202"/>
+  <text class="edgeLabel" x="330" y="216">cwLogsReport.existingLogGroupName</text>
+
+  <path class="edgeDashed" d="M 180 536 L 180 296 L 910 296 L 910 316"/>
+  <text class="edgeLabel" x="600" y="290">athenaReport.existingSource (S3 bucket)</text>
+
+  <text class="sublabel" x="150" y="608" text-anchor="middle" fill="#888888">dashed = optional: point either pattern at logs from a WAF you already run, instead of the sample Web ACL above</text>
+</svg>
