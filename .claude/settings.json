@@ -1,0 +1,32 @@
+{
+  "extraKnownMarketplaces": {
+    "agent-skills-private": {
+      "source": {
+        "source": "url",
+        "url": "git@github.com:ishiharatma/agent-skills-private.git"
+      }
+    }
+  },
+  "enabledPlugins": [
+    { "marketplace": "agent-skills-private", "plugin": "cdk-testing" },
+    { "marketplace": "agent-skills-private", "plugin": "cdk-ts-dev-guide" },
+    { "marketplace": "agent-skills-private", "plugin": "cdk-spec-writing" },
+    { "marketplace": "agent-skills-private", "plugin": "codecommit-pr" },
+    { "marketplace": "agent-skills-private", "plugin": "cicd-buildspec" },
+    { "marketplace": "agent-skills-private", "plugin": "metrics-reporter" },
+    { "marketplace": "agent-skills-private", "plugin": "metrics-logger" },
+    { "marketplace": "agent-skills-private", "plugin": "article-writer" },
+    { "marketplace": "agent-skills-private", "plugin": "article-proofreader" },
+    { "marketplace": "agent-skills-private", "plugin": "aws-mcp" }
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Read(//tmp/**)",
+      "Bash(npm --version)",
+      "Bash(npm pkg *)",
+      "Bash(npx cdk synth)",
+      "Bash(aws sts *)"
+    ]
+  }
+}

@@ -5,11 +5,16 @@ _draft*
 # skills (local dev tool, not project code)
 .claude/skills/
 .claude/CLAUDE.md
-.claude/
+.claude/settings.local.json
+!.claude/settings.json
+.claude/**/
 
 # AWS Credentials
-.aws/
-.aws
+.aws/credentials
+.aws/config*
+.aws/*.sh
+!.aws/config.sample
+.aws/**/
 
 # CA
 *.cer
