@@ -1,7 +1,7 @@
 // Base URL configuration
 const IMAGE_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '../'  // Local development
-    : 'https://raw.githubusercontent.com/ishiharatma/aws-cdk-reference-architectures/main/infrastructure/workspaces/';  // GitHub リポジトリ
+    : '';  // GitHub Pages: pages.yml が infrastructure/workspaces/*/overview.drawio.svg を同階層にコピーするため同一オリジン参照
 const REPO_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '../'  // Local development
     : 'https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/';  // GitHub リポジトリ

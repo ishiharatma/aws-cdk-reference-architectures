@@ -1,0 +1,1835 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests WafLogReportingAthenaReportStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AthenaWorkgroupName": {
+      "Description": "Athena workgroup used by the report Lambda",
+      "Value": "WafLogReportingTest-test-waf-log-reporting",
+    },
+    "GlueDatabaseName": {
+      "Description": "Glue Data Catalog database name",
+      "Value": "WafLogReportingTest_test_waf_log_reporting",
+    },
+    "GlueTableName": {
+      "Description": "Glue table name over the WAF logs",
+      "Value": "waf_logs",
+    },
+    "ReportTopicArn": {
+      "Description": "ARN of the SNS topic the daily report is published to",
+      "Value": {
+        "Ref": "AthenaReportTopic17FDA961",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AthenaQueryResultsBucketAE74152B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 7,
+              "Id": "ExpireQueryResults",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AthenaQueryResultsBucketAutoDeleteObjectsCustomResourceCED0D94E": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AthenaQueryResultsBucketPolicy8ADD94EE",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AthenaQueryResultsBucketAE74152B",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AthenaQueryResultsBucketPolicy8ADD94EE": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AthenaQueryResultsBucketAE74152B",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaQueryResultsBucketAE74152B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaQueryResultsBucketAE74152B",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaQueryResultsBucketAE74152B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaQueryResultsBucketAE74152B",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "AthenaReportFunction5401DC9D": {
+      "DependsOn": [
+        "AthenaReportFunctionServiceRoleDefaultPolicy4323B52E",
+        "AthenaReportFunctionServiceRole828D2AD4",
+        "WafLogsTable",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "14802c42d232a0bf09cbae989c5653a5aa095aa16cacd0cf5e7c1f801959f40f.zip",
+        },
+        "Description": "Builds a daily WAF activity report from Athena and publishes it to SNS",
+        "Environment": {
+          "Variables": {
+            "ANOMALY_THRESHOLD_PERCENT": "50",
+            "ATHENA_DATABASE": "WafLogReportingTest_test_waf_log_reporting",
+            "ATHENA_TABLE": "waf_logs",
+            "ATHENA_WORKGROUP": "WafLogReportingTest-test-waf-log-reporting",
+            "LOCALE": "ja",
+            "PARTITION_SCHEME": "hive",
+            "TOPIC_ARN": {
+              "Ref": "AthenaReportTopic17FDA961",
+            },
+            "TOP_N": "5",
+          },
+        },
+        "FunctionName": "WafLogReportingTest-test-waf-athena-report",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "AthenaReportFunctionLogGroupBD3FEDC7",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "AthenaReportFunctionServiceRole828D2AD4",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 300,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AthenaReportFunctionLogGroupBD3FEDC7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AthenaReportFunctionServiceRole828D2AD4": {
+      "DependsOn": [
+        "WafLogsTable",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AthenaReportFunctionServiceRoleDefaultPolicy4323B52E": {
+      "DependsOn": [
+        "WafLogsTable",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "athena:StartQueryExecution",
+                "athena:GetQueryExecution",
+                "athena:GetQueryResults",
+                "athena:StopQueryExecution",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":athena:ap-northeast-1:123456789012:workgroup/WafLogReportingTest-test-waf-log-reporting",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "glue:GetTable",
+                "glue:GetDatabase",
+                "glue:GetPartitions",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":glue:ap-northeast-1:123456789012:catalog",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":glue:ap-northeast-1:123456789012:database/WafLogReportingTest_test_waf_log_reporting",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":glue:ap-northeast-1:123456789012:table/WafLogReportingTest_test_waf_log_reporting/waf_logs",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WafLogsBucket2E62CA90",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WafLogsBucket2E62CA90",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaQueryResultsBucketAE74152B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaQueryResultsBucketAE74152B",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "AthenaReportTopic17FDA961",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AthenaReportFunctionServiceRoleDefaultPolicy4323B52E",
+        "Roles": [
+          {
+            "Ref": "AthenaReportFunctionServiceRole828D2AD4",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AthenaReportSchedule6DC5A3D2": {
+      "Properties": {
+        "Description": "Triggers the daily WAF Athena report",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "Name": "WafLogReportingTest-test-waf-athena-report",
+        "ScheduleExpression": "cron(0 0 * * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "AthenaReportFunction5401DC9D",
+              "Arn",
+            ],
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTargeteb8263D720B3C8",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "AthenaReportTopic17FDA961": {
+      "Properties": {
+        "DisplayName": "WAF daily report (Athena)",
+        "KmsMasterKeyId": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":kms:ap-northeast-1:123456789012:alias/aws/sns",
+            ],
+          ],
+        },
+        "TopicName": "WafLogReportingTest-test-waf-athena-report",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AthenaReportTopicPolicyA72BF5AE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "AthenaReportTopic17FDA961",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "AthenaReportTopic17FDA961",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "AthenaReportTopictestexamplecom7E5CAE26": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "AthenaReportTopic17FDA961",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "WafLogsBucket2E62CA90",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwlToFirehoseRole124D1583": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:ap-northeast-1:123456789012:log-group:aws-waf-logs-WafLogReportingTest-test:*",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwlToFirehoseRoleDefaultPolicy51C34CD1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WafLogsDeliveryStreamC78EF0FB",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+        "Roles": [
+          {
+            "Ref": "CwlToFirehoseRole124D1583",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "FirehoseRoleAA67C190": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "firehose.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "s3:AbortMultipartUpload",
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:ListBucketMultipartUploads",
+                    "s3:ListMultipartUploadParts",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "WafLogsBucket2E62CA90",
+                        "Arn",
+                      ],
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "WafLogsBucket2E62CA90",
+                              "Arn",
+                            ],
+                          },
+                          "/*",
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "AllowPutToS3",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FirehoseRoleDefaultPolicyF034DFF7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WafLogsBucket2E62CA90",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WafLogsBucket2E62CA90",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WafLogsDeliveryStreamLogGroupF54BE52B",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "FirehoseRoleDefaultPolicyF034DFF7",
+        "Roles": [
+          {
+            "Ref": "FirehoseRoleAA67C190",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SchedulerRoleForTargeteb8263D720B3C8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTargeteb8263DefaultPolicy8279A17B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaReportFunction5401DC9D",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaReportFunction5401DC9D",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTargeteb8263DefaultPolicy8279A17B",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTargeteb8263D720B3C8",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WafLogReportingWorkGroup": {
+      "Properties": {
+        "Description": "Workgroup used by the daily WAF Athena report Lambda",
+        "Name": "WafLogReportingTest-test-waf-log-reporting",
+        "WorkGroupConfiguration": {
+          "EnforceWorkGroupConfiguration": true,
+          "PublishCloudWatchMetricsEnabled": true,
+          "ResultConfiguration": {
+            "OutputLocation": {
+              "Fn::Join": [
+                "",
+                [
+                  "s3://",
+                  {
+                    "Ref": "AthenaQueryResultsBucketAE74152B",
+                  },
+                  "/athena-results/",
+                ],
+              ],
+            },
+          },
+        },
+      },
+      "Type": "AWS::Athena::WorkGroup",
+    },
+    "WafLogsBucket2E62CA90": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUploadsAfter7Days",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WafLogsBucketAutoDeleteObjectsCustomResource69FD4DCF": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "WafLogsBucketPolicyC1654A35",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "WafLogsBucket2E62CA90",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WafLogsBucketPolicyC1654A35": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "WafLogsBucket2E62CA90",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WafLogsBucket2E62CA90",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WafLogsBucket2E62CA90",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WafLogsBucket2E62CA90",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WafLogsBucket2E62CA90",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "WafLogsDatabase": {
+      "Properties": {
+        "CatalogId": "123456789012",
+        "DatabaseInput": {
+          "Name": "WafLogReportingTest_test_waf_log_reporting",
+        },
+      },
+      "Type": "AWS::Glue::Database",
+    },
+    "WafLogsDeliveryStreamC78EF0FB": {
+      "DependsOn": [
+        "FirehoseRoleDefaultPolicyF034DFF7",
+      ],
+      "Properties": {
+        "DeliveryStreamEncryptionConfigurationInput": {
+          "KeyType": "AWS_OWNED_CMK",
+        },
+        "DeliveryStreamName": "WafLogReportingTest-test-waf-log-reporting",
+        "DeliveryStreamType": "DirectPut",
+        "ExtendedS3DestinationConfiguration": {
+          "BucketARN": {
+            "Fn::GetAtt": [
+              "WafLogsBucket2E62CA90",
+              "Arn",
+            ],
+          },
+          "BufferingHints": {
+            "IntervalInSeconds": 60,
+            "SizeInMBs": 5,
+          },
+          "CloudWatchLoggingOptions": {
+            "Enabled": true,
+            "LogGroupName": {
+              "Ref": "WafLogsDeliveryStreamLogGroupF54BE52B",
+            },
+            "LogStreamName": {
+              "Ref": "WafLogsDeliveryStreamLogGroupS3Destination2A51EB5D",
+            },
+          },
+          "CompressionFormat": "GZIP",
+          "ErrorOutputPrefix": "waf-logs-errors/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/",
+          "Prefix": "waf-logs/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/",
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::KinesisFirehose::DeliveryStream",
+    },
+    "WafLogsDeliveryStreamLogGroupF54BE52B": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 731,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "WafLogsDeliveryStreamLogGroupS3Destination2A51EB5D": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "LogGroupName": {
+          "Ref": "WafLogsDeliveryStreamLogGroupF54BE52B",
+        },
+      },
+      "Type": "AWS::Logs::LogStream",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "WafLogsSubscriptionFilterFB7501A9": {
+      "DependsOn": [
+        "CwlToFirehoseRoleDefaultPolicy51C34CD1",
+      ],
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "WafLogsDeliveryStreamC78EF0FB",
+            "Arn",
+          ],
+        },
+        "FilterPattern": "",
+        "LogGroupName": "aws-waf-logs-WafLogReportingTest-test",
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "CwlToFirehoseRole124D1583",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::SubscriptionFilter",
+    },
+    "WafLogsTable": {
+      "Properties": {
+        "CatalogId": "123456789012",
+        "DatabaseName": "WafLogReportingTest_test_waf_log_reporting",
+        "TableInput": {
+          "Name": "waf_logs",
+          "Parameters": {
+            "classification": "json",
+            "projection.day.digits": "2",
+            "projection.day.range": "1,31",
+            "projection.day.type": "integer",
+            "projection.enabled": "true",
+            "projection.month.digits": "2",
+            "projection.month.range": "1,12",
+            "projection.month.type": "integer",
+            "projection.year.range": "2024,2035",
+            "projection.year.type": "integer",
+            "storage.location.template": {
+              "Fn::Join": [
+                "",
+                [
+                  "s3://",
+                  {
+                    "Ref": "WafLogsBucket2E62CA90",
+                  },
+                  "/waf-logs/year=\${year}/month=\${month}/day=\${day}/",
+                ],
+              ],
+            },
+          },
+          "PartitionKeys": [
+            {
+              "Name": "year",
+              "Type": "string",
+            },
+            {
+              "Name": "month",
+              "Type": "string",
+            },
+            {
+              "Name": "day",
+              "Type": "string",
+            },
+          ],
+          "StorageDescriptor": {
+            "Columns": [
+              {
+                "Name": "timestamp",
+                "Type": "bigint",
+              },
+              {
+                "Name": "formatversion",
+                "Type": "int",
+              },
+              {
+                "Name": "webaclid",
+                "Type": "string",
+              },
+              {
+                "Name": "terminatingruleid",
+                "Type": "string",
+              },
+              {
+                "Name": "terminatingruletype",
+                "Type": "string",
+              },
+              {
+                "Name": "action",
+                "Type": "string",
+              },
+              {
+                "Name": "httpsourcename",
+                "Type": "string",
+              },
+              {
+                "Name": "httpsourceid",
+                "Type": "string",
+              },
+              {
+                "Name": "rulegrouplist",
+                "Type": "array<struct<rulegroupid:string,terminatingrule:struct<ruleid:string,action:string,rulematchdetails:string>,nonterminatingmatchingrules:array<struct<ruleid:string,action:string>>,excludedrules:string>>",
+              },
+              {
+                "Name": "ratebasedrulelist",
+                "Type": "array<struct<ratebasedruleid:string,limitkey:string,maxrateallowed:int>>",
+              },
+              {
+                "Name": "nonterminatingmatchingrules",
+                "Type": "array<struct<ruleid:string,action:string,rulematchdetails:array<struct<conditiontype:string,location:string,matcheddata:array<string>>>>>",
+              },
+              {
+                "Name": "httprequest",
+                "Type": "struct<clientip:string,country:string,headers:array<struct<name:string,value:string>>,uri:string,args:string,httpversion:string,httpmethod:string,requestid:string>",
+              },
+              {
+                "Name": "labels",
+                "Type": "array<struct<name:string>>",
+              },
+              {
+                "Name": "responsecodesent",
+                "Type": "string",
+              },
+            ],
+            "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+            "Location": {
+              "Fn::Join": [
+                "",
+                [
+                  "s3://",
+                  {
+                    "Ref": "WafLogsBucket2E62CA90",
+                  },
+                  "/waf-logs/",
+                ],
+              ],
+            },
+            "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            "SerdeInfo": {
+              "Parameters": {
+                "case.insensitive": "true",
+              },
+              "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+            },
+          },
+          "TableType": "EXTERNAL_TABLE",
+        },
+      },
+      "Type": "AWS::Glue::Table",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests WafLogReportingAthenaReportStack Resource types and counts 1`] = `
+{
+  "AWS::Athena::WorkGroup": 1,
+  "AWS::Glue::Database": 1,
+  "AWS::Glue::Table": 1,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 5,
+  "AWS::KinesisFirehose::DeliveryStream": 1,
+  "AWS::Lambda::Function": 2,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::Logs::LogStream": 1,
+  "AWS::Logs::SubscriptionFilter": 1,
+  "AWS::S3::Bucket": 2,
+  "AWS::S3::BucketPolicy": 2,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::Scheduler::Schedule": 1,
+  "Custom::S3AutoDeleteObjects": 2,
+}
+`;
+
+exports[`Stack Snapshot Tests WafLogReportingCwLogsReportStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ReportTopicArn": {
+      "Description": "ARN of the SNS topic the daily report is published to",
+      "Value": {
+        "Ref": "CwLogsReportTopic93E8732C",
+      },
+    },
+    "TargetLogGroupName": {
+      "Description": "WAF CloudWatch Logs log group analyzed by the report",
+      "Value": "aws-waf-logs-WafLogReportingTest-test",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CwLogsReportFunctionFD4ADE37": {
+      "DependsOn": [
+        "CwLogsReportFunctionServiceRoleDefaultPolicyC6C44563",
+        "CwLogsReportFunctionServiceRoleADCAEDA6",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "338d893091273f7ed3516bbd4a1929ebe8eac0d541b9905974620e9e504eb451.zip",
+        },
+        "Description": "Builds a daily WAF activity report from CloudWatch Logs Insights and publishes it to SNS",
+        "Environment": {
+          "Variables": {
+            "ANOMALY_THRESHOLD_PERCENT": "50",
+            "LOCALE": "ja",
+            "LOG_GROUP_NAME": "aws-waf-logs-WafLogReportingTest-test",
+            "REPORT_PERIOD_HOURS": "24",
+            "TOPIC_ARN": {
+              "Ref": "CwLogsReportTopic93E8732C",
+            },
+            "TOP_N": "5",
+          },
+        },
+        "FunctionName": "WafLogReportingTest-test-waf-cwlogs-report",
+        "Handler": "index.lambda_handler",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "CwLogsReportFunctionLogGroup3E951503",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "CwLogsReportFunctionServiceRoleADCAEDA6",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 300,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CwLogsReportFunctionLogGroup3E951503": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CwLogsReportFunctionServiceRoleADCAEDA6": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CwLogsReportFunctionServiceRoleDefaultPolicyC6C44563": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "logs:StartQuery",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":logs:ap-northeast-1:123456789012:log-group:aws-waf-logs-WafLogReportingTest-test:*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "logs:GetQueryResults",
+                "logs:StopQuery",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CwLogsReportTopic93E8732C",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CwLogsReportFunctionServiceRoleDefaultPolicyC6C44563",
+        "Roles": [
+          {
+            "Ref": "CwLogsReportFunctionServiceRoleADCAEDA6",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CwLogsReportSchedule09B101BF": {
+      "Properties": {
+        "Description": "Triggers the daily WAF CloudWatch Logs Insights report",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "Name": "WafLogReportingTest-test-waf-cwlogs-report",
+        "ScheduleExpression": "cron(0 0 * * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "CwLogsReportFunctionFD4ADE37",
+              "Arn",
+            ],
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTargetca87aaB86EA6C9",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "CwLogsReportTopic93E8732C": {
+      "Properties": {
+        "DisplayName": "WAF daily report (CloudWatch Logs Insights)",
+        "KmsMasterKeyId": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":kms:ap-northeast-1:123456789012:alias/aws/sns",
+            ],
+          ],
+        },
+        "TopicName": "WafLogReportingTest-test-waf-cwlogs-report",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "CwLogsReportTopicPolicy909EADC0": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "CwLogsReportTopic93E8732C",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "CwLogsReportTopic93E8732C",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "CwLogsReportTopictestexamplecom91B25EF5": {
+      "Properties": {
+        "Endpoint": "test@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "CwLogsReportTopic93E8732C",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "SchedulerRoleForTargetca87aaB86EA6C9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTargetca87aaDefaultPolicy01604F54": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CwLogsReportFunctionFD4ADE37",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CwLogsReportFunctionFD4ADE37",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTargetca87aaDefaultPolicy01604F54",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTargetca87aaB86EA6C9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests WafLogReportingCwLogsReportStack Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::Scheduler::Schedule": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests WafLogReportingSampleWafStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "WafLogGroupName": {
+      "Description": "Name of the WAF CloudWatch Logs log group (source for both report stacks)",
+      "Value": {
+        "Ref": "WafLogGroupDFDE65B0",
+      },
+    },
+    "WebAclArn": {
+      "Description": "ARN of the standalone sample Web ACL",
+      "Value": {
+        "Fn::GetAtt": [
+          "Resource",
+          "Arn",
+        ],
+      },
+    },
+    "WebAclName": {
+      "Description": "Name of the standalone sample Web ACL",
+      "Value": "WafLogReportingTest-test-waf-log-reporting-sample",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "LoggingConfiguration": {
+      "Properties": {
+        "LogDestinationConfigs": [
+          {
+            "Fn::GetAtt": [
+              "WafLogGroupDFDE65B0",
+              "Arn",
+            ],
+          },
+        ],
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "Resource",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::LoggingConfiguration",
+    },
+    "Resource": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Description": "Standalone sample Web ACL (not associated with any resource) that generates WAF logs for the waf-log-reporting reference architecture.",
+        "Name": "WafLogReportingTest-test-waf-log-reporting-sample",
+        "Rules": [
+          {
+            "Name": "CommonRuleSet-Count",
+            "OverrideAction": {
+              "Count": {},
+            },
+            "Priority": 0,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "WafLogReportingTest-test-waf-log-reporting-common-count",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "KnownBadInputs-Block",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 1,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "WafLogReportingTest-test-waf-log-reporting-known-bad-inputs-block",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Block": {},
+            },
+            "Name": "RateLimit-Block",
+            "Priority": 2,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "Limit": 2000,
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "WafLogReportingTest-test-waf-log-reporting-rate-limit-block",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "REGIONAL",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "WafLogReportingTest-test-waf-log-reporting",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "WafLogGroupDFDE65B0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "aws-waf-logs-WafLogReportingTest-test",
+        "RetentionInDays": 14,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WafLogsResourcePolicy": {
+      "Properties": {
+        "PolicyDocument": {
+          "Fn::Join": [
+            "",
+            [
+              "{"Version":"2012-10-17","Statement":[{"Sid":"AWSWafLogDeliveryWrite","Effect":"Allow","Principal":{"Service":"delivery.logs.amazonaws.com"},"Action":["logs:CreateLogStream","logs:PutLogEvents"],"Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "WafLogGroupDFDE65B0",
+                  "Arn",
+                ],
+              },
+              ":*","Condition":{"StringEquals":{"aws:SourceAccount":"123456789012"},"ArnLike":{"aws:SourceArn":"",
+              {
+                "Fn::GetAtt": [
+                  "Resource",
+                  "Arn",
+                ],
+              },
+              ""}}}]}",
+            ],
+          ],
+        },
+        "PolicyName": "WafLogReportingTest-test-waf-log-reporting-logs",
+      },
+      "Type": "AWS::Logs::ResourcePolicy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests WafLogReportingSampleWafStack Resource types and counts 1`] = `
+{
+  "AWS::Logs::LogGroup": 1,
+  "AWS::Logs::ResourcePolicy": 1,
+  "AWS::WAFv2::LoggingConfiguration": 1,
+  "AWS::WAFv2::WebACL": 1,
+}
+`;

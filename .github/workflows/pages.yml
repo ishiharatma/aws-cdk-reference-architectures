@@ -6,6 +6,7 @@ on:
     # pages/ に変更があったときだけデプロイ（スキップ要件）
     paths:
       - "pages/**"
+      - "infrastructure/workspaces/**/overview.drawio.svg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -29,6 +30,18 @@ jobs:
       # https://github.com/actions/checkout
       - name: Checkout
         uses: actions/checkout@v6
+
+      # raw.githubusercontent.com への直リンクは匿名アクセスのレート制限(429)を受けやすいため、
+      # 各ワークスペースの構成図SVGを pages/ 配下にコピーして同一オリジン配信にする
+      - name: Copy pattern overview images into pages/
+        run: |
+          set -eu
+          for svg in infrastructure/workspaces/*/overview.drawio.svg; do
+            [ -e "$svg" ] || continue
+            pattern_dir=$(basename "$(dirname "$svg")")
+            mkdir -p "pages/${pattern_dir}"
+            cp "$svg" "pages/${pattern_dir}/overview.drawio.svg"
+          done
 
       # pages/ をそのまま Pages の公開物としてアップロード
       # https://github.com/actions/upload-pages-artifact

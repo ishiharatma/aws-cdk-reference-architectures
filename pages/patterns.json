@@ -1,5 +1,17 @@
 [
   {
+    "id": "waf-log-reporting",
+    "title": "WAF Log Reporting",
+    "description": "Daily WAF Count/Block activity reports built two ways from the same logs: CloudWatch Logs Insights + Lambda + SNS, and Athena + Lambda + SNS, either against a standalone sample Web ACL or an existing WAF.",
+    "image": "waf-log-reporting/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "WAF", "Athena", "CloudWatch Logs", "Lambda", "SNS", "Security"],
+    "link": "waf-log-reporting",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-16",
+    "articles": {}
+  },
+  {
     "id": "ec2-dual-eni",
     "title": "EC2 Dual ENI",
     "description": "Single EC2 instance with two network interfaces: eth0 for internet-facing HTTP/HTTPS traffic (with Elastic IP), and eth1 for SSH management access restricted to specific CIDRs.",

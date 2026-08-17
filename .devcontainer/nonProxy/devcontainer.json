@@ -28,11 +28,11 @@
 		// Git installation
 		// https://github.com/devcontainers/features/tree/main/src/git
 		"ghcr.io/devcontainers/features/git:1": {},
-		
+
 		// AWS CLI installation - allows you to run `aws` commands in terminal
 		// https://aws.amazon.com/cli/
 		//"ghcr.io/devcontainers/features/aws-cli:1": {},
-		
+
 		// AWS CDK (Cloud Development Kit) installation
 		// https://aws.amazon.com/cdk/
 		// TypeScript API reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html
@@ -50,7 +50,7 @@
 
 		// Docker in Docker - allows you to create Docker containers within your development environment
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
-		
+
 		// Claude Code feature (if needed)
 		// "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
 
@@ -237,6 +237,11 @@
 						"aws-knowledge-mcp-server": {
 							"command": "uvx",
 							"args": ["fastmcp", "run", "https://knowledge-mcp.global.api.aws"]
+						},
+						"drawio": {
+							"type": "stdio",
+							"command": "npx",
+							"args": ["@drawio/mcp"]
 						}
 					}
 				}
