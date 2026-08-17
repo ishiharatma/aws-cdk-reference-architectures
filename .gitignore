@@ -2,10 +2,15 @@
 _draft*
 .draft/
 
+# Agent
+.agent/
+
 # skills (local dev tool, not project code)
 .claude/skills/
 .claude/CLAUDE.md
-.claude/
+.claude/**
+!.claude/settings.json
+
 
 # AWS Credentials
 .aws/
