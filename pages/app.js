@@ -258,6 +258,14 @@ function setupEventListeners() {
         qrModal.classList.add('show');
     });
 
+    // モバイルボトムナビのQRコードボタン
+    const qrButtonMobile = document.getElementById('qrCodeButtonMobile');
+    if (qrButtonMobile) {
+        qrButtonMobile.addEventListener('click', function() {
+            qrModal.classList.add('show');
+        });
+    }
+
     qrModalClose.addEventListener('click', function() {
         qrModal.classList.remove('show');
     });
