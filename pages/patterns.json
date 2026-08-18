@@ -21,7 +21,7 @@
     "difficulty": "intermediate",
     "level": 200,
     "date": "2026-08-13",
-    "draft": true,
+    "draft": false,
     "articles": {}
   },
   {
@@ -182,7 +182,9 @@
     "difficulty": "intermediate",
     "level": 300,
     "date": "2026-06-06",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/issy929/aws-cdk-100-drill-exercises-009-cloudwatch-logs-s3-archive-comparing-3-log-archive-patterns-3ia6"
+    }
   },
   {
     "id": "budgets-cost-anomaly-detection",
@@ -194,7 +196,9 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-07-31",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-010-budget-alerts-cost-anomaly-detection-5-finops-alerting-23g2"
+    }
   },
   {
     "id": "cicd-cloudfront-s3",
