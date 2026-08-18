@@ -332,7 +332,7 @@
             transform: rotate(-45deg);
             box-shadow: 0 2px 6px rgba(100, 116, 139, .35);
         }
-    .header-nav { display: flex; align-items: center; gap: 4px; }
+    .header-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-left: -11px; }
     .header-nav-link {
       display: inline-flex;
       align-items: center;
@@ -473,11 +473,11 @@
     <!-- Header -->
     <header class="bg-aws-squid text-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-3xl font-bold">AWS CDK Reference Architectures</h1>
                     <p class="text-gray-300 mt-2">Architecture Patterns</p>
-                </div>                    
+                </div>
                 <nav class="header-nav" aria-label="外部リンク">
                     <a href="https://github.com/ishiharatma/aws-cdk-reference-architectures"
                     target="_blank" rel="noopener noreferrer"
@@ -535,7 +535,7 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-transparent"
                     >
                 </div>
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                     <select id="difficultyFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-aws-orange">
                         <option value="">All Difficulty Levels</option>
                         <option value="beginner">Beginner</option>
