@@ -86,6 +86,20 @@ Platforms without a link are hidden (all fields are optional).
 - **Z** - blue icon (Zenn)
 - **Q** - green icon (Qiita)
 
+## 📱 QR Code
+
+The header's "QR コード" button opens a modal showing `qr-code.svg`, a QR code pointing to the page URL (`https://ishiharatma.github.io/aws-cdk-reference-architectures/`). It is pre-generated at build time and embedded as a static image — no external API call or client-side JS library is used at runtime.
+
+### Regenerating after a URL change
+
+If the GitHub Pages URL ever changes, regenerate the SVG with the [`qrcode`](https://www.npmjs.com/package/qrcode) npm package:
+
+```bash
+npx qrcode -t svg -e M -q 1 -o pages/qr-code.svg "https://new-url-here/"
+```
+
+Also update the URL text shown in the modal (`.qr-modal-url` element in `index.html`) to match.
+
 ## 🎨 Design Customization
 
 ### Color Palette

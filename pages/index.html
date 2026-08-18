@@ -351,6 +351,94 @@
       background: rgba(255,153,0,0.12);
       text-decoration: none;
     }
+    .header-nav-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #AAB7B8;
+      font-size: 0.82rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 5px 11px;
+      border-radius: 6px;
+      transition: color 0.18s, background-color 0.18s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .header-nav-button:hover {
+      color: #FF9900;
+      background: rgba(255,153,0,0.12);
+    }
+
+    /* ---- QR Code Modal ---- */
+    .qr-modal {
+      display: none;
+      position: fixed;
+      z-index: 1100;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s;
+    }
+    .qr-modal.show { display: flex; }
+    .qr-modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem 2.5rem 1.75rem;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .qr-modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #232F3E;
+      margin-bottom: 1.25rem;
+    }
+    .qr-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #E2E8F0;
+      background: #fff;
+      color: #64748B;
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s;
+    }
+    .qr-modal-close:hover {
+      color: #FF9900;
+      border-color: #FF9900;
+    }
+    .qr-modal-image {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto;
+    }
+    .qr-modal-hint {
+      font-size: 0.8rem;
+      color: #64748B;
+      margin-top: 1rem;
+    }
+    .qr-modal-url {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #0B5394;
+      word-break: break-all;
+    }
 
         /* ---- Footer ---- */
     .site-footer {
@@ -409,10 +497,31 @@
                         style="border-radius:3px;opacity:0.75;">
                     Portfolio
                     </a>
+                    <button type="button"
+                    id="qrCodeButton"
+                    class="header-nav-button"
+                    aria-label="このページをQRコードで共有"
+                    aria-haspopup="dialog">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M2 2h4v4H2V2zm1 1v2h2V3H3zm-1 7h4v4H2v-4zm1 1v2h2v-2H3zm6-9h4v4H9V2zm1 1v2h2V3h-2zM9 9h1v1H9V9zm1 1h1v1h-1v-1zm-1 1h1v1H9v-1zm1 1h1v1h-1v-1zm1-3h1v1h-1V9zm1 1h1v1h-1v-1zm-1 1h1v1h-1v-1zm1 1h1v1h-1v-1zm1-3h1v1h-1V9zm0 3h1v1h-1v-1z"/>
+                    </svg>
+                    QRコード
+                    </button>
                 </nav>
             </div>
         </div>
     </header>
+
+    <!-- QR Code Modal -->
+    <div id="qrCodeModal" class="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qrCodeModalTitle">
+        <div class="qr-modal-content">
+            <button type="button" id="qrCodeModalClose" class="qr-modal-close" aria-label="閉じる">&times;</button>
+            <p id="qrCodeModalTitle" class="qr-modal-title">このページをQRコードで共有</p>
+            <img src="qr-code.svg" alt="このページのQRコード" class="qr-modal-image" width="220" height="220">
+            <p class="qr-modal-hint">スマートフォンのカメラで読み取れます</p>
+            <p class="qr-modal-url">ishiharatma.github.io/aws-cdk-reference-architectures</p>
+        </div>
+    </div>
 
     <!-- Search and Filter Section -->
     <section class="bg-white border-b border-gray-200 py-6 sticky top-0 z-50 shadow-md">

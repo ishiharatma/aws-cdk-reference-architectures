@@ -86,6 +86,20 @@ npx http-server pages -p 8000
 - **Z** - 青いアイコン（Zenn）
 - **Q** - 緑のアイコン（Qiita）
 
+## 📱 QRコード
+
+ヘッダーの「QRコード」ボタンをクリックすると、ページURL（`https://ishiharatma.github.io/aws-cdk-reference-architectures/`）を指す`qr-code.svg`をモーダル表示します。ビルド時に事前生成した静的画像を埋め込んでいるだけなので、実行時に外部APIやクライアントサイドのJSライブラリは使用していません。
+
+### URL変更時の再生成方法
+
+GitHub PagesのURLが変わった場合は、[`qrcode`](https://www.npmjs.com/package/qrcode) npmパッケージでSVGを再生成してください：
+
+```bash
+npx qrcode -t svg -e M -q 1 -o pages/qr-code.svg "https://new-url-here/"
+```
+
+あわせて、モーダル内に表示しているURLテキスト（`index.html`の`.qr-modal-url`要素）も更新してください。
+
 ## 🎨 デザインのカスタマイズ
 
 ### カラーパレット

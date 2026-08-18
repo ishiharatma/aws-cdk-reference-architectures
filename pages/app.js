@@ -239,13 +239,35 @@ function setupEventListeners() {
         }
     };
     
+    // QR code modal event listeners
+    const qrModal = document.getElementById('qrCodeModal');
+    const qrButton = document.getElementById('qrCodeButton');
+    const qrModalClose = document.getElementById('qrCodeModalClose');
+
     // ESC key to close modal
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && modal.style.display === 'block') {
             modal.style.display = 'none';
         }
+        if (event.key === 'Escape' && qrModal.classList.contains('show')) {
+            qrModal.classList.remove('show');
+        }
     });
-    
+
+    qrButton.addEventListener('click', function() {
+        qrModal.classList.add('show');
+    });
+
+    qrModalClose.addEventListener('click', function() {
+        qrModal.classList.remove('show');
+    });
+
+    qrModal.addEventListener('click', function(event) {
+        if (event.target === qrModal) {
+            qrModal.classList.remove('show');
+        }
+    });
+
     // Scroll to top button
     const scrollToTopBtn = document.getElementById('scrollToTop');
     
