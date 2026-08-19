@@ -12,7 +12,7 @@
     </script>
     
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" href="https://ishiharatma.github.io/favicon.ico">
     <title>AWS CDK Reference Architectures - Patterns</title>
     <!-- OGP -->
@@ -293,7 +293,7 @@
         }
         @media (max-width: 639px) {
             .scroll-to-top {
-                bottom: calc(var(--mobile-nav-height, 68px) + 12px);
+                bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
                 right: 16px;
             }
         }
@@ -480,7 +480,7 @@
     .footer-sep { font-size: 0.75rem; color: #5d7278; }
     /* モバイルではフッターを二段表示 */
     @media (max-width: 639px) {
-      .site-footer { padding-bottom: calc(var(--mobile-nav-height, 68px) + 0.5rem); }
+      .site-footer { padding-bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 0.5rem); }
       .footer-inner { flex-direction: column; gap: 6px; }
       .footer-sep.desktop-only { display: none; }
       .footer-copyright { font-size: 0.68rem; }
@@ -500,7 +500,8 @@
         z-index: 900;
         background: #232F3E;
         border-top: 1px solid #37475A;
-        height: var(--mobile-nav-height, 68px);
+        height: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         align-items: stretch;
         box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
       }
@@ -536,7 +537,7 @@
     /* メインコンテンツがボトムナビに隠れないようにパディング */
     @media (max-width: 639px) {
       #mainContent {
-        padding-bottom: calc(var(--mobile-nav-height, 64px) + 1rem);
+        padding-bottom: calc(var(--mobile-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 1rem);
       }
     }
     </style>
