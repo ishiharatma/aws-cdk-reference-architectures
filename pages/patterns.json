@@ -223,5 +223,17 @@
     "level": 200,
     "date": "2026-08-08",
     "articles": {}
+  },
+  {
+    "id": "ecr-cross-region-replication",
+    "title": "ECR Cross-Region Replication",
+    "description": "Amazon ECR cross-region replication from Tokyo to Osaka, with both repositories pre-created and independently lifecycle-managed so the replica keeps its own retention policy instead of inheriting none.",
+    "image": "ecr-cross-region-replication/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "ECR", "Replication", "Multi-Region"],
+    "link": "ecr-cross-region-replication",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-20",
+    "articles": {}
   }
 ]

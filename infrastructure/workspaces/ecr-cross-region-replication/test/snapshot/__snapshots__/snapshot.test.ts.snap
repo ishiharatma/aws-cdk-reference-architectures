@@ -1,0 +1,278 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EcrCrrOsakaStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "EcrDestinationRepositoryName75B7D5BC": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-name",
+      },
+      "Value": {
+        "Ref": "EcrDestination05916264",
+      },
+    },
+    "EcrDestinationRepositoryUri6480C20E": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-uri",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrDestination05916264",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrDestination05916264",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "EcrDestination05916264",
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "EcrDestination05916264": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "EmptyOnDelete": true,
+        "ImageScanningConfiguration": {
+          "ScanOnPush": false,
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":10,"description":"Keep latest 5 images with \\"latest\\" tag","selection":{"tagStatus":"tagged","tagPatternList":["latest"],"countType":"imageCountMoreThan","countNumber":5},"action":{"type":"expire"}},{"rulePriority":20,"description":"Limit the number of images to 10","selection":{"tagStatus":"tagged","tagPatternList":["test"],"countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}},{"rulePriority":990,"description":"Expire untagged images older than 7 days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countNumber":7,"countUnit":"days"},"action":{"type":"expire"}},{"rulePriority":999,"description":"Expire any tagged images older than 90 days","selection":{"tagStatus":"any","countType":"sinceImagePushed","countNumber":90,"countUnit":"days"},"action":{"type":"expire"}}]}",
+        },
+        "RepositoryName": "testproject-test-sample-app",
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`EcrCrrOsakaStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ECR::Repository": 1,
+}
+`;
+
+exports[`EcrCrrTokyoStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "EcrSourceRepositoryNameEB5CDFD6": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-name",
+      },
+      "Value": {
+        "Ref": "EcrSource65274AE3",
+      },
+    },
+    "EcrSourceRepositoryUri3D03F960": {
+      "Export": {
+        "Name": "testproject-test-ecr-repo-uri",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrSource65274AE3",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "EcrSource65274AE3",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "EcrSource65274AE3",
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "EcrSource65274AE3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "EmptyOnDelete": true,
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true,
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":10,"description":"Keep latest 5 images with \\"latest\\" tag","selection":{"tagStatus":"tagged","tagPatternList":["latest"],"countType":"imageCountMoreThan","countNumber":5},"action":{"type":"expire"}},{"rulePriority":20,"description":"Limit the number of images to 30","selection":{"tagStatus":"tagged","tagPatternList":["test"],"countType":"imageCountMoreThan","countNumber":30},"action":{"type":"expire"}},{"rulePriority":990,"description":"Expire untagged images older than 14 days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countNumber":14,"countUnit":"days"},"action":{"type":"expire"}},{"rulePriority":999,"description":"Expire any tagged images older than 180 days","selection":{"tagStatus":"any","countType":"sinceImagePushed","countNumber":180,"countUnit":"days"},"action":{"type":"expire"}}]}",
+        },
+        "RepositoryName": "testproject-test-sample-app",
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ReplicationConfiguration": {
+      "DependsOn": [
+        "EcrSource65274AE3",
+      ],
+      "Properties": {
+        "ReplicationConfiguration": {
+          "Rules": [
+            {
+              "Destinations": [
+                {
+                  "Region": "ap-northeast-3",
+                  "RegistryId": "123456789012",
+                },
+              ],
+              "RepositoryFilters": [
+                {
+                  "Filter": "testproject-test-sample-app",
+                  "FilterType": "PREFIX_MATCH",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::ECR::ReplicationConfiguration",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`EcrCrrTokyoStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ECR::ReplicationConfiguration": 1,
+  "AWS::ECR::Repository": 1,
+}
+`;
