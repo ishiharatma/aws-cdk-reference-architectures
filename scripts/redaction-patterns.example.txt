@@ -1,0 +1,10 @@
+# scripts/redaction-patterns.local.txt の書き方サンプル。
+# このファイル自体はコミットされるので、実在の固有名詞は書かない。
+# 実際のパターンは scripts/redaction-patterns.local.txt (gitignore 済み) に書くこと。
+#
+# 1行1つの拡張正規表現 (grep -E)。# で始まる行と空行は無視される。
+#
+# 例:
+# internal\.example-corp\.local
+# 顧客A社
+# プロジェクトコードネームX
