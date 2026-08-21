@@ -28,5 +28,19 @@
       "Bash(npx cdk synth)",
       "Bash(aws sts *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-outbound.sh",
+            "shell": "bash"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -10,6 +10,8 @@ _draft*
 .claude/CLAUDE.md
 .claude/**
 !.claude/settings.json
+!.claude/hooks/
+!.claude/hooks/**
 
 # AWS Credentials
 .aws/credentials
@@ -134,4 +136,7 @@ typings/
 .yarn-integrity
 .env
 .next
+
+# environment-specific redaction patterns for scripts/check-public-safety.sh
+scripts/redaction-patterns.local.txt
 
