@@ -1,9 +1,6 @@
 {
-  "name": "ecr-cross-region-replication",
+  "name": "aws-backup-cross-region",
   "version": "0.1.0",
-  "bin": {
-    "ecr-cross-region-replication": "bin/ecr-cross-region-replication.js"
-  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
@@ -19,9 +16,8 @@
     "bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk bootstrap  --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk diff '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "synth": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth '**' --quiet --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
-    "d:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd deploy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
-    "destroy:all": "cdk destroy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "delstack": "delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
@@ -36,15 +32,16 @@
     "clean": "rimraf ./cdk.out ./dist ./node_modules/.cache"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "22.7.9",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "~5.6.3"
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "jest": "^30",
+    "tsx": "^4.23.0",
+    "typescript": "~7.0.2"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.186.0",
-    "constructs": "^10.0.0"
+    "aws-cdk-lib": "^2.265.0",
+    "constructs": "^10.5.0"
   }
 }

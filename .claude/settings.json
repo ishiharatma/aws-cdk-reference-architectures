@@ -2,8 +2,8 @@
   "extraKnownMarketplaces": {
     "agent-skills-private": {
       "source": {
-        "source": "url",
-        "url": "git@github.com:ishiharatma/agent-skills-private.git"
+        "source": "directory",
+        "path": ".agent"
       }
     }
   },

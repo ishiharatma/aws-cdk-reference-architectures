@@ -1,0 +1,1768 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AwsBackupCrrOsakaStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "VaultArnOutput": {
+      "Description": "ARN of the secondary (Osaka) backup vault",
+      "Value": {
+        "Fn::GetAtt": [
+          "Vault23237E5B",
+          "BackupVaultArn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Vault23237E5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BackupVaultName": "testproject-test-backup-osaka",
+        "EncryptionKeyArn": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupVault",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKey6B75F33E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "KMS key for the testproject-test secondary (Osaka) backup vault",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKeyAlias6C40A5EE": {
+      "Properties": {
+        "AliasName": "alias/testproject-test-backup-osaka",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`AwsBackupCrrOsakaStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::Backup::BackupVault": 1,
+  "AWS::KMS::Alias": 1,
+  "AWS::KMS::Key": 1,
+}
+`;
+
+exports[`AwsBackupCrrTokyoStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "SampleWorkloadSampleEc2EC2InstanceId460081AC": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "SampleWorkloadSampleEc2179E7707",
+      },
+    },
+    "SampleWorkloadSampleEc2EC2InstanceKeyPairId44074C35": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SampleWorkloadSampleEc2KeyPairC06C80EB",
+          "KeyPairId",
+        ],
+      },
+    },
+    "SampleWorkloadSampleEc2EC2InstanceSubnetIdBDCC3315": {
+      "Value": {
+        "Ref": "SampleWorkloadVpcPrivateSubnet1Subnet3E750B39",
+      },
+    },
+    "SampleWorkloadSampleEc2EC2SecurityGroupIdA16D2558": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SampleWorkloadSampleEc2SecurityGroup5B507833",
+          "GroupId",
+        ],
+      },
+    },
+    "VaultArnOutput": {
+      "Description": "ARN of the primary (Tokyo) backup vault",
+      "Value": {
+        "Fn::GetAtt": [
+          "Vault23237E5B",
+          "BackupVaultArn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AwsBackupCrrTokyoSampleWorkloadSampleDatabaseSecret4DBF10503fdaad7efa858a3daf9490cf0a702aeb": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~\`#$&*()|[]{}:;<>?!'/@"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{"username":"admin"}",
+        },
+        "Tags": [
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "BackupRoleF43CFD90": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "backup.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "testproject-test-backup-role",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "SampleWorkloadSampleBucket2A863F23",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PlanDAF4E53A": {
+      "Properties": {
+        "BackupPlan": {
+          "BackupPlanName": "testproject-test-backup-plan",
+          "BackupPlanRule": [
+            {
+              "CompletionWindowMinutes": 480,
+              "CopyActions": [
+                {
+                  "DestinationBackupVaultArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":backup:ap-northeast-3:123456789012:backup-vault:testproject-test-backup-osaka",
+                      ],
+                    ],
+                  },
+                  "Lifecycle": {
+                    "DeleteAfterDays": 90,
+                  },
+                },
+              ],
+              "Lifecycle": {
+                "DeleteAfterDays": 35,
+              },
+              "RuleName": "DailyBackup",
+              "ScheduleExpression": "cron(0 16 * * ? *)",
+              "StartWindowMinutes": 60,
+              "TargetBackupVault": {
+                "Fn::GetAtt": [
+                  "Vault23237E5B",
+                  "BackupVaultName",
+                ],
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupPlan",
+    },
+    "PlanTagBasedSelectionB69A39E8": {
+      "Properties": {
+        "BackupPlanId": {
+          "Fn::GetAtt": [
+            "PlanDAF4E53A",
+            "BackupPlanId",
+          ],
+        },
+        "BackupSelection": {
+          "IamRoleArn": {
+            "Fn::GetAtt": [
+              "BackupRoleF43CFD90",
+              "Arn",
+            ],
+          },
+          "ListOfTags": [
+            {
+              "ConditionKey": "Backup",
+              "ConditionType": "STRINGEQUALS",
+              "ConditionValue": "true",
+            },
+          ],
+          "SelectionName": "TagBasedSelection",
+        },
+      },
+      "Type": "AWS::Backup::BackupSelection",
+    },
+    "SampleWorkloadDbSecurityGroupC1D167FE": {
+      "Properties": {
+        "GroupDescription": "Security group for the sample RDS instance",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "SampleWorkloadVpc0285B2F8",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow MySQL access from within the VPC",
+            "FromPort": 3306,
+            "IpProtocol": "tcp",
+            "ToPort": 3306,
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SampleWorkloadFlowLogGroupD2C700AA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 3,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleWorkloadSampleBucket2A863F23": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "testproject-test-backup-sample-123456789012-ap-northeast-1-an",
+        "BucketNamespace": "account-regional",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUpload",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleWorkloadSampleBucketAutoDeleteObjectsCustomResource59F7457B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "SampleWorkloadSampleBucketPolicy3DB8B2EB",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "SampleWorkloadSampleBucket2A863F23",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleWorkloadSampleBucketPolicy3DB8B2EB": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "SampleWorkloadSampleBucket2A863F23",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SampleWorkloadSampleBucket2A863F23",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SampleWorkloadSampleBucket2A863F23",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SampleWorkloadSampleBucket2A863F23",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SampleWorkloadSampleBucket2A863F23",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "SampleWorkloadSampleDatabase60DDDD8F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AllocatedStorage": "20",
+        "BackupRetentionPeriod": 1,
+        "CopyTagsToSnapshot": true,
+        "DBInstanceClass": "db.t3.micro",
+        "DBSubnetGroupName": {
+          "Ref": "SampleWorkloadSampleDatabaseSubnetGroup9FD863B8",
+        },
+        "DeletionProtection": false,
+        "EnableCloudwatchLogsExports": [
+          "error",
+          "general",
+          "slowquery",
+        ],
+        "Engine": "mysql",
+        "EngineVersion": "8.0",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AwsBackupCrrTokyoSampleWorkloadSampleDatabaseSecret4DBF10503fdaad7efa858a3daf9490cf0a702aeb",
+              },
+              ":SecretString:password::}}",
+            ],
+          ],
+        },
+        "MasterUsername": "admin",
+        "MultiAZ": false,
+        "PubliclyAccessible": false,
+        "StorageEncrypted": true,
+        "StorageType": "gp2",
+        "Tags": [
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+        ],
+        "VPCSecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "SampleWorkloadDbSecurityGroupC1D167FE",
+              "GroupId",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleWorkloadSampleDatabaseLogRetentionerrorB41D6D5C": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/instance/",
+              {
+                "Ref": "SampleWorkloadSampleDatabase60DDDD8F",
+              },
+              "/error",
+            ],
+          ],
+        },
+        "RetentionInDays": 3,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "SampleWorkloadSampleDatabaseLogRetentiongeneral1C6F01A3": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/instance/",
+              {
+                "Ref": "SampleWorkloadSampleDatabase60DDDD8F",
+              },
+              "/general",
+            ],
+          ],
+        },
+        "RetentionInDays": 3,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "SampleWorkloadSampleDatabaseLogRetentionslowquery191AB052": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/instance/",
+              {
+                "Ref": "SampleWorkloadSampleDatabase60DDDD8F",
+              },
+              "/slowquery",
+            ],
+          ],
+        },
+        "RetentionInDays": 3,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "SampleWorkloadSampleDatabaseSecretAttachmentD89D0C2B": {
+      "Properties": {
+        "SecretId": {
+          "Ref": "AwsBackupCrrTokyoSampleWorkloadSampleDatabaseSecret4DBF10503fdaad7efa858a3daf9490cf0a702aeb",
+        },
+        "TargetId": {
+          "Ref": "SampleWorkloadSampleDatabase60DDDD8F",
+        },
+        "TargetType": "AWS::RDS::DBInstance",
+      },
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+    },
+    "SampleWorkloadSampleDatabaseSubnetGroup9FD863B8": {
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for SampleDatabase database",
+        "SubnetIds": [
+          {
+            "Ref": "SampleWorkloadVpcPrivateSubnet1Subnet3E750B39",
+          },
+          {
+            "Ref": "SampleWorkloadVpcPrivateSubnet2Subnet31E5D9C5",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBSubnetGroup",
+    },
+    "SampleWorkloadSampleEc2179E7707": {
+      "DependsOn": [
+        "SampleWorkloadSampleEc2InstanceRole88D4BE2D",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "SampleWorkloadSampleEc2InstanceProfile38DC6B7A",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "SampleWorkloadSampleEc2KeyPairC06C80EB",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "SampleWorkloadSampleEc2LaunchTemplateD5AB9CF0",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "SampleWorkloadSampleEc2SecurityGroup5B507833",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet1Subnet3E750B39",
+        },
+        "Tags": [
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+          {
+            "Key": "Name",
+            "Value": "SampleEc2/test/instance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "SampleWorkloadSampleEc2InstanceProfile38DC6B7A": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "SampleWorkloadSampleEc2InstanceRole88D4BE2D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "SampleWorkloadSampleEc2InstanceRole88D4BE2D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+          {
+            "Key": "Name",
+            "Value": "SampleEc2/test/instance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SampleWorkloadSampleEc2KeyPairC06C80EB": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "SampleEc2-ec2-KeyPair",
+        "KeyType": "ed25519",
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "SampleWorkloadSampleEc2LaunchTemplateD5AB9CF0": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "SampleWorkloadSampleEc2SecurityGroup5B507833": {
+      "Properties": {
+        "GroupDescription": "AwsBackupCrrTokyo/SampleWorkload/SampleEc2/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "SampleWorkloadVpc0285B2F8",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SampleWorkloadVpc0285B2F8": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "SampleWorkloadVpcFlowLogBDFFF85C": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "SampleWorkloadVpcFlowLogIAMRole4A1A64D5",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "SampleWorkloadFlowLogGroupD2C700AA",
+        },
+        "ResourceId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/FlowLog",
+          },
+        ],
+        "TrafficType": "ALL",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "SampleWorkloadVpcFlowLogIAMRole4A1A64D5": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/FlowLog",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SampleWorkloadVpcFlowLogIAMRoleDefaultPolicy2EA6BC3D": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SampleWorkloadFlowLogGroupD2C700AA",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SampleWorkloadVpcFlowLogIAMRoleDefaultPolicy2EA6BC3D",
+        "Roles": [
+          {
+            "Ref": "SampleWorkloadVpcFlowLogIAMRole4A1A64D5",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SampleWorkloadVpcIGW10EE7FF7": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "SampleWorkloadVpcPrivateSubnet1DefaultRoute9BFE96B9": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1NATGateway0E69118B",
+        },
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet1RouteTable0E03940C",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SampleWorkloadVpcPrivateSubnet1RouteTable0E03940C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SampleWorkloadVpcPrivateSubnet1RouteTableAssociation122F0C5C": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet1RouteTable0E03940C",
+        },
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet1Subnet3E750B39",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SampleWorkloadVpcPrivateSubnet1Subnet3E750B39": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SampleWorkloadVpcPrivateSubnet2DefaultRoute2D56642B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1NATGateway0E69118B",
+        },
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet2RouteTableF5BF7250",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SampleWorkloadVpcPrivateSubnet2RouteTableAssociationE2F9D458": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet2RouteTableF5BF7250",
+        },
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPrivateSubnet2Subnet31E5D9C5",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SampleWorkloadVpcPrivateSubnet2RouteTableF5BF7250": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SampleWorkloadVpcPrivateSubnet2Subnet31E5D9C5": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SampleWorkloadVpcPublicSubnet1DefaultRoute324F513D": {
+      "DependsOn": [
+        "SampleWorkloadVpcVPCGWF74526EB",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "SampleWorkloadVpcIGW10EE7FF7",
+        },
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1RouteTable26975398",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SampleWorkloadVpcPublicSubnet1EIP0C186802": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "SampleWorkloadVpcPublicSubnet1NATGateway0E69118B": {
+      "DependsOn": [
+        "SampleWorkloadVpcPublicSubnet1DefaultRoute324F513D",
+        "SampleWorkloadVpcPublicSubnet1RouteTableAssociationD602AFDB",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "SampleWorkloadVpcPublicSubnet1EIP0C186802",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1SubnetAA1C63FD",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "SampleWorkloadVpcPublicSubnet1RouteTable26975398": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SampleWorkloadVpcPublicSubnet1RouteTableAssociationD602AFDB": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1RouteTable26975398",
+        },
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet1SubnetAA1C63FD",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SampleWorkloadVpcPublicSubnet1SubnetAA1C63FD": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SampleWorkloadVpcPublicSubnet2DefaultRoute60F8CFBC": {
+      "DependsOn": [
+        "SampleWorkloadVpcVPCGWF74526EB",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "SampleWorkloadVpcIGW10EE7FF7",
+        },
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet2RouteTableD710C142",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SampleWorkloadVpcPublicSubnet2RouteTableAssociation57D6F705": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet2RouteTableD710C142",
+        },
+        "SubnetId": {
+          "Ref": "SampleWorkloadVpcPublicSubnet2Subnet74F13B3F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SampleWorkloadVpcPublicSubnet2RouteTableD710C142": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SampleWorkloadVpcPublicSubnet2Subnet74F13B3F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "AwsBackupCrrTokyo/SampleWorkload/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SampleWorkloadVpcVPCGWF74526EB": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "SampleWorkloadVpcIGW10EE7FF7",
+        },
+        "VpcId": {
+          "Ref": "SampleWorkloadVpc0285B2F8",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "Vault23237E5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BackupVaultName": "testproject-test-backup-tokyo",
+        "EncryptionKeyArn": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupVault",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKey6B75F33E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "KMS key for the testproject-test primary (Tokyo) backup vault",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKeyAlias6C40A5EE": {
+      "Properties": {
+        "AliasName": "alias/testproject-test-backup-tokyo",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`AwsBackupCrrTokyoStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::Backup::BackupPlan": 1,
+  "AWS::Backup::BackupSelection": 1,
+  "AWS::Backup::BackupVault": 1,
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::FlowLog": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::KeyPair": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 4,
+  "AWS::EC2::RouteTable": 4,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::Subnet": 4,
+  "AWS::EC2::SubnetRouteTableAssociation": 4,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 5,
+  "AWS::KMS::Alias": 1,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 2,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::RDS::DBInstance": 1,
+  "AWS::RDS::DBSubnetGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SecretsManager::Secret": 1,
+  "AWS::SecretsManager::SecretTargetAttachment": 1,
+  "Custom::LogRetention": 3,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
+
+exports[`SampleAppStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "SampleAppBucket2C0F27C8",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SampleAppBucket2C0F27C8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "testproject-test-sample-app-123456789012-ap-northeast-1-an",
+        "BucketNamespace": "account-regional",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUpload",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Backup",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleAppBucketAutoDeleteObjectsCustomResource732E80CB": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "SampleAppBucketPolicyE80DA732",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "SampleAppBucket2C0F27C8",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SampleAppBucketPolicyE80DA732": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "SampleAppBucket2C0F27C8",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SampleAppBucket2C0F27C8",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SampleAppBucket2C0F27C8",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SampleAppBucket2C0F27C8",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SampleAppBucket2C0F27C8",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "SampleAppConfigC6A9616B": {
+      "Properties": {
+        "Description": "Placeholder configuration value for the sample application stack",
+        "Name": "/testproject/test/sample-app/config",
+        "Tags": {
+          "Backup": "true",
+        },
+        "Type": "String",
+        "Value": "sample-value",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`SampleAppStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SSM::Parameter": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;

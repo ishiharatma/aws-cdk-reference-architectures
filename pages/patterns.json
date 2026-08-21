@@ -1,5 +1,17 @@
 [
   {
+    "id": "aws-backup-cross-region",
+    "title": "AWS Backup Cross-Region (Tokyo to Osaka)",
+    "description": "A single tag-based AWS Backup Selection protecting a sample EC2 instance, RDS database, S3 bucket, and an entire CloudFormation stack in Tokyo, with every recovery point copied cross-region to a pre-created secondary vault in Osaka.",
+    "image": "aws-backup-cross-region/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "AWS Backup", "EC2", "RDS", "S3", "CloudFormation", "Multi-Region", "DR"],
+    "link": "aws-backup-cross-region",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-21",
+    "articles": {}
+  },
+  {
     "id": "waf-log-reporting",
     "title": "WAF Log Reporting",
     "description": "Daily WAF Count/Block activity reports built two ways from the same logs: CloudWatch Logs Insights + Lambda + SNS, and Athena + Lambda + SNS, either against a standalone sample Web ACL or an existing WAF.",
