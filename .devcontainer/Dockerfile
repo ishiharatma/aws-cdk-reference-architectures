@@ -93,6 +93,10 @@ RUN echo "node ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/node
 # install AWS CDK and TypeScript
 RUN npm install -g aws-cdk aws-cdk-local typescript
 
+# Install CDKD
+# https://github.com/go-to-k/cdkd
+RUN npm install -g @go-to-k/cdkd
+
 # Set user to node
 USER node
 WORKDIR /home/node

@@ -61,7 +61,7 @@ swrole() {
     echo "Example: swrole 123456789012 @role-admin my-admin-role awslogin ap-northeast-1 my-mfa"
     return 1
   fi
-  
+
   local account_id="$1"
   local role_name="$2"
   local profile_name="$3"
@@ -70,17 +70,17 @@ swrole() {
   local mfa_name="${6:-}"
 
   local role_arn="arn:aws:iam::${account_id}:role/${role_name}"
-  
+
   echo "Account ID: $account_id"
   echo "Assuming role: $role_arn"
   echo "Source profile: $source_profile"
   echo "Target profile: $profile_name"
   echo "Region: $region"
-  
+
   # Create or update credentials file
   local config_file="$HOME/.aws/config"
   touch "$config_file"
-  
+
   # Remove existing profile if it exists
   if grep -q "^\[$profile_name\]" "$config_file"; then
     echo "Updating existing profile: $profile_name"
@@ -95,10 +95,10 @@ swrole() {
   else
     echo "Creating new profile: $profile_name"
   fi
-  
+
   # Ensure file ends with newline, then append new config
   [ -s "$config_file" ] && [ -z "$(tail -c 1 "$config_file")" ] || echo "" >> "$config_file"
-  
+
   {
     echo "[profile $profile_name]"
     echo "role_arn = $role_arn"
@@ -114,7 +114,7 @@ swrole() {
   echo ""
   echo "Testing config..."
   aws sts get-caller-identity --profile "$profile_name"
-  
+
   if [ $? -eq 0 ]; then
     echo ""
     echo "✅ Profile is ready to use!"
@@ -129,45 +129,45 @@ swcre() {
     echo "Example: swcre arn:aws:iam::123456789012:role/@role-admin my-admin-role awslogin my-session"
     return 1
   fi
-  
+
   local role_arn="$1"
   local profile_name="$2"
   local source_profile="${3:-awslogin}"
   local session_name="${4:-${profile_name}-session}"
-  
+
   echo "Assuming role: $role_arn"
   echo "Source profile: $source_profile"
   echo "Target profile: $profile_name"
   echo "Session name: $session_name"
-  
+
   # Assume role and get credentials
   local assume_output
   assume_output=$(aws sts assume-role --role-arn "$role_arn" --role-session-name "$session_name" --profile "$source_profile" 2>&1)
-  
+
   if [ $? -ne 0 ]; then
     echo "Error: Failed to assume role"
     echo "$assume_output"
     return 1
   fi
-  
+
   # Parse JSON output
   local access_key
   local secret_key
   local session_token
-  
+
   access_key=$(echo "$assume_output" | grep -o "\"AccessKeyId\": \"[^\"]*\"" | cut -d"\"" -f4)
   secret_key=$(echo "$assume_output" | grep -o "\"SecretAccessKey\": \"[^\"]*\"" | cut -d"\"" -f4)
   session_token=$(echo "$assume_output" | grep -o "\"SessionToken\": \"[^\"]*\"" | cut -d"\"" -f4)
-  
+
   if [ -z "$access_key" ] || [ -z "$secret_key" ] || [ -z "$session_token" ]; then
     echo "Error: Failed to parse credentials"
     return 1
   fi
-  
+
   # Create or update credentials file
   local cred_file="$HOME/.aws/credentials"
   touch "$cred_file"
-  
+
   # Remove existing profile if it exists
   if grep -q "^\[$profile_name\]" "$cred_file"; then
     echo "Updating existing profile: $profile_name"
@@ -182,22 +182,22 @@ swcre() {
   else
     echo "Creating new profile: $profile_name"
   fi
-  
+
   # Ensure file ends with newline, then append new credentials
   [ -s "$cred_file" ] && [ -z "$(tail -c 1 "$cred_file")" ] || echo "" >> "$cred_file"
-  
+
   {
     echo "[$profile_name]"
     echo "aws_access_key_id = $access_key"
     echo "aws_secret_access_key = $secret_key"
     echo "aws_session_token = $session_token"
   } >> "$cred_file"
-  
+
   echo "✅ Credentials saved to profile: $profile_name"
   echo ""
   echo "Testing credentials..."
   aws sts get-caller-identity --profile "$profile_name"
-  
+
   if [ $? -eq 0 ]; then
     echo ""
     echo "✅ Profile is ready to use!"
@@ -212,22 +212,22 @@ clearrole() {
     echo "Example: clearrole my-admin-role"
     return 1
   fi
-  
+
   local profile_name="$1"
   local cred_file="$HOME/.aws/credentials"
-  
+
   if [ ! -f "$cred_file" ]; then
     echo "Error: Credentials file not found: $cred_file"
     return 1
   fi
-  
+
   if ! grep -q "^\[$profile_name\]" "$cred_file"; then
     echo "Error: Profile not found: $profile_name"
     return 1
   fi
-  
+
   echo "Removing profile: $profile_name"
-  
+
   # Remove the profile
   awk -v profile="$profile_name" '\''
     BEGIN { skip=0 }
@@ -236,17 +236,17 @@ clearrole() {
     skip == 0 { print }
   '\'' "$cred_file" > "${cred_file}.tmp"
   mv "${cred_file}.tmp" "$cred_file"
-  
+
   echo "✅ Profile removed: $profile_name"
 }
 
 # AWS logout and optionally clear credentials
 awslogout() {
   local profile_name="${1:-awslogin}"
-  
+
   echo "Logging out from profile: $profile_name"
   aws logout --profile "$profile_name"
-  
+
   if [ $? -eq 0 ]; then
     echo ""
     echo "Checking if profile exists in credentials..."
@@ -359,6 +359,13 @@ if command -v localstack &> /dev/null; then
     echo "LocalStack version: $(localstack --version)"
 else
     echo "❌ LocalStack not found"
+fi
+# check CDKD  configuration
+if command -v cdkd &> /dev/null; then
+    echo "✅ CDKD is available"
+    echo "CDKD version: $(cdkd --version)"
+else
+    echo "❌ CDKD not found"
 fi
 
 # Check Python configuration
