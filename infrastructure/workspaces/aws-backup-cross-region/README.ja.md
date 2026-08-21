@@ -51,6 +51,7 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 - **`SampleAppStack`** – 東京側のワークロードと同じタグを付けた、それ自体は無関係な最小構成のスタック(S3バケット+SSMパラメータ)。AWS Backupが「CloudFormationスタックまるごと」を1つの復旧ポイントとして保護できることを示すための例。
 - **`SampleWorkloadConstruct`**(`lib/constructs/`) – 東京にある小さなVPC+EC2+RDS+S3の「アプリケーション」。すべてのリソースに`Backup=true`タグを付与。
 - **`AwsBackupCrrTokyoStack`** – プライマリVault、Backup Plan(日次ルール+クロスリージョンコピーアクション)、AWS Backupが引き受けるIAMロール、そして上記すべてを対象とする単一のタグベースBackup Selectionを作成する。
+- **`check-backup-status.sh`** – 両Vaultの存在、PlanのCopyActionのコピー先、Backup Selectionの有無、直近のバックアップ/コピージョブが実際に完了しているか(`cdk deploy`が成功しただけではない)を確認する。
 
 ### アーキテクチャの特性
 
@@ -114,7 +115,7 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 
 | 柱 | 実装内容 |
 |---|---|
-| **運用上の優秀性** | 両Vaultスタックが`CfnOutput`(`VaultArnOutput`)を出力し検証を容易化。タグ1つで新規リソースをBackup Planに追加できる |
+| **運用上の優秀性** | 両Vaultスタックが`CfnOutput`(`VaultArnOutput`)を出力し検証を容易化。タグ1つで新規リソースをBackup Planに追加できる。`check-backup-status.sh`によりVault・Plan・Selection・直近ジョブ状況をスクリプトでエンドツーエンド検証できる |
 | **セキュリティ** | 両Vaultともローテーション有効なKMSキーで暗号化。AWS BackupのIAMロールはAWS自身のマネージドサービスロールポリシーのみ使用(カスタムワイルドカード権限なし)。RDSストレージも暗号化 |
 | **信頼性** | クロスリージョンにコピーされる日次バックアップが東京リージョン全体の障害から保護。`tokyoStack.addDependency(osakaStack)`によりVault作成と最初のコピージョブの間の競合状態を排除 |
 | **パフォーマンス効率** | AWS Backupのオーケストレーション・スケジューリング・クロスリージョンコピーはすべてフルマネージド — カスタムのポーリング/オーケストレーション用コンピュートは不要 |
@@ -178,6 +179,7 @@ npm run test:compliance -w workspaces/aws-backup-cross-region
 - Node.js 20.x 以降
 - AWS CDK 2.x (`aws-cdk-lib` ^2.265、本ワークスペースに同梱)
 - Git
+- `jq`(`check-backup-status.sh`の実行にのみ必要)
 
 ### 必要なIAM権限
 
@@ -212,12 +214,12 @@ CDKは`AwsBackupCrrOsakaStack`を`AwsBackupCrrTokyoStack`より先にデプロ�
 
 ### 4. デプロイの確認
 
-`scripts/check-backup-status.sh` は、以下の個別チェックを1回の実行でまとめて確認できるスクリプトです。
+`check-backup-status.sh` は、以下の個別チェックを1回の実行でまとめて確認できるスクリプトです。
 Vaultの存在、Planの`CopyAction`のコピー先、Backup Selectionの有無に加え、直近のバックアップ/コピージョブが
 (`cdk deploy`が成功しているだけでなく)実際に完了しているかまで判定します。
 
 ```bash
-./scripts/check-backup-status.sh --project backup-crr-demo --env dev
+./check-backup-status.sh --project backup-crr-demo --env dev
 # --days N で直近ジョブの参照期間を広げられます(デフォルト: 2日)
 ```
 
@@ -341,18 +343,20 @@ cdk.Tags.of(myResource).add('DataClassification', 'critical');
 **症状**: `aws backup list-recovery-points-by-backup-vault`に期待するリソースが含まれない。
 
 **解決策**:
-1. タグのキー/値が`parameters/dev-params.ts`の`backupTagKey`/`backupTagValue`と完全に一致しているか確認する(大文字小文字を区別)。
-2. リソースがBackup Planと**同じリージョン**(`ap-northeast-1`)にあるか確認する — Backup Selectionは自身と同じリージョンのリソースしか検出しない。
-3. リソースタイプがAWS Backupのサポート対象か確認する — [AWS Backupのリソース別機能対応表](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html)を参照。
-4. 最初のバックアップは次のスケジュール実行(`scheduleExpression`)まで走らない — 早く確認したい場合はオンデマンドのバックアップジョブ(`aws backup start-backup-job`)を実行する。
+1. まず`./check-backup-status.sh --project <project> --env <env>`を実行する — Plan/Selectionの状態と直近ジョブの結果を1回でまとめて確認できる。
+2. タグのキー/値が`parameters/dev-params.ts`の`backupTagKey`/`backupTagValue`と完全に一致しているか確認する(大文字小文字を区別)。
+3. リソースがBackup Planと**同じリージョン**(`ap-northeast-1`)にあるか確認する — Backup Selectionは自身と同じリージョンのリソースしか検出しない。
+4. リソースタイプがAWS Backupのサポート対象か確認する — [AWS Backupのリソース別機能対応表](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html)を参照。
+5. 最初のバックアップは次のスケジュール実行(`scheduleExpression`)まで走らない — 早く確認したい場合はオンデマンドのバックアップジョブ(`aws backup start-backup-job`)を実行する。
 
 ### 問題: 大阪Vaultに復旧ポイントが現れない
 
 **症状**: 東京Vaultには復旧ポイントがあるが、大阪の`list-recovery-points-by-backup-vault`は空。
 
 **解決策**:
-1. コピージョブはプライマリのバックアップジョブが完了した**後**に実行される(並行ではない) — `aws backup list-copy-jobs --region ap-northeast-1`でステータスを確認する。
-2. Backup Selectionに渡しているIAMロール(`AWSBackupServiceRolePolicyForBackup`)がアタッチされたままか確認する — CDKの外で手動でデタッチすると、次の`cdk deploy`まで静かにコピージョブが失敗し続ける。
+1. `./check-backup-status.sh --project <project> --env <env>` を実行する — 「Recent copy jobs」セクションでコピージョブの状態が直接わかる。
+2. コピージョブはプライマリのバックアップジョブが完了した**後**に実行される(並行ではない) — `aws backup list-copy-jobs --region ap-northeast-1`でステータスを確認する。
+3. Backup Selectionに渡しているIAMロール(`AWSBackupServiceRolePolicyForBackup`)がアタッチされたままか確認する — CDKの外で手動でデタッチすると、次の`cdk deploy`まで静かにコピージョブが失敗し続ける。
 
 ## 📚 参考資料
 

@@ -51,6 +51,7 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1, depends on Stack 1)
 - **`SampleAppStack`** – a minimal, otherwise-unrelated stack (S3 bucket + SSM Parameter) tagged the same way as the Tokyo workload, to demonstrate that AWS Backup can protect a *whole CloudFormation stack* as a single recovery point.
 - **`SampleWorkloadConstruct`** (`lib/constructs/`) – a small VPC + EC2 + RDS + S3 "application" in Tokyo, every resource tagged `Backup=true`.
 - **`AwsBackupCrrTokyoStack`** – creates the primary vault, the Backup Plan (daily rule + cross-region copy action), the IAM role AWS Backup assumes, and the single tag-based Backup Selection that covers everything above.
+- **`check-backup-status.sh`** – confirms both vaults exist, the plan's CopyAction targets Osaka, a backup selection is attached, and recent backup/copy jobs actually completed (not just that `cdk deploy` succeeded).
 
 ### Architecture Characteristics
 
@@ -114,7 +115,7 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1, depends on Stack 1)
 
 | Pillar | Implementation |
 |---|---|
-| **Operational Excellence** | Both vault stacks emit `CfnOutput`s (`VaultArnOutput`) for verification; a single tag makes onboarding a new resource to the backup plan a one-line change |
+| **Operational Excellence** | Both vault stacks emit `CfnOutput`s (`VaultArnOutput`) for verification; a single tag makes onboarding a new resource to the backup plan a one-line change; `check-backup-status.sh` gives an end-to-end, scriptable way to verify vaults, plan, selection, and recent job status |
 | **Security** | Both vaults are KMS-encrypted with key rotation; the AWS Backup IAM role uses only AWS's own managed service-role policies (no custom wildcard permissions); RDS storage is encrypted |
 | **Reliability** | Daily backups copied cross-region protect against a full Tokyo regional outage; `tokyoStack.addDependency(osakaStack)` removes the race between vault creation and the first copy job |
 | **Performance Efficiency** | AWS Backup orchestration, scheduling, and cross-region copy are fully managed — no custom polling or orchestration compute |
@@ -178,6 +179,7 @@ npm run test:compliance -w workspaces/aws-backup-cross-region
 - Node.js 20.x or later
 - AWS CDK 2.x (`aws-cdk-lib` ^2.265, bundled in this workspace)
 - Git
+- `jq` (only needed to run `check-backup-status.sh`)
 
 ### Required IAM Permissions
 
@@ -212,12 +214,12 @@ CDK deploys `AwsBackupCrrOsakaStack` before `AwsBackupCrrTokyoStack` (see [Desig
 
 ### 4. Verify Deployment
 
-`scripts/check-backup-status.sh` wraps the checks below into a single pass/fail report — vault
+`check-backup-status.sh` wraps the checks below into a single pass/fail report — vault
 existence, the plan's `CopyAction` target, the backup selection, and whether recent backup/copy
 jobs actually completed (not just that `cdk deploy` succeeded):
 
 ```bash
-./scripts/check-backup-status.sh --project backup-crr-demo --env dev
+./check-backup-status.sh --project backup-crr-demo --env dev
 # add --days N to widen the lookback window for recent jobs (default: 2)
 ```
 
@@ -341,18 +343,20 @@ cdk.Tags.of(myResource).add('DataClassification', 'critical');
 **Symptoms**: `aws backup list-recovery-points-by-backup-vault` doesn't include a resource you expect.
 
 **Solutions**:
-1. Confirm the tag key/value exactly match `backupTagKey`/`backupTagValue` in `parameters/dev-params.ts` (case-sensitive).
-2. Confirm the resource is in the *same region* as the Backup Plan (`ap-northeast-1`) — a Backup Selection only discovers resources in its own region.
-3. Confirm the resource type is one AWS Backup supports — see the [AWS Backup feature availability by resource](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html) table.
-4. The first backup only runs on the next scheduled window (`scheduleExpression`) — trigger an on-demand backup job (`aws backup start-backup-job`) to verify sooner.
+1. Run `./check-backup-status.sh --project <project> --env <env>` first — it reports the plan/selection status and recent job outcomes in one pass.
+2. Confirm the tag key/value exactly match `backupTagKey`/`backupTagValue` in `parameters/dev-params.ts` (case-sensitive).
+3. Confirm the resource is in the *same region* as the Backup Plan (`ap-northeast-1`) — a Backup Selection only discovers resources in its own region.
+4. Confirm the resource type is one AWS Backup supports — see the [AWS Backup feature availability by resource](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html) table.
+5. The first backup only runs on the next scheduled window (`scheduleExpression`) — trigger an on-demand backup job (`aws backup start-backup-job`) to verify sooner.
 
 ### Issue: No recovery points appear in the Osaka vault
 
 **Symptoms**: Tokyo vault has recovery points, but Osaka's `list-recovery-points-by-backup-vault` is empty.
 
 **Solutions**:
-1. Copy jobs run *after* the primary backup job completes, not in parallel — check `aws backup list-copy-jobs --region ap-northeast-1` for its status.
-2. Confirm the IAM role passed to the Backup Selection (`AWSBackupServiceRolePolicyForBackup`) is still attached — removing it manually outside CDK breaks copy jobs silently until the next `cdk deploy`.
+1. Run `./check-backup-status.sh --project <project> --env <env>` — its "Recent copy jobs" section reports copy job state directly.
+2. Copy jobs run *after* the primary backup job completes, not in parallel — check `aws backup list-copy-jobs --region ap-northeast-1` for its status.
+3. Confirm the IAM role passed to the Backup Selection (`AWSBackupServiceRolePolicyForBackup`) is still attached — removing it manually outside CDK breaks copy jobs silently until the next `cdk deploy`.
 
 ## 📚 References
 
