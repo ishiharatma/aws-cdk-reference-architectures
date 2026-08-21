@@ -212,6 +212,17 @@ CDKは`AwsBackupCrrOsakaStack`を`AwsBackupCrrTokyoStack`より先にデプロ�
 
 ### 4. デプロイの確認
 
+`scripts/check-backup-status.sh` は、以下の個別チェックを1回の実行でまとめて確認できるスクリプトです。
+Vaultの存在、Planの`CopyAction`のコピー先、Backup Selectionの有無に加え、直近のバックアップ/コピージョブが
+(`cdk deploy`が成功しているだけでなく)実際に完了しているかまで判定します。
+
+```bash
+./scripts/check-backup-status.sh --project backup-crr-demo --env dev
+# --days N で直近ジョブの参照期間を広げられます(デフォルト: 2日)
+```
+
+個別に確認したい場合の手動コマンドは以下の通りです:
+
 ```bash
 # 両Vaultの存在を確認:
 aws backup describe-backup-vault --region ap-northeast-1 --backup-vault-name backup-crr-demo-dev-backup-tokyo

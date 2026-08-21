@@ -212,6 +212,17 @@ CDK deploys `AwsBackupCrrOsakaStack` before `AwsBackupCrrTokyoStack` (see [Desig
 
 ### 4. Verify Deployment
 
+`scripts/check-backup-status.sh` wraps the checks below into a single pass/fail report — vault
+existence, the plan's `CopyAction` target, the backup selection, and whether recent backup/copy
+jobs actually completed (not just that `cdk deploy` succeeded):
+
+```bash
+./scripts/check-backup-status.sh --project backup-crr-demo --env dev
+# add --days N to widen the lookback window for recent jobs (default: 2)
+```
+
+Equivalent manual checks, if you prefer to run them individually:
+
 ```bash
 # Confirm both vaults exist:
 aws backup describe-backup-vault --region ap-northeast-1 --backup-vault-name backup-crr-demo-dev-backup-tokyo
