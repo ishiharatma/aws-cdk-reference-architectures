@@ -50,7 +50,7 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
       isAutoDeleteObject: props.isAutoDeleteObject,
       crossRegionReferences: true,
     });
-    mainStack.addDependency(wafStack);
+    mainStack.addStackDependency(wafStack);
 
     // CloudFront standard logging (v2) delivery (log group + source + destination + pairing) must
     // all live in us-east-1: PutDeliverySource for CloudFront only works there, and CloudWatch Logs
@@ -67,7 +67,7 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
         isAutoDeleteObject: props.isAutoDeleteObject,
         crossRegionReferences: true,
       });
-      logDeliveryStack.addDependency(mainStack);
+      logDeliveryStack.addStackDependency(mainStack);
     }
 
     // CloudFront's request/error metrics (namespace AWS/CloudFront) are only published to us-east-1
@@ -85,7 +85,7 @@ export class CloudfrontVpcOriginStage extends cdk.Stage {
       terminationProtection: props.terminationProtection,
       crossRegionReferences: true,
     });
-    monitoringStack.addDependency(mainStack);
+    monitoringStack.addStackDependency(mainStack);
 
   }
 }

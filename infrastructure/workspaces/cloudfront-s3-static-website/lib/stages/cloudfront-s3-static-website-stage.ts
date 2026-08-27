@@ -52,7 +52,7 @@ export class CloudfrontS3StaticWebsiteStage extends cdk.Stage {
       contentsPath: path.join(__dirname, '../../../../../frontend/static-web/'), // Path to the local directory containing the static website content
       geoRestrictionCountries: props.params.geoRestrictionCountries, // Pass the geoRestrictionCountries parameter to the main stack
     });
-    mainStack.addDependency(wafStack);
+    mainStack.addStackDependency(wafStack);
 
   }
 }

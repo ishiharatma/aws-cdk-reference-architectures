@@ -45,8 +45,9 @@ describe("S3BasicStack Fine-grained Assertions", () => {
 
   test("S3 Buckets are created", () => {
     // Multiple S3 buckets created: Default, NamedBucket, AutoDelete, BlockPublicAccessOff,
-    // EncryptionSSEKMSManaged, EncryptionSSEKMSCustomer, LifecycleRules, Versioning
-    stackTemplate.resourceCountIs("AWS::S3::Bucket", 8);
+    // EncryptionSSEKMSManaged, EncryptionSSEKMSCustomer, LifecycleRules, Versioning,
+    // AccountRegionalBucket, AccountRegionalBucket2
+    stackTemplate.resourceCountIs("AWS::S3::Bucket", 10);
   });
 
   test("S3 Bucket with custom name has correct name", () => {

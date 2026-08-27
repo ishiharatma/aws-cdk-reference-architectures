@@ -62,7 +62,7 @@ export class EcsFargateAlbStage extends cdk.Stage {
       isBootstrapMode: isBootstrapMode,
       commitHash: commitHash,
     });
-    ecrStack.addDependency(baseStack);
+    ecrStack.addStackDependency(baseStack);
 
     const ecsFargateStack = new EcsFargateAlbStack(this, `${pascalCase(props.project)}EcsFargateAlb`, {
       project: props.project,
@@ -84,8 +84,8 @@ export class EcsFargateAlbStage extends cdk.Stage {
       hostedZoneId: props.params.hostedZoneId,
       domainName: props.params.domainName,
     });
-    ecsFargateStack.addDependency(baseStack);
-    ecsFargateStack.addDependency(ecrStack);
+    ecsFargateStack.addStackDependency(baseStack);
+    ecsFargateStack.addStackDependency(ecrStack);
 
     const cicdStack = new CICDStack(this, `${pascalCase(props.project)}Cicd`, {
       project: props.project,
@@ -98,9 +98,9 @@ export class EcsFargateAlbStage extends cdk.Stage {
       isAutoDeleteObject: props.isAutoDeleteObject,
       codecommitAccountId: props.codecommitParams.codecommitAccountId,
     });
-    cicdStack.addDependency(baseStack);
-    cicdStack.addDependency(ecrStack);
-    cicdStack.addDependency(ecsFargateStack);
+    cicdStack.addStackDependency(baseStack);
+    cicdStack.addStackDependency(ecrStack);
+    cicdStack.addStackDependency(ecsFargateStack);
 
   }
 }

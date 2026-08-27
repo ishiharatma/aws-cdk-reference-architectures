@@ -1,0 +1,122 @@
+# .github/workflows/cdk-update-snapshots-pr-workspace.yml
+name: CDK Update Snapshots (Workspace, Create PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: "Workspace name under infrastructure/workspaces/"
+        required: true
+        type: string
+      base_branch:
+        description: "Base branch for the PR"
+        required: true
+        default: "develop"
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: "24"
+  MONOREPO_DIR: "infrastructure"
+  WORKSPACES_DIR: "infrastructure/workspaces"
+  WORKSPACE: ${{ github.event.inputs.workspace }}
+  BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+
+jobs:
+  update-snapshots-pr:
+    name: Update snapshots & open PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.base_branch }}
+
+      - name: Verify workspace exists
+        run: |
+          if [ ! -d "${{ env.WORKSPACES_DIR }}/${{ env.WORKSPACE }}" ]; then
+            echo "::error::Workspace '${{ env.WORKSPACE }}' not found under ${{ env.WORKSPACES_DIR }}/"
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        id: setup_node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ env.MONOREPO_DIR }}/package-lock.json"
+
+      - name: Install dependencies (npm workspaces root)
+        id: install_deps
+        working-directory: ${{ env.MONOREPO_DIR }}
+        run: npm ci
+
+      - name: Update snapshots
+        id: snapshot_update
+        continue-on-error: true
+        working-directory: ${{ env.MONOREPO_DIR }}
+        env:
+          PROJECT: drillexercises
+          ENV: dev
+        run: |
+          set +e
+          npm run --silent test:snapshot:update -w "workspaces/${{ env.WORKSPACE }}" -- --passWithNoTests --no-color > snapshot-update.log 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat snapshot-update.log
+
+      - name: Detect snapshot changes
+        id: changes
+        run: |
+          if git status --porcelain -- "${{ env.WORKSPACES_DIR }}/${{ env.WORKSPACE }}/test" | grep -qE '\.snap$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Snapshot files changed in \`${{ env.WORKSPACE }}\`" >> "$GITHUB_STEP_SUMMARY"
+            git --no-pager diff --stat -- "${{ env.WORKSPACES_DIR }}/${{ env.WORKSPACE }}/test"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ No snapshot changes in \`${{ env.WORKSPACE }}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Create Pull Request
+        id: create_pr
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.inputs.base_branch }}
+          branch: "chore/update-snapshots-${{ env.WORKSPACE }}-${{ github.run_number }}"
+          commit-message: "chore(${{ env.WORKSPACE }}): update CDK snapshots [skip ci]"
+          title: "🔄 Update CDK snapshots: `${{ env.WORKSPACE }}`"
+          add-paths: |
+            ${{ env.WORKSPACES_DIR }}/${{ env.WORKSPACE }}/test/**/*.snap
+          body: |
+            ## 📸 スナップショットテストの更新
+
+            このPRは `CDK Update Snapshots (Workspace)` ワークフローによる自動生成です。
+
+            ### 対象
+            - **Workspace**: `${{ env.WORKSPACE }}`
+            - **パス**: `${{ env.WORKSPACES_DIR }}/${{ env.WORKSPACE }}`
+
+            ### レビュー観点
+            - [ ] 変更が意図した差分であること
+            - [ ] リソースの削除が含まれていないこと
+            - [ ] セキュリティ関連プロパティの変化がないこと
+
+            ---
+            *[Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+          labels: |
+            automated
+            tests
+            snapshots
+            workspace:${{ env.WORKSPACE }}
+
+      - name: Report update failure without diff
+        if: steps.snapshot_update.outputs.exit_code != '0' && steps.changes.outputs.changed != 'true'
+        run: |
+          echo "::error::Snapshot update run failed and produced no .snap changes — see the 'Update snapshots' step log."
+          exit 1

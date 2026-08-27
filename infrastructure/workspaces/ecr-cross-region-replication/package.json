@@ -28,6 +28,7 @@
     "d:bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd bootstrap --profile ${PROJECT}-${ENV}",
     "d:diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd diff '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "d:stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd deploy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "d:stage:destroy:all": "cross-env cdkd destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint \"**/*.ts\" --fix",
     "format": "prettier --write \"**/*.ts\"",
@@ -43,7 +44,7 @@
     "typescript": "~5.6.3"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.186.0",
+    "aws-cdk-lib": "^2.265.0",
     "constructs": "^10.0.0"
   }
 }

@@ -91,6 +91,16 @@ exports[`Stack Snapshot Tests Ec2AsgMultiStack full template snapshot 1`] = `
         },
         "Port": 80,
         "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },
@@ -577,6 +587,16 @@ exports[`Stack Snapshot Tests Ec2AsgMultiWarmStack full template snapshot 1`] = 
         },
         "Port": 80,
         "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },
@@ -1081,6 +1101,16 @@ exports[`Stack Snapshot Tests Ec2AsgSingleStack full template snapshot 1`] = `
         },
         "Port": 80,
         "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "TestProject",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },

@@ -59,7 +59,7 @@ export class WafLogReportingStage extends cdk.Stage {
                 sampleLogGroupName: sampleWafStack.logGroup.logGroupName,
             },
         );
-        cwLogsReportStack.addDependency(sampleWafStack);
+        cwLogsReportStack.addStackDependency(sampleWafStack);
 
         const athenaReportStack = new WafLogReportingAthenaReportStack(
             this,
@@ -71,6 +71,6 @@ export class WafLogReportingStage extends cdk.Stage {
                 sampleLogGroupName: sampleWafStack.logGroup.logGroupName,
             },
         );
-        athenaReportStack.addDependency(sampleWafStack);
+        athenaReportStack.addStackDependency(sampleWafStack);
     }
 }

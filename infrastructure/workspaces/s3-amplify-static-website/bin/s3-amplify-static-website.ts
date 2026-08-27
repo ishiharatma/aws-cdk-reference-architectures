@@ -6,8 +6,10 @@ import { S3AmplifyStaticWebsiteStage } from 'lib/stages/s3-amplify-static-websit
 
 const app = new cdk.App();
 
-const pjName: string = app.node.tryGetContext('project');
-const envName: Environment = app.node.tryGetContext('env') || Environment.DEVELOPMENT;
+const pjName: string = process.env.PROJECT || app.node.tryGetContext("project");
+const envName: Environment =
+  process.env.ENV as Environment ||
+  app.node.tryGetContext("env") || Environment.DEVELOPMENT;
 
 const defaultEnv = {
   account: process.env.CDK_DEFAULT_ACCOUNT,

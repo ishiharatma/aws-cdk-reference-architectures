@@ -7,8 +7,9 @@ import { Environment } from "@common/parameters/environments";
 const app = new cdk.App();
 
 // Get environment (specified in cdk.json context or at runtime with --context)
-const pjName: string = app.node.tryGetContext("project");
+const pjName: string = process.env.PROJECT || app.node.tryGetContext("project");
 const envName: Environment =
+  process.env.ENV as Environment ||
   app.node.tryGetContext("env") || Environment.DEVELOPMENT;
 
 const defaultEnv = {

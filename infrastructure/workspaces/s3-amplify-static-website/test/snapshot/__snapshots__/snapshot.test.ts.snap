@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
 {
@@ -176,7 +176,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
                   "AppId",
                 ],
               },
-              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/b192cb917222170e1480b1beba8ab9d5d09e2171ba72b3d5f28a8c107c0c3587.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
+              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
             ],
           ],
         },
@@ -198,7 +198,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
                   "AppId",
                 ],
               },
-              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/b192cb917222170e1480b1beba8ab9d5d09e2171ba72b3d5f28a8c107c0c3587.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
+              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
             ],
           ],
         },

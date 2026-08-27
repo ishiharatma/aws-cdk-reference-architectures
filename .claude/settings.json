@@ -13,11 +13,12 @@
     { "marketplace": "agent-skills-private", "plugin": "cdk-spec-writing" },
     { "marketplace": "agent-skills-private", "plugin": "codecommit-pr" },
     { "marketplace": "agent-skills-private", "plugin": "cicd-buildspec" },
+    { "marketplace": "agent-skills-private", "plugin": "metrics-reporter" },
+    { "marketplace": "agent-skills-private", "plugin": "metrics-logger" },
     { "marketplace": "agent-skills-private", "plugin": "article-writer" },
     { "marketplace": "agent-skills-private", "plugin": "article-proofreader" },
     { "marketplace": "agent-skills-private", "plugin": "aws-mcp" },
-    { "marketplace": "agent-skills-private", "plugin": "aws-icon-diagram" },
-    { "marketplace": "claude-plugins-official", "plugin": "skill-creator" }
+    { "marketplace": "agent-skills-private", "plugin": "aws-icon-diagram" }
   ],
   "permissions": {
     "allow": [

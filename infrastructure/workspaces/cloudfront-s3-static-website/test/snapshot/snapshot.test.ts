@@ -52,6 +52,7 @@ describe("Stack Snapshot Tests", () => {
       env: wafEnv,
       isAutoDeleteObject: true,
       terminationProtection: false,
+      enableWaf: true,
       allowedIpsAfterRules: ['192.0.2.10'],
     });
     const template = Template.fromStack(stack);

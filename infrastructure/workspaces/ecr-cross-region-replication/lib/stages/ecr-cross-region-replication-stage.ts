@@ -50,6 +50,6 @@ export class EcrCrossRegionReplicationStage extends cdk.Stage {
             stackName: `${props.project}-${props.environment}-ecr-crr-tokyo`,
             description: 'Stack 2: Source ECR repository (Tokyo / ap-northeast-1) + cross-region replication to Osaka',
         });
-        tokyoStack.addDependency(osakaStack);
+        tokyoStack.addStackDependency(osakaStack);
     }
 }
