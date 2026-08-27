@@ -1,0 +1,120 @@
+# .github/actions/cdk-test-reporter-workspace/action.yml
+name: "CDK Test Reporter (Workspace)"
+description: "Run snapshot / unit / integration / compliance jest suites for a single npm workspace and emit a Markdown report fragment."
+
+inputs:
+  workspace-name:
+    description: "Workspace directory name under infrastructure/workspaces/"
+    required: true
+  monorepo-dir:
+    description: "npm workspaces root that holds package-lock.json and node_modules"
+    required: false
+    default: "infrastructure"
+  report-dir:
+    description: "Directory where the report fragment is written (test-report-<workspace-name>.md)"
+    required: false
+    default: "cdk-test-reports"
+
+outputs:
+  passed:
+    description: "'true' when every suite exited 0, otherwise 'false'"
+    value: ${{ steps.result.outputs.passed }}
+  report-file:
+    description: "Path to the generated Markdown fragment"
+    value: ${{ steps.result.outputs.report-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Debug - environment
+      shell: bash
+      working-directory: ${{ inputs.monorepo-dir }}
+      run: |
+        echo "=== Workspace: ${{ inputs.workspace-name }} ==="
+        node --version
+        npm --version
+        echo "--- workspace package.json scripts ---"
+        node -e "console.log(Object.keys((require('./workspaces/${{ inputs.workspace-name }}/package.json').scripts)||{}).join('\n'))"
+
+    # Tests are run from the monorepo root via `-w` so the hoisted node_modules
+    # (single infrastructure/package-lock.json) resolves correctly.
+    # PROJECT / ENV mirror infrastructure/run-all-test.sh in case a suite reads them.
+    - name: Snapshot tests
+      id: snapshot
+      shell: bash
+      working-directory: ${{ inputs.monorepo-dir }}
+      env:
+        PROJECT: drillexercises
+        ENV: dev
+      run: |
+        set +e
+        npm run --silent test:snapshot -w "workspaces/${{ inputs.workspace-name }}" -- --passWithNoTests --no-color > snapshot-test.log 2>&1
+        code=$?
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        cat snapshot-test.log
+
+    - name: Unit tests
+      id: unit
+      shell: bash
+      working-directory: ${{ inputs.monorepo-dir }}
+      env:
+        PROJECT: drillexercises
+        ENV: dev
+      run: |
+        set +e
+        npm run --silent test:unit -w "workspaces/${{ inputs.workspace-name }}" -- --passWithNoTests --no-color > unit-test.log 2>&1
+        code=$?
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        cat unit-test.log
+
+    - name: Integration tests
+      id: integration
+      shell: bash
+      working-directory: ${{ inputs.monorepo-dir }}
+      env:
+        PROJECT: drillexercises
+        ENV: dev
+      run: |
+        set +e
+        npm run --silent test:integration -w "workspaces/${{ inputs.workspace-name }}" -- --passWithNoTests --no-color > integration-test.log 2>&1
+        code=$?
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        cat integration-test.log
+
+    - name: Compliance tests
+      id: compliance
+      shell: bash
+      working-directory: ${{ inputs.monorepo-dir }}
+      env:
+        PROJECT: drillexercises
+        ENV: dev
+      run: |
+        set +e
+        npm run --silent test:compliance -w "workspaces/${{ inputs.workspace-name }}" -- --passWithNoTests --no-color > compliance-test.log 2>&1
+        code=$?
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        cat compliance-test.log
+
+    - name: Generate report fragment
+      id: result
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.report-dir }}"
+        out="${{ inputs.report-dir }}/test-report-${{ inputs.workspace-name }}.md"
+        node "${{ github.action_path }}/generate-report.js" \
+          "${{ inputs.workspace-name }}" \
+          "${{ github.workspace }}/${{ inputs.monorepo-dir }}" \
+          "$out" \
+          "${{ steps.snapshot.outputs.exit_code }}" \
+          "${{ steps.unit.outputs.exit_code }}" \
+          "${{ steps.integration.outputs.exit_code }}" \
+          "${{ steps.compliance.outputs.exit_code }}"
+        echo "report-file=$out" >> "$GITHUB_OUTPUT"
+        if [ "${{ steps.snapshot.outputs.exit_code }}" = "0" ] \
+           && [ "${{ steps.unit.outputs.exit_code }}" = "0" ] \
+           && [ "${{ steps.integration.outputs.exit_code }}" = "0" ] \
+           && [ "${{ steps.compliance.outputs.exit_code }}" = "0" ]; then
+          echo "passed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "passed=false" >> "$GITHUB_OUTPUT"
+        fi

@@ -23,6 +23,7 @@ function synth(overrides: Partial<ConstructorParameters<typeof CloudfrontWafStac
         env: defaultEnv,
         isAutoDeleteObject: true,
         terminationProtection: false,
+        enableWaf: true,
         ...overrides,
     });
     return { stack, template: Template.fromStack(stack) };
@@ -68,7 +69,11 @@ describe('CloudfrontWafStack Fine-grained Assertions', () => {
             template.hasResourceProperties('AWS::WAFv2::WebACL', {
                 Rules: Match.not(Match.arrayWith([Match.objectLike({ Name: 'AllowSpecificIPsBeforeRules' })])),
             });
-            template.resourceCountIs('AWS::WAFv2::IPSet', 1);
+            // Only the two after-rules defaults (IPv4 + IPv6 full range) exist; no *BeforeRules IPSet.
+            template.resourceCountIs('AWS::WAFv2::IPSet', 2);
+            Object.values(template.findResources('AWS::WAFv2::IPSet')).forEach((resource) => {
+                expect((resource as { Properties: { Name: string } }).Properties.Name).not.toContain('BeforeRules');
+            });
         });
 
         test('should create a before-rules allow list at priority 1 when allowedIpsBeforeRules is provided', () => {
@@ -109,8 +114,11 @@ describe('CloudfrontWafStack Fine-grained Assertions', () => {
     describe('WAF log delivery', () => {
         test('should name the log bucket with the mandatory aws-waf-logs- prefix', () => {
             const { template } = synth();
+            // The account-regional namespace only takes a prefix; S3 appends the account id and
+            // region. The mandatory `aws-waf-logs-` prefix must survive into that prefix.
             template.hasResourceProperties('AWS::S3::Bucket', {
-                BucketName: `aws-waf-logs-${projectName.toLowerCase()}-${envName}-${defaultEnv.account}-${defaultEnv.region}-an`,
+                BucketNamePrefix: `aws-waf-logs-${projectName.toLowerCase()}-${envName}`,
+                BucketNamespace: 'account-regional',
             });
         });
 

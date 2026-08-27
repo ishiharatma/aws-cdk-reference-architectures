@@ -41,7 +41,8 @@ node ${SCRIPT_DIR}/init-cdk-scripts.js ${targetDir}
 
 # Install necessary dev dependencies
 npm install --save-dev eslint \
-	eslint eslint-cdk-plugin \
+	eslint \
+	eslint-plugin-awscdk \
 	eslint-config-prettier \
 	eslint-plugin-prettier \
 	eslint-plugin-unused-imports \

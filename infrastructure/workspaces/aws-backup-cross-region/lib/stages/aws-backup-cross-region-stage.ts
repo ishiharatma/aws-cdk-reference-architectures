@@ -72,6 +72,6 @@ export class AwsBackupCrossRegionStage extends cdk.Stage {
             description:
                 'Stack 3: Sample VPC/EC2/RDS/S3 workload + primary Backup Vault/Plan/Selection with cross-region copy to Osaka',
         });
-        tokyoStack.addDependency(osakaStack);
+        tokyoStack.addStackDependency(osakaStack);
     }
 }

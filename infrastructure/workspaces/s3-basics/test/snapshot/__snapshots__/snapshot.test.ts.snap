@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
 {
@@ -10,6 +10,275 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     },
   },
   "Resources": {
+    "AccountRegionalBucket12A53D06": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketNamePrefix": "testproject-test-rn",
+        "BucketNamespace": "account-regional",
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AccountRegionalBucket2AutoDeleteObjectsCustomResource980AAD5B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AccountRegionalBucket2PolicyF575AC94",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AccountRegionalBucket2E3CCD519",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AccountRegionalBucket2E3CCD519": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketNamePrefix": "testproject-test-rn2",
+        "BucketNamespace": "account-regional",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "AbortIncompleteMultipartUpload",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AccountRegionalBucket2PolicyF575AC94": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AccountRegionalBucket2E3CCD519",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AccountRegionalBucket2E3CCD519",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AccountRegionalBucket2E3CCD519",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AccountRegionalBucket2E3CCD519",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AccountRegionalBucket2E3CCD519",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "AccountRegionalBucketAutoDeleteObjectsCustomResourceDC03FC6B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AccountRegionalBucketPolicy10800202",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AccountRegionalBucket12A53D06",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AccountRegionalBucketPolicy10800202": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AccountRegionalBucket12A53D06",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AccountRegionalBucket12A53D06",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AccountRegionalBucket12A53D06",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AccountRegionalBucket12A53D06",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AccountRegionalBucket12A53D06",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
     "AutoDeleteObjects9931B84E": {
       "DeletionPolicy": "Delete",
       "Properties": {
@@ -841,8 +1110,8 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::IAM::Role": 1,
   "AWS::KMS::Key": 1,
   "AWS::Lambda::Function": 1,
-  "AWS::S3::Bucket": 8,
-  "AWS::S3::BucketPolicy": 7,
-  "Custom::S3AutoDeleteObjects": 7,
+  "AWS::S3::Bucket": 10,
+  "AWS::S3::BucketPolicy": 9,
+  "Custom::S3AutoDeleteObjects": 9,
 }
 `;

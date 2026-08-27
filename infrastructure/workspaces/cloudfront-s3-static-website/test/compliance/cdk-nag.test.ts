@@ -90,6 +90,7 @@ nagTestSuite(
             isAutoDeleteObject: false,
             terminationProtection: false,
             env: wafEnv,
+            enableWaf: true,
             allowedIpsAfterRules: ['192.0.2.10'],
         }),
     (stack) => {

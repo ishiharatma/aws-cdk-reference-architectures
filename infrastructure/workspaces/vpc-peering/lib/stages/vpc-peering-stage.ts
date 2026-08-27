@@ -87,7 +87,7 @@ export class VpcPeeringStage extends cdk.Stage {
         });
         // Set dependencies - ensure VPC B is deployed first
         // Note: VPC C should be deployed separately to Account B before this stack
-        crossAccountPeeringStack.addDependency(vpcAStack);
+        crossAccountPeeringStack.addStackDependency(vpcAStack);
 
         // Stack 4: VPC C Routes (Account B)
         // This stack adds routes in VPC C pointing to VPC B
@@ -108,8 +108,8 @@ export class VpcPeeringStage extends cdk.Stage {
         });
 
         // Set dependencies
-        vpcCRoutesStack.addDependency(crossAccountPeeringStack);
-        vpcCRoutesStack.addDependency(vpcCStack);
+        vpcCRoutesStack.addStackDependency(crossAccountPeeringStack);
+        vpcCRoutesStack.addStackDependency(vpcCStack);
       }
     }
   }

@@ -501,7 +501,7 @@ exports[`AwsBackupCrrTokyoStack Snapshot Complete CloudFormation template snapsh
             },
           ],
         },
-        "BucketName": "testproject-test-backup-sample-123456789012-ap-northeast-1-an",
+        "BucketNamePrefix": "testproject-test-backup-sample",
         "BucketNamespace": "account-regional",
         "LifecycleConfiguration": {
           "Rules": [
@@ -1572,7 +1572,7 @@ exports[`SampleAppStack Snapshot Complete CloudFormation template snapshot 1`] =
             },
           ],
         },
-        "BucketName": "testproject-test-sample-app-123456789012-ap-northeast-1-an",
+        "BucketNamePrefix": "testproject-test-sample-app",
         "BucketNamespace": "account-regional",
         "LifecycleConfiguration": {
           "Rules": [

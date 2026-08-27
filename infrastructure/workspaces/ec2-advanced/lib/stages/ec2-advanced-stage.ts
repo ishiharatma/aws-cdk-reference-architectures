@@ -49,7 +49,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       ec2Config: props.params.ec2Config,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2SingleStack.addDependency(baseStack);
+    ec2SingleStack.addStackDependency(baseStack);
 
     // Pattern 2: EC2 Auto-Recovery
     const ec2AutoRecoveryStack = new Ec2AutoRecoveryStack(this, `${pascalCase(props.project)}AutoRecovery`, {
@@ -59,7 +59,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       ec2Config: props.params.ec2Config,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2AutoRecoveryStack.addDependency(baseStack);
+    ec2AutoRecoveryStack.addStackDependency(baseStack);
 
     // Pattern 3a: EC2 ASG (always 1 instance) + ALB
     const ec2AsgSingleStack = new Ec2AsgSingleStack(this, `${pascalCase(props.project)}AsgSingle`, {
@@ -72,7 +72,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       allowedIpsforAlb: props.allowedIpsforAlb ?? props.params.allowedIpsforAlb,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2AsgSingleStack.addDependency(baseStack);
+    ec2AsgSingleStack.addStackDependency(baseStack);
 
     // Pattern 3b: EC2 ASG (always 1 instance) without ALB — SSM-only access
     const ec2AsgSingleNoAlbStack = new Ec2AsgSingleStack(this, `${pascalCase(props.project)}AsgSingleNoAlb`, {
@@ -83,7 +83,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       useAlb: false,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2AsgSingleNoAlbStack.addDependency(baseStack);
+    ec2AsgSingleNoAlbStack.addStackDependency(baseStack);
 
     // Pattern 4: EC2 ASG (always 2 instances, multi-AZ) + ALB
     const ec2AsgMultiStack = new Ec2AsgMultiStack(this, `${pascalCase(props.project)}AsgMulti`, {
@@ -95,7 +95,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       allowedIpsforAlb: props.allowedIpsforAlb ?? props.params.allowedIpsforAlb,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2AsgMultiStack.addDependency(baseStack);
+    ec2AsgMultiStack.addStackDependency(baseStack);
 
     // Pattern 5: EC2 ASG (multi-AZ) + ALB + Warm Pool (hibernated instances for fast scale-out)
     // Instances in the warm pool are pre-initialized and hibernated.
@@ -112,7 +112,7 @@ export class Ec2AdvancedStage extends cdk.Stage {
       allowedIpsforAlb: props.allowedIpsforAlb ?? props.params.allowedIpsforAlb,
       notificationTopic: baseStack.notificationTopic,
     });
-    ec2AsgMultiWarmStack.addDependency(baseStack);
+    ec2AsgMultiWarmStack.addStackDependency(baseStack);
   }
 }
 

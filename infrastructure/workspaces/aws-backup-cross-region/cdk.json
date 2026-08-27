@@ -1,5 +1,5 @@
 {
-  "app": "npx tsc && npx tsx bin/aws-backup-cross-region.ts",
+  "app": "npx tsx bin/aws-backup-cross-region.ts",
   "watch": {
     "include": [
       "**"

@@ -11,7 +11,7 @@ import { AwsBackupCrossRegionStage } from 'lib/stages/aws-backup-cross-region-st
 const app = new cdk.App();
 
 // Get environment (specified in cdk.json context or at runtime with --context)
-const pjName: string = process.env.PROJECT_NAME || app.node.tryGetContext("project");
+const pjName: string = process.env.PROJECT || app.node.tryGetContext("project");
 const envName: Environment =
   process.env.ENV as Environment ||
   app.node.tryGetContext("env")  || Environment.DEVELOPMENT;

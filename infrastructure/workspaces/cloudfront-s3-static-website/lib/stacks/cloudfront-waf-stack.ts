@@ -65,9 +65,6 @@ export class CloudfrontWafStack extends cdk.Stack {
       return;
     }
 
-    const accountId = cdk.Stack.of(this).account;
-    const region = cdk.Stack.of(this).region;
-
     // Build the "before rules" allow statement (bypasses the managed rules entirely) from
     // whichever of IPv4/IPv6 were specified. Unlike "after rules", there is no "allow all"
     // fallback here — if neither is specified, the whole before-rules bypass is omitted.
@@ -271,7 +268,8 @@ export class CloudfrontWafStack extends cdk.Stack {
 
     // Bucket for direct WAF -> S3 log delivery. The "aws-waf-logs-" prefix is mandatory: AWS WAF
     // refuses to create the logging configuration below against a bucket whose name doesn't
-    // start with it.
+    // start with it, so it is forced here via bucketNameOverride. The account-regional namespace
+    // appends the account id and region to this prefix, so they are not repeated here.
     const wafLogBucket = createAccountRegionalBucket({
       scope: this,
       id: 'WafLogBucket',
@@ -280,7 +278,7 @@ export class CloudfrontWafStack extends cdk.Stack {
       autoDeleteObjects: props.isAutoDeleteObject,
       accessControl: s3.BucketAccessControl.LOG_DELIVERY_WRITE,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
-      bucketNameOverride: `aws-waf-logs-${props.project}-${props.environment}-${accountId}-${region}-an`,
+      bucketNameOverride: `aws-waf-logs-${props.project}-${props.environment}`,
       purpose: 'waf-logs',
       lifecycle: {
         intelligentTieringDays: 0,

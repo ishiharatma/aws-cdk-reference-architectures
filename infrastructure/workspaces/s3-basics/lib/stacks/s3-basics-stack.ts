@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { Environment } from "@common/parameters/environments";
+import { createAccountRegionalBucket } from "@common/constructs/s3";
 
 export interface StackProps extends cdk.StackProps {
   project: string;
@@ -18,7 +19,7 @@ export class S3BasicStack extends cdk.Stack {
     const accountId = cdk.Stack.of(this).account;
     const region = cdk.Stack.of(this).region;
     // exclude hyphens from region
-    const regionNoHyphens = region.replace(/-/g, "");
+    const regionNoHyphens = cdk.Token.isUnresolved(region) ? region : region.replace(/-/g, "");
 
     // Example with all default settings
     this.bucket = new s3.Bucket(this, "CDKDefault", {});
@@ -31,9 +32,12 @@ export class S3BasicStack extends cdk.Stack {
       accountId, // AWS account ID
       regionNoHyphens, // region (hyphens removed)
     ]
-      .join("-")
-      .toLowerCase();
-    new s3.Bucket(this, "NamedBucket", {
+      .map((v) => (cdk.Token.isUnresolved(v) ? v : v.toLowerCase()))
+      .join("-");
+      //.join("-")
+      //.toLowerCase();
+
+      new s3.Bucket(this, "NamedBucket", {
       bucketName,
       autoDeleteObjects: props.isAutoDeleteObject,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -154,5 +158,26 @@ export class S3BasicStack extends cdk.Stack {
         },
       ],
     });
+
+    // Account-Regional Namespace
+    new s3.Bucket(this, "AccountRegionalBucket", {
+      // bucketNamePrefix must be lowercase; project/environment can contain uppercase.
+      bucketNamePrefix: `${props.project}-${props.environment}-rn`.toLowerCase(),
+      bucketNamespace: s3.BucketNamespace.ACCOUNT_REGIONAL,
+      autoDeleteObjects: props.isAutoDeleteObject,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      enforceSSL: true,
+    });
+
+    createAccountRegionalBucket({
+      scope: this,
+      id: "AccountRegionalBucket2",
+      project: props.project,
+      environment: props.environment,
+      purpose: `rn2`,
+      autoDeleteObjects: props.isAutoDeleteObject,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
   }
 }

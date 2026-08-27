@@ -44,7 +44,7 @@ try {
     "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
-    "delstack": "delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "delstack": "cross-env CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --profile ${PROJECT}-${ENV} --query Account --output text) delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "d:bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd bootstrap --profile ${PROJECT}-${ENV}",
     "d:diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd diff '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "d:stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd deploy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",

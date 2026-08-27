@@ -1,0 +1,233 @@
+# .github/workflows/cdk-ci-workspace.yml
+name: CDK CI (Workspaces)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/cdk-ci-workspace.yml"
+      - ".github/actions/cdk-test-reporter-workspace/**"
+  workflow_dispatch:
+    inputs:
+      workspace:
+        description: "Single workspace to test (leave empty to auto-detect all changed)"
+        required: false
+        type: string
+
+concurrency:
+  group: cdk-ci-workspace-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+  MONOREPO_DIR: "infrastructure"
+  WORKSPACES_DIR: "infrastructure/workspaces"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: figure out which workspaces need testing
+  # ---------------------------------------------------------------------------
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      workspaces: ${{ steps.set.outputs.workspaces }}
+      has-changes: ${{ steps.set.outputs.has-changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed workspaces
+        id: detect
+        run: |
+          set -euo pipefail
+
+          # Manual run targeting one workspace
+          if [ -n "${{ github.event.inputs.workspace }}" ]; then
+            echo "list=${{ github.event.inputs.workspace }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          if [ -z "$BASE_SHA" ]; then
+            # workflow_dispatch without input -> test everything
+            echo "list=$(ls -1 "${{ env.WORKSPACES_DIR }}" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Diff range: $BASE_SHA...$HEAD_SHA"
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          echo "--- all changed files ---"; echo "$CHANGED"
+
+          # Documentation / image only changes never trigger tests
+          CODE=$(echo "$CHANGED" | grep -vE '\.(md|png|svg)$' | grep -vE '(^|/)LICENSE$' || true)
+          echo "--- code-relevant changed files ---"; echo "$CODE"
+
+          # Shared code -> retest every workspace
+          if echo "$CODE" | grep -qE '^infrastructure/(common/|package\.json|package-lock\.json|tsconfig)'; then
+            echo "Shared infrastructure code changed -> testing all workspaces"
+            echo "list=$(ls -1 "${{ env.WORKSPACES_DIR }}" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          LIST=$(echo "$CODE" \
+            | grep -oE '^infrastructure/workspaces/[^/]+/' \
+            | cut -d'/' -f3 \
+            | sort -u \
+            | tr '\n' ' ')
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
+
+      - name: Build matrix
+        id: set
+        run: |
+          set -euo pipefail
+          LIST="${{ steps.detect.outputs.list }}"
+          if [ -z "$(echo "$LIST" | tr -d '[:space:]')" ]; then
+            echo "has-changes=false" >> "$GITHUB_OUTPUT"
+            echo "workspaces=[]" >> "$GITHUB_OUTPUT"
+            echo "No workspace code changes detected."
+          else
+            JSON=$(echo "$LIST" | jq -R -s -c 'split(" ") | map(select(length > 0)) | unique')
+            echo "has-changes=true" >> "$GITHUB_OUTPUT"
+            echo "workspaces=$JSON" >> "$GITHUB_OUTPUT"
+            echo "Matrix: $JSON"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Job 2: run the jest suites per workspace (parallel matrix)
+  # ---------------------------------------------------------------------------
+  test-workspace:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: ${{ fromJson(needs.detect-changes.outputs.workspaces) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ env.MONOREPO_DIR }}/package-lock.json"
+
+      - name: Install dependencies (npm workspaces root)
+        working-directory: ${{ env.MONOREPO_DIR }}
+        run: npm ci
+
+      - name: Run tests & build report fragment
+        id: report
+        uses: ./.github/actions/cdk-test-reporter-workspace
+        with:
+          workspace-name: ${{ matrix.workspace }}
+          monorepo-dir: ${{ env.MONOREPO_DIR }}
+          report-dir: cdk-test-reports
+
+      - name: Upload report fragment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.workspace }}
+          path: cdk-test-reports/test-report-${{ matrix.workspace }}.md
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Fail job when a suite failed
+        if: always() && steps.report.outputs.passed != 'true'
+        run: |
+          echo "::error::One or more test suites failed in workspace '${{ matrix.workspace }}'"
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Job 3: aggregate every fragment into ONE sticky PR comment
+  # ---------------------------------------------------------------------------
+  report:
+    needs: [detect-changes, test-workspace]
+    if: always() && github.event_name == 'pull_request' && needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download report fragments
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-report-*
+          path: reports
+          merge-multiple: true
+
+      - name: Assemble comment body
+        id: body
+        run: |
+          set -euo pipefail
+          BODY=comment.md
+          {
+            echo '<!-- cdk-workspace-test-report -->'
+            echo '## 🧪 CDK Workspace Test Results'
+            echo
+          } > "$BODY"
+          if ls reports/test-report-*.md >/dev/null 2>&1; then
+            cat reports/test-report-*.md >> "$BODY"
+          else
+            echo '_No report fragments were produced._' >> "$BODY"
+          fi
+          {
+            echo
+            echo "---"
+            echo "_Updated: $(date -u +%Y-%m-%dT%H:%M:%SZ) • [run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+          } >> "$BODY"
+          echo "--- assembled comment ---"
+          cat "$BODY"
+
+      - name: Upsert PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+            const marker = '<!-- cdk-workspace-test-report -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
+
+  # ---------------------------------------------------------------------------
+  # Job 4: overall gate
+  # ---------------------------------------------------------------------------
+  gate:
+    needs: [detect-changes, test-workspace]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate
+        run: |
+          result="${{ needs.test-workspace.result }}"
+          if [ "${{ needs.detect-changes.outputs.has-changes }}" != "true" ]; then
+            echo "::notice::No workspace code changes — nothing to test."
+            exit 0
+          fi
+          case "$result" in
+            success) echo "::notice::All workspace tests passed." ;;
+            skipped) echo "::notice::Workspace tests skipped." ;;
+            *) echo "::error::Workspace tests result: $result"; exit 1 ;;
+          esac
