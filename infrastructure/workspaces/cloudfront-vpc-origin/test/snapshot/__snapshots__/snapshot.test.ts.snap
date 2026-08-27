@@ -212,6 +212,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         },
         "Port": 80,
         "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },
@@ -241,6 +247,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "AlbListener86261768",
         },
         "Priority": 10,
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
     },
@@ -293,6 +305,12 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "Ref": "AlbListener86261768",
         },
         "Priority": 20,
+        "Tags": [
+          {
+            "Key": "Role",
+            "Value": "internal-vpc-origin",
+          },
+        ],
       },
       "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
     },
@@ -922,7 +940,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "a72522445441e9b66c2f16956c54d4786af8c61c156b80c48a6e7c32fcc49023.zip",
+          "S3Key": "98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -957,7 +975,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Content": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "a72522445441e9b66c2f16956c54d4786af8c61c156b80c48a6e7c32fcc49023.zip",
+          "S3Key": "98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -981,7 +999,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
           "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
         ],
         "SourceObjectKeys": [
-          "b192cb917222170e1480b1beba8ab9d5d09e2171ba72b3d5f28a8c107c0c3587.zip",
+          "0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip",
         ],
         "WaitForDistributionInvalidation": true,
       },

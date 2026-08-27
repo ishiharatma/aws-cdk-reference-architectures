@@ -95,7 +95,7 @@ jobs:
             echo "workspaces=[]" >> "$GITHUB_OUTPUT"
             echo "No workspace code changes detected."
           else
-            JSON=$(echo "$LIST" | jq -R -s -c 'split(" ") | map(select(length > 0)) | unique')
+            JSON=$(echo "$LIST" | jq -R -s -c '[splits("[[:space:]]+")] | map(select(length > 0)) | unique')
             echo "has-changes=true" >> "$GITHUB_OUTPUT"
             echo "workspaces=$JSON" >> "$GITHUB_OUTPUT"
             echo "Matrix: $JSON"

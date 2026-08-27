@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Stack Snapshot Tests WafLogReportingAthenaReportStack Complete CloudFormation template snapshot 1`] = `
 {
@@ -181,7 +181,7 @@ exports[`Stack Snapshot Tests WafLogReportingAthenaReportStack Complete CloudFor
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "14802c42d232a0bf09cbae989c5653a5aa095aa16cacd0cf5e7c1f801959f40f.zip",
+          "S3Key": "1899ef311d9b82dea43c4d77eebeab8f6aaeb7410035dc96969ed09cd533b5ae.zip",
         },
         "Description": "Builds a daily WAF activity report from Athena and publishes it to SNS",
         "Environment": {
@@ -1304,7 +1304,7 @@ exports[`Stack Snapshot Tests WafLogReportingCwLogsReportStack Complete CloudFor
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "338d893091273f7ed3516bbd4a1929ebe8eac0d541b9905974620e9e504eb451.zip",
+          "S3Key": "d49823f2bf7d6e64319442272b21d3a377f4829845c9988bd20dbb30d49db897.zip",
         },
         "Description": "Builds a daily WAF activity report from CloudWatch Logs Insights and publishes it to SNS",
         "Environment": {

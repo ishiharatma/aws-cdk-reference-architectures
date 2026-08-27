@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveBasicStack Complete CloudFormation template snapshot 1`] = `
 {
@@ -1639,44 +1639,36 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
       },
       "Type": "AWS::IAM::Role",
     },
-    "ExportScheduleRule8C953033": {
+    "ExportSchedule86791C8A": {
       "Properties": {
         "Description": "Triggers CloudWatch Logs export task to S3 on schedule",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
         "Name": "TestProject-test-cwl-export-schedule",
         "ScheduleExpression": "rate(1 day)",
+        "ScheduleExpressionTimezone": "Etc/UTC",
         "State": "ENABLED",
-        "Targets": [
-          {
-            "Arn": {
-              "Fn::GetAtt": [
-                "ExportTaskFunctionD34B64B2",
-                "Arn",
-              ],
-            },
-            "Id": "Target0",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "ExportTaskFunctionD34B64B2",
+              "Arn",
+            ],
           },
-        ],
-      },
-      "Type": "AWS::Events::Rule",
-    },
-    "ExportScheduleRuleAllowEventRuleCwlArchiveExportStackExportTaskFunctionF07EC0DE7954B6E8": {
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ExportTaskFunctionD34B64B2",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": {
-          "Fn::GetAtt": [
-            "ExportScheduleRule8C953033",
-            "Arn",
-          ],
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget6155238C9DC2CD",
+              "Arn",
+            ],
+          },
         },
       },
-      "Type": "AWS::Lambda::Permission",
+      "Type": "AWS::Scheduler::Schedule",
     },
     "ExportTaskFunctionD34B64B2": {
       "DependsOn": [
@@ -1686,7 +1678,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "300951df11477266979a492eb0e308bd163487189ed52adae0dd42f7a16671b2.zip",
+          "S3Key": "bfd3649f5fc05155bd2f37a1be8f27e6c23ed7f4376d0d64e581869d107ab9c6.zip",
         },
         "Description": "Schedules a CloudWatch Logs export task to S3",
         "Environment": {
@@ -1703,6 +1695,8 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
         "FunctionName": "TestProject-test-cwl-export-task",
         "Handler": "index.lambda_handler",
         "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
           "LogGroup": {
             "Ref": "ExportTaskFunctionLogGroupCA581CE6",
           },
@@ -1714,7 +1708,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
             "Arn",
           ],
         },
-        "Runtime": "python3.12",
+        "Runtime": "python3.14",
         "Timeout": 300,
       },
       "Type": "AWS::Lambda::Function",
@@ -1782,6 +1776,82 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
       },
       "Type": "AWS::IAM::Role",
     },
+    "SchedulerRoleForTarget6155238C9DC2CD": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget615523DefaultPolicyB87EBA12": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ExportTaskFunctionD34B64B2",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ExportTaskFunctionD34B64B2",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget615523DefaultPolicyB87EBA12",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTarget6155238C9DC2CD",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
   },
   "Rules": {
     "CheckBootstrapVersion": {
@@ -1815,14 +1885,13 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Complete CloudF
 
 exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveExportStack Resource types and counts 1`] = `
 {
-  "AWS::Events::Rule": 1,
-  "AWS::IAM::Policy": 1,
-  "AWS::IAM::Role": 2,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 3,
   "AWS::Lambda::Function": 2,
-  "AWS::Lambda::Permission": 1,
   "AWS::Logs::LogGroup": 2,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
+  "AWS::Scheduler::Schedule": 1,
   "Custom::S3AutoDeleteObjects": 1,
 }
 `;
@@ -2034,6 +2103,8 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLambdaStack Complete CloudF
         "FunctionName": "TestProject-test-cwl-to-s3",
         "Handler": "index.lambda_handler",
         "LoggingConfig": {
+          "ApplicationLogLevel": "INFO",
+          "LogFormat": "JSON",
           "LogGroup": {
             "Ref": "ArchiveFunctionLogGroup7F6422FB",
           },
@@ -2045,7 +2116,7 @@ exports[`Stack Snapshot Tests CloudwatchLogsS3ArchiveLambdaStack Complete CloudF
             "Arn",
           ],
         },
-        "Runtime": "python3.12",
+        "Runtime": "python3.14",
         "Timeout": 60,
       },
       "Type": "AWS::Lambda::Function",
