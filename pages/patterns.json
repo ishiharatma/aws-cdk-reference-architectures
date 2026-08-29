@@ -70,7 +70,9 @@
     "difficulty": "intermediate",
     "level": 200,
     "date": "2026-08-05",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-013-cloudfront-s3-static-website-serving-a-private-bucket-over-413g"
+    }
   },
   {
     "id": "s3-static-web-site",
@@ -82,7 +84,9 @@
     "difficulty": "beginner",
     "level": 100,
     "date": "2026-08-05",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-012-s3-static-web-site-getting-a-public-bucket-policy-past-block-3b18"
+    }
   },
   {
     "id": "sqs-lambda-firehose",
@@ -258,7 +262,9 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-08-02",
-    "articles": {}
+    "articles": {
+      "devto": "https://dev.to/aws-builders/aws-cdk-100-drill-exercises-011-a-codepipeline-for-cloudfront-s3-and-a-self-reference-bug-22ml"
+    }
   },
   {
     "id": "sns-basic",
