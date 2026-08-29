@@ -14,8 +14,8 @@ across all six pillars.
 > **Where this diverges from the workshop.** The workshop keeps the Transit Gateway's *default* route table
 > (automatic association + propagation) and adds a `10.0.0.0/8` aggregate route in VPC B and VPC C. This workspace
 > instead creates **one explicitly managed TGW route table** and adds **specific `/16` routes** in every VPC. Both
-> choices are deliberate and explained under [Design Decisions](#design-decisions--best-practices); the workshop's
-> approach is the simpler baseline, this one is closer to what you would run in production.
+> approaches work; this workspace trades a few extra CloudFormation resources for routing that shows up in
+> `cdk diff` and is simpler to segment later. The reasoning is under [Design Decisions](#design-decisions--best-practices).
 
 ## 📑 Table of Contents
 
@@ -109,12 +109,13 @@ the ENIs and leaves the address space for real subnets.
 **Decision**: the construct adds one `<peer VPC CIDR> → TGW` route per remote VPC to each routable subnet's route
 table, rather than a single `10.0.0.0/8 → TGW`.
 
-**Why**: the workshop uses specific `/16` routes in VPC A but a `10.0.0.0/8` aggregate in VPC B and VPC C — the
-aggregate is quicker to type in a console lab. A broad supernet route silently blackholes any future in-region
-service you reach by private IP that happens to fall inside `10/8`, so this workspace uses specific `/16` routes
-in *every* VPC: the blast radius of a mistake stays at exactly one VPC and `cdk diff` shows precisely which
-reachability changed. The `10.0.0.0/8` value is still used, but only for the **security-group** rules that permit
-intra-mesh ICMP/SSH, where over-broad is acceptable because the SG is the second gate, not the first.
+**Why**: the workshop uses specific `/16` routes in VPC A and a `10.0.0.0/8` aggregate in VPC B and VPC C. An
+aggregate is a fair choice — fewer entries, and it stays under the per-route-table limit as the mesh grows — but
+a broad supernet route also silently blackholes any future in-region service you reach by a private IP inside
+`10/8`. With three VPCs there is no scale pressure, so this workspace uses specific `/16` routes everywhere: a
+misroute stays contained to one VPC and `cdk diff` shows exactly which reachability changed. The `10.0.0.0/8`
+value is still used, but only for the **security-group** rules that permit intra-mesh ICMP/SSH, where over-broad
+is acceptable because the SG is the second gate, not the first.
 
 ### 4. Test instances in public subnets, no NAT Gateway
 

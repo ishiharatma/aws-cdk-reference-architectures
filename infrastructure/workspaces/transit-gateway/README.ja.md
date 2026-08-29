@@ -11,8 +11,8 @@
 
 > **ワークショップとの相違点。** ワークショップは Transit Gateway の *デフォルト* ルートテーブル（自動の関連付け + 伝播）をそのまま使い、
 > VPC B / VPC C には `10.0.0.0/8` の集約ルートを入れます。本ワークスペースは代わりに **明示的に管理する単一の TGW ルートテーブル** を作り、
-> **すべての VPC で個別の `/16` ルート** を入れます。どちらも意図的な選択で、理由は [設計判断](#設計判断とベストプラクティス)で説明します。
-> ワークショップの方式がシンプルなベースライン、本実装は本番運用に近い形です。
+> **すべての VPC で個別の `/16` ルート** を入れます。どちらの方式でも動きます。本実装は CloudFormation リソースが少し増える代わりに、
+> `cdk diff` に差分が出て後からセグメント化しやすい形を選んでいます。理由は [設計判断](#設計判断とベストプラクティス)で説明します。
 
 ## 📑 目次
 
@@ -101,9 +101,10 @@ AWS リージョン（既定は us-east-1。デプロイプロファイルのリ
 **判断**: コンストラクトは各ルーティング対象サブネットのルートテーブルに、リモート VPC ごとの `<対向 VPC CIDR> → TGW` を 1 本ずつ追加する。
 `10.0.0.0/8 → TGW` の 1 本にはしない。
 
-**理由**: ワークショップは VPC A では個別の `/16` ルートを使うが、VPC B / VPC C では `10.0.0.0/8` の集約ルートを使う（コンソール操作を減らすため）。
-広いスーパーネットルートは、将来プライベート IP で到達する同一リージョンのサービスが `10/8` に含まれる場合に、それを無言でブラックホール化する。
-そこで本ワークスペースは *すべての* VPC で個別の `/16` ルートに統一する。誤設定の影響範囲をちょうど 1 VPC に閉じ込められ、`cdk diff` でどの到達性が変わったかが明確になる。
+**理由**: ワークショップは VPC A では個別の `/16` ルート、VPC B / VPC C では `10.0.0.0/8` の集約ルートを使う。
+集約は正当な選択で、エントリ数が減り、メッシュが増えてもルートテーブルの上限に強い。一方で広いスーパーネットルートは、
+将来プライベート IP で到達する同一リージョンのサービスが `10/8` に含まれる場合、それを無言でブラックホール化する。
+VPC が 3 つだけならスケール上の圧力はないので、本ワークスペースはすべて個別の `/16` にしている。誤設定の影響範囲が 1 VPC に留まり、`cdk diff` でどの到達性が変わったかが分かる。
 `10.0.0.0/8` という値はメッシュ内 ICMP/SSH を許可する **セキュリティグループ** ルールでのみ使う。そこでは SG が 2 段目のゲートなので広めでも許容できる。
 
 ### 4. テストインスタンスは Public サブネット、NAT Gateway なし
@@ -234,8 +235,8 @@ ping が固まる場合は [トラブルシューティング](#トラブルシ�
 
 ## 📚 参考資料
 
-- AWS Networking Workshop — Multi-VPC → Transit Gateway: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw>（ワークショップトップ: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US>）
+- AWS Networking Workshop の Multi-VPC → Transit Gateway ラボ: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw>（ワークショップトップ: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US>）
 - [Amazon VPC attachments in AWS Transit Gateway](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html)
 - [Transit gateway route tables](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-route-tables.html)
 - [How AWS Transit Gateway works](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)
-- 関連ワークスペース: [`vpc-peering`](../vpc-peering/) — 同じ 3 VPC をピアリングで接続した場合。安価だがスケールしにくい理由も解説。
+- 関連ワークスペース: [`vpc-peering`](../vpc-peering/)。同じ 3 VPC をピアリングで接続した場合。安価だがスケールしにくい理由も解説。
