@@ -53,7 +53,7 @@ describe('CicdCloudfrontS3Stack core resources', () => {
     const pythonFunctions = template.findResources('AWS::Lambda::Function', {
       Properties: Match.objectLike({
         Runtime: 'python3.14',
-        Handler: 'index.handler',
+        Handler: 'index.lambda_handler',
       }),
     });
     expect(Object.keys(pythonFunctions)).toHaveLength(2);

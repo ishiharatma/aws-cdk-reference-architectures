@@ -128,16 +128,29 @@ function applySuppressions(stack: CicdCloudfrontS3Stack): void {
       ],
     );
 
-    // CodePipeline's LambdaInvokeAction grants codepipeline:PutJobSuccessResult/PutJobFailureResult
-    // to the function's own role; these CodePipeline job-result APIs do not support resource-level scoping.
+    // The function's execution-role DefaultPolicy collects several intentional wildcards:
+    //  - codepipeline:PutJobSuccessResult/PutJobFailureResult (no resource-level scoping)
+    //  - CDK's auto-granted read on the pipeline artifact bucket for the invoke action's
+    //    input (s3:GetObject*/GetBucket*/List* on <ArtifactBucket>.Arn/*)
+    //  - for S3SyncLambda, the hand-written policy granting object-level access to the
+    //    deployment target bucket (arn:aws:s3:::<bucket>/*) so it can sync arbitrary keys
     NagSuppressions.addResourceSuppressionsByPath(
       stack,
       `${pathPrefix}/${lambdaId}/ServiceRole/DefaultPolicy/Resource`,
       [
         {
           id: 'AwsSolutions-IAM5',
-          reason: 'codepipeline:PutJobSuccessResult/PutJobFailureResult do not support resource-level permissions and require a wildcard resource.',
-          appliesTo: ['Resource::*'],
+          reason: 'codepipeline:PutJobSuccessResult/PutJobFailureResult do not support resource-level permissions; CDK auto-grants object-level read on the artifact bucket for the invoke action input; and the S3 sync function is intentionally granted object-level access to the deployment target bucket (bucket/*).',
+          appliesTo: [
+            'Resource::*',
+            'Action::s3:GetObject*',
+            'Action::s3:GetBucket*',
+            'Action::s3:List*',
+            'Action::s3:DeleteObject*',
+            'Action::s3:Abort*',
+            { regex: '/^Resource::<ArtifactBucket[0-9A-Fa-f]{8}\\.Arn>\\/\\*$/g' },
+            { regex: '/^Resource::arn:aws:s3:::[^/]+\\/\\*$/g' },
+          ],
         },
       ],
     );

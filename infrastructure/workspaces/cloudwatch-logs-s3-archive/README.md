@@ -49,7 +49,7 @@ Three stacks illustrate increasing S3 lifecycle complexity and the "existing log
 ### Pattern B — Scheduled Export Task (Stack 4)
 
 ```text
-EventBridge Rule (schedule)
+EventBridge Scheduler (schedule)
   → Lambda  (calls logs:CreateExportTask for the previous day)
   → CloudWatch Logs Export API
   → S3 Archive Bucket  (bucket policy allows logs.amazonaws.com to write)

@@ -27,6 +27,10 @@ function applySuppressions(stack: cdk.Stack) {
       id: 'AwsSolutions-IAM4',
       reason: 'AmazonSSMManagedInstanceCore is an AWS-managed policy used intentionally for SSM access.',
     },
+    {
+      id: 'AwsSolutions-VPC7',
+      reason: 'VPC Flow Logs are omitted from this single-instance dual-ENI reference pattern to keep it minimal; enable them in production.',
+    },
   ]);
 }
 
