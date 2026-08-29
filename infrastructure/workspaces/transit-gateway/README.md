@@ -5,10 +5,17 @@
 
 > **Level: 300 (Advanced)**
 
-Single-account, single-region reproduction of the **AWS Networking Workshop** Transit Gateway lab.
-Three VPCs (A / B / C) are joined into a full mesh by **one Transit Gateway** with a **single, explicitly managed
-Transit Gateway route table**, and one SSM-managed test instance is dropped into each VPC so connectivity can be
-verified end to end. It aligns with the AWS Well-Architected Framework across all six pillars.
+Single-account, single-region take on the **AWS Networking Workshop** Transit Gateway lab
+([Multi-VPC → Transit Gateway](https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw)).
+Three VPCs (A / B / C) are joined into a full mesh by **one Transit Gateway**, and one SSM-managed test instance is
+dropped into each VPC so connectivity can be verified end to end. It aligns with the AWS Well-Architected Framework
+across all six pillars.
+
+> **Where this diverges from the workshop.** The workshop keeps the Transit Gateway's *default* route table
+> (automatic association + propagation) and adds a `10.0.0.0/8` aggregate route in VPC B and VPC C. This workspace
+> instead creates **one explicitly managed TGW route table** and adds **specific `/16` routes** in every VPC. Both
+> choices are deliberate and explained under [Design Decisions](#design-decisions--best-practices); the workshop's
+> approach is the simpler baseline, this one is closer to what you would run in production.
 
 ## 📑 Table of Contents
 
@@ -77,10 +84,12 @@ AWS Region (us-east-1 by default; the deploy profile's region wins)
 attachment is *associated with* (its inbound traffic is evaluated against it) and *propagates into* (its VPC CIDR
 is advertised to the others).
 
-**Why**: the implicit default route table is convenient but invisible in IaC and in the console's "route tables"
-list — you cannot review, tag, or diff it. An owned route table makes the routing domain auditable and is the
-starting point for later segmentation (e.g. splitting into "prod" and "shared-services" tables). Associating +
-propagating all three attachments against a single table yields a full mesh with the least moving parts.
+**Why**: the AWS Networking Workshop keeps the *default* route table (it says "keep the remaining settings at the
+defaults"), which is fine for a lab. But the implicit default table is invisible in IaC and in the console's
+"route tables" list — you cannot review, tag, or diff it. An owned route table makes the routing domain auditable
+and is the starting point for later segmentation (e.g. splitting into "prod" and "shared-services" tables).
+Associating + propagating all three attachments against a single table reproduces the workshop's full mesh with
+the least moving parts while keeping every routing decision explicit in the template.
 
 **Trade-off**: two extra CloudFormation resources per attachment. Negligible, and it is the pattern you want to
 grow into.
@@ -90,19 +99,22 @@ grow into.
 **Decision**: each VPC has a `Tgw` subnet group of `PRIVATE_ISOLATED` `/28` subnets (one per AZ) used **only**
 for the attachment ENIs. Workloads live in the `Public` subnets.
 
-**Why**: AWS's own guidance is to give the attachment its own subnet so its route table is not entangled with
-workload routing. A `/28` (11 usable IPs) is ample for the ENIs and leaves the address space for real subnets.
+**Why**: the workshop attaches through the existing private subnets; AWS's [Transit Gateway best-practices
+guidance](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-best-design-practices.html) is to give each attachment
+its own subnet so its route table is not entangled with workload routing. A `/28` (11 usable IPs) is ample for
+the ENIs and leaves the address space for real subnets.
 
 ### 3. Specific peer-CIDR routes, not a summarized supernet
 
 **Decision**: the construct adds one `<peer VPC CIDR> → TGW` route per remote VPC to each routable subnet's route
 table, rather than a single `10.0.0.0/8 → TGW`.
 
-**Why**: a broad supernet route silently blackholes any future in-region service you reach by private IP that
-happens to fall inside `10/8`. Specific routes keep the blast radius of a mistake to exactly one VPC and make
-`cdk diff` show precisely which reachability changed. The `10.0.0.0/8` value is still used, but only for the
-**security-group** rules that permit intra-mesh ICMP/SSH, where over-broad is acceptable because the SG is the
-second gate, not the first.
+**Why**: the workshop uses specific `/16` routes in VPC A but a `10.0.0.0/8` aggregate in VPC B and VPC C — the
+aggregate is quicker to type in a console lab. A broad supernet route silently blackholes any future in-region
+service you reach by private IP that happens to fall inside `10/8`, so this workspace uses specific `/16` routes
+in *every* VPC: the blast radius of a mistake stays at exactly one VPC and `cdk diff` shows precisely which
+reachability changed. The `10.0.0.0/8` value is still used, but only for the **security-group** rules that permit
+intra-mesh ICMP/SSH, where over-broad is acceptable because the SG is the second gate, not the first.
 
 ### 4. Test instances in public subnets, no NAT Gateway
 

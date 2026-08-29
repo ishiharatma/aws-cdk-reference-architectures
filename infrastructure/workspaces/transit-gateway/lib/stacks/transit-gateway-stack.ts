@@ -35,7 +35,9 @@ interface VpcDefinition {
 /**
  * Transit Gateway Stack
  *
- * Single-account, single-region reproduction of the AWS multi-VPC Transit Gateway lab:
+ * Single-account, single-region take on the AWS Networking Workshop multi-VPC Transit Gateway lab.
+ * Unlike the workshop (default TGW route table + a 10.0.0.0/8 aggregate in VPC B/C), this manages
+ * one explicit TGW route table and adds specific /16 routes in every VPC - see README.md.
  *
  * - Creates VPC A / B / C from the environment parameters
  * - Joins them with one Transit Gateway (full mesh via a single TGW route table)
