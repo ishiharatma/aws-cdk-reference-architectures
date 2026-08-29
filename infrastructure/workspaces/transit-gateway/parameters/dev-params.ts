@@ -7,7 +7,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 /**
  * Development Environment Parameters
  *
- * Mirrors the AWS "One to Many: Evolving VPC Design" Transit Gateway lab:
+ * Mirrors the AWS Networking Workshop Transit Gateway lab:
  * - VPC A (10.0.0.0/16), VPC B (10.1.0.0/16), VPC C (10.2.0.0/16) in one account / region
  * - Each VPC: a public subnet for the test instance and a dedicated /28 "Tgw" subnet
  *   (PRIVATE_ISOLATED) per AZ for the Transit Gateway attachment ENIs

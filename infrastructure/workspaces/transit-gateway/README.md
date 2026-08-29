@@ -5,7 +5,7 @@
 
 > **Level: 300 (Advanced)**
 
-Single-account, single-region reproduction of the AWS *One to Many: Evolving VPC Design* Transit Gateway lab.
+Single-account, single-region reproduction of the **AWS Networking Workshop** Transit Gateway lab.
 Three VPCs (A / B / C) are joined into a full mesh by **one Transit Gateway** with a **single, explicitly managed
 Transit Gateway route table**, and one SSM-managed test instance is dropped into each VPC so connectivity can be
 verified end to end. It aligns with the AWS Well-Architected Framework across all six pillars.
@@ -236,7 +236,7 @@ Both pings succeed once the attachments are `available` and the route tables hav
 
 ## 📚 References
 
-- AWS Workshop — *One to Many: Evolving VPC Design* → Transit Gateway: <https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/foundational/multivpc/transit-gw>
+- AWS Networking Workshop — Multi-VPC → Transit Gateway: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw> (workshop home: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US>)
 - [Amazon VPC attachments in AWS Transit Gateway](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html)
 - [Transit gateway route tables](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-route-tables.html)
 - [How AWS Transit Gateway works](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)

@@ -5,7 +5,7 @@
 
 > **レベル: 300 (Advanced)**
 
-AWS の *One to Many: Evolving VPC Design* ワークショップの Transit Gateway ラボを、**シングルアカウント・シングルリージョン**で再現します。
+**AWS Networking Workshop** の Transit Gateway ラボを、**シングルアカウント・シングルリージョン**で再現します。
 3 つの VPC（A / B / C）を **1 つの Transit Gateway** と **明示的に管理する単一の Transit Gateway ルートテーブル** でフルメッシュに接続し、
 各 VPC に SSM 管理のテスト用インスタンスを 1 台ずつ配置して疎通をエンドツーエンドで確認できるようにします。AWS Well-Architected Framework の 6 本の柱すべてに整合しています。
 
@@ -226,7 +226,7 @@ ping が固まる場合は [トラブルシューティング](#トラブルシ�
 
 ## 📚 参考資料
 
-- AWS Workshop — *One to Many: Evolving VPC Design* → Transit Gateway: <https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/foundational/multivpc/transit-gw>
+- AWS Networking Workshop — Multi-VPC → Transit Gateway: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw>（ワークショップトップ: <https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US>）
 - [Amazon VPC attachments in AWS Transit Gateway](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-vpc-attachments.html)
 - [Transit gateway route tables](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-route-tables.html)
 - [How AWS Transit Gateway works](https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html)
