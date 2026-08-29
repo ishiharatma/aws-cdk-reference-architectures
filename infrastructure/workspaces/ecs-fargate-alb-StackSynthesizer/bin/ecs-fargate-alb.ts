@@ -58,6 +58,7 @@ const stage = new EcsFargateAlbStage(app, `EcsFargateAlb${pascalCase(envName)}`,
   terminationProtection: isTerminationProtection, // Enabling deletion protection
   isAutoDeleteObject: isAutoDeleteObject,
   params: envParams,
+  codecommitParams: codecommitParams,
   allowedIpsforAlb: [getMyGlobalIpCidr()],
   synthesizer,
 });

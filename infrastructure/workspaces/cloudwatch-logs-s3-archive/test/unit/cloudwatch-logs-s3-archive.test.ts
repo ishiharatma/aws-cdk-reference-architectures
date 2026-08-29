@@ -577,9 +577,9 @@ describe('CloudwatchLogsS3ArchiveExportStack Fine-grained Assertions', () => {
     });
 
     describe('Lambda Function', () => {
-        test('should create Lambda with Python 3.12 runtime', () => {
+        test('should create Lambda with Python 3.14 runtime', () => {
             template.hasResourceProperties('AWS::Lambda::Function', {
-                Runtime: 'python3.12',
+                Runtime: 'python3.14',
                 Handler: 'index.lambda_handler',
             });
         });
@@ -611,28 +611,27 @@ describe('CloudwatchLogsS3ArchiveExportStack Fine-grained Assertions', () => {
         });
     });
 
-    describe('EventBridge Rule', () => {
-        test('should create one EventBridge rule', () => {
-            template.resourceCountIs('AWS::Events::Rule', 1);
+    describe('EventBridge Scheduler', () => {
+        test('should create one EventBridge Scheduler schedule (and no legacy Events rule)', () => {
+            template.resourceCountIs('AWS::Scheduler::Schedule', 1);
+            template.resourceCountIs('AWS::Events::Rule', 0);
         });
 
         test('should configure the schedule expression', () => {
-            template.hasResourceProperties('AWS::Events::Rule', {
+            template.hasResourceProperties('AWS::Scheduler::Schedule', {
                 ScheduleExpression: 'rate(1 day)',
             });
         });
 
         test('should target the export Lambda function', () => {
-            template.hasResourceProperties('AWS::Events::Rule', {
-                Targets: Match.arrayWith([
-                    Match.objectLike({
-                        Arn: Match.objectLike({
-                            'Fn::GetAtt': Match.arrayWith([
-                                Match.stringLikeRegexp('ExportTaskFunction'),
-                            ]),
-                        }),
+            template.hasResourceProperties('AWS::Scheduler::Schedule', {
+                Target: Match.objectLike({
+                    Arn: Match.objectLike({
+                        'Fn::GetAtt': Match.arrayWith([
+                            Match.stringLikeRegexp('ExportTaskFunction'),
+                        ]),
                     }),
-                ]),
+                }),
             });
         });
     });
@@ -678,9 +677,9 @@ describe('CloudwatchLogsS3ArchiveLambdaStack Fine-grained Assertions', () => {
     });
 
     describe('Lambda Function', () => {
-        test('should create Lambda with Python 3.12 runtime', () => {
+        test('should create Lambda with Python 3.14 runtime', () => {
             template.hasResourceProperties('AWS::Lambda::Function', {
-                Runtime: 'python3.12',
+                Runtime: 'python3.14',
                 Handler: 'index.lambda_handler',
             });
         });

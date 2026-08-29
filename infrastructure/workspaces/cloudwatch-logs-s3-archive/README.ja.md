@@ -49,7 +49,7 @@ CloudWatch Log Group
 ### パターンB — スケジュールエクスポートタスク（スタック4）
 
 ```text
-EventBridge Rule（スケジュール）
+EventBridge Scheduler（スケジュール）
   → Lambda  (前日のログに対して logs:CreateExportTask を呼び出す)
   → CloudWatch Logs Export API
   → S3 アーカイブバケット  (バケットポリシーで logs.amazonaws.com の書き込みを許可)

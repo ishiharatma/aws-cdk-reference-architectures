@@ -95,7 +95,7 @@ const testParams: EnvParams = {
         "backend": {
             createConfig: {
                 repositoryNameSuffix: 'nodejs-backend-repo',
-                imageSourcePath: '../../../../backend/example-nodejs-api',
+                imageSourcePath: '../../../backend/example-nodejs-api',
             },
         },
     }
