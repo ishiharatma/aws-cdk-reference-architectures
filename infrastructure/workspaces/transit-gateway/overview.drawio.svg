@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 z" fill="#4d5b6b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="34" text-anchor="middle" font-size="20" font-weight="bold" fill="#232f3e">Multi-VPC connectivity with AWS Transit Gateway (single account / single region)</text>
+  <text x="480" y="56" text-anchor="middle" font-size="13" fill="#5f6b7a">VPC A / B / C meshed through one Transit Gateway route table (association + propagation on every attachment)</text>
+
+  <!-- Region container -->
+  <rect x="30" y="76" width="900" height="470" rx="8" fill="none" stroke="#00a4a6" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="46" y="96" font-size="12" fill="#00a4a6" font-weight="bold">AWS Region (us-east-1 by default; profile region wins)</text>
+
+  <!-- Transit Gateway (center) -->
+  <rect x="400" y="250" width="160" height="70" rx="6" fill="#e6f2ff" stroke="#2074d5" stroke-width="2"/>
+  <text x="480" y="278" text-anchor="middle" font-size="14" font-weight="bold" fill="#154b8c">Transit Gateway</text>
+  <text x="480" y="298" text-anchor="middle" font-size="11" fill="#154b8c">ASN 64512 · default assoc/prop disabled</text>
+
+  <!-- TGW route table -->
+  <rect x="360" y="360" width="240" height="120" rx="6" fill="#f4f8ff" stroke="#2074d5" stroke-width="1.5"/>
+  <text x="480" y="381" text-anchor="middle" font-size="12" font-weight="bold" fill="#154b8c">TGW route table (shared)</text>
+  <text x="376" y="404" font-size="11" fill="#333">10.0.0.0/16  ->  VpcA attachment (prop)</text>
+  <text x="376" y="424" font-size="11" fill="#333">10.1.0.0/16  ->  VpcB attachment (prop)</text>
+  <text x="376" y="444" font-size="11" fill="#333">10.2.0.0/16  ->  VpcC attachment (prop)</text>
+  <text x="376" y="466" font-size="10" fill="#777">every attachment associated + propagated</text>
+  <line x1="480" y1="320" x2="480" y2="360" stroke="#2074d5" stroke-width="1.5"/>
+
+  <!-- VPC A -->
+  <g>
+    <rect x="60" y="120" width="250" height="180" rx="6" fill="#f2fbf2" stroke="#1a9c3e" stroke-width="1.5"/>
+    <text x="76" y="140" font-size="12" font-weight="bold" fill="#1a7a32">VPC A  10.0.0.0/16</text>
+    <rect x="76" y="150" width="218" height="52" rx="4" fill="#ffffff" stroke="#8bc79a"/>
+    <text x="86" y="168" font-size="10" fill="#555">Public subnet /24 (x2 AZ)</text>
+    <rect x="86" y="174" width="90" height="22" rx="3" fill="#fff3e0" stroke="#e08e0b"/>
+    <text x="131" y="189" text-anchor="middle" font-size="10" fill="#a5670a">EC2 test</text>
+    <rect x="76" y="212" width="218" height="40" rx="4" fill="#ffffff" stroke="#8bc79a"/>
+    <text x="86" y="230" font-size="10" fill="#555">Tgw subnet /28 (x2 AZ) — isolated</text>
+    <text x="86" y="244" font-size="9" fill="#888">hosts the TGW attachment ENIs</text>
+    <text x="76" y="284" font-size="9" fill="#777">route: 10.1/16 &amp; 10.2/16 -> tgw</text>
+  </g>
+  <line x1="310" y1="232" x2="400" y2="270" stroke="#4d5b6b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="330" y="243" font-size="10" fill="#4d5b6b">attachment</text>
+
+  <!-- VPC B -->
+  <g>
+    <rect x="650" y="120" width="250" height="180" rx="6" fill="#f2fbf2" stroke="#1a9c3e" stroke-width="1.5"/>
+    <text x="666" y="140" font-size="12" font-weight="bold" fill="#1a7a32">VPC B  10.1.0.0/16</text>
+    <rect x="666" y="150" width="218" height="52" rx="4" fill="#ffffff" stroke="#8bc79a"/>
+    <text x="676" y="168" font-size="10" fill="#555">Public subnet /24 (x2 AZ)</text>
+    <rect x="676" y="174" width="90" height="22" rx="3" fill="#fff3e0" stroke="#e08e0b"/>
+    <text x="721" y="189" text-anchor="middle" font-size="10" fill="#a5670a">EC2 test</text>
+    <rect x="666" y="212" width="218" height="40" rx="4" fill="#ffffff" stroke="#8bc79a"/>
+    <text x="676" y="230" font-size="10" fill="#555">Tgw subnet /28 (x2 AZ) — isolated</text>
+    <text x="676" y="244" font-size="9" fill="#888">hosts the TGW attachment ENIs</text>
+    <text x="666" y="284" font-size="9" fill="#777">route: 10.0/16 &amp; 10.2/16 -> tgw</text>
+  </g>
+  <line x1="650" y1="232" x2="560" y2="270" stroke="#4d5b6b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="585" y="243" font-size="10" fill="#4d5b6b">attachment</text>
+
+  <!-- VPC C -->
+  <g>
+    <rect x="355" y="120" width="250" height="110" rx="6" fill="#f2fbf2" stroke="#1a9c3e" stroke-width="1.5"/>
+    <text x="371" y="140" font-size="12" font-weight="bold" fill="#1a7a32">VPC C  10.2.0.0/16</text>
+    <rect x="371" y="150" width="218" height="34" rx="4" fill="#ffffff" stroke="#8bc79a"/>
+    <text x="381" y="164" font-size="10" fill="#555">Public subnet /24  ·  EC2 test</text>
+    <text x="381" y="178" font-size="9" fill="#888">Tgw subnet /28 hosts the attachment ENIs</text>
+    <text x="371" y="216" font-size="9" fill="#777">route: 10.0/16 &amp; 10.1/16 -> tgw</text>
+  </g>
+  <line x1="480" y1="230" x2="480" y2="250" stroke="#4d5b6b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Operator -->
+  <rect x="60" y="470" width="200" height="60" rx="6" fill="#fef6f6" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="160" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="#a5281b">Operator</text>
+  <text x="160" y="512" text-anchor="middle" font-size="10" fill="#a5281b">SSH allowed from your global IP /32 only</text>
+  <path d="M160,470 C160,420 200,360 355,300" fill="none" stroke="#c0392b" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="150" y="360" font-size="10" fill="#c0392b" transform="rotate(-32 150 360)">SSH 22 (getMyGlobalIp / ALLOWED_IPS)</text>
+
+  <!-- Mesh note -->
+  <rect x="620" y="470" width="290" height="60" rx="6" fill="#f7f7f7" stroke="#999"/>
+  <text x="636" y="490" font-size="11" font-weight="bold" fill="#444">Security groups</text>
+  <text x="636" y="507" font-size="10" fill="#555">ICMP + SSH from 10.0.0.0/8 (mesh) </text>
+  <text x="636" y="521" font-size="10" fill="#555">+ SSH from operator IP /32 — no 0.0.0.0/0</text>
+
+  <text x="480" y="580" text-anchor="middle" font-size="11" fill="#888">Verify: SSM Session Manager onto any test instance, then ping the other VPCs' private addresses across the Transit Gateway</text>
+</svg>

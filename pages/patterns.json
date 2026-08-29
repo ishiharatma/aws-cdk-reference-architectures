@@ -1,5 +1,17 @@
 [
   {
+    "id": "transit-gateway",
+    "title": "Multi-VPC Transit Gateway",
+    "description": "Three VPCs (10.0/16, 10.1/16, 10.2/16) joined into a full mesh by one Transit Gateway with a single, explicitly managed TGW route table (association + propagation on every attachment), plus one SSM-managed test instance per VPC for connectivity verification.",
+    "image": "transit-gateway/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Transit Gateway", "VPC", "Networking", "EC2"],
+    "link": "transit-gateway",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-29",
+    "articles": {}
+  },
+  {
     "id": "aws-backup-cross-region",
     "title": "AWS Backup Cross-Region (Tokyo to Osaka)",
     "description": "A single tag-based AWS Backup Selection protecting a sample EC2 instance, RDS database, S3 bucket, and an entire CloudFormation stack in Tokyo, with every recovery point copied cross-region to a pre-created secondary vault in Osaka.",
