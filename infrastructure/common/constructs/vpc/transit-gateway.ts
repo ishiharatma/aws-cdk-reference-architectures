@@ -161,7 +161,7 @@ export class TransitGatewayConstruct extends Construct {
                             transitGatewayId: this.transitGateway.ref,
                         },
                     );
-                    route.addDependency(this.attachments[source.name]);
+                    route.addResourceDependency(this.attachments[source.name]);
                 });
             });
         }
