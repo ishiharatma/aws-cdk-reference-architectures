@@ -1,0 +1,3264 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "TransitGatewayTransitGatewayId2E48FC60": {
+      "Description": "Transit Gateway ID",
+      "Value": {
+        "Ref": "TransitGateway11B93D57",
+      },
+    },
+    "TransitGatewayTransitGatewayRouteTableIdAF35B409": {
+      "Description": "Transit Gateway route table ID",
+      "Value": {
+        "Ref": "TransitGatewayRouteTableB78D450A",
+      },
+    },
+    "VpcAAvailabilityZonesD8236899": {
+      "Description": "Availability Zones for TestProject/test/VpcA",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcACidr": {
+      "Description": "VpcA CIDR block",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcAF30F05C4",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcACidr684E3B0A": {
+      "Description": "VPC CIDR for TestProject/test/VpcA",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcAF30F05C4",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcAId35E2A6DA": {
+      "Description": "VPC ID for TestProject/test/VpcA",
+      "Value": {
+        "Ref": "VpcAF30F05C4",
+      },
+    },
+    "VpcATestInstanceEC2InstanceId80955030": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VpcATestInstance16F2E1EA",
+      },
+    },
+    "VpcATestInstanceEC2InstanceKeyPairId98AE1315": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcATestInstanceKeyPair5BF4225C",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VpcATestInstanceEC2InstanceSubnetId58E07F6A": {
+      "Value": {
+        "Ref": "VpcAPublicSubnet1SubnetFA6980DF",
+      },
+    },
+    "VpcATestInstanceEC2SecurityGroupId6E3C9A2B": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcATestInstanceSecurityGroupAECB8EB6",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcATestInstanceId": {
+      "Description": "Test EC2 instance ID in VpcA",
+      "Value": {
+        "Ref": "VpcATestInstance16F2E1EA",
+      },
+    },
+    "VpcBAvailabilityZonesFEC6D26E": {
+      "Description": "Availability Zones for TestProject/test/VpcB",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcBCidr": {
+      "Description": "VpcB CIDR block",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcB165FAAA0",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcBCidr6E307F64": {
+      "Description": "VPC CIDR for TestProject/test/VpcB",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcB165FAAA0",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcBIdF7B17369": {
+      "Description": "VPC ID for TestProject/test/VpcB",
+      "Value": {
+        "Ref": "VpcB165FAAA0",
+      },
+    },
+    "VpcBTestInstanceEC2InstanceIdAB46B9AB": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VpcBTestInstance1F8066C2",
+      },
+    },
+    "VpcBTestInstanceEC2InstanceKeyPairIdB7E24CD9": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcBTestInstanceKeyPair6D45810D",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VpcBTestInstanceEC2InstanceSubnetId325D20A5": {
+      "Value": {
+        "Ref": "VpcBPublicSubnet1SubnetF1D410C3",
+      },
+    },
+    "VpcBTestInstanceEC2SecurityGroupIdC5271F15": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcBTestInstanceSecurityGroup11E77A7A",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcBTestInstanceId": {
+      "Description": "Test EC2 instance ID in VpcB",
+      "Value": {
+        "Ref": "VpcBTestInstance1F8066C2",
+      },
+    },
+    "VpcCAvailabilityZonesDC82F5DF": {
+      "Description": "Availability Zones for TestProject/test/VpcC",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcCCidr": {
+      "Description": "VpcC CIDR block",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcC94E97401",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcCCidr8E45DC21": {
+      "Description": "VPC CIDR for TestProject/test/VpcC",
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcC94E97401",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcCIdE1278028": {
+      "Description": "VPC ID for TestProject/test/VpcC",
+      "Value": {
+        "Ref": "VpcC94E97401",
+      },
+    },
+    "VpcCTestInstanceEC2InstanceId975E7CA9": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VpcCTestInstance0F200763",
+      },
+    },
+    "VpcCTestInstanceEC2InstanceKeyPairIdF4F970B1": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcCTestInstanceKeyPairD77C1F05",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VpcCTestInstanceEC2InstanceSubnetId7D2A9293": {
+      "Value": {
+        "Ref": "VpcCPublicSubnet1SubnetCC8A7BCA",
+      },
+    },
+    "VpcCTestInstanceEC2SecurityGroupId6CA61DD0": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VpcCTestInstanceSecurityGroupC7EF677C",
+          "GroupId",
+        ],
+      },
+    },
+    "VpcCTestInstanceId": {
+      "Description": "Test EC2 instance ID in VpcC",
+      "Value": {
+        "Ref": "VpcCTestInstance0F200763",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "TransitGateway11B93D57": {
+      "Properties": {
+        "AmazonSideAsn": 64512,
+        "AutoAcceptSharedAttachments": "disable",
+        "DefaultRouteTableAssociation": "disable",
+        "DefaultRouteTablePropagation": "disable",
+        "Description": "TestProject/test multi-VPC Transit Gateway",
+        "DnsSupport": "enable",
+        "MulticastSupport": "disable",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/TransitGateway",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpnEcmpSupport": "enable",
+      },
+      "Type": "AWS::EC2::TransitGateway",
+    },
+    "TransitGatewayRouteTableB78D450A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/TransitGatewayRouteTable",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTable",
+    },
+    "TransitGatewayVpcAAssociationAFF3A3FA": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcAAttachment117A376F",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayVpcAAttachment117A376F": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "VpcATgwSubnet1Subnet1ECA24B9",
+          },
+          {
+            "Ref": "VpcATgwSubnet2Subnet72EAEEB7",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcAAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayVpcAPropagation345D1455": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcAAttachment117A376F",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayVpcAToVpcBRoute19A46BA34": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcBRoute23345FFC0": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcBRoute3C02E9AEB": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet1RouteTable53A35E91",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcBRoute49FF2CAF5": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet2RouteTable09AA1855",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcCRoute10DB6755F": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcCRoute2FE3F86E6": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcCRoute3DB2AFD4E": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet1RouteTable53A35E91",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcAToVpcCRoute47441123E": {
+      "DependsOn": [
+        "TransitGatewayVpcAAttachment117A376F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet2RouteTable09AA1855",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBAssociationD0424879": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcBAttachmentB60A1C1A",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayVpcBAttachmentB60A1C1A": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "VpcBTgwSubnet1SubnetD57C0F8E",
+          },
+          {
+            "Ref": "VpcBTgwSubnet2Subnet499FC0F8",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcBAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayVpcBPropagation1A5FB414": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcBAttachmentB60A1C1A",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayVpcBToVpcARoute102D759CA": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcARoute25032E3FC": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcARoute339CA38B2": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet1RouteTable27D68AE3",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcARoute40DDB7C99": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet2RouteTable9D699807",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcCRoute138B9B836": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcCRoute21246B331": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcCRoute300B4DEC4": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet1RouteTable27D68AE3",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcBToVpcCRoute450D793E9": {
+      "DependsOn": [
+        "TransitGatewayVpcBAttachmentB60A1C1A",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcC94E97401",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet2RouteTable9D699807",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCAssociation5CEFF948": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcCAttachmentDCCAA6F6",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayVpcCAttachmentDCCAA6F6": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "VpcCTgwSubnet1Subnet8F20A8ED",
+          },
+          {
+            "Ref": "VpcCTgwSubnet2SubnetDB652076",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcCAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayVpcCPropagation4D275A52": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayVpcCAttachmentDCCAA6F6",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayVpcCToVpcARoute1DF1A1258": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcARoute2D8838056": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcARoute314A40974": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet1RouteTable65BD20B5",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcARoute43BBA8707": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcAF30F05C4",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet2RouteTable249095D1",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcBRoute1686A2DFB": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcBRoute25687E844": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcBRoute3E9C204D0": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet1RouteTable65BD20B5",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayVpcCToVpcBRoute498ADD13E": {
+      "DependsOn": [
+        "TransitGatewayVpcCAttachmentDCCAA6F6",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VpcB165FAAA0",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet2RouteTable249095D1",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcADynamoDbEndpointCD726D3B": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+          },
+          {
+            "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+          },
+          {
+            "Ref": "VpcATgwSubnet1RouteTable53A35E91",
+          },
+          {
+            "Ref": "VpcATgwSubnet2RouteTable09AA1855",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcAF30F05C4": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcAIGWB0843D43": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcAPublicSubnet1DefaultRouteCC2FBD7F": {
+      "DependsOn": [
+        "VpcAVPCGW477FE913",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPublicSubnet1RouteTable8F8E1BDE": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPublicSubnet1RouteTableAssociation0D8C6DCF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet1SubnetFA6980DF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPublicSubnet1SubnetFA6980DF": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAPublicSubnet2DefaultRoute181FFB1E": {
+      "DependsOn": [
+        "VpcAVPCGW477FE913",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcAPublicSubnet2RouteTable4F1CAA69": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcAPublicSubnet2RouteTableAssociation8AF6D672": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+        },
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet2SubnetA692A3F6",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcAPublicSubnet2SubnetA692A3F6": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAS3Endpoint33E613E7": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcAPublicSubnet1RouteTable8F8E1BDE",
+          },
+          {
+            "Ref": "VpcAPublicSubnet2RouteTable4F1CAA69",
+          },
+          {
+            "Ref": "VpcATgwSubnet1RouteTable53A35E91",
+          },
+          {
+            "Ref": "VpcATgwSubnet2RouteTable09AA1855",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcA",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcATestInstance16F2E1EA": {
+      "DependsOn": [
+        "VpcATestInstanceInstanceRoleEBE0751D",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VpcATestInstanceInstanceProfile8D5C34AC",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VpcATestInstanceKeyPair5BF4225C",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VpcATestInstanceLaunchTemplateDC23EB2D",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcATestInstanceSecurityGroupAECB8EB6",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcATestInstanceSg1F440A7A",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcAPublicSubnet1SubnetFA6980DF",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcATestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcATestInstanceInstanceProfile8D5C34AC": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcATestInstanceInstanceRoleEBE0751D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcATestInstanceInstanceRoleEBE0751D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcATestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcATestInstanceKeyPair5BF4225C": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VpcATestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VpcATestInstanceLaunchTemplateDC23EB2D": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VpcATestInstanceSecurityGroupAECB8EB6": {
+      "Properties": {
+        "GroupDescription": "TransitGateway/VpcATestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcAF30F05C4",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcATestInstanceSg1F440A7A": {
+      "Properties": {
+        "GroupDescription": "Cross-VPC connectivity test security group for VpcA",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow ICMP from Transit Gateway connected networks",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow SSH from Transit Gateway connected networks",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+          {
+            "CidrIp": "192.0.2.10/32",
+            "Description": "Allow SSH from operator IP 192.0.2.10/32",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcATgwSubnet1RouteTable53A35E91": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcATgwSubnet1RouteTableAssociationD1B6EFF9": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet1RouteTable53A35E91",
+        },
+        "SubnetId": {
+          "Ref": "VpcATgwSubnet1Subnet1ECA24B9",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcATgwSubnet1Subnet1ECA24B9": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcATgwSubnet2RouteTable09AA1855": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcATgwSubnet2RouteTableAssociation65122D5D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcATgwSubnet2RouteTable09AA1855",
+        },
+        "SubnetId": {
+          "Ref": "VpcATgwSubnet2Subnet72EAEEB7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcATgwSubnet2Subnet72EAEEB7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.2.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcA/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcAVPCGW477FE913": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcAIGWB0843D43",
+        },
+        "VpcId": {
+          "Ref": "VpcAF30F05C4",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcB165FAAA0": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcBDynamoDbEndpointC846FD5D": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+          },
+          {
+            "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+          },
+          {
+            "Ref": "VpcBTgwSubnet1RouteTable27D68AE3",
+          },
+          {
+            "Ref": "VpcBTgwSubnet2RouteTable9D699807",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcBIGW3AD09AFC": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcBPublicSubnet1DefaultRouteC8BEB7B6": {
+      "DependsOn": [
+        "VpcBVPCGWB1193685",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPublicSubnet1RouteTable00C3C1C0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPublicSubnet1RouteTableAssociation64D1DC85": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet1SubnetF1D410C3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPublicSubnet1SubnetF1D410C3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBPublicSubnet2DefaultRouteD5F30AA4": {
+      "DependsOn": [
+        "VpcBVPCGWB1193685",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcBPublicSubnet2RouteTableAssociation06303A18": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+        },
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet2SubnetE5778C45",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBPublicSubnet2RouteTableE9FB005E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBPublicSubnet2SubnetE5778C45": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBS3EndpointA89107A4": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcBPublicSubnet1RouteTable00C3C1C0",
+          },
+          {
+            "Ref": "VpcBPublicSubnet2RouteTableE9FB005E",
+          },
+          {
+            "Ref": "VpcBTgwSubnet1RouteTable27D68AE3",
+          },
+          {
+            "Ref": "VpcBTgwSubnet2RouteTable9D699807",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcB",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcBTestInstance1F8066C2": {
+      "DependsOn": [
+        "VpcBTestInstanceInstanceRoleA02EEEA5",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VpcBTestInstanceInstanceProfile5C055FBD",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VpcBTestInstanceKeyPair6D45810D",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VpcBTestInstanceLaunchTemplate7D813DAE",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcBTestInstanceSecurityGroup11E77A7A",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcBTestInstanceSgC1685594",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcBPublicSubnet1SubnetF1D410C3",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcBTestInstanceInstanceProfile5C055FBD": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcBTestInstanceInstanceRoleA02EEEA5",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcBTestInstanceInstanceRoleA02EEEA5": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcBTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcBTestInstanceKeyPair6D45810D": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VpcBTestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VpcBTestInstanceLaunchTemplate7D813DAE": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VpcBTestInstanceSecurityGroup11E77A7A": {
+      "Properties": {
+        "GroupDescription": "TransitGateway/VpcBTestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcB165FAAA0",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcBTestInstanceSgC1685594": {
+      "Properties": {
+        "GroupDescription": "Cross-VPC connectivity test security group for VpcB",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow ICMP from Transit Gateway connected networks",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow SSH from Transit Gateway connected networks",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+          {
+            "CidrIp": "192.0.2.10/32",
+            "Description": "Allow SSH from operator IP 192.0.2.10/32",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcBTgwSubnet1RouteTable27D68AE3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBTgwSubnet1RouteTableAssociation5D735781": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet1RouteTable27D68AE3",
+        },
+        "SubnetId": {
+          "Ref": "VpcBTgwSubnet1SubnetD57C0F8E",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBTgwSubnet1SubnetD57C0F8E": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.2.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBTgwSubnet2RouteTable9D699807": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcBTgwSubnet2RouteTableAssociation8F2237BC": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcBTgwSubnet2RouteTable9D699807",
+        },
+        "SubnetId": {
+          "Ref": "VpcBTgwSubnet2Subnet499FC0F8",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcBTgwSubnet2Subnet499FC0F8": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.2.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcB/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcBVPCGWB1193685": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcBIGW3AD09AFC",
+        },
+        "VpcId": {
+          "Ref": "VpcB165FAAA0",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcC94E97401": {
+      "Properties": {
+        "CidrBlock": "10.2.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcCDynamoDbEndpoint157F665F": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+          },
+          {
+            "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+          },
+          {
+            "Ref": "VpcCTgwSubnet1RouteTable65BD20B5",
+          },
+          {
+            "Ref": "VpcCTgwSubnet2RouteTable249095D1",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCIGW4CB21CED": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcCPublicSubnet1DefaultRoute71BFD939": {
+      "DependsOn": [
+        "VpcCVPCGW25918F10",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcCIGW4CB21CED",
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcCPublicSubnet1RouteTableAssociation2A114F96": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+        },
+        "SubnetId": {
+          "Ref": "VpcCPublicSubnet1SubnetCC8A7BCA",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcCPublicSubnet1RouteTableCF045167": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcCPublicSubnet1SubnetCC8A7BCA": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcCPublicSubnet2DefaultRouteACD9BC38": {
+      "DependsOn": [
+        "VpcCVPCGW25918F10",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcCIGW4CB21CED",
+        },
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcCPublicSubnet2RouteTableA303FCF6": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcCPublicSubnet2RouteTableAssociation5BEF4D3D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+        },
+        "SubnetId": {
+          "Ref": "VpcCPublicSubnet2SubnetAFA1F562",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcCPublicSubnet2SubnetAFA1F562": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.2.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcCS3EndpointBDA759A9": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcCPublicSubnet1RouteTableCF045167",
+          },
+          {
+            "Ref": "VpcCPublicSubnet2RouteTableA303FCF6",
+          },
+          {
+            "Ref": "VpcCTgwSubnet1RouteTable65BD20B5",
+          },
+          {
+            "Ref": "VpcCTgwSubnet2RouteTable249095D1",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VpcC",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCTestInstance0F200763": {
+      "DependsOn": [
+        "VpcCTestInstanceInstanceRole45388725",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VpcCTestInstanceInstanceProfileF2B73DE3",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VpcCTestInstanceKeyPairD77C1F05",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VpcCTestInstanceLaunchTemplateFC817388",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcCTestInstanceSecurityGroupC7EF677C",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "VpcCTestInstanceSg634A9FF7",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcCPublicSubnet1SubnetCC8A7BCA",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcCTestInstanceInstanceProfileF2B73DE3": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcCTestInstanceInstanceRole45388725",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcCTestInstanceInstanceRole45388725": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VpcCTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcCTestInstanceKeyPairD77C1F05": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VpcCTestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VpcCTestInstanceLaunchTemplateFC817388": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VpcCTestInstanceSecurityGroupC7EF677C": {
+      "Properties": {
+        "GroupDescription": "TransitGateway/VpcCTestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VpcC94E97401",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcCTestInstanceSg634A9FF7": {
+      "Properties": {
+        "GroupDescription": "Cross-VPC connectivity test security group for VpcC",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow ICMP from Transit Gateway connected networks",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow SSH from Transit Gateway connected networks",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+          {
+            "CidrIp": "192.0.2.10/32",
+            "Description": "Allow SSH from operator IP 192.0.2.10/32",
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "ToPort": 22,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcCTgwSubnet1RouteTable65BD20B5": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcCTgwSubnet1RouteTableAssociation1867ABAA": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet1RouteTable65BD20B5",
+        },
+        "SubnetId": {
+          "Ref": "VpcCTgwSubnet1Subnet8F20A8ED",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcCTgwSubnet1Subnet8F20A8ED": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.2.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcCTgwSubnet2RouteTable249095D1": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcCTgwSubnet2RouteTableAssociationA0A555EF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcCTgwSubnet2RouteTable249095D1",
+        },
+        "SubnetId": {
+          "Ref": "VpcCTgwSubnet2SubnetDB652076",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcCTgwSubnet2SubnetDB652076": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.2.2.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TransitGateway/VpcC/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "transit-gateway-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcCVPCGW25918F10": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcCIGW4CB21CED",
+        },
+        "VpcId": {
+          "Ref": "VpcC94E97401",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::Instance": 3,
+  "AWS::EC2::InternetGateway": 3,
+  "AWS::EC2::KeyPair": 3,
+  "AWS::EC2::LaunchTemplate": 3,
+  "AWS::EC2::Route": 30,
+  "AWS::EC2::RouteTable": 12,
+  "AWS::EC2::SecurityGroup": 6,
+  "AWS::EC2::Subnet": 12,
+  "AWS::EC2::SubnetRouteTableAssociation": 12,
+  "AWS::EC2::TransitGateway": 1,
+  "AWS::EC2::TransitGatewayRouteTable": 1,
+  "AWS::EC2::TransitGatewayRouteTableAssociation": 3,
+  "AWS::EC2::TransitGatewayRouteTablePropagation": 3,
+  "AWS::EC2::TransitGatewayVpcAttachment": 3,
+  "AWS::EC2::VPC": 3,
+  "AWS::EC2::VPCEndpoint": 6,
+  "AWS::EC2::VPCGatewayAttachment": 3,
+  "AWS::IAM::InstanceProfile": 3,
+  "AWS::IAM::Role": 3,
+}
+`;
