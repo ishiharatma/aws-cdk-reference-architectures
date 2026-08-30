@@ -49,11 +49,13 @@ Add a new entry to `patterns.json`:
   "id": "unique-pattern-id",
   "title": "Pattern title",
   "description": "Pattern description",
-  "image": "your-pattern/overview.png",
+  "image": "your-pattern/overview.drawio.svg",
   "tags": ["CDK", "TypeScript"],
   "link": "your-pattern",
   "difficulty": "beginner|intermediate|advanced",
+  "level": 100,
   "date": "YYYY-MM-DD",
+  "draft": false,
   "articles": {
     "devto": "https://dev.to/your-article-url",
     "zenn": "https://zenn.dev/your-article-url",
@@ -61,6 +63,45 @@ Add a new entry to `patterns.json`:
   }
 }
 ```
+
+### Field Reference
+
+| Field | Required | Description |
+| ----- | -------- | ----------- |
+| `id` | Yes | Unique identifier for the pattern (kebab-case). Not rendered; used to keep entries distinct. |
+| `title` | Yes | Title shown on the card. Searchable. |
+| `description` | Yes | Short summary shown on the card. Searchable. |
+| `image` | No | Architecture diagram. Relative path (`<id>/overview.drawio.svg`, resolved inside this repository) or a full `https://` URL for an image hosted elsewhere. Omit to render a card with no image. |
+| `tags` | Yes | Array of tag strings. Drives search and the tag filter dropdown. |
+| `link` | Yes | "View Pattern" button target. A relative slug resolves to `infrastructure/workspaces/<slug>` in this repository (with a `#readme` anchor). A full `https://` URL is used as-is and marks the pattern as living in a separate repository (see below). |
+| `difficulty` | Yes | `beginner` / `intermediate` / `advanced`. Drives the difficulty badge and the difficulty filter. |
+| `level` | No | AWS content level: `100` / `200` / `300` / `400` / `500`. Drives the `Lv.` badge. Omit to hide the badge. |
+| `date` | Yes | `YYYY-MM-DD`. Sorts the gallery (newest first) and drives the `NEW` ribbon (shown for 7 days after this date). |
+| `draft` | No | `true` shows a `DRAFT` ribbon and disables the "View Pattern" button (rendered as a non-clickable "Coming Soon"). Defaults to `false`. |
+| `articles` | No | Object with optional `devto` / `zenn` / `qiita` article URLs. Each present key renders an icon link. |
+
+### Referencing a Pattern in Another Repository
+
+By default a pattern's `link` and `image` are resolved inside this repository. To showcase a pattern that lives in one of your other **public** repositories, use full URLs:
+
+```json
+{
+  "id": "my-external-pattern",
+  "title": "My External Pattern",
+  "description": "A pattern maintained in a separate public repository.",
+  "image": "https://cdn.jsdelivr.net/gh/ishiharatma/other-repo@main/docs/overview.drawio.svg",
+  "tags": ["CDK", "TypeScript"],
+  "link": "https://github.com/ishiharatma/other-repo",
+  "difficulty": "advanced",
+  "level": 300,
+  "date": "2026-09-01",
+  "articles": {}
+}
+```
+
+- `link`: any `http(s)://` URL is used as-is (no `#readme` suffix is appended). The card shows an **External repo** badge.
+- `image`: any `http(s)://` URL is used as-is. Note that `raw.githubusercontent.com` serves `.svg` with `Content-Type: text/plain`, so it will not render inside an `<img>`. Use jsDelivr (`https://cdn.jsdelivr.net/gh/<user>/<repo>@<ref>/<path>`), the other repository's GitHub Pages URL, or copy the diagram into this repository's `pages/<id>/` directory instead.
+- The `pages.yml` deploy workflow only copies diagrams from `infrastructure/workspaces/*/`, so an external image must be reachable at its full URL at runtime.
 
 ### About Images
 

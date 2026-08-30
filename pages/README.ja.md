@@ -49,11 +49,13 @@ npx http-server pages -p 8000
   "id": "unique-pattern-id",
   "title": "パターンのタイトル",
   "description": "パターンの説明文",
-  "image": "your-pattern/overview.png",
+  "image": "your-pattern/overview.drawio.svg",
   "tags": ["CDK", "TypeScript"],
   "link": "your-pattern",
   "difficulty": "beginner|intermediate|advanced",
+  "level": 100,
   "date": "YYYY-MM-DD",
+  "draft": false,
   "articles": {
     "devto": "https://dev.to/your-article-url",
     "zenn": "https://zenn.dev/your-article-url",
@@ -61,6 +63,45 @@ npx http-server pages -p 8000
   }
 }
 ```
+
+### フィールド一覧
+
+| フィールド | 必須 | 説明 |
+| ---------- | ---- | ---- |
+| `id` | ○ | パターンの一意な識別子（kebab-case）。表示はされず、エントリを区別するために使用。 |
+| `title` | ○ | カードに表示されるタイトル。検索対象。 |
+| `description` | ○ | カードに表示される短い説明。検索対象。 |
+| `image` | - | 構成図。相対パス（`<id>/overview.drawio.svg`、このリポジトリ内で解決）または外部ホストの画像を指す `https://` フルURL。省略すると画像なしのカードになる。 |
+| `tags` | ○ | タグ文字列の配列。検索とタグフィルタで使用。 |
+| `link` | ○ | 「View Pattern」ボタンのリンク先。相対スラッグはこのリポジトリの `infrastructure/workspaces/<slug>` に解決される（末尾に `#readme` が付く）。`https://` フルURLはそのまま使われ、別リポジトリのパターンとして扱われる（下記参照）。 |
+| `difficulty` | ○ | `beginner` / `intermediate` / `advanced`。難易度バッジと難易度フィルタを制御。 |
+| `level` | - | AWSコンテンツレベル：`100` / `200` / `300` / `400` / `500`。`Lv.` バッジを制御。省略するとバッジ非表示。 |
+| `date` | ○ | `YYYY-MM-DD`。ギャラリーのソート（新しい順）と `NEW` リボン（この日付から7日間表示）を制御。 |
+| `draft` | - | `true` で `DRAFT` リボンを表示し、「View Pattern」ボタンをクリック不可の「Coming Soon」に切り替える。デフォルトは `false`。 |
+| `articles` | - | `devto` / `zenn` / `qiita` の記事URLを持つ任意オブジェクト。設定されたキーごとにアイコンリンクを表示。 |
+
+### 別リポジトリのパターンを参照する
+
+`link` と `image` は既定でこのリポジトリ内で解決されます。自分の別の**公開**リポジトリにあるパターンを掲載したい場合は、フルURLを指定します：
+
+```json
+{
+  "id": "my-external-pattern",
+  "title": "My External Pattern",
+  "description": "別の公開リポジトリで管理しているパターン。",
+  "image": "https://cdn.jsdelivr.net/gh/ishiharatma/other-repo@main/docs/overview.drawio.svg",
+  "tags": ["CDK", "TypeScript"],
+  "link": "https://github.com/ishiharatma/other-repo",
+  "difficulty": "advanced",
+  "level": 300,
+  "date": "2026-09-01",
+  "articles": {}
+}
+```
+
+- `link`：`http(s)://` のURLはそのまま使われる（`#readme` は付与されない）。カードに **External repo** バッジが表示される。
+- `image`：`http(s)://` のURLはそのまま使われる。ただし `raw.githubusercontent.com` は `.svg` を `Content-Type: text/plain` で返すため `<img>` で表示されない。jsDelivr（`https://cdn.jsdelivr.net/gh/<user>/<repo>@<ref>/<path>`）、相手リポジトリの GitHub Pages URL、またはこのリポジトリの `pages/<id>/` に構成図をコピーする方法を使うこと。
+- `pages.yml` のデプロイワークフローは `infrastructure/workspaces/*/` の構成図しかコピーしないため、外部画像は実行時にフルURLで到達可能である必要がある。
 
 ### 画像について
 

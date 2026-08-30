@@ -17,9 +17,14 @@ function toAbsoluteImageUrl(relativePath) {
 function toAbsoluteLinkUrl(relativePath) {
     if (!relativePath) return relativePath;
     if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
-        return relativePath;  // Already absolute
+        return relativePath;  // Already absolute (pattern hosted in a separate repository)
     }
     return REPO_BASE_URL + relativePath.replace(/^\.\.?\//, '') + '#readme';
+}
+
+// A pattern whose link points at a full URL lives in a separate (external) repository
+function isExternalUrl(value) {
+    return typeof value === 'string' && /^https?:\/\//.test(value);
 }
 // Load patterns from JSON file
 let allPatterns = [];
@@ -106,6 +111,12 @@ function createPatternCard(pattern) {
         ? `<span class="level-badge level-${pattern.level}">Lv.${pattern.level}</span>`
         : '';
 
+    // External repo badge: shown when the pattern is hosted outside this repository
+    const isExternal = isExternalUrl(pattern.link);
+    const externalBadgeHTML = isExternal
+        ? `<span class="external-badge" title="Hosted in a separate GitHub repository">External repo</span>`
+        : '';
+
     // NEW ribbon: within 7 days of date
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     const isNew = (Date.now() - new Date(pattern.date).getTime()) <= ONE_WEEK_MS;
@@ -127,7 +138,22 @@ function createPatternCard(pattern) {
     
     // Article links HTML
     const articleLinksHTML = createArticleLinksHTML(pattern.articles);
-    
+
+    // View Pattern button: disabled ("Coming Soon") while the pattern is a draft
+    const viewButtonHTML = pattern.draft
+        ? `<span class="inline-flex items-center justify-center w-full text-center bg-gray-200 text-gray-400 font-semibold py-2 px-4 rounded gap-2 cursor-not-allowed select-none" aria-disabled="true" title="This pattern is still a draft and not published yet">
+                        Coming Soon
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>`
+        : `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-full text-center bg-aws-orange hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition gap-2">
+                        View Pattern
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>`;
+
     return `
         <div class="pattern-card bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
             ${newRibbonHTML}
@@ -138,9 +164,10 @@ function createPatternCard(pattern) {
                 
                 <!-- Difficulty / Level Badges -->
                 <div class="mb-3 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <span class="difficulty-badge ${difficultyClass}">${difficultyLabel}</span>
                         ${levelBadgeHTML}
+                        ${externalBadgeHTML}
                     </div>
                     <span class="text-xs text-gray-400">${pattern.date}</span>
                 </div>
@@ -159,12 +186,7 @@ function createPatternCard(pattern) {
                     </div>
                     
                     <!-- View Pattern Button -->
-                    <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-full text-center bg-aws-orange hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded transition gap-2">
-                        View Pattern
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                    </a>
+                    ${viewButtonHTML}
                 </div>
             </div>
         </div>
