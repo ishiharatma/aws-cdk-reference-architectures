@@ -1,0 +1,47 @@
+{
+  "name": "route53-resolver-endpoints",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest test/unit",
+    "test:snapshot": "jest test/snapshot",
+    "test:snapshot:update": "jest test/snapshot --updateSnapshot",
+    "test:integration": "jest test/integration",
+    "test:compliance": "jest test/compliance",
+    "bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk bootstrap  --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk diff '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "synth": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk synth '**' --quiet --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy --all --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "destroy:all": "cdk destroy --all -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdk deploy '**' --version-reporting false --asset-metadata false -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "delstack": "cross-env CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --profile ${PROJECT}-${ENV} --query Account --output text) delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "d:bootstrap": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd bootstrap --profile ${PROJECT}-${ENV}",
+    "d:diff": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd diff '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "d:stage:deploy:all": "cross-env COMMIT_HASH=$(git rev-parse --short HEAD) cdkd deploy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "d:stage:destroy:all": "cross-env cdkd destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "lint": "eslint \"**/*.ts\"",
+    "lint:fix": "eslint \"**/*.ts\" --fix",
+    "format": "prettier --write \"**/*.ts\"",
+    "docs": "npx typedoc",
+    "clean": "rimraf ./cdk.out ./dist ./node_modules/.cache"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "jest": "^30",
+    "tsx": "^4.23.0",
+    "typescript": "~7.0.2"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.265.0",
+    "constructs": "^10.5.0"
+  }
+}
