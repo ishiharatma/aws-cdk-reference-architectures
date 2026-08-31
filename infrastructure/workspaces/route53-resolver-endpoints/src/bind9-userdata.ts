@@ -35,7 +35,10 @@ export function bind9UserData(zoneName: string, hostRecordName = 'host1'): strin
         'NAMEDCONFEOF',
 
         `cat > ${zoneFile} << ZONEEOF`,
-        '$TTL 300',
+        // Escaped: in this unquoted heredoc (needed so ${PRIVATE_IP} below expands),
+        // bash would otherwise treat BIND's "$TTL" directive as an unset shell variable
+        // and silently strip it, corrupting the zone file's first line.
+        '\\$TTL 300',
         `@ IN SOA ns.${zoneName}. admin.${zoneName}. ( 1 3600 900 604800 300 )`,
         `@ IN NS ns.${zoneName}.`,
         `ns.${zoneName}. IN A \${PRIVATE_IP}`,

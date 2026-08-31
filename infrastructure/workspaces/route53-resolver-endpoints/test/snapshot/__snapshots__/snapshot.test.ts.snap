@@ -469,7 +469,7 @@ zone "onprem.example.com" IN {
 };
 NAMEDCONFEOF
 cat > /var/named/onprem.example.com.zone << ZONEEOF
-$TTL 300
+\\$TTL 300
 @ IN SOA ns.onprem.example.com. admin.onprem.example.com. ( 1 3600 900 604800 300 )
 @ IN NS ns.onprem.example.com.
 ns.onprem.example.com. IN A \${PRIVATE_IP}
