@@ -51,6 +51,23 @@ describe('Route53PhzDelegationStack – topology', () => {
         template.resourceCountIs('AWS::EC2::TransitGatewayRouteTablePropagation', 4);
     });
 
+    test('every subnet is isolated: no Internet Gateway, NAT Gateway, or public IP', () => {
+        template.resourceCountIs('AWS::EC2::InternetGateway', 0);
+        template.resourceCountIs('AWS::EC2::NatGateway', 0);
+        const instances = template.findResources('AWS::EC2::Instance');
+        for (const instance of Object.values(instances)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((instance as any).Properties.NetworkInterfaces?.[0]?.AssociatePublicIpAddress).not.toBe(true);
+        }
+    });
+
+    test('creates the SSM/SSM Messages/EC2 Messages interface endpoints for Hub and OnPrem VPCs', () => {
+        const interfaceEndpoints = template.findResources('AWS::EC2::VPCEndpoint', {
+            Properties: { VpcEndpointType: 'Interface' },
+        });
+        expect(Object.keys(interfaceEndpoints)).toHaveLength(6); // 3 services x 2 VPCs (Hub, OnPrem)
+    });
+
     test('creates three private hosted zones, one per zone-owning VPC', () => {
         template.resourceCountIs('AWS::Route53::HostedZone', 3);
         template.hasResourceProperties('AWS::Route53::HostedZone', { Name: 'system.example.com.' });

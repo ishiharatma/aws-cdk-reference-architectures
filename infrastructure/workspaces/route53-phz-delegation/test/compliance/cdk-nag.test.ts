@@ -107,6 +107,8 @@ function applySuppressions(stack: Route53PhzDelegationStack): void {
         'HubOutboundEndpoint/SecurityGroup/Resource',
         'DevInboundDelegationEndpoint/SecurityGroup/Resource',
         'StgInboundDelegationEndpoint/SecurityGroup/Resource',
+        'HubSsmEndpointsSecurityGroup/Resource',
+        'OnPremSsmEndpointsSecurityGroup/Resource',
     ]) {
         NagSuppressions.addResourceSuppressionsByPath(stack, `${pathPrefix}/${path}`, [
             {

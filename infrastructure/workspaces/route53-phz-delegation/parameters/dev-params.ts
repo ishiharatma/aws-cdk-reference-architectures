@@ -7,18 +7,21 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 /**
  * Development Environment Parameters
  *
- * - HubVpc (10.0.0.0/16, 2 AZs): "Public" hosts the test instance; a dedicated "Resolver"
- *   isolated /27 subnet group hosts the regular inbound + outbound Resolver endpoints; a
- *   dedicated "Tgw" isolated /28 subnet group hosts the Transit Gateway attachment ENIs.
+ * - HubVpc (10.0.0.0/16, 2 AZs): a "Private" isolated subnet group hosts the test instance
+ *   and its SSM interface endpoints; a dedicated "Resolver" isolated /27 subnet group hosts
+ *   the regular inbound + outbound Resolver endpoints; a dedicated "Tgw" isolated /28
+ *   subnet group hosts the Transit Gateway attachment ENIs.
  * - DevVpc / StgVpc (10.1.0.0/16, 10.2.0.0/16, 2 AZs): no workload subnet needed - only
  *   "Resolver" (the INBOUND_DELEGATION endpoint) and "Tgw".
- * - OnPremVpc (10.3.0.0/16, 1 AZ): "Public" hosts the BIND9 forwarder; "Tgw" for the
- *   attachment.
- * - No NAT Gateway anywhere - the test/BIND9 instances only need the Internet Gateway
- *   (SSM + package installs); the Resolver endpoint ENIs need no internet access at all.
+ * - OnPremVpc (10.3.0.0/16, 1 AZ): a "Private" isolated subnet hosts the BIND9 forwarder
+ *   and its own SSM interface endpoints; "Tgw" for the attachment.
+ * - No NAT Gateway and no Internet Gateway anywhere - every subnet is PRIVATE_ISOLATED.
+ *   `dnf install` reaches the Amazon Linux package repos via the default S3 gateway
+ *   endpoint; SSM Session Manager reaches its endpoints via the SSM/SSM Messages/EC2
+ *   Messages interface endpoints created in the stack for HubVpc and OnPremVpc.
  */
 const hubVpcSubnets = [
-    { name: 'Public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
+    { name: 'Private', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 },
     { name: 'Resolver', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 27 },
     { name: 'Tgw', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 28 },
 ];
@@ -29,7 +32,7 @@ const childVpcSubnets = [
 ];
 
 const onPremVpcSubnets = [
-    { name: 'Public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
+    { name: 'Private', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 },
     { name: 'Tgw', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 28 },
 ];
 
@@ -56,6 +59,7 @@ const devParams: EnvParams = {
             maxAzs: 2,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false, // Enable in production
@@ -71,6 +75,7 @@ const devParams: EnvParams = {
             maxAzs: 2,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,
@@ -86,6 +91,7 @@ const devParams: EnvParams = {
             maxAzs: 2,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,
@@ -101,6 +107,7 @@ const devParams: EnvParams = {
             maxAzs: 1,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,

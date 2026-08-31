@@ -34,8 +34,9 @@
                               │        Transit Gateway         │
                               └───┬───────┬────────┬───────┬───┘
         HubVpc 10.0.0.0/16        │  DevVpc 10.1.0.0/16     │  StgVpc 10.2.0.0/16
-        ├─ Public (テストEC2)      │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
-        ├─ Resolver /27 x2 AZ     │  │   Inbound-Delegation  │  │   Inbound-Delegation
+        ├─ Private (テストEC2、    │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
+        │   SSMエンドポイント)      │  │   Inbound-Delegation  │  │   Inbound-Delegation
+        ├─ Resolver /27 x2 AZ     │  │                       │  │
         │   ├─ インバウンド ◄──────┼──┼── system.* を転送     │  │
         │   └─ アウトバウンド ─────┼──┤   PHZ dev.system.*    │  │  PHZ stg.system.*
         ├─ Tgw /28 x2 AZ          │  └─ Tgw /28 x2 AZ        │  └─ Tgw /28 x2 AZ
@@ -45,8 +46,10 @@
         ResolverRule DELEGATE(dev.system.*) / DELEGATE(stg.system.*)（アウトバウンドエンドポイント上）
                               │
         OnPremVpc 10.3.0.0/16 │ （「オンプレミス役」）
-        ├─ Public (BIND9 フォワーダー: system.example.com → HubVpcインバウンドエンドポイントIP)
+        ├─ Private (BIND9 フォワーダー、SSMエンドポイント: system.example.com → HubVpcインバウンドエンドポイントIP)
         └─ Tgw /28
+
+インターネットゲートウェイ/NAT Gatewayはどこにもなし — 全サブネットがPRIVATE_ISOLATED。
 ```
 
 ### 主要コンポーネント
@@ -55,7 +58,8 @@
 |-----------|------|
 | **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | [`route53-resolver-endpoints`](../route53-resolver-endpoints/) と共有。ここではHubVpcの通常インバウンド/アウトバウンドエンドポイントと、DevVpc/StgVpcの `INBOUND_DELEGATION` エンドポイント（Do53のみ、静的IP）を作成。 |
 | **`TransitGatewayConstruct`** (`@common/constructs/vpc/transit-gateway`) | 4つのVPCすべてを、1つの共有TGWルートテーブルに接続（[`transit-gateway`](../transit-gateway/) ワークスペースと同パターン）。 |
-| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | 各VPCのサブネットグループを構築: `Public`（ワークロード、Hub/OnPremのみ）、`Resolver`（Hub/Dev/Stgのみ）、`Tgw`（4VPCすべて）。 |
+| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | 各VPCのサブネットグループを構築: `Private`（ワークロード+SSMエンドポイント、Hub/OnPremのみ）、`Resolver`（Hub/Dev/Stgのみ）、`Tgw`（4VPCすべて）。全サブネットが `PRIVATE_ISOLATED` で、インターネットゲートウェイもNAT Gatewayもなし。 |
+| **SSM VPCインターフェースエンドポイント**（`SSM` / `SSM Messages` / `EC2 Messages`） | HubVpcに1セット、OnPremVpcに1セット — EC2インスタンスを持つのはこの2つのVPCのみ。インターネット経路が一切なくてもSession Managerで到達できる。 |
 | **プライベートホストゾーン** | HubVpcの `system.example.com`、DevVpcの `dev.system.example.com`、StgVpcの `stg.system.example.com`。それぞれ自分のVPCのみに関連付け。 |
 | **`DELEGATE` Resolverルール** | HubVpcのアウトバウンドエンドポイント上に2つの `CfnResolverRule`（`RuleType: DELEGATE`、子ゾーンごとに `DelegationRecord` を1つ）を作成し、HubVpcに関連付け。 |
 | **NS＋グルーレコード** | 親ゾーン内に、子ドメインごとのNSレコード（架空のネームサーバーホスト名2つを指す）と、それぞれをその子の委任エンドポイントの静的IPへ解決するAレコード（グルー）を配置。 |
@@ -68,7 +72,8 @@
 | 接続方式 | ピアリングではなくTransit Gateway | VPCが4つのハブ&スポーク構成。2VPCのピアリングケースは [`route53-resolver-endpoints`](../route53-resolver-endpoints/) を参照。 |
 | 委任の深さ | 1段（親→子） | AWSの `DELEGATE` ルール機構をエンドツーエンドで実演。さらに深いチェーン（子が孫を委任）への拡張は容易だが本構成には含まない。 |
 | ゾーンの独立性 | 各PHZは正確に1つのVPCに関連付け | `dev`/`stg` の所有権を別アカウント/VPCに分けつつ、単一のDNS名前空間を維持する実際の組織構成を模している。 |
-| コスト | NAT Gatewayなし | すべてのEC2はパブリックサブネットに置きSSMでアクセス。Transit GatewayアタッチメントとResolverエンドポイントの時間課金のみが発生。 |
+| セキュリティ | インターネット露出なし | 全サブネットが `PRIVATE_ISOLATED`。両EC2ともインターネットゲートウェイではなくインターフェースエンドポイント経由でSSMに到達。 |
+| コスト | NAT Gatewayなし、代わりにSSMインターフェースエンドポイント | いずれにせよTransit GatewayアタッチメントとResolverエンドポイントの時間課金が支配的。SSMインターフェースエンドポイントはそれに上乗せされる、より小さく限定的なコスト。 |
 
 ## 🧭 設計判断とベストプラクティス
 
@@ -126,6 +131,12 @@ IPを `Fn::GetAtt` 属性として一切公開していない（`IpAddressCount`
 ワークスペースのREADMEで説明したトレードオフと同じであり、本ワークスペースはピアリングが有利でなくなる
 2VPCの閾値を超えているためこちらを採用している。
 
+### 6. 全サブネットをプライベートに — インターネットゲートウェイの代わりにSSMインターフェースエンドポイント
+
+**決定**: HubVpcもOnPremVpcも `Public` サブネットグループやインターネットゲートウェイを持たない。両VPCのEC2インスタンスは `Private`（`PRIVATE_ISOLATED`）サブネットグループに置き、それぞれ独自のSSM・SSM Messages・EC2 MessagesインターフェースエンドポイントをこのPrivateサブネットグループ内に配置することで、Session Managerが引き続き機能するようにしている。DevVpc/StgVpcはもともとワークロード用サブネットを持たないため影響を受けない。
+
+**理由**: [`route53-resolver-endpoints`](../route53-resolver-endpoints/) ワークスペースのREADMEにある同一の決定（詳細な理由も含む）を参照。実際のオンプレミスDNSサーバーがインターネットに直接晒されることは通常なく、「ハブ」インスタンスもインターネットへの経路を必要としない。そちらで `@common/constructs/ec2/ec2-testinstance` に追加した `targetSubnetGroupName` を本ワークスペースでも再利用し、`SubnetType` だけに頼らず各インスタンスをそのVPCの `Private` グループに配置している（両VPCとも他にも `PRIVATE_ISOLATED` グループ — `Resolver` や `Tgw` — を持つため）。
+
 ## 💰 コスト最適化
 
 概算 **ap-northeast-1**、オンデマンド、24時間稼働想定。
@@ -136,13 +147,15 @@ IPを `Fn::GetAtt` 属性として一切公開していない（`IpAddressCount`
 | Resolverエンドポイント（Hub in+out、Dev、Stg委任） | 4 | $0.125 / エンドポイント時間 | ~$365 |
 | EC2 `t4g.nano`（テスト + BIND9） | 2 | $0.0042 / 時間（リージョン係数あり） | ~$6 |
 | EBS gp3 8 GiB | 2 | $0.08 / GB月 | ~$1.3 |
-| **合計（アイドル時）** | | | **~$516 / 月** |
+| SSMインターフェースエンドポイント（SSM/SSM Messages/EC2 Messages、AZごと） | 9（HubVpcの2AZ×3 + OnPremVpcの1AZ×3） | ~$0.013 / エンドポイント・AZ時間 | ~$85 |
+| **合計（アイドル時）** | | | **~$601 / 月** |
 
 コスト削減の勘所:
 
 - **エンドポイント時間課金とアタッチメント時間課金の両方が支配的** — これは両姉妹ワークスペースの構成を
   組み合わせて委任チェーン全体を実演しているため。検証が終わったら速やかに `cdk destroy` すること。
-- NAT Gatewayは一切使用しない。
+- NAT Gatewayは一切使用しない。HubVpcとOnPremVpcは代わりにSSMインターフェースエンドポイントを使う
+  （[設計判断6](#6-全サブネットをプライベートに--インターネットゲートウェイの代わりにssmインターフェースエンドポイント) 参照）。
 - 委任の仕組みそのものだけを確認したい場合（Transit Gatewayの構成自体は不要な場合）、2つの子VPCの
   Resolverエンドポイントと Transit Gateway アタッチメントのコストが最低ライン。VPC数を減らすとピアリングが
   必要になる代わりに、実際のマルチアカウント構成が持つハブ&スポーク形状が失われる、というWell-Architectedな
@@ -153,6 +166,7 @@ IPを `Fn::GetAtt` 属性として一切公開していない（`IpAddressCount`
 | 制御 | 実装内容 |
 |---------|----------------|
 | **DNSトラフィックの範囲** | すべてのResolverエンドポイントのセキュリティグループは、特定のピアVPC CIDR1つに対してのみTCP/UDP 53を開放する（Hubインバウンド ← OnPrem、Hubアウトバウンド ← Dev/Stg、Dev/Stg委任インバウンド ← Hub）。`0.0.0.0/0` は使わず、ユニットテストで検証済み。 |
+| **インターネット露出なし** | 全サブネットが `PRIVATE_ISOLATED` — インターネットゲートウェイ、NAT Gateway、パブリックIPを持つインスタンスは一切存在しない。ユニットテストで検証済み。 |
 | **委任プロトコル制限** | `INBOUND_DELEGATION` エンドポイントは `ResolverEndpointConstruct` 内で `Protocols: ['DO53']` に固定。 |
 | **ゾーンの独立性** | 各プライベートホストゾーンは正確に1つのVPCに関連付けられている。`dev.system.example.com` はStgVpcやOnPremVpcから直接解決できず、HubVpcを経由する委任チェーンでのみ解決される。 |
 | **`DELEGATE` ルールは静的な認証情報/IPを持たない** | `FORWARD` と異なり、`DELEGATE` ルールの `TargetIps` は意図的に空。宛先はゾーン自身のNS/グルーレコード（スタックの他部分と一緒に管理される）から導出される。 |
@@ -191,7 +205,7 @@ npm run destroy:all -w workspaces/route53-phz-delegation
 | 層 | ファイル | 検証内容 |
 |-------|------|----------------|
 | スナップショット | `test/snapshot/snapshot.test.ts` | テンプレート全体、およびリソース種別/数のスナップショット。 |
-| ユニット | `test/unit/route53-phz-delegation-stack.test.ts` | 想定CIDRの4VPC、4VPCすべてをメッシュする1つのTransit Gateway、3つのプライベートホストゾーン、4つのResolverエンドポイント（Hubインバウンド `INBOUND`、Hubアウトバウンド `OUTBOUND`、Dev/Stgの `INBOUND_DELEGATION` が `Protocols: [DO53]` と各2 IPを持つこと）、`TargetIps` を持たない2つの `DELEGATE` ルールとその関連付け、親ゾーン内の両子ゾーン向けNS＋グルー `A` レコード、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
+| ユニット | `test/unit/route53-phz-delegation-stack.test.ts` | 想定CIDRの4VPC、4VPCすべてをメッシュする1つのTransit Gateway、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、HubVpcとOnPremVpcのSSMインターフェースエンドポイント、3つのプライベートホストゾーン、4つのResolverエンドポイント（Hubインバウンド `INBOUND`、Hubアウトバウンド `OUTBOUND`、Dev/Stgの `INBOUND_DELEGATION` が `Protocols: [DO53]` と各2 IPを持つこと）、`TargetIps` を持たない2つの `DELEGATE` ルールとその関連付け、親ゾーン内の両子ゾーン向けNS＋グルー `A` レコード、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
 | コンプライアンス | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` を実行し、スコープと理由を明記した抑制のみを許可。 |
 
 ```bash

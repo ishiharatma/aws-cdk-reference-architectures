@@ -37,6 +37,9 @@ export interface Route53PhzDelegationStackProps extends cdk.StackProps {
  *   forwarder is configured, which is the point of the June 2025 DNS delegation feature.
  * - A test instance in `HubVpc` can `dig` all three zones; the delegation chain resolves
  *   `dev.`/`stg.` queries transparently through the Resolver rules.
+ * - Every subnet is `PRIVATE_ISOLATED` - there is no Internet Gateway or NAT Gateway
+ *   anywhere. SSM Session Manager access to the test/BIND9 instances (in `HubVpc` and
+ *   `OnPremVpc`) is provided by SSM/SSM Messages/EC2 Messages interface endpoints instead.
  */
 export class Route53PhzDelegationStack extends cdk.Stack {
     public readonly hubVpc: VpcConstruct;
@@ -86,9 +89,15 @@ export class Route53PhzDelegationStack extends cdk.Stack {
             prefix,
         });
 
+        // SSM interface endpoints in the two VPCs that host an EC2 instance, so the
+        // private-only instances below stay reachable via Session Manager with no
+        // Internet Gateway / NAT Gateway anywhere in the stack.
+        this.addSsmInterfaceEndpoints(this.hubVpc.vpc, 'Hub');
+        this.addSsmInterfaceEndpoints(this.onPremVpc.vpc, 'OnPrem');
+
         // 2. Join all four VPCs with a single Transit Gateway (same pattern as the
         //    `transit-gateway` workspace: one shared TGW route table, dedicated "Tgw"
-        //    attachment subnets, routes to every other VPC's CIDR on public + isolated subnets).
+        //    attachment subnets, routes to every other VPC's CIDR on every isolated subnet).
         const definitions = [
             { name: 'Hub', construct: this.hubVpc },
             { name: 'Dev', construct: this.devVpc },
@@ -103,7 +112,7 @@ export class Route53PhzDelegationStack extends cdk.Stack {
                 name,
                 vpc: construct.vpc,
                 attachmentSubnets: construct.vpc.selectSubnets({ subnetGroupName: 'Tgw' }).subnets,
-                routableSubnets: [...construct.vpc.publicSubnets, ...construct.vpc.isolatedSubnets],
+                routableSubnets: construct.vpc.isolatedSubnets,
             })),
         });
 
@@ -268,7 +277,7 @@ export class Route53PhzDelegationStack extends cdk.Stack {
             project: props.project,
             environment: props.environment,
             vpc: this.onPremVpc.vpc,
-            targetSubnetType: ec2.SubnetType.PUBLIC,
+            targetSubnetGroupName: 'Private',
             additionalSecurityGroups: [onPremDnsSecurityGroup],
             additionalUserData: bind9ForwarderUserData(parentZoneName, hubInboundEndpoint.ipAddresses),
         });
@@ -278,7 +287,7 @@ export class Route53PhzDelegationStack extends cdk.Stack {
             project: props.project,
             environment: props.environment,
             vpc: this.hubVpc.vpc,
-            targetSubnetType: ec2.SubnetType.PUBLIC,
+            targetSubnetGroupName: 'Private',
         });
 
         new cdk.CfnOutput(this, 'ParentZoneId', {
@@ -298,6 +307,39 @@ export class Route53PhzDelegationStack extends cdk.Stack {
         if (props.params.tags) {
             Object.entries(props.params.tags).forEach(([key, value]) => {
                 cdk.Tags.of(this).add(key, value);
+            });
+        }
+    }
+
+    /**
+     * Creates the SSM, SSM Messages, and EC2 Messages interface endpoints (in the "Private"
+     * subnet group) that Session Manager needs to reach an instance with no Internet Gateway
+     * or NAT Gateway. Ingress is scoped to the VPC's own CIDR on 443/tcp only.
+     * @param vpc the VPC to add the endpoints to
+     * @param idPrefix construct id prefix, unique per VPC (e.g. "Hub", "OnPrem")
+     */
+    private addSsmInterfaceEndpoints(vpc: ec2.IVpc, idPrefix: string): void {
+        const securityGroup = new ec2.SecurityGroup(this, `${idPrefix}SsmEndpointsSecurityGroup`, {
+            vpc,
+            description: `SSM interface endpoints security group for ${idPrefix}Vpc`,
+            allowAllOutbound: true,
+        });
+        securityGroup.addIngressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(443),
+            `Allow HTTPS from ${vpc.vpcCidrBlock} for SSM interface endpoints`,
+        );
+
+        const services: [string, ec2.InterfaceVpcEndpointAwsService][] = [
+            ['Ssm', ec2.InterfaceVpcEndpointAwsService.SSM],
+            ['SsmMessages', ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES],
+            ['Ec2Messages', ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES],
+        ];
+        for (const [name, service] of services) {
+            vpc.addInterfaceEndpoint(`${idPrefix}${name}Endpoint`, {
+                service,
+                subnets: { subnetGroupName: 'Private' },
+                securityGroups: [securityGroup],
             });
         }
     }

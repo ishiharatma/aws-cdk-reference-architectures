@@ -34,8 +34,9 @@ Gateway.
                               │        Transit Gateway         │
                               └───┬───────┬────────┬───────┬───┘
         HubVpc 10.0.0.0/16        │  DevVpc 10.1.0.0/16     │  StgVpc 10.2.0.0/16
-        ├─ Public (test EC2)      │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
-        ├─ Resolver /27 x2 AZ     │  │   Inbound-Delegation  │  │   Inbound-Delegation
+        ├─ Private (test EC2, SSM │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
+        │   endpoints)            │  │   Inbound-Delegation  │  │   Inbound-Delegation
+        ├─ Resolver /27 x2 AZ     │  │                       │  │
         │   ├─ Inbound endpoint ◄─┼──┼── forwards system.*   │  │
         │   └─ Outbound endpoint ─┼──┤   PHZ dev.system.*    │  │  PHZ stg.system.*
         ├─ Tgw /28 x2 AZ          │  └─ Tgw /28 x2 AZ        │  └─ Tgw /28 x2 AZ
@@ -45,8 +46,10 @@ Gateway.
         ResolverRule DELEGATE(dev.system.*) / DELEGATE(stg.system.*) on Outbound endpoint
                               │
         OnPremVpc 10.3.0.0/16 │  ("on-premises role")
-        ├─ Public (BIND9 forwarder: system.example.com → HubVpc Inbound endpoint IPs)
+        ├─ Private (BIND9 forwarder, SSM endpoints: system.example.com → HubVpc Inbound endpoint IPs)
         └─ Tgw /28
+
+No Internet Gateway / NAT Gateway anywhere - every subnet is PRIVATE_ISOLATED.
 ```
 
 ### Key Components
@@ -55,7 +58,8 @@ Gateway.
 |-----------|------|
 | **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | Shared with [`route53-resolver-endpoints`](../route53-resolver-endpoints/): here it creates HubVpc's regular inbound + outbound endpoints and DevVpc/StgVpc's `INBOUND_DELEGATION` endpoints (Do53-only, static IPs). |
 | **`TransitGatewayConstruct`** (`@common/constructs/vpc/transit-gateway`) | Joins all four VPCs into one shared TGW route table (same pattern as the [`transit-gateway`](../transit-gateway/) workspace). |
-| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | Builds each VPC's subnet groups: `Public` (workload, Hub/OnPrem only), `Resolver` (Hub/Dev/Stg only), `Tgw` (all four). |
+| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | Builds each VPC's subnet groups: `Private` (workload + SSM endpoints, Hub/OnPrem only), `Resolver` (Hub/Dev/Stg only), `Tgw` (all four). Every subnet is `PRIVATE_ISOLATED` - no Internet Gateway, no NAT Gateway. |
+| **SSM interface endpoints** (`SSM` / `SSM Messages` / `EC2 Messages`) | One set in HubVpc, one in OnPremVpc - the only two VPCs with an EC2 instance - so Session Manager reaches them with no internet path at all. |
 | **Private hosted zones** | `system.example.com` in HubVpc, `dev.system.example.com` in DevVpc, `stg.system.example.com` in StgVpc - each associated with its own VPC only. |
 | **`DELEGATE` resolver rules** | Two `CfnResolverRule`s (`RuleType: DELEGATE`, one `DelegationRecord` per child zone) on HubVpc's outbound endpoint, associated with HubVpc. |
 | **NS + glue records** | In the parent zone: an `NS` record per child domain pointing at two synthetic nameserver hostnames, each backed by an `A` record (glue) resolving to that child's delegation endpoint static IP. |
@@ -68,7 +72,8 @@ Gateway.
 | Connectivity | Transit Gateway, not peering | Four VPCs, hub-and-spoke - see the [`route53-resolver-endpoints`](../route53-resolver-endpoints/) workspace for the 2-VPC peering case. |
 | Delegation depth | One hop (parent → child) | AWS's `DELEGATE` rule mechanism is demonstrated end to end; deeper chains (child delegates a grandchild) are a straightforward extension, not implemented here. |
 | Zone isolation | Each PHZ associated with exactly one VPC | Mirrors how a real organization would split `dev`/`stg` ownership across separate accounts/VPCs while keeping a single DNS namespace. |
-| Cost | No NAT Gateway | All EC2s sit in public subnets with SSM; only Transit Gateway attachment-hours and Resolver endpoint-hours apply. |
+| Security | No internet exposure | Every subnet is `PRIVATE_ISOLATED`; both EC2s reach SSM through interface endpoints instead of an Internet Gateway. |
+| Cost | No NAT Gateway, but SSM interface endpoints instead | Transit Gateway attachment-hours and Resolver endpoint-hours dominate either way; SSM interface endpoints add a smaller, bounded cost on top. |
 
 ## 🧭 Design Decisions & Best Practices
 
@@ -124,6 +129,20 @@ topology needs 4 attachments. This is the same trade-off documented in the
 [`transit-gateway`](../transit-gateway/) workspace's README, applied here because this workspace crosses the
 2-VPC threshold where peering stops being the cheaper answer.
 
+### 6. Every subnet is private - SSM interface endpoints instead of an Internet Gateway
+
+**Decision**: neither HubVpc nor OnPremVpc has a `Public` subnet group or an Internet Gateway. Their EC2 instances
+sit in a `Private` (`PRIVATE_ISOLATED`) subnet group, and each of those two VPCs gets its own SSM, SSM Messages,
+and EC2 Messages interface endpoints (in that same subnet group) so Session Manager still works. DevVpc and StgVpc
+never had a workload subnet to begin with, so they are unaffected.
+
+**Why**: see the identical decision (and full rationale) in the
+[`route53-resolver-endpoints`](../route53-resolver-endpoints/) workspace's README - a real on-premises DNS server
+is never directly internet-facing, and a "hub" instance does not need a route to the internet either. The same
+`targetSubnetGroupName` addition to `@common/constructs/ec2/ec2-testinstance` used there is reused here to place
+each instance in its VPC's `Private` group rather than disambiguating by `SubnetType` alone (both VPCs also have
+other `PRIVATE_ISOLATED` groups - `Resolver` and/or `Tgw`).
+
 ## 💰 Cost Optimization
 
 Approximate **ap-northeast-1**, on-demand, running 24×7.
@@ -134,13 +153,15 @@ Approximate **ap-northeast-1**, on-demand, running 24×7.
 | Resolver endpoint (Hub in+out, Dev, Stg delegation) | 4 | $0.125 / endpoint-hour | ~$365 |
 | EC2 `t4g.nano` (test + BIND9) | 2 | $0.0042 / hr (× region factor) | ~$6 |
 | EBS gp3 8 GiB | 2 | $0.08 / GB-month | ~$1.3 |
-| **Total (idle)** | | | **~$516 / month** |
+| SSM interface endpoints (SSM/SSM Messages/EC2 Messages, per AZ) | 9 (6 in HubVpc's 2 AZ + 3 in OnPremVpc's 1 AZ) | ~$0.013 / endpoint-AZ-hour | ~$85 |
+| **Total (idle)** | | | **~$601 / month** |
 
 Cost levers:
 
 - **Endpoint-hours and attachment-hours both dominate** here, more than in either sibling workspace alone - this
   stack combines both patterns to demonstrate the full delegation chain. `cdk destroy` promptly after verifying.
-- No NAT Gateway anywhere.
+- No NAT Gateway anywhere; HubVpc and OnPremVpc use SSM interface endpoints instead (see
+  [Design Decision 6](#6-every-subnet-is-private---ssm-interface-endpoints-instead-of-an-internet-gateway)).
 - If you only need to prove the delegation mechanism itself (not the Transit Gateway story), the two child VPCs'
   Resolver endpoints and the Transit Gateway attachment cost are the floor - Well-Architected trade-off: fewer
   VPCs would need peering instead, at the cost of losing the hub-and-spoke shape a real multi-account setup uses.
@@ -150,6 +171,7 @@ Cost levers:
 | Control | Implementation |
 |---------|----------------|
 | **DNS traffic scope** | Every Resolver endpoint's security group opens TCP+UDP 53 to one specific peer VPC CIDR only (Hub inbound ← OnPrem; Hub outbound ← Dev/Stg; Dev/Stg delegation inbound ← Hub) - never `0.0.0.0/0`; a unit test asserts this. |
+| **No internet exposure** | Every subnet is `PRIVATE_ISOLATED` - no Internet Gateway, no NAT Gateway, no public IP on any instance; a unit test asserts this. |
 | **Delegation protocol restriction** | `INBOUND_DELEGATION` endpoints are hard-coded to `Protocols: ['DO53']` in `ResolverEndpointConstruct`. |
 | **Zone isolation** | Each private hosted zone is associated with exactly one VPC - `dev.system.example.com` is not resolvable from StgVpc or OnPremVpc directly, only via the delegation chain through HubVpc. |
 | **`DELEGATE` rules carry no static credentials/IPs** | Unlike `FORWARD`, a `DELEGATE` rule's `TargetIps` is intentionally empty - the destination is derived from the zone's own NS/glue records, which are managed alongside the rest of the stack. |
@@ -188,7 +210,7 @@ npm run destroy:all -w workspaces/route53-phz-delegation
 | Layer | File | What it checks |
 |-------|------|----------------|
 | Snapshot | `test/snapshot/snapshot.test.ts` | Full template + resource-type/count snapshot. |
-| Unit | `test/unit/route53-phz-delegation-stack.test.ts` | 4 VPCs with the expected CIDRs; 1 Transit Gateway meshing all 4; 3 private hosted zones; 4 Resolver endpoints (Hub inbound `INBOUND`, Hub outbound `OUTBOUND`, Dev/Stg `INBOUND_DELEGATION` with `Protocols: [DO53]` and 2 IPs each); 2 `DELEGATE` rules (no `TargetIps`) with their associations; NS + glue `A` records in the parent zone for both children; no security group opening DNS to `0.0.0.0/0`. |
+| Unit | `test/unit/route53-phz-delegation-stack.test.ts` | 4 VPCs with the expected CIDRs; 1 Transit Gateway meshing all 4; no Internet Gateway/NAT Gateway/public IP anywhere; the SSM interface endpoints in HubVpc and OnPremVpc; 3 private hosted zones; 4 Resolver endpoints (Hub inbound `INBOUND`, Hub outbound `OUTBOUND`, Dev/Stg `INBOUND_DELEGATION` with `Protocols: [DO53]` and 2 IPs each); 2 `DELEGATE` rules (no `TargetIps`) with their associations; NS + glue `A` records in the parent zone for both children; no security group opening DNS to `0.0.0.0/0`. |
 | Compliance | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` with only scoped, documented suppressions. |
 
 ```bash
