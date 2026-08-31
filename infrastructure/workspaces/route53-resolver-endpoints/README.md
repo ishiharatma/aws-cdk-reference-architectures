@@ -110,9 +110,9 @@ stack.
 **Decision**: the two VPCs are joined with `VpcPeering` (one `AWS::EC2::VPCPeeringConnection`), not a Transit
 Gateway.
 
-**Why**: the user's requirement was explicit — "接続は簡単にVPCピアリングでいい" (a simple VPC peering connection is
-enough). Two VPCs is exactly the case where peering's zero hourly cost beats a Transit Gateway's per-attachment
-charge; TGW earns its keep once a third VPC needs the same connectivity, which is the scenario the
+**Why**: this workspace only ever connects two VPCs, and two VPCs is exactly the case where peering's zero hourly
+cost beats a Transit Gateway's per-attachment charge — a plain peering connection is the simpler and cheaper tool
+for the job. TGW earns its keep once a third VPC needs the same connectivity, which is the scenario the
 [`route53-phz-delegation`](../route53-phz-delegation/) workspace demonstrates instead.
 
 ### 5. `ResolverEndpointConstruct` lives in `@common`

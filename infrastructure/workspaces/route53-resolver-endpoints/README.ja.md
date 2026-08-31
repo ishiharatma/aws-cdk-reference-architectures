@@ -90,7 +90,7 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 **決定**: 2つのVPCは `VpcPeering`（`AWS::EC2::VPCPeeringConnection` 1本）で接続し、Transit Gatewayは使わない。
 
-**理由**: ユーザー要件に明記されていた通り（「接続は簡単にVPCピアリングでいい」）。VPCが2つだけの場合はまさに、時間課金のないピアリングがTransit Gatewayのアタッチメント課金に勝るケースである。TGWが真価を発揮するのは同じ接続性を3つ目以降のVPCにも必要になったときであり、そのシナリオは [`route53-phz-delegation`](../route53-phz-delegation/) ワークスペースで実演している。
+**理由**: 本ワークスペースが接続するVPCは常に2つだけであり、VPCが2つだけの場合はまさに、時間課金のないピアリングがTransit Gatewayのアタッチメント課金に勝るケースである。単純なピアリング接続の方がシンプルかつ安価な選択肢となる。TGWが真価を発揮するのは同じ接続性を3つ目以降のVPCにも必要になったときであり、そのシナリオは [`route53-phz-delegation`](../route53-phz-delegation/) ワークスペースで実演している。
 
 ### 5. `ResolverEndpointConstruct` は `@common` に配置
 
