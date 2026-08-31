@@ -29,13 +29,15 @@ inbound endpoint's category (`INBOUND` vs the June 2025 `INBOUND_DELEGATION`) is
 
 ```text
 VerifyVpc 10.10.0.0/16 (2 AZ)                     OnPremVpc 10.20.0.0/16 (1 AZ)
-├─ Public /24  (test instance)                    ├─ Public /24 (BIND9 EC2)
+├─ Private /24 (test instance, SSM endpoints)      ├─ Private /24 (BIND9 EC2, SSM endpoints)
 └─ Resolver /27 x2 AZ                              │    authoritative for
     ├─ Inbound endpoint  (INBOUND | INBOUND_DELEGATION)   onprem.example.com
     └─ Outbound endpoint (OUTBOUND)  ────────────┐  │
                                                    │  │
         VPC Peering (AllowDnsResolutionFromRemoteVpc) │
         ◄──────────────────────────────────────────┘
+
+No Internet Gateway / NAT Gateway anywhere - every subnet is PRIVATE_ISOLATED.
 
 PrivateHostedZone system.example.com  →  associated with VerifyVpc
   app.system.example.com  A  10.10.200.10                 (answered locally)
@@ -49,9 +51,10 @@ ResolverRule (FORWARD, domain=onprem.example.com)
 | Component | Role |
 |-----------|------|
 | **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | Wraps `AWS::Route53Resolver::ResolverEndpoint` plus its security group. Handles the `INBOUND` / `OUTBOUND` / `INBOUND_DELEGATION` direction, forces `Protocols: [DO53]` for delegation, and can assign deterministic static IPs. Reusable by any workspace that needs Resolver endpoints. |
-| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | Creates `VerifyVpc` (`Public` + dedicated `Resolver` isolated subnet group) and `OnPremVpc` (`Public` only), no NAT Gateway. |
+| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | Creates `VerifyVpc` (`Private` + dedicated `Resolver` isolated subnet group) and `OnPremVpc` (`Private` only) - every subnet is `PRIVATE_ISOLATED`, no Internet Gateway, no NAT Gateway. |
+| **SSM interface endpoints** (`SSM` / `SSM Messages` / `EC2 Messages`) | One set per VPC, in the `Private` subnet group, so Session Manager reaches the test/BIND9 instances with no internet path at all. |
 | **`VpcPeering`** (`@common/constructs/vpc/vpc-peering`) | Plain VPC peering connection with `AllowDnsResolutionFromRemoteVpc` enabled on both sides via a custom resource, plus routes on every subnet. |
-| **`TestInstance`** (`@common/constructs/ec2/ec2-testinstance`) | Amazon Linux 2023 test instance in `VerifyVpc`, and (with a BIND9 user-data script) the on-premises-role DNS server in `OnPremVpc`. |
+| **`TestInstance`** (`@common/constructs/ec2/ec2-testinstance`) | Amazon Linux 2023 test instance in `VerifyVpc`, and (with a BIND9 user-data script) the on-premises-role DNS server in `OnPremVpc`. Both launched via `targetSubnetGroupName: 'Private'`. |
 | **Private hosted zone** | `system.example.com`, associated with `VerifyVpc` only, with one demo `A` record (`app.system.example.com`). |
 | **Resolver FORWARD rule** | Sends `onprem.example.com` queries out through the outbound endpoint to the BIND9 instance's private IP. |
 
@@ -61,8 +64,8 @@ ResolverRule (FORWARD, domain=onprem.example.com)
 |-----------------|-------|-----------|
 | Availability | 2-AZ Resolver endpoints | Route 53 Resolver requires ≥ 2 subnets per endpoint; two AZs is the minimum viable topology. |
 | Connectivity | VPC peering, not Transit Gateway | Two VPCs, one relationship — peering has no hourly attachment cost. See the [`route53-phz-delegation`](../route53-phz-delegation/) workspace for the Transit Gateway case (4 VPCs). |
-| Security | DNS traffic scoped to peer VPC CIDR only | Every Resolver/BIND9 security group opens TCP+UDP 53 to the specific peer CIDR, never `0.0.0.0/0`. |
-| Cost | No NAT Gateway | Test/BIND9 instances sit in public subnets with SSM access; only endpoint-hour + ENI charges apply. |
+| Security | No internet exposure, DNS scoped to peer VPC CIDR | Every subnet is `PRIVATE_ISOLATED`; every Resolver/BIND9 security group opens TCP+UDP 53 to the specific peer CIDR, never `0.0.0.0/0`. |
+| Cost | No NAT Gateway, but SSM interface endpoints instead | Test/BIND9 instances sit in fully private subnets; SSM access costs 3 interface-endpoint-hours per VPC instead of one NAT Gateway-hour per VPC. |
 
 ## 🧭 Design Decisions & Best Practices
 
@@ -117,6 +120,29 @@ charge; TGW earns its keep once a third VPC needs the same connectivity, which i
 It takes only `ec2.IVpc` + subnets + a direction and has no dependency on this workspace's parameters, so both
 Route 53 Resolver workspaces in this repository share it from `infrastructure/common/constructs/route53/`.
 
+### 6. Every subnet is private - SSM interface endpoints instead of an Internet Gateway
+
+**Decision**: both VPCs have no `Public` subnet group and no Internet Gateway at all. The test instance and the
+BIND9 instance sit in a `Private` (`PRIVATE_ISOLATED`) subnet group, and each VPC gets its own SSM, SSM Messages,
+and EC2 Messages interface endpoints (in that same subnet group) so Session Manager still works.
+
+**Why**: an earlier version of this workspace put both instances in a public subnet with an Internet Gateway,
+reasoning that it was the cheapest way to give Session Manager outbound HTTPS access. That is true, but it is a
+poor fit for the architecture being demonstrated: a real on-premises DNS server is never directly internet-facing,
+and giving a "verification" instance a route to the internet at all is more exposure than a private hosted zone
+demo needs. SSM interface endpoints remove that exposure entirely - the instances have no route to the internet in
+either direction - at the cost of running three interface endpoints per VPC instead of zero.
+
+**Trade-off**: SSM interface endpoints are billed hourly per endpoint (see [Cost Optimization](#cost-optimization)),
+so this is more expensive than the public-subnet approach, though still cheaper than a NAT Gateway per VPC.
+`dnf install` for BIND9 still works with no NAT/IGW because `VpcConstruct` already adds the S3 gateway endpoint
+(free) by default, and the Amazon Linux package repos are served from S3.
+
+**How to select a specific subnet group**: `TestInstance` originally only accepted a `targetSubnetType`, which is
+ambiguous once a VPC has two `PRIVATE_ISOLATED` groups (`Private` for workloads, `Resolver` for endpoint ENIs).
+It now also accepts `targetSubnetGroupName`, which takes precedence - a small, additive change to
+`@common/constructs/ec2/ec2-testinstance`.
+
 ## 💰 Cost Optimization
 
 Approximate **ap-northeast-1**, on-demand, running 24×7.
@@ -128,23 +154,30 @@ Approximate **ap-northeast-1**, on-demand, running 24×7.
 | DNS queries processed | — | $0.40 / million queries | negligible at demo volume |
 | EC2 `t4g.nano` (test + BIND9) | 2 | $0.0042 / hr (× region factor) | ~$6 |
 | EBS gp3 8 GiB | 2 | $0.08 / GB-month | ~$1.3 |
+| SSM interface endpoints (SSM/SSM Messages/EC2 Messages, per AZ) | 9 (6 in VerifyVpc's 2 AZ + 3 in OnPremVpc's 1 AZ) | ~$0.013 / endpoint-AZ-hour | ~$85 |
 | VPC Peering | 1 | $0 (no hourly charge) | $0 |
-| **Total (idle)** | | | **~$190 / month** |
+| **Total (idle)** | | | **~$275 / month** |
 
 Cost levers:
 
 - **Endpoint-hours dominate**, exactly like Transit Gateway attachment-hours in the sibling workspace — this is
   inherent to Resolver endpoints, not a configuration choice. `cdk destroy` as soon as the demo is done.
-- No NAT Gateway anywhere; the test/BIND9 instances use the Internet Gateway + SSM only.
+- No NAT Gateway anywhere; the test/BIND9 instances use SSM interface endpoints instead (see
+  [Design Decision 6](#6-every-subnet-is-private---ssm-interface-endpoints-instead-of-an-internet-gateway)) - still
+  cheaper than one NAT Gateway per VPC (~$0.062/hr × 2 ≈ ~$90/month), and with no internet route at all.
 - VPC peering has no hourly charge, unlike Transit Gateway — see [Design Decision 4](#4-vpc-peering-instead-of-transit-gateway).
+- If cost matters more than the private-subnet posture, drop the SSM interface endpoints and switch
+  `targetSubnetGroupName: 'Private'` back to a `Public` subnet group + Internet Gateway - see the git history
+  for the previous shape of this workspace.
 
 ## 🔒 Security Considerations
 
 | Control | Implementation |
 |---------|----------------|
 | **DNS traffic scope** | Every Resolver endpoint and the BIND9 security group open TCP+UDP 53 to the specific peer VPC CIDR only — never `0.0.0.0/0`; a unit test asserts this. |
+| **No internet exposure** | Every subnet is `PRIVATE_ISOLATED` — no Internet Gateway, no NAT Gateway, no public IP on any instance; a unit test asserts this. |
 | **Delegation protocol restriction** | `INBOUND_DELEGATION` endpoints are hard-coded to `Protocols: ['DO53']` in `ResolverEndpointConstruct`. |
-| **Instance hardening** | IMDSv2 required, EBS encrypted, SSM Session Manager instead of long-lived SSH keys. |
+| **Instance hardening** | IMDSv2 required, EBS encrypted, SSM Session Manager instead of long-lived SSH keys, and now reachable with no internet path at all (SSM interface endpoints). |
 | **Least-privilege IAM** | Instances get only `AmazonSSMManagedInstanceCore`. CDK Nag (`AwsSolutionsChecks`) runs in tests; every suppression is scoped to a path and carries a reason. |
 | **Zone isolation** | `system.example.com` is a *private* hosted zone associated with `VerifyVpc` only — it is never resolvable outside the VPC/peering boundary. |
 | **Default SG** | `@aws-cdk/aws-ec2:restrictDefaultSecurityGroup` is on repo-wide, so each VPC's default SG denies all traffic. |
@@ -185,7 +218,7 @@ on-premises NS record would delegate to.
 | Layer | File | What it checks |
 |-------|------|----------------|
 | Snapshot | `test/snapshot/snapshot.test.ts` | Full template + resource-type/count snapshot. |
-| Unit | `test/unit/route53-resolver-endpoints-stack.test.ts` | 2 VPCs with the expected CIDRs; 1 peering connection with DNS resolution enabled; the private hosted zone + demo record; 2 Resolver endpoints (inbound/outbound) with 2 IPs each; the inbound endpoint switching to `INBOUND_DELEGATION` + `Protocols: [DO53]` when configured; the FORWARD rule + association; no security group opening DNS to `0.0.0.0/0`. |
+| Unit | `test/unit/route53-resolver-endpoints-stack.test.ts` | 2 VPCs with the expected CIDRs; 1 peering connection with DNS resolution enabled; no Internet Gateway/NAT Gateway/public IP anywhere; the SSM interface endpoints in both VPCs; the private hosted zone + demo record; 2 Resolver endpoints (inbound/outbound) with 2 IPs each; the inbound endpoint switching to `INBOUND_DELEGATION` + `Protocols: [DO53]` when configured; the FORWARD rule + association; no security group opening DNS to `0.0.0.0/0`. |
 | Compliance | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` with only scoped, documented suppressions. |
 
 ```bash

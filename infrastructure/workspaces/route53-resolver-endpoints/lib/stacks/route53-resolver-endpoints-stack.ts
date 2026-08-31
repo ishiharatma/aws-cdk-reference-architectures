@@ -35,6 +35,9 @@ export interface Route53ResolverEndpointsStackProps extends cdk.StackProps {
  *   out through the outbound endpoint, across the peering, to the BIND9 instance.
  * - A test instance in `VerifyVpc` can `dig` both the private hosted zone record (answered
  *   locally by Route 53) and the on-premises record (forwarded over the peering).
+ * - Every subnet is `PRIVATE_ISOLATED` - there is no Internet Gateway or NAT Gateway.
+ *   SSM Session Manager access to the test/BIND9 instances is provided by SSM/SSM
+ *   Messages/EC2 Messages interface endpoints in each VPC instead.
  */
 export class Route53ResolverEndpointsStack extends cdk.Stack {
     public readonly verifyVpc: VpcConstruct;
@@ -71,11 +74,16 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
             prefix,
         });
 
+        // SSM interface endpoints so the private-only instances below stay reachable via
+        // Session Manager with no Internet Gateway / NAT Gateway anywhere in either VPC.
+        this.addSsmInterfaceEndpoints(this.verifyVpc.vpc, 'Verify');
+        this.addSsmInterfaceEndpoints(this.onPremVpc.vpc, 'OnPrem');
+
         // 2. Connect the two VPCs with a simple peering connection. Routes are added for
         //    every subnet on both sides so the resolver endpoints and BIND9 instance can
         //    reach each other regardless of which subnet group they land in.
-        const verifyRoutableSubnets = [...this.verifyVpc.vpc.publicSubnets, ...this.verifyVpc.vpc.isolatedSubnets];
-        const onPremRoutableSubnets = [...this.onPremVpc.vpc.publicSubnets, ...this.onPremVpc.vpc.isolatedSubnets];
+        const verifyRoutableSubnets = this.verifyVpc.vpc.isolatedSubnets;
+        const onPremRoutableSubnets = this.onPremVpc.vpc.isolatedSubnets;
         new VpcPeering(this, 'VerifyToOnPremPeering', {
             project: props.project,
             environment: props.environment,
@@ -105,7 +113,7 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
             project: props.project,
             environment: props.environment,
             vpc: this.onPremVpc.vpc,
-            targetSubnetType: ec2.SubnetType.PUBLIC,
+            targetSubnetGroupName: 'Private',
             additionalSecurityGroups: [onPremDnsSecurityGroup],
             additionalUserData: bind9UserData(onPremDomainName),
         });
@@ -166,7 +174,7 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
             project: props.project,
             environment: props.environment,
             vpc: this.verifyVpc.vpc,
-            targetSubnetType: ec2.SubnetType.PUBLIC,
+            targetSubnetGroupName: 'Private',
         });
 
         new cdk.CfnOutput(this, 'PrivateHostedZoneId', {
@@ -190,6 +198,39 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
         if (props.params.tags) {
             Object.entries(props.params.tags).forEach(([key, value]) => {
                 cdk.Tags.of(this).add(key, value);
+            });
+        }
+    }
+
+    /**
+     * Creates the SSM, SSM Messages, and EC2 Messages interface endpoints (in the "Private"
+     * subnet group) that Session Manager needs to reach an instance with no Internet Gateway
+     * or NAT Gateway. Ingress is scoped to the VPC's own CIDR on 443/tcp only.
+     * @param vpc the VPC to add the endpoints to
+     * @param idPrefix construct id prefix, unique per VPC (e.g. "Verify", "OnPrem")
+     */
+    private addSsmInterfaceEndpoints(vpc: ec2.IVpc, idPrefix: string): void {
+        const securityGroup = new ec2.SecurityGroup(this, `${idPrefix}SsmEndpointsSecurityGroup`, {
+            vpc,
+            description: `SSM interface endpoints security group for ${idPrefix}Vpc`,
+            allowAllOutbound: true,
+        });
+        securityGroup.addIngressRule(
+            ec2.Peer.ipv4(vpc.vpcCidrBlock),
+            ec2.Port.tcp(443),
+            `Allow HTTPS from ${vpc.vpcCidrBlock} for SSM interface endpoints`,
+        );
+
+        const services: [string, ec2.InterfaceVpcEndpointAwsService][] = [
+            ['Ssm', ec2.InterfaceVpcEndpointAwsService.SSM],
+            ['SsmMessages', ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES],
+            ['Ec2Messages', ec2.InterfaceVpcEndpointAwsService.EC2_MESSAGES],
+        ];
+        for (const [name, service] of services) {
+            vpc.addInterfaceEndpoint(`${idPrefix}${name}Endpoint`, {
+                service,
+                subnets: { subnetGroupName: 'Private' },
+                securityGroups: [securityGroup],
             });
         }
     }

@@ -26,13 +26,15 @@
 
 ```text
 VerifyVpc 10.10.0.0/16 (2 AZ)                     OnPremVpc 10.20.0.0/16 (1 AZ)
-├─ Public /24  (テストインスタンス)                 ├─ Public /24 (BIND9 EC2)
+├─ Private /24 (テストインスタンス、SSMエンドポイント) ├─ Private /24 (BIND9 EC2、SSMエンドポイント)
 └─ Resolver /27 x2 AZ                              │    onprem.example.com の
     ├─ インバウンドエンドポイント (INBOUND | INBOUND_DELEGATION)  権威DNSサーバー
     └─ アウトバウンドエンドポイント (OUTBOUND) ─────┐  │
                                                    │  │
         VPC ピアリング（双方向でDNS解決を許可）      │  │
         ◄──────────────────────────────────────────┘
+
+インターネットゲートウェイ/NAT Gatewayはどちらにもなし — 全サブネットがPRIVATE_ISOLATED。
 
 プライベートホストゾーン system.example.com  →  VerifyVpc に関連付け
   app.system.example.com  A  10.10.200.10                 （ローカルで応答）
@@ -46,9 +48,10 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 | コンポーネント | 役割 |
 |-----------|------|
 | **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | `AWS::Route53Resolver::ResolverEndpoint` とそのセキュリティグループをラップ。`INBOUND` / `OUTBOUND` / `INBOUND_DELEGATION` の方向を扱い、委任時は `Protocols: [DO53]` を強制し、決定論的な静的IPの割当にも対応。両ワークスペースで再利用。 |
-| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | `VerifyVpc`（`Public` + 専用の `Resolver` isolatedサブネットグループ）と `OnPremVpc`（`Public` のみ）を作成。NAT Gatewayなし。 |
+| **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | `VerifyVpc`（`Private` + 専用の `Resolver` isolatedサブネットグループ）と `OnPremVpc`（`Private` のみ）を作成。全サブネットが `PRIVATE_ISOLATED` で、インターネットゲートウェイもNAT Gatewayもなし。 |
+| **SSM VPCインターフェースエンドポイント**（`SSM` / `SSM Messages` / `EC2 Messages`） | VPCごとに1セット、`Private` サブネットグループ内に配置。インターネット経路が一切なくてもSession Managerでテスト/BIND9インスタンスに到達できる。 |
 | **`VpcPeering`** (`@common/constructs/vpc/vpc-peering`) | 単純なVPCピアリング接続。カスタムリソースで双方向に `AllowDnsResolutionFromRemoteVpc` を有効化し、各サブネットにルートを追加。 |
-| **`TestInstance`** (`@common/constructs/ec2/ec2-testinstance`) | `VerifyVpc` のテストインスタンス、および `OnPremVpc` のBIND9によるオンプレミス相当DNSサーバー（同一コンストラクトにBIND9用user dataを渡して構成）。 |
+| **`TestInstance`** (`@common/constructs/ec2/ec2-testinstance`) | `VerifyVpc` のテストインスタンス、および `OnPremVpc` のBIND9によるオンプレミス相当DNSサーバー（同一コンストラクトにBIND9用user dataを渡して構成）。どちらも `targetSubnetGroupName: 'Private'` で起動。 |
 | **プライベートホストゾーン** | `system.example.com`。`VerifyVpc` のみに関連付け、デモ用の `A` レコード（`app.system.example.com`）を1件保持。 |
 | **Resolver FORWARDルール** | `onprem.example.com` へのクエリをアウトバウンドエンドポイント経由でBIND9インスタンスのプライベートIPへ転送。 |
 
@@ -58,8 +61,8 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 |-----------------|-------|-----------|
 | 可用性 | Resolverエンドポイントは2AZ | Route 53 Resolverはエンドポイントごとに最低2サブネットを要求するため、2AZが最小構成。 |
 | 接続方式 | Transit Gatewayではなく VPCピアリング | VPCが2つ・関係も1つのみのため、時間課金のないピアリングを採用。4VPC構成のTransit Gatewayケースは [`route53-phz-delegation`](../route53-phz-delegation/) ワークスペースを参照。 |
-| セキュリティ | DNSトラフィックはピアVPCのCIDRのみに限定 | すべてのResolver/BIND9セキュリティグループは特定のピアCIDRに対してのみTCP/UDP 53を開放し、`0.0.0.0/0` は使用しない。 |
-| コスト | NAT Gatewayなし | テスト/BIND9インスタンスはパブリックサブネットに置きSSMでアクセス。エンドポイント時間課金とENI課金のみが発生。 |
+| セキュリティ | インターネット露出なし、DNSはピアVPCのCIDRのみに限定 | 全サブネットが `PRIVATE_ISOLATED`。すべてのResolver/BIND9セキュリティグループは特定のピアCIDRに対してのみTCP/UDP 53を開放し、`0.0.0.0/0` は使用しない。 |
+| コスト | NAT Gatewayなし、代わりにSSMインターフェースエンドポイント | テスト/BIND9インスタンスは完全にプライベートなサブネットに配置。SSMアクセスにはVPCあたりNAT Gateway 1台分の時間課金の代わりに、インターフェースエンドポイント3本分の時間課金が発生。 |
 
 ## 🧭 設計判断とベストプラクティス
 
@@ -93,6 +96,16 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 `ec2.IVpc` + サブネット + 方向のみを受け取り、本ワークスペース固有のパラメータに依存しないため、`infrastructure/common/constructs/route53/` に置き、Route 53 Resolverを扱う両ワークスペースで共有している。
 
+### 6. 全サブネットをプライベートに — インターネットゲートウェイの代わりにSSMインターフェースエンドポイント
+
+**決定**: 両VPCとも `Public` サブネットグループを持たず、インターネットゲートウェイも一切配置しない。テストインスタンスとBIND9インスタンスは `Private`（`PRIVATE_ISOLATED`）サブネットグループに置き、各VPCに独自のSSM・SSM Messages・EC2 MessagesインターフェースエンドポイントをこのPrivateサブネットグループ内に配置することで、Session Managerが引き続き機能するようにしている。
+
+**理由**: 本ワークスペースの初期バージョンでは、両インスタンスをインターネットゲートウェイ付きのパブリックサブネットに配置していた。これはSession ManagerにアウトバウンドHTTPSアクセスを与える最も安価な方法という理由からだったが、今回実演しているアーキテクチャには不向きだった。実際のオンプレミスDNSサーバーがインターネットに直接晒されることは通常なく、「検証用」インスタンスにインターネットへの経路を与えること自体、プライベートホストゾーンのデモに必要な露出を超えている。SSMインターフェースエンドポイントを使えばこの露出を完全に排除できる — インスタンスはどちらの方向にもインターネットへの経路を持たない — 代わりにVPCごとに3本のインターフェースエンドポイントを稼働させるコストがかかる。
+
+**トレードオフ**: SSMインターフェースエンドポイントはエンドポイントごとに時間課金される([コスト最適化](#コスト最適化)を参照)ため、パブリックサブネット方式より高くつくが、VPCごとにNAT Gatewayを置くより安い。`dnf install` によるBIND9のインストールは、`VpcConstruct` がデフォルトで追加するS3ゲートウェイエンドポイント(無料)経由でAmazon Linuxのパッケージリポジトリ(S3配信)にアクセスできるため、NAT/IGWなしでも問題なく動作する。
+
+**特定のサブネットグループを指定する方法**: `TestInstance` はもともと `targetSubnetType` しか受け付けなかったが、これは1つのVPCに2つの `PRIVATE_ISOLATED` グループ(ワークロード用の `Private` とエンドポイントENI用の `Resolver`)がある場合には曖昧になる。そこで `targetSubnetGroupName` を追加し、指定時はこちらを優先するようにした — `@common/constructs/ec2/ec2-testinstance` への小さな追加的変更。
+
 ## 💰 コスト最適化
 
 概算 **ap-northeast-1**、オンデマンド、24時間稼働想定。
@@ -104,22 +117,25 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 | 処理DNSクエリ | — | $0.40 / 100万クエリ | デモ規模では無視できる程度 |
 | EC2 `t4g.nano`（テスト + BIND9） | 2 | $0.0042 / 時間（リージョン係数あり） | ~$6 |
 | EBS gp3 8 GiB | 2 | $0.08 / GB月 | ~$1.3 |
+| SSMインターフェースエンドポイント（SSM/SSM Messages/EC2 Messages、AZごと） | 9（VerifyVpcの2AZ×3 + OnPremVpcの1AZ×3） | ~$0.013 / エンドポイント・AZ時間 | ~$85 |
 | VPCピアリング | 1 | $0（時間課金なし） | $0 |
-| **合計（アイドル時）** | | | **~$190 / 月** |
+| **合計（アイドル時）** | | | **~$275 / 月** |
 
 コスト削減の勘所:
 
 - **エンドポイント時間課金が支配的**。姉妹ワークスペースのTransit Gatewayアタッチメント課金と同様、これはResolverエンドポイントに内在するコストであり設定では回避できない。検証が終わったら速やかに `cdk destroy` すること。
-- NAT Gatewayは一切使用しない。テスト/BIND9インスタンスはインターネットゲートウェイとSSMのみで足りる。
+- NAT Gatewayは一切使用しない。テスト/BIND9インスタンスは代わりにSSMインターフェースエンドポイントを使う（[設計判断6](#6-全サブネットをプライベートに--インターネットゲートウェイの代わりにssmインターフェースエンドポイント) 参照）。それでもVPCごとにNAT Gateway 1台を置く（~$0.062/時間 × 2 ≈ ~$90/月）よりは安く、インターネット経路も一切ない。
 - VPCピアリングはTransit Gatewayと異なり時間課金が発生しない（[設計判断4](#4-transit-gatewayではなくvpcピアリング) 参照）。
+- プライベートサブネットの姿勢よりコストを優先する場合は、SSMインターフェースエンドポイントを外し `targetSubnetGroupName: 'Private'` を `Public` サブネットグループ+インターネットゲートウェイに戻せばよい — 以前の構成はgit履歴を参照。
 
 ## 🔒 セキュリティ考慮事項
 
 | 制御 | 実装内容 |
 |---------|----------------|
 | **DNSトラフィックの範囲** | すべてのResolverエンドポイントおよびBIND9のセキュリティグループは、特定のピアVPC CIDRに対してのみTCP/UDP 53を開放し、`0.0.0.0/0` は使わない。ユニットテストで検証済み。 |
+| **インターネット露出なし** | 全サブネットが `PRIVATE_ISOLATED` — インターネットゲートウェイ、NAT Gateway、パブリックIPを持つインスタンスは一切存在しない。ユニットテストで検証済み。 |
 | **委任プロトコル制限** | `INBOUND_DELEGATION` エンドポイントは `ResolverEndpointConstruct` 内で `Protocols: ['DO53']` に固定。 |
-| **インスタンスの堅牢化** | IMDSv2必須、EBS暗号化、長期的なSSH鍵の代わりにSSM Session Managerを使用。 |
+| **インスタンスの堅牢化** | IMDSv2必須、EBS暗号化、長期的なSSH鍵の代わりにSSM Session Managerを使用。インターネット経路が一切なくてもSSMインターフェースエンドポイント経由で到達可能。 |
 | **最小権限IAM** | インスタンスには `AmazonSSMManagedInstanceCore` のみを付与。CDK Nag（`AwsSolutionsChecks`）をテストで実行し、すべての抑制はパスと理由付きでスコープしている。 |
 | **ゾーンの分離** | `system.example.com` は *プライベート* ホストゾーンであり `VerifyVpc` にのみ関連付けている。VPC/ピアリング境界の外からは解決できない。 |
 | **デフォルトSG** | リポジトリ全体で `@aws-cdk/aws-ec2:restrictDefaultSecurityGroup` を有効化しているため、各VPCのデフォルトSGは全トラフィックを拒否する。 |
@@ -155,7 +171,7 @@ npm run destroy:all -w workspaces/route53-resolver-endpoints
 | 層 | ファイル | 検証内容 |
 |-------|------|----------------|
 | スナップショット | `test/snapshot/snapshot.test.ts` | テンプレート全体、およびリソース種別/数のスナップショット。 |
-| ユニット | `test/unit/route53-resolver-endpoints-stack.test.ts` | 想定CIDRの2VPC、DNS解決が有効な1本のピアリング接続、プライベートホストゾーンとデモレコード、2AZ×2IPのResolverエンドポイント（インバウンド/アウトバウンド）、`inboundEndpointType` 設定時に `INBOUND_DELEGATION` + `Protocols: [DO53]` へ切り替わること、FORWARDルールと関連付け、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
+| ユニット | `test/unit/route53-resolver-endpoints-stack.test.ts` | 想定CIDRの2VPC、DNS解決が有効な1本のピアリング接続、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、両VPCのSSMインターフェースエンドポイント、プライベートホストゾーンとデモレコード、2AZ×2IPのResolverエンドポイント（インバウンド/アウトバウンド）、`inboundEndpointType` 設定時に `INBOUND_DELEGATION` + `Protocols: [DO53]` へ切り替わること、FORWARDルールと関連付け、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
 | コンプライアンス | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` を実行し、スコープと理由を明記した抑制のみを許可。 |
 
 ```bash

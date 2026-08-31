@@ -10,11 +10,11 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
  * Static values (no env-var / network lookups) so snapshots stay deterministic.
  */
 const verifyVpcSubnets = [
-    { name: 'Public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
+    { name: 'Private', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 },
     { name: 'Resolver', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 27 },
 ];
 
-const onPremVpcSubnets = [{ name: 'Public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 }];
+const onPremVpcSubnets = [{ name: 'Private', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 }];
 
 const testParams: EnvParams = {
     region: 'us-east-1',
@@ -33,6 +33,7 @@ const testParams: EnvParams = {
             maxAzs: 2,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,
@@ -46,6 +47,7 @@ const testParams: EnvParams = {
             maxAzs: 1,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,

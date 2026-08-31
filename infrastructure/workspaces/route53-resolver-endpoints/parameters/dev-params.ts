@@ -7,17 +7,22 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 /**
  * Development Environment Parameters
  *
- * - VerifyVpc (10.10.0.0/16, 2 AZs): "Public" subnets host the test instance (Internet
- *   Gateway reachable, no NAT needed for SSM Session Manager); the dedicated "Resolver"
- *   isolated /27 subnets host the Resolver in/outbound endpoint ENIs.
- * - OnPremVpc (10.20.0.0/16, 1 AZ): a single "Public" subnet hosts the BIND9 instance.
- * - No NAT Gateway anywhere - this workspace only needs outbound internet access for the
- *   test/BIND9 instances' package installs and SSM, which the Internet Gateway covers.
+ * - VerifyVpc (10.10.0.0/16, 2 AZs): a "Private" isolated /24 subnet group hosts the test
+ *   instance and the SSM interface endpoints (SSM Session Manager access with no internet
+ *   route at all); the dedicated "Resolver" isolated /27 subnet group hosts the Resolver
+ *   in/outbound endpoint ENIs.
+ * - OnPremVpc (10.20.0.0/16, 1 AZ): a single "Private" isolated subnet hosts the BIND9
+ *   instance and its own SSM interface endpoints.
+ * - No NAT Gateway and no Internet Gateway anywhere - every subnet is PRIVATE_ISOLATED.
+ *   `dnf install` reaches the Amazon Linux package repos via the default S3 gateway
+ *   endpoint (added automatically by VpcConstruct); SSM Session Manager reaches its
+ *   endpoints via the SSM/SSM Messages/EC2 Messages interface endpoints created in the
+ *   stack.
  */
 const verifyVpcSubnets = [
     {
-        name: 'Public',
-        subnetType: ec2.SubnetType.PUBLIC,
+        name: 'Private',
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         cidrMask: 24,
     },
     {
@@ -29,8 +34,8 @@ const verifyVpcSubnets = [
 
 const onPremVpcSubnets = [
     {
-        name: 'Public',
-        subnetType: ec2.SubnetType.PUBLIC,
+        name: 'Private',
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
         cidrMask: 24,
     },
 ];
@@ -55,6 +60,7 @@ const devParams: EnvParams = {
             maxAzs: 2,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false, // Enable in production
@@ -70,6 +76,7 @@ const devParams: EnvParams = {
             maxAzs: 1,
             natCount: 0,
             natType: NatType.GATEWAY,
+            createInternetGateway: false,
             enableDnsHostnames: true,
             enableDnsSupport: true,
             enableFlowLogsToCloudWatch: false,

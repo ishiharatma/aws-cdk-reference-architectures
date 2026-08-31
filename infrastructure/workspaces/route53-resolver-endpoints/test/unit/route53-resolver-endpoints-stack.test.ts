@@ -46,6 +46,24 @@ describe('Route53ResolverEndpointsStack – topology', () => {
         template.resourceCountIs('AWS::EC2::VPCPeeringConnection', 1);
     });
 
+    test('every subnet is isolated: no Internet Gateway, NAT Gateway, or public IP', () => {
+        template.resourceCountIs('AWS::EC2::InternetGateway', 0);
+        template.resourceCountIs('AWS::EC2::NatGateway', 0);
+        const instances = template.findResources('AWS::EC2::Instance');
+        for (const instance of Object.values(instances)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((instance as any).Properties.NetworkInterfaces?.[0]?.AssociatePublicIpAddress).not.toBe(true);
+        }
+    });
+
+    test('creates the SSM/SSM Messages/EC2 Messages interface endpoints for both VPCs', () => {
+        template.resourceCountIs('AWS::EC2::VPCEndpoint', 10); // 2 gateway (S3+DynamoDB) x2 VPCs + 3 interface x2 VPCs
+        const interfaceEndpoints = template.findResources('AWS::EC2::VPCEndpoint', {
+            Properties: { VpcEndpointType: 'Interface' },
+        });
+        expect(Object.keys(interfaceEndpoints)).toHaveLength(6);
+    });
+
     test('creates a private hosted zone for system.example.com associated with the verification VPC', () => {
         template.resourceCountIs('AWS::Route53::HostedZone', 1);
         template.hasResourceProperties('AWS::Route53::HostedZone', {

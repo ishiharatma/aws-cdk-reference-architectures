@@ -101,7 +101,13 @@ function applySuppressions(stack: Route53ResolverEndpointsStack): void {
     }
 
     // Additional security groups whose ingress CIDR is an intrinsic reference to a VPC CIDR.
-    for (const path of ['OnPremDnsServerSecurityGroup/Resource', 'InboundEndpoint/SecurityGroup/Resource', 'OutboundEndpoint/SecurityGroup/Resource']) {
+    for (const path of [
+        'OnPremDnsServerSecurityGroup/Resource',
+        'InboundEndpoint/SecurityGroup/Resource',
+        'OutboundEndpoint/SecurityGroup/Resource',
+        'VerifySsmEndpointsSecurityGroup/Resource',
+        'OnPremSsmEndpointsSecurityGroup/Resource',
+    ]) {
         NagSuppressions.addResourceSuppressionsByPath(stack, `${pathPrefix}/${path}`, [
             {
                 id: 'CdkNagValidationFailure',

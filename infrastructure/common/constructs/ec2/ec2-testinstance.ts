@@ -18,9 +18,18 @@ export interface TestEC2InstanceProps {
   readonly additionalSecurityGroups?: ec2.ISecurityGroup[];
   /**
    * The subnet type where the EC2 instance will be launched.
+   * Ignored when {@link targetSubnetGroupName} is also provided.
    * @default ec2.SubnetType.PRIVATE_WITH_EGRESS
    */
   readonly targetSubnetType?: ec2.SubnetType;
+  /**
+   * The specific subnet group name to launch the EC2 instance in, e.g. `'Private'`.
+   * Takes precedence over {@link targetSubnetType} - needed when a VPC has more than one
+   * subnet group of the same `SubnetType` (e.g. a workload group and a Resolver-endpoint
+   * group both declared `PRIVATE_ISOLATED`) and `subnetType` alone would be ambiguous.
+   * @default - selected via targetSubnetType instead
+   */
+  readonly targetSubnetGroupName?: string;
   /**
    * The instance type for the EC2 instance.
    * @default ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.NANO)
@@ -101,9 +110,11 @@ export class TestInstance extends Construct {
     new cdk.CfnOutput(this, 'EC2InstanceKeyPairId', {
       value: keyPair.keyPairId,
     });
-    const targetSubnet = props.vpc.selectSubnets({
-      subnetType: props.targetSubnetType ?? ec2.SubnetType.PRIVATE_WITH_EGRESS,
-    }).subnets[0];
+    const targetSubnet = props.vpc.selectSubnets(
+      props.targetSubnetGroupName
+        ? { subnetGroupName: props.targetSubnetGroupName }
+        : { subnetType: props.targetSubnetType ?? ec2.SubnetType.PRIVATE_WITH_EGRESS },
+    ).subnets[0];
     this.subnet = targetSubnet;
     new cdk.CfnOutput(this, 'EC2InstanceSubnetId', {
       value: targetSubnet.subnetId,
