@@ -34,7 +34,7 @@ VerifyVpc 10.10.0.0/16 (2 AZ)                     OnPremVpc 10.20.0.0/16 (1 AZ)
         VPC ピアリング（双方向でDNS解決を許可）      │  │
         ◄──────────────────────────────────────────┘
 
-インターネットゲートウェイ/NAT Gatewayはどちらにもなし — 全サブネットがPRIVATE_ISOLATED。
+インターネットゲートウェイ/NAT Gatewayはどちらにもなし。全サブネットがPRIVATE_ISOLATED。
 
 プライベートホストゾーン system.example.com  →  VerifyVpc に関連付け
   app.system.example.com  A  10.10.200.10                 （ローカルで応答）
@@ -47,7 +47,7 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 | コンポーネント | 役割 |
 |-----------|------|
-| **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | `AWS::Route53Resolver::ResolverEndpoint` とそのセキュリティグループをラップ。`INBOUND` / `OUTBOUND` / `INBOUND_DELEGATION` の方向を扱い、委任時は `Protocols: [DO53]` を強制し、決定論的な静的IPの割当にも対応。両ワークスペースで再利用。 |
+| **`ResolverEndpointConstruct`** (`@common/constructs/route53/resolver-endpoint`) | `AWS::Route53Resolver::ResolverEndpoint` とそのセキュリティグループをラップ。`INBOUND` / `OUTBOUND` / `INBOUND_DELEGATION` の方向を扱い、委任時は `Protocols: [Do53]` を強制し、決定論的な静的IPの割当にも対応。両ワークスペースで再利用。 |
 | **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | `VerifyVpc`（`Private` + 専用の `Resolver` isolatedサブネットグループ）と `OnPremVpc`（`Private` のみ）を作成。全サブネットが `PRIVATE_ISOLATED` で、インターネットゲートウェイもNAT Gatewayもなし。 |
 | **SSM VPCインターフェースエンドポイント**（`SSM` / `SSM Messages` / `EC2 Messages`） | VPCごとに1セット、`Private` サブネットグループ内に配置。インターネット経路が一切なくてもSession Managerでテスト/BIND9インスタンスに到達できる。 |
 | **`VpcPeering`** (`@common/constructs/vpc/vpc-peering`) | 単純なVPCピアリング接続。カスタムリソースで双方向に `AllowDnsResolutionFromRemoteVpc` を有効化し、各サブネットにルートを追加。 |
@@ -76,7 +76,7 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 ### 2. 委任エンドポイントはDo53のみ
 
-**決定**: `direction === 'INBOUND_DELEGATION'` の場合、`ResolverEndpointConstruct` は常に `Protocols: ['DO53']` を強制する。
+**決定**: `direction === 'INBOUND_DELEGATION'` の場合、`ResolverEndpointConstruct` は常に `Protocols: ['Do53']` を強制する。
 
 **理由**: `AWS::Route53Resolver::ResolverEndpoint` のCloudFormationリファレンスには「委任インバウンドエンドポイントではDo53のみ使用可能」と明記されている。DoH / DoH-FIPSはデフォルトインバウンドエンドポイントでのみ有効。これをコンストラクト側で固定化することで、呼び出し側が誤って無効な組み合わせをリクエストできないようにしている。
 
@@ -96,15 +96,15 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 `ec2.IVpc` + サブネット + 方向のみを受け取り、本ワークスペース固有のパラメータに依存しないため、`infrastructure/common/constructs/route53/` に置き、Route 53 Resolverを扱う両ワークスペースで共有している。
 
-### 6. 全サブネットをプライベートに — インターネットゲートウェイの代わりにSSMインターフェースエンドポイント
+### 6. 全サブネットをプライベート化し、インターネットゲートウェイの代わりにSSMインターフェースエンドポイントを使用
 
 **決定**: 両VPCとも `Public` サブネットグループを持たず、インターネットゲートウェイも一切配置しない。テストインスタンスとBIND9インスタンスは `Private`（`PRIVATE_ISOLATED`）サブネットグループに置き、各VPCに独自のSSM・SSM Messages・EC2 MessagesインターフェースエンドポイントをこのPrivateサブネットグループ内に配置することで、Session Managerが引き続き機能するようにしている。
 
-**理由**: 本ワークスペースの初期バージョンでは、両インスタンスをインターネットゲートウェイ付きのパブリックサブネットに配置していた。これはSession ManagerにアウトバウンドHTTPSアクセスを与える最も安価な方法という理由からだったが、今回実演しているアーキテクチャには不向きだった。実際のオンプレミスDNSサーバーがインターネットに直接晒されることは通常なく、「検証用」インスタンスにインターネットへの経路を与えること自体、プライベートホストゾーンのデモに必要な露出を超えている。SSMインターフェースエンドポイントを使えばこの露出を完全に排除できる — インスタンスはどちらの方向にもインターネットへの経路を持たない — 代わりにVPCごとに3本のインターフェースエンドポイントを稼働させるコストがかかる。
+**理由**: 本ワークスペースの初期バージョンでは、両インスタンスをインターネットゲートウェイ付きのパブリックサブネットに配置していた。これはSession ManagerにアウトバウンドHTTPSアクセスを与える最も安価な方法という理由からだったが、今回実演しているアーキテクチャには不向きだった。実際のオンプレミスDNSサーバーがインターネットに直接晒されることは通常なく、「検証用」インスタンスにインターネットへの経路を与えること自体、プライベートホストゾーンのデモに必要な露出を超えている。SSMインターフェースエンドポイントを使えばこの露出を完全に排除できる。インスタンスはどちらの方向にもインターネットへの経路を持たない。その代わり、VPCごとに3本のインターフェースエンドポイントを稼働させるコストがかかる。
 
 **トレードオフ**: SSMインターフェースエンドポイントはエンドポイントごとに時間課金される([コスト最適化](#コスト最適化)を参照)ため、パブリックサブネット方式より高くつくが、VPCごとにNAT Gatewayを置くより安い。`dnf install` によるBIND9のインストールは、`VpcConstruct` がデフォルトで追加するS3ゲートウェイエンドポイント(無料)経由でAmazon Linuxのパッケージリポジトリ(S3配信)にアクセスできるため、NAT/IGWなしでも問題なく動作する。
 
-**特定のサブネットグループを指定する方法**: `TestInstance` はもともと `targetSubnetType` しか受け付けなかったが、これは1つのVPCに2つの `PRIVATE_ISOLATED` グループ(ワークロード用の `Private` とエンドポイントENI用の `Resolver`)がある場合には曖昧になる。そこで `targetSubnetGroupName` を追加し、指定時はこちらを優先するようにした — `@common/constructs/ec2/ec2-testinstance` への小さな追加的変更。
+**特定のサブネットグループを指定する方法**: `TestInstance` はもともと `targetSubnetType` しか受け付けなかったが、これは1つのVPCに2つの `PRIVATE_ISOLATED` グループ(ワークロード用の `Private` とエンドポイントENI用の `Resolver`)がある場合には曖昧になる。そこで `targetSubnetGroupName` を追加し、指定時はこちらを優先するようにした。`@common/constructs/ec2/ec2-testinstance` への小さな追加的変更である。
 
 ## 💰 コスト最適化
 
@@ -124,17 +124,17 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 コスト削減の勘所:
 
 - **エンドポイント時間課金が支配的**。姉妹ワークスペースのTransit Gatewayアタッチメント課金と同様、これはResolverエンドポイントに内在するコストであり設定では回避できない。検証が終わったら速やかに `cdk destroy` すること。
-- NAT Gatewayは一切使用しない。テスト/BIND9インスタンスは代わりにSSMインターフェースエンドポイントを使う（[設計判断6](#6-全サブネットをプライベートに--インターネットゲートウェイの代わりにssmインターフェースエンドポイント) 参照）。それでもVPCごとにNAT Gateway 1台を置く（~$0.062/時間 × 2 ≈ ~$90/月）よりは安く、インターネット経路も一切ない。
+- NAT Gatewayは一切使用しない。テスト/BIND9インスタンスは代わりにSSMインターフェースエンドポイントを使う（[設計判断6](#6-全サブネットをプライベート化しインターネットゲートウェイの代わりにssmインターフェースエンドポイントを使用) 参照）。それでもVPCごとにNAT Gateway 1台を置く（~$0.062/時間 × 2 ≈ ~$90/月）よりは安く、インターネット経路も一切ない。
 - VPCピアリングはTransit Gatewayと異なり時間課金が発生しない（[設計判断4](#4-transit-gatewayではなくvpcピアリング) 参照）。
-- プライベートサブネットの姿勢よりコストを優先する場合は、SSMインターフェースエンドポイントを外し `targetSubnetGroupName: 'Private'` を `Public` サブネットグループ+インターネットゲートウェイに戻せばよい — 以前の構成はgit履歴を参照。
+- プライベートサブネットの姿勢よりコストを優先する場合は、SSMインターフェースエンドポイントを外し `targetSubnetGroupName: 'Private'` を `Public` サブネットグループ+インターネットゲートウェイに戻せばよい。以前の構成はgit履歴を参照。
 
 ## 🔒 セキュリティ考慮事項
 
 | 制御 | 実装内容 |
 |---------|----------------|
 | **DNSトラフィックの範囲** | すべてのResolverエンドポイントおよびBIND9のセキュリティグループは、特定のピアVPC CIDRに対してのみTCP/UDP 53を開放し、`0.0.0.0/0` は使わない。ユニットテストで検証済み。 |
-| **インターネット露出なし** | 全サブネットが `PRIVATE_ISOLATED` — インターネットゲートウェイ、NAT Gateway、パブリックIPを持つインスタンスは一切存在しない。ユニットテストで検証済み。 |
-| **委任プロトコル制限** | `INBOUND_DELEGATION` エンドポイントは `ResolverEndpointConstruct` 内で `Protocols: ['DO53']` に固定。 |
+| **インターネット露出なし** | 全サブネットが `PRIVATE_ISOLATED`。インターネットゲートウェイ、NAT Gateway、パブリックIPを持つインスタンスは一切存在しない。ユニットテストで検証済み。 |
+| **委任プロトコル制限** | `INBOUND_DELEGATION` エンドポイントは `ResolverEndpointConstruct` 内で `Protocols: ['Do53']` に固定。 |
 | **インスタンスの堅牢化** | IMDSv2必須、EBS暗号化、長期的なSSH鍵の代わりにSSM Session Managerを使用。インターネット経路が一切なくてもSSMインターフェースエンドポイント経由で到達可能。 |
 | **最小権限IAM** | インスタンスには `AmazonSSMManagedInstanceCore` のみを付与。CDK Nag（`AwsSolutionsChecks`）をテストで実行し、すべての抑制はパスと理由付きでスコープしている。 |
 | **ゾーンの分離** | `system.example.com` は *プライベート* ホストゾーンであり `VerifyVpc` にのみ関連付けている。VPC/ピアリング境界の外からは解決できない。 |
@@ -171,7 +171,7 @@ npm run destroy:all -w workspaces/route53-resolver-endpoints
 | 層 | ファイル | 検証内容 |
 |-------|------|----------------|
 | スナップショット | `test/snapshot/snapshot.test.ts` | テンプレート全体、およびリソース種別/数のスナップショット。 |
-| ユニット | `test/unit/route53-resolver-endpoints-stack.test.ts` | 想定CIDRの2VPC、DNS解決が有効な1本のピアリング接続、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、両VPCのSSMインターフェースエンドポイント、プライベートホストゾーンとデモレコード、2AZ×2IPのResolverエンドポイント（インバウンド/アウトバウンド）、`inboundEndpointType` 設定時に `INBOUND_DELEGATION` + `Protocols: [DO53]` へ切り替わること、FORWARDルールと関連付け、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
+| ユニット | `test/unit/route53-resolver-endpoints-stack.test.ts` | 想定CIDRの2VPC、DNS解決が有効な1本のピアリング接続、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、両VPCのSSMインターフェースエンドポイント、プライベートホストゾーンとデモレコード、2AZ×2IPのResolverエンドポイント（インバウンド/アウトバウンド）、`inboundEndpointType` 設定時に `INBOUND_DELEGATION` + `Protocols: [Do53]` へ切り替わること、FORWARDルールと関連付け、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
 | コンプライアンス | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` を実行し、スコープと理由を明記した抑制のみを許可。 |
 
 ```bash
@@ -220,4 +220,4 @@ dig host1.onprem.example.com +short        # → BIND9インスタンスのプ�
 - [AWS::Route53Resolver::ResolverEndpoint（CloudFormationリファレンス）](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverendpoint.html)
 - [AWS::Route53Resolver::ResolverRule（CloudFormationリファレンス）](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverrule.html)
 - [VPCとネットワーク間でのDNSクエリの解決](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
-- 関連ワークスペース: [`route53-phz-delegation`](../route53-phz-delegation/) — Transit Gateway上でのRoute 53同士のプライベートホストゾーン委任（`RuleType: DELEGATE`）。
+- 関連ワークスペース: [`route53-phz-delegation`](../route53-phz-delegation/): Transit Gateway上でのRoute 53同士のプライベートホストゾーン委任（`RuleType: DELEGATE`）。
