@@ -130,8 +130,9 @@ export class ResolverEndpointConstruct extends Construct {
                 ...(useStaticIps ? { ip: this.ipAddresses[index] } : {}),
             })),
             securityGroupIds: [this.securityGroup.securityGroupId],
-            // A delegation inbound endpoint only supports the Do53 protocol.
-            protocols: isDelegationInbound ? ['DO53'] : undefined,
+            // A delegation inbound endpoint only supports the Do53 protocol. Note the exact
+            // casing: the Route 53 Resolver API's enum value is "Do53", not "DO53".
+            protocols: isDelegationInbound ? ['Do53'] : undefined,
             resolverEndpointType: 'IPV4',
             // Resolver endpoint names may only contain letters, numbers, hyphens,
             // underscores and spaces - no slashes.

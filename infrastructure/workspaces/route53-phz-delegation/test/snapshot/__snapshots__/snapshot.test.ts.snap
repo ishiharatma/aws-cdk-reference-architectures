@@ -304,7 +304,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
         "Name": "TestProject-test-DevInboundDelegation",
         "Protocols": [
-          "DO53",
+          "Do53",
         ],
         "ResolverEndpointType": "IPV4",
         "SecurityGroupIds": [
@@ -3078,7 +3078,7 @@ systemctl restart named",
         ],
         "Name": "TestProject-test-StgInboundDelegation",
         "Protocols": [
-          "DO53",
+          "Do53",
         ],
         "ResolverEndpointType": "IPV4",
         "SecurityGroupIds": [

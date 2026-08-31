@@ -86,7 +86,7 @@ describe('Route53PhzDelegationStack – topology', () => {
         expect(Object.keys(delegationEndpoints)).toHaveLength(2);
         for (const endpoint of Object.values(delegationEndpoints)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((endpoint as any).Properties.Protocols).toEqual(['DO53']);
+            expect((endpoint as any).Properties.Protocols).toEqual(['Do53']);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             expect((endpoint as any).Properties.IpAddresses).toHaveLength(2);
         }

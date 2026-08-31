@@ -92,7 +92,7 @@ describe('Route53ResolverEndpointsStack – topology', () => {
         const delegationTemplate = synthStack({ inboundEndpointType: 'DELEGATION' });
         delegationTemplate.hasResourceProperties('AWS::Route53Resolver::ResolverEndpoint', {
             Direction: 'INBOUND_DELEGATION',
-            Protocols: ['DO53'],
+            Protocols: ['Do53'],
         });
         // The outbound endpoint is unaffected by the inbound toggle.
         delegationTemplate.hasResourceProperties('AWS::Route53Resolver::ResolverEndpoint', {
