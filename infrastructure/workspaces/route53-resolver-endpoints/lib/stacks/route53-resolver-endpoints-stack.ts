@@ -42,6 +42,13 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
     public readonly inboundEndpoint: ResolverEndpointConstruct;
     public readonly outboundEndpoint: ResolverEndpointConstruct;
 
+    /**
+     * Provisions VerifyVpc/OnPremVpc, the peering connection, the private hosted zone, both
+     * Resolver endpoints, the on-premises FORWARD rule, and the test/BIND9 instances.
+     * @param scope parent construct
+     * @param id stack id
+     * @param props stack configuration
+     */
     constructor(scope: Construct, id: string, props: Route53ResolverEndpointsStackProps) {
         super(scope, id, props);
 

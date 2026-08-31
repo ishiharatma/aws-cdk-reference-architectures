@@ -22,6 +22,12 @@ export interface StageProps extends cdk.StageProps {
  * Wraps the single {@link Route53ResolverEndpointsStack}.
  */
 export class Route53ResolverEndpointsStage extends cdk.Stage {
+    /**
+     * Instantiates the single {@link Route53ResolverEndpointsStack} for this stage.
+     * @param scope parent construct
+     * @param id stage id
+     * @param props stage configuration
+     */
     constructor(scope: Construct, id: string, props: StageProps) {
         super(scope, id, props);
 

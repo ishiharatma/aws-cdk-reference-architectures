@@ -60,7 +60,6 @@ describe('Stack Snapshot Tests', () => {
         });
 
         test('Resource types and counts', () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const templateJson = stackTemplate.toJSON();
             const resourceCounts: Record<string, number> = {};
 

@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Match, Template } from 'aws-cdk-lib/assertions';
+import { Template } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
 import { Route53ResolverEndpointsStack } from 'lib/stacks/route53-resolver-endpoints-stack';
 import { EnvParams } from 'lib/types/route53-resolver-endpoints-params';
