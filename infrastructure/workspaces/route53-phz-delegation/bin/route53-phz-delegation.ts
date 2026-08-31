@@ -4,7 +4,12 @@ import { pascalCase } from 'change-case-commonjs';
 import { Environment } from '@common/parameters/environments';
 import { validateDeployment } from '@common/helpers/validate-deployment';
 import { params } from 'parameters/environments';
-import 'parameters'; // registers dev-params into `params` as a side effect
+// Import the file directly (not the `parameters` barrel/directory) - resolving a bare
+// directory specifier to `index.ts` vs. a stray, tsc-regenerated `index.js` is ambiguous
+// under this workspace's `tsc && tsx` app command and can silently load two separate
+// module instances, leaving `params` looking empty. See route53-resolver-endpoints for
+// the same fix.
+import 'parameters/dev-params'; // registers dev-params into `params` as a side effect
 import { Route53PhzDelegationStage } from 'lib/stages/route53-phz-delegation-stage';
 
 const app = new cdk.App();
