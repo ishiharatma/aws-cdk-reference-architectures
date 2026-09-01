@@ -1,5 +1,29 @@
 [
   {
+    "id": "route53-phz-delegation",
+    "title": "Route 53 Private Hosted Zone Delegation",
+    "description": "Parent private hosted zone system.example.com delegates dev.system.example.com and stg.system.example.com to two child VPCs using the June 2025 Route 53 Resolver DNS delegation feature (INBOUND_DELEGATION endpoints + DELEGATE resolver rules), with a fourth on-premises-role VPC and all four VPCs joined by one Transit Gateway.",
+    "image": "route53-phz-delegation/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Route 53", "Route 53 Resolver", "DNS Delegation", "Transit Gateway", "Networking"],
+    "link": "route53-phz-delegation",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-31",
+    "articles": {}
+  },
+  {
+    "id": "route53-resolver-endpoints",
+    "title": "Route 53 Resolver Inbound/Outbound Endpoints",
+    "description": "A verification VPC with the system.example.com private hosted zone and both a Resolver inbound endpoint (switchable via parameter between the default and the June 2025 INBOUND_DELEGATION type) and outbound endpoint, peered with an on-premises-role VPC running a BIND9 DNS server.",
+    "image": "route53-resolver-endpoints/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Route 53", "Route 53 Resolver", "Hybrid DNS", "VPC Peering", "Networking"],
+    "link": "route53-resolver-endpoints",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-08-31",
+    "articles": {}
+  },
+  {
     "id": "transit-gateway",
     "title": "Multi-VPC Transit Gateway",
     "description": "Three VPCs (10.0/16, 10.1/16, 10.2/16) joined into a full mesh by one Transit Gateway with a single, explicitly managed TGW route table (association + propagation on every attachment), plus one SSM-managed test instance per VPC for connectivity verification.",

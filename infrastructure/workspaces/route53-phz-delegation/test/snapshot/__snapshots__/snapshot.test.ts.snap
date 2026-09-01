@@ -1,0 +1,4982 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "DevInboundDelegationEndpointResolverEndpointIdD23BF541": {
+      "Description": "Resolver endpoint ID (INBOUND_DELEGATION) for DevInboundDelegation",
+      "Value": {
+        "Fn::GetAtt": [
+          "DevInboundDelegationEndpoint25436D57",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "DevInboundDelegationEndpointResolverEndpointIpsBD0F1383": {
+      "Description": "Static IP addresses for the DevInboundDelegation resolver endpoint",
+      "Value": "10.1.0.10,10.1.0.42",
+    },
+    "DevVpcAvailabilityZones81B2C996": {
+      "Description": "Availability Zones for TestProject/test/DevVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "DevVpcCidrE9EAE5A7": {
+      "Description": "VPC CIDR for TestProject/test/DevVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "DevVpcA66C08DA",
+          "CidrBlock",
+        ],
+      },
+    },
+    "DevVpcId2A0F7DC7": {
+      "Description": "VPC ID for TestProject/test/DevVpc",
+      "Value": {
+        "Ref": "DevVpcA66C08DA",
+      },
+    },
+    "HubInboundEndpointResolverEndpointId71E570BA": {
+      "Description": "Resolver endpoint ID (INBOUND) for HubInbound",
+      "Value": {
+        "Fn::GetAtt": [
+          "HubInboundEndpointCFA19CEB",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "HubInboundEndpointResolverEndpointIpsB2C0B702": {
+      "Description": "Static IP addresses for the HubInbound resolver endpoint",
+      "Value": "10.0.2.10,10.0.2.42",
+    },
+    "HubOutboundEndpointResolverEndpointId44C6529F": {
+      "Description": "Resolver endpoint ID (OUTBOUND) for HubOutbound",
+      "Value": {
+        "Fn::GetAtt": [
+          "HubOutboundEndpoint75D32F8F",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "HubTestInstanceEC2InstanceIdBEF1B1CA": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "HubTestInstanceD1D6A755",
+      },
+    },
+    "HubTestInstanceEC2InstanceKeyPairId566A9D97": {
+      "Value": {
+        "Fn::GetAtt": [
+          "HubTestInstanceKeyPairEAE5CFB6",
+          "KeyPairId",
+        ],
+      },
+    },
+    "HubTestInstanceEC2InstanceSubnetIdB90A31B2": {
+      "Value": {
+        "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+      },
+    },
+    "HubTestInstanceEC2SecurityGroupIdB3B56DC3": {
+      "Value": {
+        "Fn::GetAtt": [
+          "HubTestInstanceSecurityGroupD1161F6B",
+          "GroupId",
+        ],
+      },
+    },
+    "HubTestInstanceId": {
+      "Description": "Test EC2 instance ID in HubVpc",
+      "Value": {
+        "Ref": "HubTestInstanceD1D6A755",
+      },
+    },
+    "HubVpcAvailabilityZones18C8BBF1": {
+      "Description": "Availability Zones for TestProject/test/HubVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "HubVpcCidr159204E5": {
+      "Description": "VPC CIDR for TestProject/test/HubVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "HubVpc85493B83",
+          "CidrBlock",
+        ],
+      },
+    },
+    "HubVpcId1E11A91D": {
+      "Description": "VPC ID for TestProject/test/HubVpc",
+      "Value": {
+        "Ref": "HubVpc85493B83",
+      },
+    },
+    "OnPremDnsForwarderEC2InstanceIdD1FFF352": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "OnPremDnsForwarder6477B011",
+      },
+    },
+    "OnPremDnsForwarderEC2InstanceKeyPairIdB39A0518": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsForwarderKeyPair5970DF1A",
+          "KeyPairId",
+        ],
+      },
+    },
+    "OnPremDnsForwarderEC2InstanceSubnetId27109D7A": {
+      "Value": {
+        "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+      },
+    },
+    "OnPremDnsForwarderEC2SecurityGroupId59C1F9C0": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsForwarderSecurityGroup809AD6F2",
+          "GroupId",
+        ],
+      },
+    },
+    "OnPremDnsForwarderPrivateIp": {
+      "Description": "BIND9 on-premises-role forwarder private IP",
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsForwarder6477B011",
+          "PrivateIp",
+        ],
+      },
+    },
+    "OnPremVpcAvailabilityZones36D369D9": {
+      "Description": "Availability Zones for TestProject/test/OnPremVpc",
+      "Value": "dummy1a",
+    },
+    "OnPremVpcCidrF1FE0F77": {
+      "Description": "VPC CIDR for TestProject/test/OnPremVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremVpc1BE9B8EF",
+          "CidrBlock",
+        ],
+      },
+    },
+    "OnPremVpcId60E5C026": {
+      "Description": "VPC ID for TestProject/test/OnPremVpc",
+      "Value": {
+        "Ref": "OnPremVpc1BE9B8EF",
+      },
+    },
+    "ParentZoneId": {
+      "Description": "Private hosted zone ID for system.example.com",
+      "Value": {
+        "Ref": "ParentZoneECA3B259",
+      },
+    },
+    "StgInboundDelegationEndpointResolverEndpointId7BBAE42B": {
+      "Description": "Resolver endpoint ID (INBOUND_DELEGATION) for StgInboundDelegation",
+      "Value": {
+        "Fn::GetAtt": [
+          "StgInboundDelegationEndpoint6FF63980",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "StgInboundDelegationEndpointResolverEndpointIpsF4B9EE0A": {
+      "Description": "Static IP addresses for the StgInboundDelegation resolver endpoint",
+      "Value": "10.2.0.10,10.2.0.42",
+    },
+    "StgVpcAvailabilityZones7F6F77D8": {
+      "Description": "Availability Zones for TestProject/test/StgVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "StgVpcCidrD402449D": {
+      "Description": "VPC CIDR for TestProject/test/StgVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "StgVpc10991B62",
+          "CidrBlock",
+        ],
+      },
+    },
+    "StgVpcIdAD55E49A": {
+      "Description": "VPC ID for TestProject/test/StgVpc",
+      "Value": {
+        "Ref": "StgVpc10991B62",
+      },
+    },
+    "TransitGatewayTransitGatewayId2E48FC60": {
+      "Description": "Transit Gateway ID",
+      "Value": {
+        "Ref": "TransitGateway11B93D57",
+      },
+    },
+    "TransitGatewayTransitGatewayRouteTableIdAF35B409": {
+      "Description": "Transit Gateway route table ID",
+      "Value": {
+        "Ref": "TransitGatewayRouteTableB78D450A",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "DevAppRecord64C3D245": {
+      "Properties": {
+        "Comment": "Demo record proving direct resolution once inside DevVpc's own zone.",
+        "HostedZoneId": {
+          "Ref": "DevZone68E8D642",
+        },
+        "Name": "app.dev.system.example.com.",
+        "ResourceRecords": [
+          "10.1.200.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "DevInboundDelegationEndpoint25436D57": {
+      "Properties": {
+        "Direction": "INBOUND_DELEGATION",
+        "IpAddresses": [
+          {
+            "Ip": "10.1.0.10",
+            "SubnetId": {
+              "Ref": "DevVpcResolverSubnet1SubnetC02E9F78",
+            },
+          },
+          {
+            "Ip": "10.1.0.42",
+            "SubnetId": {
+              "Ref": "DevVpcResolverSubnet2Subnet1ECD62B7",
+            },
+          },
+        ],
+        "Name": "TestProject-test-DevInboundDelegation",
+        "Protocols": [
+          "Do53",
+        ],
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "DevInboundDelegationEndpointSecurityGroup6DEDAACC",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "DevInboundDelegationEndpointSecurityGroup6DEDAACC": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver INBOUND_DELEGATION endpoint (DevInboundDelegation) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "DevNsGlueRecord12AD168FB": {
+      "Properties": {
+        "Comment": "Glue record for ns-dev-1.system.example.com -> DevVpc delegation endpoint",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "ns-dev-1.system.example.com.",
+        "ResourceRecords": [
+          "10.1.0.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "DevNsGlueRecord28CCBA8F9": {
+      "Properties": {
+        "Comment": "Glue record for ns-dev-2.system.example.com -> DevVpc delegation endpoint",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "ns-dev-2.system.example.com.",
+        "ResourceRecords": [
+          "10.1.0.42",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "DevNsRecord9FBE74C5": {
+      "Properties": {
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "dev.system.example.com.",
+        "ResourceRecords": [
+          "ns-dev-1.system.example.com.",
+          "ns-dev-2.system.example.com.",
+        ],
+        "TTL": "1800",
+        "Type": "NS",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "DevVpcA66C08DA": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/DevVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "DevVpcDynamoDbEndpoint3D883E9A": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+          },
+          {
+            "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+          },
+          {
+            "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+          },
+          {
+            "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/DevVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "DevVpcResolverSubnet1RouteTable8E569CC8": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "DevVpcResolverSubnet1RouteTableAssociation9C7BC2E0": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+        },
+        "SubnetId": {
+          "Ref": "DevVpcResolverSubnet1SubnetC02E9F78",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "DevVpcResolverSubnet1SubnetC02E9F78": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "DevVpcResolverSubnet2RouteTableAssociation15643C88": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+        },
+        "SubnetId": {
+          "Ref": "DevVpcResolverSubnet2Subnet1ECD62B7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "DevVpcResolverSubnet2RouteTableC33AA14C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "DevVpcResolverSubnet2Subnet1ECD62B7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "DevVpcS3Endpoint9D08FBD0": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+          },
+          {
+            "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+          },
+          {
+            "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+          },
+          {
+            "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/DevVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "DevVpcTgwSubnet1RouteTableAssociationDCA073B3": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+        },
+        "SubnetId": {
+          "Ref": "DevVpcTgwSubnet1Subnet241AF01B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "DevVpcTgwSubnet1RouteTableB7915B09": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "DevVpcTgwSubnet1Subnet241AF01B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.64/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "DevVpcTgwSubnet2RouteTableAssociation2E7E5D32": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+        },
+        "SubnetId": {
+          "Ref": "DevVpcTgwSubnet2Subnet11DAAB34",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "DevVpcTgwSubnet2RouteTableEE2EE8CB": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "DevVpcTgwSubnet2Subnet11DAAB34": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.1.0.80/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/DevVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "DevZone68E8D642": {
+      "Properties": {
+        "HostedZoneTags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "Name": "dev.system.example.com.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "DevVpcA66C08DA",
+            },
+            "VPCRegion": "us-east-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+    "HubInboundEndpointCFA19CEB": {
+      "Properties": {
+        "Direction": "INBOUND",
+        "IpAddresses": [
+          {
+            "Ip": "10.0.2.10",
+            "SubnetId": {
+              "Ref": "HubVpcResolverSubnet1Subnet49A21612",
+            },
+          },
+          {
+            "Ip": "10.0.2.42",
+            "SubnetId": {
+              "Ref": "HubVpcResolverSubnet2Subnet3DDAC393",
+            },
+          },
+        ],
+        "Name": "TestProject-test-HubInbound",
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubInboundEndpointSecurityGroupE7B5CE14",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "HubInboundEndpointSecurityGroupE7B5CE14": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver INBOUND endpoint (HubInbound) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "HubOutboundEndpoint75D32F8F": {
+      "Properties": {
+        "Direction": "OUTBOUND",
+        "IpAddresses": [
+          {
+            "SubnetId": {
+              "Ref": "HubVpcResolverSubnet1Subnet49A21612",
+            },
+          },
+          {
+            "SubnetId": {
+              "Ref": "HubVpcResolverSubnet2Subnet3DDAC393",
+            },
+          },
+        ],
+        "Name": "TestProject-test-HubOutbound",
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubOutboundEndpointSecurityGroup9C17791E",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "HubOutboundEndpointSecurityGroup9C17791E": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver OUTBOUND endpoint (HubOutbound) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "DevVpcA66C08DA",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "DevVpcA66C08DA",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "DevVpcA66C08DA",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "DevVpcA66C08DA",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "StgVpc10991B62",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "StgVpc10991B62",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "StgVpc10991B62",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "StgVpc10991B62",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "HubSsmEndpointsSecurityGroup1010F9B7": {
+      "Properties": {
+        "GroupDescription": "SSM interface endpoints security group for HubVpc",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow HTTPS from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                  " for SSM interface endpoints",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "HubTestInstanceD1D6A755": {
+      "DependsOn": [
+        "HubTestInstanceInstanceRole172B5B76",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "HubTestInstanceInstanceProfileCED03D7F",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "HubTestInstanceKeyPairEAE5CFB6",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "HubTestInstanceLaunchTemplateF48EBE09",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubTestInstanceSecurityGroupD1161F6B",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "HubTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "HubTestInstanceInstanceProfileCED03D7F": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "HubTestInstanceInstanceRole172B5B76",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "HubTestInstanceInstanceRole172B5B76": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "HubTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "HubTestInstanceKeyPairEAE5CFB6": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "HubTestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "HubTestInstanceLaunchTemplateF48EBE09": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "HubTestInstanceSecurityGroupD1161F6B": {
+      "Properties": {
+        "GroupDescription": "Route53PhzDelegation/HubTestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "HubVpc85493B83": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "HubVpcDynamoDbEndpoint5B78889F": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+          },
+          {
+            "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+          },
+          {
+            "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+          },
+          {
+            "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+          },
+          {
+            "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+          },
+          {
+            "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "HubVpcHubEc2MessagesEndpoint617ECAA9": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubSsmEndpointsSecurityGroup1010F9B7",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ec2messages",
+        "SubnetIds": [
+          {
+            "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+          },
+          {
+            "Ref": "HubVpcPrivateSubnet2SubnetB95FDC38",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "HubVpcHubSsmEndpointE466746C": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubSsmEndpointsSecurityGroup1010F9B7",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+          },
+          {
+            "Ref": "HubVpcPrivateSubnet2SubnetB95FDC38",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "HubVpcHubSsmMessagesEndpoint625410E8": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "HubSsmEndpointsSecurityGroup1010F9B7",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+          },
+          {
+            "Ref": "HubVpcPrivateSubnet2SubnetB95FDC38",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "HubVpcPrivateSubnet1RouteTable9B3AEB7C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcPrivateSubnet1RouteTableAssociationFE2695A5": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcPrivateSubnet1Subnet3228DC9B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcPrivateSubnet1Subnet3228DC9B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "HubVpcPrivateSubnet2RouteTableAssociation4F543F74": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcPrivateSubnet2SubnetB95FDC38",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcPrivateSubnet2RouteTableBF6D3CF1": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcPrivateSubnet2SubnetB95FDC38": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "HubVpcResolverSubnet1RouteTableAssociationA684FE66": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcResolverSubnet1Subnet49A21612",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcResolverSubnet1RouteTableFB692440": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcResolverSubnet1Subnet49A21612": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "HubVpcResolverSubnet2RouteTable6D646944": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcResolverSubnet2RouteTableAssociation7CFF8FF8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcResolverSubnet2Subnet3DDAC393",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcResolverSubnet2Subnet3DDAC393": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.2.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "HubVpcS3Endpoint5FABB8AE": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+          },
+          {
+            "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+          },
+          {
+            "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+          },
+          {
+            "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+          },
+          {
+            "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+          },
+          {
+            "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "HubVpcTgwSubnet1RouteTable7AA462C7": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcTgwSubnet1RouteTableAssociation9D9BF7F4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcTgwSubnet1SubnetE501E112",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcTgwSubnet1SubnetE501E112": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.64/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "HubVpcTgwSubnet2RouteTableA36848FF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "HubVpcTgwSubnet2RouteTableAssociationB1607229": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+        },
+        "SubnetId": {
+          "Ref": "HubVpcTgwSubnet2Subnet5C74CF7A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "HubVpcTgwSubnet2Subnet5C74CF7A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.2.80/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/HubVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "OnPremDnsForwarder6477B011": {
+      "DependsOn": [
+        "OnPremDnsForwarderInstanceRoleBEF6C6DA",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "OnPremDnsForwarderInstanceProfile221C56A4",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "OnPremDnsForwarderKeyPair5970DF1A",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "OnPremDnsForwarderLaunchTemplate476A8006",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremDnsForwarderSecurityGroup809AD6F2",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "OnPremDnsServerSecurityGroup238F462F",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "OnPremDnsForwarder/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance
+dnf install -y bind bind-utils
+cat > /etc/named.conf << 'NAMEDCONFEOF'
+options {
+    listen-on port 53 { any; };
+    listen-on-v6 port 53 { none; };
+    directory "/var/named";
+    allow-query { 10.0.0.0/8; 127.0.0.1; };
+    recursion yes;
+    dnssec-validation no;
+};
+zone "system.example.com" IN {
+    type forward;
+    forward only;
+    forwarders {
+        10.0.2.10;
+        10.0.2.42;
+    };
+};
+NAMEDCONFEOF
+named-checkconf
+systemctl enable named
+systemctl restart named",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "OnPremDnsForwarderInstanceProfile221C56A4": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "OnPremDnsForwarderInstanceRoleBEF6C6DA",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "OnPremDnsForwarderInstanceRoleBEF6C6DA": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "OnPremDnsForwarder/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "OnPremDnsForwarderKeyPair5970DF1A": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "OnPremDnsForwarder-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "OnPremDnsForwarderLaunchTemplate476A8006": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "OnPremDnsForwarderSecurityGroup809AD6F2": {
+      "Properties": {
+        "GroupDescription": "Route53PhzDelegation/OnPremDnsForwarder/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremDnsServerSecurityGroup238F462F": {
+      "Properties": {
+        "GroupDescription": "BIND9 on-premises-role DNS forwarder security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremSsmEndpointsSecurityGroupCD0C9002": {
+      "Properties": {
+        "GroupDescription": "SSM interface endpoints security group for OnPremVpc",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow HTTPS from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                  " for SSM interface endpoints",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremVpc1BE9B8EF": {
+      "Properties": {
+        "CidrBlock": "10.3.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "OnPremVpcDynamoDbEndpoint987CA859": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+          },
+          {
+            "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremEc2MessagesEndpoint2494FF87": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ec2messages",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremSsmEndpoint830276BA": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremSsmMessagesEndpoint4CC91576": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcPrivateSubnet1RouteTable99954166": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/OnPremVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "OnPremVpcPrivateSubnet1RouteTableAssociationC1D3A676": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "SubnetId": {
+          "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "OnPremVpcPrivateSubnet1Subnet92EEF1E9": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.3.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/OnPremVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "OnPremVpcS3EndpointAA7D845D": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+          },
+          {
+            "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcTgwSubnet1RouteTable7B34D1F5": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/OnPremVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "OnPremVpcTgwSubnet1RouteTableAssociationF295DC2D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+        },
+        "SubnetId": {
+          "Ref": "OnPremVpcTgwSubnet1Subnet4659AA70",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "OnPremVpcTgwSubnet1Subnet4659AA70": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.3.1.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/OnPremVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ParentAppRecord2BA58967": {
+      "Properties": {
+        "Comment": "Demo record proving direct resolution against the parent zone itself (no delegation involved).",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "app.system.example.com.",
+        "ResourceRecords": [
+          "10.0.200.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "ParentDelegateRule": {
+      "Properties": {
+        "DelegationRecord": "system.example.com",
+        "Name": "TestProject-test-parent-delegate",
+        "ResolverEndpointId": {
+          "Fn::GetAtt": [
+            "HubOutboundEndpoint75D32F8F",
+            "ResolverEndpointId",
+          ],
+        },
+        "RuleType": "DELEGATE",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverRule",
+    },
+    "ParentDelegateRuleAssociation": {
+      "Properties": {
+        "ResolverRuleId": {
+          "Fn::GetAtt": [
+            "ParentDelegateRule",
+            "ResolverRuleId",
+          ],
+        },
+        "VPCId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::Route53Resolver::ResolverRuleAssociation",
+    },
+    "ParentZoneECA3B259": {
+      "Properties": {
+        "HostedZoneTags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "Name": "system.example.com.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "HubVpc85493B83",
+            },
+            "VPCRegion": "us-east-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+    "StgAppRecord263147DC": {
+      "Properties": {
+        "Comment": "Demo record proving direct resolution once inside StgVpc's own zone.",
+        "HostedZoneId": {
+          "Ref": "StgZoneDBBD77E3",
+        },
+        "Name": "app.stg.system.example.com.",
+        "ResourceRecords": [
+          "10.2.200.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "StgInboundDelegationEndpoint6FF63980": {
+      "Properties": {
+        "Direction": "INBOUND_DELEGATION",
+        "IpAddresses": [
+          {
+            "Ip": "10.2.0.10",
+            "SubnetId": {
+              "Ref": "StgVpcResolverSubnet1Subnet3AA10528",
+            },
+          },
+          {
+            "Ip": "10.2.0.42",
+            "SubnetId": {
+              "Ref": "StgVpcResolverSubnet2Subnet97087BBD",
+            },
+          },
+        ],
+        "Name": "TestProject-test-StgInboundDelegation",
+        "Protocols": [
+          "Do53",
+        ],
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "StgInboundDelegationEndpointSecurityGroup9E91103E",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "StgInboundDelegationEndpointSecurityGroup9E91103E": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver INBOUND_DELEGATION endpoint (StgInboundDelegation) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "HubVpc85493B83",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "HubVpc85493B83",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "StgNsGlueRecord1AEA5D4FA": {
+      "Properties": {
+        "Comment": "Glue record for ns-stg-1.system.example.com -> StgVpc delegation endpoint",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "ns-stg-1.system.example.com.",
+        "ResourceRecords": [
+          "10.2.0.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "StgNsGlueRecord279863EFC": {
+      "Properties": {
+        "Comment": "Glue record for ns-stg-2.system.example.com -> StgVpc delegation endpoint",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "ns-stg-2.system.example.com.",
+        "ResourceRecords": [
+          "10.2.0.42",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "StgNsRecordD2A01628": {
+      "Properties": {
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "stg.system.example.com.",
+        "ResourceRecords": [
+          "ns-stg-1.system.example.com.",
+          "ns-stg-2.system.example.com.",
+        ],
+        "TTL": "1800",
+        "Type": "NS",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "StgVpc10991B62": {
+      "Properties": {
+        "CidrBlock": "10.2.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/StgVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "StgVpcDynamoDbEndpoint88163AEC": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+          },
+          {
+            "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+          },
+          {
+            "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+          },
+          {
+            "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/StgVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "StgVpcResolverSubnet1RouteTable2C4F4E90": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "StgVpcResolverSubnet1RouteTableAssociationEA32B6D8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+        },
+        "SubnetId": {
+          "Ref": "StgVpcResolverSubnet1Subnet3AA10528",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "StgVpcResolverSubnet1Subnet3AA10528": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.0/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "StgVpcResolverSubnet2RouteTable396301BB": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "StgVpcResolverSubnet2RouteTableAssociationE44AD7AD": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+        },
+        "SubnetId": {
+          "Ref": "StgVpcResolverSubnet2Subnet97087BBD",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "StgVpcResolverSubnet2Subnet97087BBD": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.2.0.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "StgVpcS3EndpointD1ECFA27": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+          },
+          {
+            "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+          },
+          {
+            "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+          },
+          {
+            "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/StgVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "StgVpcTgwSubnet1RouteTable1221DADF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "StgVpcTgwSubnet1RouteTableAssociation2EAA0691": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+        },
+        "SubnetId": {
+          "Ref": "StgVpcTgwSubnet1Subnet0BA9C7CD",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "StgVpcTgwSubnet1Subnet0BA9C7CD": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.64/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/TgwSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "StgVpcTgwSubnet2RouteTableAD48AFDC": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "StgVpcTgwSubnet2RouteTableAssociationE2797D21": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+        },
+        "SubnetId": {
+          "Ref": "StgVpcTgwSubnet2Subnet4AE35112",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "StgVpcTgwSubnet2Subnet4AE35112": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.2.0.80/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53PhzDelegation/StgVpc/Resource/TgwSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "StgZoneDBBD77E3": {
+      "Properties": {
+        "HostedZoneTags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "Name": "stg.system.example.com.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "StgVpc10991B62",
+            },
+            "VPCRegion": "us-east-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+    "TransitGateway11B93D57": {
+      "Properties": {
+        "AmazonSideAsn": 64512,
+        "AutoAcceptSharedAttachments": "disable",
+        "DefaultRouteTableAssociation": "disable",
+        "DefaultRouteTablePropagation": "disable",
+        "Description": "TestProject/test multi-VPC Transit Gateway",
+        "DnsSupport": "enable",
+        "MulticastSupport": "disable",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/TransitGateway",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "VpnEcmpSupport": "enable",
+      },
+      "Type": "AWS::EC2::TransitGateway",
+    },
+    "TransitGatewayDevAssociation83F0C71A": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayDevAttachment03D410A7",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayDevAttachment03D410A7": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "DevVpcTgwSubnet1Subnet241AF01B",
+          },
+          {
+            "Ref": "DevVpcTgwSubnet2Subnet11DAAB34",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/DevAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "DevVpcA66C08DA",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayDevPropagation7E2F8C20": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayDevAttachment03D410A7",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayDevToHubRoute1D3FE800C": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToHubRoute2FB7B21C7": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToHubRoute3A1F3E08C": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToHubRoute4624171CB": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToOnPremRoute10540C1BD": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToOnPremRoute2D0279300": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToOnPremRoute3999BC461": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToOnPremRoute4AE8A8689": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToStgRoute1187EACB7": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet1RouteTable8E569CC8",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToStgRoute2BB3CB205": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcResolverSubnet2RouteTableC33AA14C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToStgRoute395527625": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet1RouteTableB7915B09",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayDevToStgRoute4F215F14E": {
+      "DependsOn": [
+        "TransitGatewayDevAttachment03D410A7",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "DevVpcTgwSubnet2RouteTableEE2EE8CB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubAssociationCB1C61B0": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayHubAttachmentEEE5C4DF",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayHubAttachmentEEE5C4DF": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "HubVpcTgwSubnet1SubnetE501E112",
+          },
+          {
+            "Ref": "HubVpcTgwSubnet2Subnet5C74CF7A",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/HubAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayHubPropagationB2D18691": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayHubAttachmentEEE5C4DF",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayHubToDevRoute194B8CA0B": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToDevRoute23243C265": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToDevRoute36AACA7E1": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToDevRoute4EDECF1CC": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToDevRoute597520086": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToDevRoute6F2E7C0B3": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute144988CB5": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute20B2B8174": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute35938AD90": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute4FF4B7500": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute5E0523734": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToOnPremRoute6F63F7B6D": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute1E0B3909A": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet1RouteTable9B3AEB7C",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute2F5CBA33D": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcPrivateSubnet2RouteTableBF6D3CF1",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute3AD56C0B7": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet1RouteTableFB692440",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute4DCA45633": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcResolverSubnet2RouteTable6D646944",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute5457A5382": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet1RouteTable7AA462C7",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayHubToStgRoute64E12A4EF": {
+      "DependsOn": [
+        "TransitGatewayHubAttachmentEEE5C4DF",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "HubVpcTgwSubnet2RouteTableA36848FF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremAssociationEBC4F2D9": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayOnPremAttachment962E1935",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayOnPremAttachment962E1935": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcTgwSubnet1Subnet4659AA70",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayOnPremPropagationA5472F6A": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayOnPremAttachment962E1935",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayOnPremToDevRoute13E3E7082": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremToDevRoute26D671F95": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremToHubRoute1C2ECC2B6": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremToHubRoute20C7332C3": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremToStgRoute162F73744": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayOnPremToStgRoute2C0A0A4C2": {
+      "DependsOn": [
+        "TransitGatewayOnPremAttachment962E1935",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "StgVpc10991B62",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcTgwSubnet1RouteTable7B34D1F5",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayRouteTableB78D450A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/TransitGatewayRouteTable",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTable",
+    },
+    "TransitGatewayStgAssociation5FB77916": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayStgAttachmentB6294769",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "TransitGatewayStgAttachmentB6294769": {
+      "Properties": {
+        "Options": {
+          "DnsSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "StgVpcTgwSubnet1Subnet0BA9C7CD",
+          },
+          {
+            "Ref": "StgVpcTgwSubnet2Subnet4AE35112",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/StgAttachment",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+        "VpcId": {
+          "Ref": "StgVpc10991B62",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "TransitGatewayStgPropagation853CAEF9": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "TransitGatewayStgAttachmentB6294769",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "TransitGatewayRouteTableB78D450A",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTablePropagation",
+    },
+    "TransitGatewayStgToDevRoute1880000BC": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToDevRoute2242A2B33": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToDevRoute347C163A2": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToDevRoute464A3264D": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "DevVpcA66C08DA",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToHubRoute1964AC073": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToHubRoute29E8CBC2D": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToHubRoute386F63399": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToHubRoute411ECB70D": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "HubVpc85493B83",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToOnPremRoute1BEB3679C": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet1RouteTable2C4F4E90",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToOnPremRoute211DC5889": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcResolverSubnet2RouteTable396301BB",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToOnPremRoute386D07923": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet1RouteTable1221DADF",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TransitGatewayStgToOnPremRoute4CCE0D2CE": {
+      "DependsOn": [
+        "TransitGatewayStgAttachmentB6294769",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "StgVpcTgwSubnet2RouteTableAD48AFDC",
+        },
+        "TransitGatewayId": {
+          "Ref": "TransitGateway11B93D57",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::Instance": 2,
+  "AWS::EC2::KeyPair": 2,
+  "AWS::EC2::LaunchTemplate": 2,
+  "AWS::EC2::Route": 48,
+  "AWS::EC2::RouteTable": 16,
+  "AWS::EC2::SecurityGroup": 9,
+  "AWS::EC2::Subnet": 16,
+  "AWS::EC2::SubnetRouteTableAssociation": 16,
+  "AWS::EC2::TransitGateway": 1,
+  "AWS::EC2::TransitGatewayRouteTable": 1,
+  "AWS::EC2::TransitGatewayRouteTableAssociation": 4,
+  "AWS::EC2::TransitGatewayRouteTablePropagation": 4,
+  "AWS::EC2::TransitGatewayVpcAttachment": 4,
+  "AWS::EC2::VPC": 4,
+  "AWS::EC2::VPCEndpoint": 14,
+  "AWS::IAM::InstanceProfile": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Route53::HostedZone": 3,
+  "AWS::Route53::RecordSet": 9,
+  "AWS::Route53Resolver::ResolverEndpoint": 4,
+  "AWS::Route53Resolver::ResolverRule": 1,
+  "AWS::Route53Resolver::ResolverRuleAssociation": 1,
+}
+`;

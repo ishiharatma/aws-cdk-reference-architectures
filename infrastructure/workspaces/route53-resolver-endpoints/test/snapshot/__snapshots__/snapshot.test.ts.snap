@@ -1,0 +1,2511 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "InboundEndpointDirection": {
+      "Description": "Active inbound endpoint direction (params.inboundEndpointType)",
+      "Value": "INBOUND",
+    },
+    "InboundEndpointResolverEndpointId19CDB123": {
+      "Description": "Resolver endpoint ID (INBOUND) for Inbound",
+      "Value": {
+        "Fn::GetAtt": [
+          "InboundEndpoint9DB607C8",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "InboundEndpointResolverEndpointIps43E1AB1E": {
+      "Description": "Static IP addresses for the Inbound resolver endpoint",
+      "Value": "10.10.2.10,10.10.2.42",
+    },
+    "OnPremDnsServerEC2InstanceId086CCFB2": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "OnPremDnsServerE03BB6BD",
+      },
+    },
+    "OnPremDnsServerEC2InstanceKeyPairIdBCE88414": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsServerKeyPair35A512C9",
+          "KeyPairId",
+        ],
+      },
+    },
+    "OnPremDnsServerEC2InstanceSubnetIdCA86386C": {
+      "Value": {
+        "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+      },
+    },
+    "OnPremDnsServerEC2SecurityGroupId2927CDF9": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsServerSecurityGroup509682B8",
+          "GroupId",
+        ],
+      },
+    },
+    "OnPremDnsServerPrivateIp": {
+      "Description": "BIND9 on-premises-role DNS server private IP",
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremDnsServerE03BB6BD",
+          "PrivateIp",
+        ],
+      },
+    },
+    "OnPremVpcAvailabilityZones36D369D9": {
+      "Description": "Availability Zones for TestProject/test/OnPremVpc",
+      "Value": "dummy1a",
+    },
+    "OnPremVpcCidrF1FE0F77": {
+      "Description": "VPC CIDR for TestProject/test/OnPremVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "OnPremVpc1BE9B8EF",
+          "CidrBlock",
+        ],
+      },
+    },
+    "OnPremVpcId60E5C026": {
+      "Description": "VPC ID for TestProject/test/OnPremVpc",
+      "Value": {
+        "Ref": "OnPremVpc1BE9B8EF",
+      },
+    },
+    "OutboundEndpointResolverEndpointId16204618": {
+      "Description": "Resolver endpoint ID (OUTBOUND) for Outbound",
+      "Value": {
+        "Fn::GetAtt": [
+          "OutboundEndpoint5939913C",
+          "ResolverEndpointId",
+        ],
+      },
+    },
+    "PrivateHostedZoneId": {
+      "Description": "Private hosted zone ID for system.example.com",
+      "Value": {
+        "Ref": "PrivateHostedZone6354E1BB",
+      },
+    },
+    "VerifyTestInstanceEC2InstanceIdD949CA55": {
+      "Description": "Test Instance",
+      "Value": {
+        "Ref": "VerifyTestInstanceDC707CDA",
+      },
+    },
+    "VerifyTestInstanceEC2InstanceKeyPairId2756CB29": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VerifyTestInstanceKeyPair1AAB6AC0",
+          "KeyPairId",
+        ],
+      },
+    },
+    "VerifyTestInstanceEC2InstanceSubnetIdEB6B363D": {
+      "Value": {
+        "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+      },
+    },
+    "VerifyTestInstanceEC2SecurityGroupIdF36D378F": {
+      "Value": {
+        "Fn::GetAtt": [
+          "VerifyTestInstanceSecurityGroup6D618127",
+          "GroupId",
+        ],
+      },
+    },
+    "VerifyTestInstanceId": {
+      "Description": "Test EC2 instance ID in VerifyVpc",
+      "Value": {
+        "Ref": "VerifyTestInstanceDC707CDA",
+      },
+    },
+    "VerifyVpcAvailabilityZones5854BC6A": {
+      "Description": "Availability Zones for TestProject/test/VerifyVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VerifyVpcCidr268D0F47": {
+      "Description": "VPC CIDR for TestProject/test/VerifyVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "VerifyVpcFF33BD78",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VerifyVpcId6A58D2C9": {
+      "Description": "VPC ID for TestProject/test/VerifyVpc",
+      "Value": {
+        "Ref": "VerifyVpcFF33BD78",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-us-east-1",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AppRecordD9BF1812": {
+      "Properties": {
+        "Comment": "Demo record proving direct private hosted zone resolution.",
+        "HostedZoneId": {
+          "Ref": "PrivateHostedZone6354E1BB",
+        },
+        "Name": "app.system.example.com.",
+        "ResourceRecords": [
+          "10.10.200.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "InboundEndpoint9DB607C8": {
+      "Properties": {
+        "Direction": "INBOUND",
+        "IpAddresses": [
+          {
+            "Ip": "10.10.2.10",
+            "SubnetId": {
+              "Ref": "VerifyVpcResolverSubnet1Subnet0C64F470",
+            },
+          },
+          {
+            "Ip": "10.10.2.42",
+            "SubnetId": {
+              "Ref": "VerifyVpcResolverSubnet2SubnetC9E32E17",
+            },
+          },
+        ],
+        "Name": "TestProject-test-Inbound",
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "InboundEndpointSecurityGroup26F45A50",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "InboundEndpointSecurityGroup26F45A50": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver INBOUND endpoint (Inbound) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremDnsServerE03BB6BD": {
+      "DependsOn": [
+        "OnPremDnsServerInstanceRoleED6D32E7",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "OnPremDnsServerInstanceProfile49544DC6",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "OnPremDnsServerKeyPair35A512C9",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "OnPremDnsServerLaunchTemplate784145F2",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremDnsServerSecurityGroup509682B8",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "OnPremDnsServerSecurityGroup238F462F",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "OnPremDnsServer/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance
+dnf install -y bind bind-utils
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+cat > /etc/named.conf << 'NAMEDCONFEOF'
+options {
+    listen-on port 53 { any; };
+    listen-on-v6 port 53 { none; };
+    directory "/var/named";
+    allow-query { 10.0.0.0/8; 127.0.0.1; };
+    recursion yes;
+    dnssec-validation no;
+};
+zone "onprem.example.com" IN {
+    type master;
+    file "/var/named/onprem.example.com.zone";
+    allow-update { none; };
+};
+zone "system.example.com" IN {
+    type forward;
+    forward only;
+    forwarders {
+        10.10.2.10;
+        10.10.2.42;
+    };
+};
+NAMEDCONFEOF
+cat > /var/named/onprem.example.com.zone << ZONEEOF
+\\$TTL 300
+@ IN SOA ns.onprem.example.com. admin.onprem.example.com. ( 1 3600 900 604800 300 )
+@ IN NS ns.onprem.example.com.
+ns.onprem.example.com. IN A \${PRIVATE_IP}
+host1.onprem.example.com. IN A \${PRIVATE_IP}
+ZONEEOF
+chown named:named /var/named/onprem.example.com.zone
+chmod 640 /var/named/onprem.example.com.zone
+named-checkconf
+named-checkzone onprem.example.com /var/named/onprem.example.com.zone
+systemctl enable named
+systemctl restart named",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "OnPremDnsServerInstanceProfile49544DC6": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "OnPremDnsServerInstanceRoleED6D32E7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "OnPremDnsServerInstanceRoleED6D32E7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "OnPremDnsServer/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "OnPremDnsServerKeyPair35A512C9": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "OnPremDnsServer-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "OnPremDnsServerLaunchTemplate784145F2": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "OnPremDnsServerSecurityGroup238F462F": {
+      "Properties": {
+        "GroupDescription": "BIND9 DNS server security group (authoritative for onprem.example.com)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VerifyVpcFF33BD78",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VerifyVpcFF33BD78",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VerifyVpcFF33BD78",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VerifyVpcFF33BD78",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremDnsServerSecurityGroup509682B8": {
+      "Properties": {
+        "GroupDescription": "Route53ResolverEndpoints/OnPremDnsServer/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremForwardRule": {
+      "Properties": {
+        "DomainName": "onprem.example.com",
+        "Name": "TestProject-test-onprem-forward",
+        "ResolverEndpointId": {
+          "Fn::GetAtt": [
+            "OutboundEndpoint5939913C",
+            "ResolverEndpointId",
+          ],
+        },
+        "RuleType": "FORWARD",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "TargetIps": [
+          {
+            "Ip": {
+              "Fn::GetAtt": [
+                "OnPremDnsServerE03BB6BD",
+                "PrivateIp",
+              ],
+            },
+            "Port": "53",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverRule",
+    },
+    "OnPremForwardRuleAssociation": {
+      "Properties": {
+        "ResolverRuleId": {
+          "Fn::GetAtt": [
+            "OnPremForwardRule",
+            "ResolverRuleId",
+          ],
+        },
+        "VPCId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::Route53Resolver::ResolverRuleAssociation",
+    },
+    "OnPremSsmEndpointsSecurityGroupCD0C9002": {
+      "Properties": {
+        "GroupDescription": "SSM interface endpoints security group for OnPremVpc",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow HTTPS from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                  " for SSM interface endpoints",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OnPremVpc1BE9B8EF": {
+      "Properties": {
+        "CidrBlock": "10.20.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "OnPremVpcDynamoDbEndpoint987CA859": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremEc2MessagesEndpoint2494FF87": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ec2messages",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremSsmEndpoint830276BA": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcOnPremSsmMessagesEndpoint4CC91576": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OnPremSsmEndpointsSecurityGroupCD0C9002",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OnPremVpcPrivateSubnet1RouteTable99954166": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/OnPremVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "OnPremVpcPrivateSubnet1RouteTableAssociationC1D3A676": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "SubnetId": {
+          "Ref": "OnPremVpcPrivateSubnet1Subnet92EEF1E9",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "OnPremVpcPrivateSubnet1Subnet92EEF1E9": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.20.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/OnPremVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "OnPremVpcS3EndpointAA7D845D": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/OnPremVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "OutboundEndpoint5939913C": {
+      "Properties": {
+        "Direction": "OUTBOUND",
+        "IpAddresses": [
+          {
+            "SubnetId": {
+              "Ref": "VerifyVpcResolverSubnet1Subnet0C64F470",
+            },
+          },
+          {
+            "SubnetId": {
+              "Ref": "VerifyVpcResolverSubnet2SubnetC9E32E17",
+            },
+          },
+        ],
+        "Name": "TestProject-test-Outbound",
+        "ResolverEndpointType": "IPV4",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "OutboundEndpointSecurityGroup965EEEC7",
+              "GroupId",
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverEndpoint",
+    },
+    "OutboundEndpointSecurityGroup965EEEC7": {
+      "Properties": {
+        "GroupDescription": "Route 53 Resolver OUTBOUND endpoint (Outbound) security group",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (TCP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "tcp",
+            "ToPort": 53,
+          },
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow DNS (UDP) from ",
+                  {
+                    "Fn::GetAtt": [
+                      "OnPremVpc1BE9B8EF",
+                      "CidrBlock",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "FromPort": 53,
+            "IpProtocol": "udp",
+            "ToPort": 53,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "PrivateHostedZone6354E1BB": {
+      "Properties": {
+        "HostedZoneTags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "Name": "system.example.com.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "VerifyVpcFF33BD78",
+            },
+            "VPCRegion": "us-east-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+    "VerifySsmEndpointsSecurityGroup66503DFE": {
+      "Properties": {
+        "GroupDescription": "SSM interface endpoints security group for VerifyVpc",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VerifyVpcFF33BD78",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow HTTPS from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VerifyVpcFF33BD78",
+                      "CidrBlock",
+                    ],
+                  },
+                  " for SSM interface endpoints",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VerifyTestInstanceDC707CDA": {
+      "DependsOn": [
+        "VerifyTestInstanceInstanceRole5E8B2062",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "VerifyTestInstanceInstanceProfile5DB30178",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "KeyName": {
+          "Ref": "VerifyTestInstanceKeyPair1AAB6AC0",
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ResourceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "VerifyTestInstanceLaunchTemplateDC52F5E3",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VerifyTestInstanceSecurityGroup6D618127",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VerifyTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+echo "Test EC2 Instance" > /etc/update-motd.d/00-test-instance",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VerifyTestInstanceInstanceProfile5DB30178": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VerifyTestInstanceInstanceRole5E8B2062",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VerifyTestInstanceInstanceRole5E8B2062": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "VerifyTestInstance/test/instance",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VerifyTestInstanceKeyPair1AAB6AC0": {
+      "Properties": {
+        "KeyFormat": "pem",
+        "KeyName": "VerifyTestInstance-ec2-KeyPair",
+        "KeyType": "ed25519",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::KeyPair",
+    },
+    "VerifyTestInstanceLaunchTemplateDC52F5E3": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ResourceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "VerifyTestInstanceSecurityGroup6D618127": {
+      "Properties": {
+        "GroupDescription": "Route53ResolverEndpoints/VerifyTestInstance/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VerifyVpcFF33BD78",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic within VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VerifyToOnPremPeeringEnableVpcPeeringDnsResolutionB7735261": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "VerifyToOnPremPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy7860C205",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+              },
+              ""}}",
+            ],
+          ],
+        },
+        "Delete": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":false}}}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"EC2","action":"modifyVpcPeeringConnectionOptions","parameters":{"VpcPeeringConnectionId":"",
+              {
+                "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+              },
+              "","AccepterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true},"RequesterPeeringConnectionOptions":{"AllowDnsResolutionFromRemoteVpc":true}},"physicalResourceId":{"id":"EnableVpcPeeringDnsResolution:",
+              {
+                "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+              },
+              ""}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VerifyToOnPremPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy7860C205": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ec2:ModifyVpcPeeringConnectionOptions",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VerifyToOnPremPeeringEnableVpcPeeringDnsResolutionCustomResourcePolicy7860C205",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VerifyToOnPremPeeringLocalVpcPeeringSecurityGroupE531AAF9": {
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            "",
+            [
+              "Security group for VPC Peering traffic from peer VPC[",
+              {
+                "Ref": "OnPremVpc1BE9B8EF",
+              },
+              "]",
+            ],
+          ],
+        },
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "OnPremVpc1BE9B8EF",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow all traffic from peer VPC [",
+                  {
+                    "Ref": "OnPremVpc1BE9B8EF",
+                  },
+                  "]",
+                ],
+              ],
+            },
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VerifyToOnPremPeeringPeerVpcPeeringSecurityGroup3D34AB62": {
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            "",
+            [
+              "Security group for VPC Peering traffic from local VPC[",
+              {
+                "Ref": "VerifyVpcFF33BD78",
+              },
+              "]",
+            ],
+          ],
+        },
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VerifyVpcFF33BD78",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "Allow all traffic from local VPC [",
+                  {
+                    "Ref": "VerifyVpcFF33BD78",
+                  },
+                  "]",
+                ],
+              ],
+            },
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989": {
+      "Properties": {
+        "PeerVpcId": {
+          "Ref": "OnPremVpc1BE9B8EF",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "TestProject-test-Peering-",
+                  {
+                    "Ref": "VerifyVpcFF33BD78",
+                  },
+                  "-to-",
+                  {
+                    "Ref": "OnPremVpc1BE9B8EF",
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCPeeringConnection",
+    },
+    "VerifyToOnPremPeeringVpcPeeringRouteToLocalVpc1203BE7D5": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "VerifyVpcFF33BD78",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "OnPremVpcPrivateSubnet1RouteTable99954166",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VerifyToOnPremPeeringVpcPeeringRouteToPeerVpc1CFA5B84A": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VerifyVpcPrivateSubnet1RouteTable221C7D2C",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VerifyToOnPremPeeringVpcPeeringRouteToPeerVpc2566E6D84": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VerifyVpcPrivateSubnet2RouteTable86ED7A29",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VerifyToOnPremPeeringVpcPeeringRouteToPeerVpc3D44509B2": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VerifyVpcResolverSubnet1RouteTable77C96B9E",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VerifyToOnPremPeeringVpcPeeringRouteToPeerVpc492BC3ED6": {
+      "Properties": {
+        "DestinationCidrBlock": {
+          "Fn::GetAtt": [
+            "OnPremVpc1BE9B8EF",
+            "CidrBlock",
+          ],
+        },
+        "RouteTableId": {
+          "Ref": "VerifyVpcResolverSubnet2RouteTable0403D005",
+        },
+        "VpcPeeringConnectionId": {
+          "Ref": "VerifyToOnPremPeeringVpcPeeringConnectionBEAEF989",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VerifyVpcDynamoDbEndpointAF40D786": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VerifyVpcPrivateSubnet1RouteTable221C7D2C",
+          },
+          {
+            "Ref": "VerifyVpcPrivateSubnet2RouteTable86ED7A29",
+          },
+          {
+            "Ref": "VerifyVpcResolverSubnet1RouteTable77C96B9E",
+          },
+          {
+            "Ref": "VerifyVpcResolverSubnet2RouteTable0403D005",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VerifyVpcFF33BD78": {
+      "Properties": {
+        "CidrBlock": "10.10.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VerifyVpcPrivateSubnet1RouteTable221C7D2C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VerifyVpcPrivateSubnet1RouteTableAssociation52BDD4E1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VerifyVpcPrivateSubnet1RouteTable221C7D2C",
+        },
+        "SubnetId": {
+          "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VerifyVpcPrivateSubnet1SubnetB5D474CE": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.10.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VerifyVpcPrivateSubnet2RouteTable86ED7A29": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VerifyVpcPrivateSubnet2RouteTableAssociationBC7FC5A2": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VerifyVpcPrivateSubnet2RouteTable86ED7A29",
+        },
+        "SubnetId": {
+          "Ref": "VerifyVpcPrivateSubnet2Subnet80002062",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VerifyVpcPrivateSubnet2Subnet80002062": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.10.1.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VerifyVpcResolverSubnet1RouteTable77C96B9E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VerifyVpcResolverSubnet1RouteTableAssociation24649450": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VerifyVpcResolverSubnet1RouteTable77C96B9E",
+        },
+        "SubnetId": {
+          "Ref": "VerifyVpcResolverSubnet1Subnet0C64F470",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VerifyVpcResolverSubnet1Subnet0C64F470": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.10.2.0/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/ResolverSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VerifyVpcResolverSubnet2RouteTable0403D005": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VerifyVpcResolverSubnet2RouteTableAssociationC0DB90F6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VerifyVpcResolverSubnet2RouteTable0403D005",
+        },
+        "SubnetId": {
+          "Ref": "VerifyVpcResolverSubnet2SubnetC9E32E17",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VerifyVpcResolverSubnet2SubnetC9E32E17": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.10.2.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Resolver",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53ResolverEndpoints/VerifyVpc/Resource/ResolverSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VerifyVpcS3Endpoint6C418EFF": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VerifyVpcPrivateSubnet1RouteTable221C7D2C",
+          },
+          {
+            "Ref": "VerifyVpcPrivateSubnet2RouteTable86ED7A29",
+          },
+          {
+            "Ref": "VerifyVpcResolverSubnet1RouteTable77C96B9E",
+          },
+          {
+            "Ref": "VerifyVpcResolverSubnet2RouteTable0403D005",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VerifyVpcVerifyEc2MessagesEndpoint45D21FEF": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VerifySsmEndpointsSecurityGroup66503DFE",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ec2messages",
+        "SubnetIds": [
+          {
+            "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+          },
+          {
+            "Ref": "VerifyVpcPrivateSubnet2Subnet80002062",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VerifyVpcVerifySsmEndpoint6068D7D1": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VerifySsmEndpointsSecurityGroup66503DFE",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+          },
+          {
+            "Ref": "VerifyVpcPrivateSubnet2Subnet80002062",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VerifyVpcVerifySsmMessagesEndpointF5ADBA39": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VerifySsmEndpointsSecurityGroup66503DFE",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "VerifyVpcPrivateSubnet1SubnetB5D474CE",
+          },
+          {
+            "Ref": "VerifyVpcPrivateSubnet2Subnet80002062",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestProject/test/VerifyVpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-resolver-endpoints-example",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VerifyVpcFF33BD78",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::Instance": 2,
+  "AWS::EC2::KeyPair": 2,
+  "AWS::EC2::LaunchTemplate": 2,
+  "AWS::EC2::Route": 5,
+  "AWS::EC2::RouteTable": 5,
+  "AWS::EC2::SecurityGroup": 9,
+  "AWS::EC2::Subnet": 5,
+  "AWS::EC2::SubnetRouteTableAssociation": 5,
+  "AWS::EC2::VPC": 2,
+  "AWS::EC2::VPCEndpoint": 10,
+  "AWS::EC2::VPCPeeringConnection": 1,
+  "AWS::IAM::InstanceProfile": 2,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 1,
+  "AWS::Route53::HostedZone": 1,
+  "AWS::Route53::RecordSet": 1,
+  "AWS::Route53Resolver::ResolverEndpoint": 2,
+  "AWS::Route53Resolver::ResolverRule": 1,
+  "AWS::Route53Resolver::ResolverRuleAssociation": 1,
+  "Custom::AWS": 1,
+}
+`;
