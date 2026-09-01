@@ -2930,6 +2930,21 @@ systemctl restart named",
       },
       "Type": "AWS::EC2::Subnet",
     },
+    "ParentAppRecord2BA58967": {
+      "Properties": {
+        "Comment": "Demo record proving direct resolution against the parent zone itself (no delegation involved).",
+        "HostedZoneId": {
+          "Ref": "ParentZoneECA3B259",
+        },
+        "Name": "app.system.example.com.",
+        "ResourceRecords": [
+          "10.0.200.10",
+        ],
+        "TTL": "1800",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
     "ParentDelegateRule": {
       "Properties": {
         "DelegationRecord": "system.example.com",
@@ -4959,7 +4974,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::IAM::InstanceProfile": 2,
   "AWS::IAM::Role": 2,
   "AWS::Route53::HostedZone": 3,
-  "AWS::Route53::RecordSet": 8,
+  "AWS::Route53::RecordSet": 9,
   "AWS::Route53Resolver::ResolverEndpoint": 4,
   "AWS::Route53Resolver::ResolverRule": 1,
   "AWS::Route53Resolver::ResolverRuleAssociation": 1,

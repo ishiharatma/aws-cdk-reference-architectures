@@ -8,7 +8,7 @@
 親プライベートホストゾーン（`system.example.com`）が、2つのサブドメイン（`dev.system.example.com`、
 `stg.system.example.com`）を別々のVPCへ委任する構成です。2025年6月に追加された **Route 53 Resolver DNS委任**
 機能を使い、子VPC側の `INBOUND_DELEGATION` エンドポイントと、親側アウトバウンドエンドポイント上の
-`DELEGATE` Resolverルールを、親ゾーン内の通常のNS＋グルーレコードで結び付けます。4つ目のオンプレミス相当VPC
+`DELEGATE` Resolverルール1本を、親ゾーン内の通常のNS＋グルーレコードで結び付けます。4つ目のオンプレミス相当VPC
 は親ドメインのみをハブへ転送し（子ドメインごとのコンディショナルフォワーダーは不要）、4つのVPCすべてを
 1つのTransit Gatewayで接続します。
 
@@ -43,7 +43,7 @@
         PHZ system.example.com    │                          │
           NS dev.system.*  → ns-dev-{1,2}.system.*（グルー: DevVpc委任エンドポイントIP）
           NS stg.system.*  → ns-stg-{1,2}.system.*（グルー: StgVpc委任エンドポイントIP）
-        ResolverRule DELEGATE(dev.system.*) / DELEGATE(stg.system.*)（アウトバウンドエンドポイント上）
+        ResolverRule DELEGATE(system.example.com)（アウトバウンドエンドポイント上、1本で両子ゾーンをカバー）
                               │
         OnPremVpc 10.3.0.0/16 │ （「オンプレミス役」）
         ├─ Private (BIND9 フォワーダー、SSMエンドポイント: system.example.com → HubVpcインバウンドエンドポイントIP)
@@ -61,7 +61,7 @@
 | **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | 各VPCのサブネットグループを構築: `Private`（ワークロード+SSMエンドポイント、Hub/OnPremのみ）、`Resolver`（Hub/Dev/Stgのみ）、`Tgw`（4VPCすべて）。全サブネットが `PRIVATE_ISOLATED` で、インターネットゲートウェイもNAT Gatewayもなし。 |
 | **SSM VPCインターフェースエンドポイント**（`SSM` / `SSM Messages` / `EC2 Messages`） | HubVpcに1セット、OnPremVpcに1セット。EC2インスタンスを持つのはこの2つのVPCのみ。インターネット経路が一切なくてもSession Managerで到達できる。 |
 | **プライベートホストゾーン** | HubVpcの `system.example.com`、DevVpcの `dev.system.example.com`、StgVpcの `stg.system.example.com`。それぞれ自分のVPCのみに関連付け。 |
-| **`DELEGATE` Resolverルール** | HubVpcのアウトバウンドエンドポイント上に2つの `CfnResolverRule`（`RuleType: DELEGATE`、子ゾーンごとに `DelegationRecord` を1つ）を作成し、HubVpcに関連付け。 |
+| **`DELEGATE` Resolverルール** | HubVpcのアウトバウンドエンドポイント上に1つの `CfnResolverRule`（`RuleType: DELEGATE`、`DelegationRecord` は*親*ゾーン名）を作成し、HubVpcに関連付け。これ1本で両子ゾーンをカバーする。 |
 | **NS＋グルーレコード** | 親ゾーン内に、子ドメインごとのNSレコード（架空のネームサーバーホスト名2つを指す）と、それぞれをその子の委任エンドポイントの静的IPへ解決するAレコード（グルー）を配置。 |
 | **BIND9フォワーダー** | OnPremVpcのAL2023 EC2。`system.example.com` のみをHubVpcの通常インバウンドエンドポイントへ転送する。`dev.`/`stg.` クエリは委任チェーンを介して透過的に解決される。 |
 
@@ -80,7 +80,7 @@
 ### 1. 親→子の経路には FORWARD ではなく DELEGATE ルール
 
 **決定**: HubVpcのアウトバウンドエンドポイントには、静的な `TargetIps` を持つ `FORWARD` ルールではなく、
-`RuleType: DELEGATE` と `DelegationRecord`（子ゾーン名）を持つ `AWS::Route53Resolver::ResolverRule` を2つ配置する。
+`RuleType: DELEGATE` を持つ `AWS::Route53Resolver::ResolverRule` を1本だけ配置する。
 
 **理由**: `DELEGATE` は、ゾーンに既に存在するNS＋グルーレコードを介して転送先を解決する。これは公開DNSが
 サブドメインを委任する際に昔から使ってきた仕組みそのものを、プライベートホストゾーンの階層に適用したもの。
@@ -88,6 +88,21 @@
 している「オンプレミス側のコンディショナルフォワーダー」問題そのものになってしまう。`FORWARD` が今も適切な
 場面については、姉妹ワークスペース [`route53-resolver-endpoints`](../route53-resolver-endpoints/)（固定IPを持ち
 自身のRoute 53ゾーンを持たない宛先の場合）を参照。
+
+**`DelegationRecord` は「子ゾーン名」ではなく「親ゾーン名」を指定する**。これが本ワークスペース全体の中で
+最も重要かつ、最も見落としやすい仕様である。`AWS::Route53Resolver::ResolverRule` の `DelegationRecord` は
+「委任するサブドメイン名」ではなく、「このルールがNS応答を監視すべきゾーン名」を指定するプロパティである。
+AWS公式の[Resolver delegation rules tutorial](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/outbound-delegation-tutorial.html)
+はこれを「in-zone delegation」と呼んでいる（子ゾーンのNS＋グルーレコードが親ゾーン自身の中に存在するケースで、
+まさに本ワークスペースの構成そのもの）。同チュートリアルの実例では、親ゾーン（`hr.example.com`）を指定した
+**1本**の委任ルールだけで、2つの子ゾーン（`eu.hr.example.com`、`apac.hr.example.com`）への委任を透過的にカバー
+している。子ゾーンごとに別ルールが必要になるのは「out-of-zone delegation」（子ゾーンのNS＋グルーレコードが
+自アカウントの管理外の別ゾーンに存在するケース）のみである。本ワークスペースの初期バージョンはここを逆に
+実装していた。子ゾーンごとに、その子ゾーン自身の名前を `DelegationRecord` に指定した `DELEGATE` ルールを
+1本ずつ作成していた。これはデプロイもVPCへの関連付けもエラーなく成功するが、実際には何も解決しない
+（`dig app.dev.system.example.com` はタイムアウトもエラーもなく空応答を返す。ルールがそもそもどのNS応答にも
+マッチしないため）。`system.example.com` を指定した `ParentDelegateRule` こそが、両子ゾーンへのクエリを
+実際にルーティングするものである。
 
 ### 2. 委任エンドポイントの静的IPをそのままグルーとして使う
 
@@ -205,7 +220,7 @@ npm run destroy:all -w workspaces/route53-phz-delegation
 | 層 | ファイル | 検証内容 |
 |-------|------|----------------|
 | スナップショット | `test/snapshot/snapshot.test.ts` | テンプレート全体、およびリソース種別/数のスナップショット。 |
-| ユニット | `test/unit/route53-phz-delegation-stack.test.ts` | 想定CIDRの4VPC、4VPCすべてをメッシュする1つのTransit Gateway、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、HubVpcとOnPremVpcのSSMインターフェースエンドポイント、3つのプライベートホストゾーン、4つのResolverエンドポイント（Hubインバウンド `INBOUND`、Hubアウトバウンド `OUTBOUND`、Dev/Stgの `INBOUND_DELEGATION` が `Protocols: [Do53]` と各2 IPを持つこと）、`TargetIps` を持たない2つの `DELEGATE` ルールとその関連付け、親ゾーン内の両子ゾーン向けNS＋グルー `A` レコード、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
+| ユニット | `test/unit/route53-phz-delegation-stack.test.ts` | 想定CIDRの4VPC、4VPCすべてをメッシュする1つのTransit Gateway、インターネットゲートウェイ/NAT Gateway/パブリックIPが一切存在しないこと、HubVpcとOnPremVpcのSSMインターフェースエンドポイント、3つのプライベートホストゾーン、4つのResolverエンドポイント（Hubインバウンド `INBOUND`、Hubアウトバウンド `OUTBOUND`、Dev/Stgの `INBOUND_DELEGATION` が `Protocols: [Do53]` と各2 IPを持つこと）、`TargetIps` を持たず親ゾーン名で `DelegationRecord` を指定した `DELEGATE` ルールが正確に1本であることとその関連付け、親ゾーン内の両子ゾーン向けNS＋グルー `A` レコード、DNSを `0.0.0.0/0` に開放するセキュリティグループが存在しないこと。 |
 | コンプライアンス | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` を実行し、スコープと理由を明記した抑制のみを許可。 |
 
 ```bash
@@ -219,9 +234,9 @@ npm run test:snapshot:update -w workspaces/route53-phz-delegation   # 意図し�
 # HubVpcのテストインスタンスにセッションを開く（IDはスタック出力から取得）
 aws ssm start-session --target <HubTestInstance id> --profile route53-phz-delegation-dev
 
-dig system.example.com +short          # HubVpc自身のゾーンで直接応答
-dig app.dev.system.example.com +short  # → 10.1.200.10、DELEGATE経由でDevVpcへ委任
-dig app.stg.system.example.com +short  # → 10.2.200.10、DELEGATE経由でStgVpcへ委任
+dig app.system.example.com +short      # → 10.0.200.10、HubVpc自身のゾーンで直接応答（委任なし）
+dig app.dev.system.example.com +short  # → 10.1.200.10、親ゾーンのDELEGATEルール経由でDevVpcへ委任
+dig app.stg.system.example.com +short  # → 10.2.200.10、同じルール経由でStgVpcへ委任
 
 # OnPremVpcのBIND9ホストから、自分自身をリゾルバとして使用
 # （system.example.com のみをフォワードゾーンとして設定しているが、dev./stg. も委任チェーン経由で解決される）
@@ -234,7 +249,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 | やりたいこと | 変更箇所 |
 |------|--------|
 | ゾーン名/ドメイン名を変更 | `parameters/dev-params.ts` の `parentZoneName` / `devZoneName` / `stgZoneName`。 |
-| 3つ目の子環境を追加 | `DevVpc`/`StgVpc` と同じパターンで `PrdVpc` を追加: `Resolver` + `Tgw` サブネットグループ、プライベートホストゾーン、`INBOUND_DELEGATION` エンドポイント、Hubのアウトバウンドエンドポイント上の `DELEGATE` ルール＋関連付け、親ゾーンへのNS/グルーレコードのペア。 |
+| 3つ目の子環境を追加 | `DevVpc`/`StgVpc` と同じパターンで `PrdVpc` を追加: `Resolver` + `Tgw` サブネットグループ、プライベートホストゾーン、`INBOUND_DELEGATION` エンドポイント、親ゾーンへのNS/グルーレコードのペア。既存の `ParentDelegateRule` は親ゾーン名で指定されているため、新しい `DELEGATE` ルールは不要でそのままカバーされる。 |
 | CIDRを変更 | `parameters/dev-params.ts` の `hubVpcConfig` / `devVpcConfig` / `stgVpcConfig` / `onPremVpcConfig`。 |
 | エンドポイントコンストラクトを他で再利用 | `ResolverEndpointConstruct` は `vpc` / `subnets` / `direction` / `allowedCidrs` のみが必要で、本ワークスペースへの依存はない。 |
 
@@ -242,6 +257,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 
 | 症状 | 想定される原因 | 対処 |
 |---------|--------------|-----|
+| `dig app.dev.system.example.com` が応答を返さない（エラーもタイムアウトもなく空） | `DELEGATE` ルールの `DelegationRecord` が*子*ゾーン名になっている（正しくは*親*ゾーン名） | `DelegationRecord` にはNS＋グルーレコードが実際に存在するゾーン(ここでは `system.example.com`)を指定する必要がある。委任先の子ゾーン名ではない。[設計判断1](#1-親→子の経路には-forward-ではなく-delegate-ルール)を参照。`aws route53resolver get-resolver-rule --resolver-rule-id <id>` でデプロイ済みの値を確認できる。 |
 | HubVpcのテストインスタンスから `dig app.dev.system.example.com` がタイムアウトする | `DELEGATE` ルールがまだ関連付けられていない、またはTransit Gatewayアタッチメントがまだ `pending` | `aws route53resolver list-resolver-rule-associations`、`aws ec2 describe-transit-gateway-attachments` を確認。 |
 | BIND9が `system.example.com` は解決できるが `dev.system.example.com` は解決できない | HubVpcの通常インバウンドエンドポイントのSGがOnPremVpcのCIDRを許可していない、または `DELEGATE` ルール/グルーレコードが欠けている | `HubInboundEndpoint` のセキュリティグループと、合成済みテンプレート内の `DevNsRecord`/`DevNsGlueRecord*` を確認。 |
 | CloudFormation ValidateがResolverエンドポイントの `Name` について警告を出す | `[a-zA-Z0-9\-_ ]` 以外の文字が含まれている | `ResolverEndpointConstruct` はスラッシュを既にサニタイズ済み。`project`/`environment` に他の記号を含めた場合は調整する。 |
@@ -252,6 +268,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 - [Amazon Route 53 Resolver endpoints now support DNS delegation for private hosted zones（AWS What's New, 2025/06/24）](https://aws.amazon.com/about-aws/whats-new/2025/06/amazon-route-53-resolver-endpoints-dns-delegation-private-hosted-zones/)
 - [AWS::Route53Resolver::ResolverEndpoint（CloudFormationリファレンス）](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverendpoint.html)
 - [AWS::Route53Resolver::ResolverRule（CloudFormationリファレンス）](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverrule.html)
+- [Resolver delegation rules tutorial](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/outbound-delegation-tutorial.html): 本ワークスペースの `DelegationRecord`（子ゾーンではなく親ゾーン）の根拠となった公式の実例。
 - [VPCとネットワーク間でのDNSクエリの解決](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
 - 関連ワークスペース: [`route53-resolver-endpoints`](../route53-resolver-endpoints/): よりシンプルな2VPCのインバウンド/アウトバウンドエンドポイント構成。設定ドリブンな `INBOUND` / `INBOUND_DELEGATION` 切り替えも含む。
 - 関連ワークスペース: [`transit-gateway`](../transit-gateway/): 本ワークスペースで再利用しているTransit Gatewayコンストラクト単体のドキュメント。

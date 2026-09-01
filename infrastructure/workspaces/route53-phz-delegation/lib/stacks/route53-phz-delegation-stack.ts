@@ -129,6 +129,12 @@ export class Route53PhzDelegationStack extends cdk.Stack {
             zoneName: stgZoneName,
             vpc: this.stgVpc.vpc,
         });
+        new route53.ARecord(this, 'ParentAppRecord', {
+            zone: parentZone,
+            recordName: 'app',
+            target: route53.RecordTarget.fromIpAddresses('10.0.200.10'),
+            comment: 'Demo record proving direct resolution against the parent zone itself (no delegation involved).',
+        });
         new route53.ARecord(this, 'DevAppRecord', {
             zone: devZone,
             recordName: 'app',

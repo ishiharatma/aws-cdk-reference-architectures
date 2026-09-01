@@ -7,7 +7,7 @@
 
 A parent private hosted zone (`system.example.com`) delegates two subdomains (`dev.system.example.com`,
 `stg.system.example.com`) to two other VPCs, using the June 2025 **Route 53 Resolver DNS delegation** feature:
-`INBOUND_DELEGATION` endpoints on the child VPCs and `DELEGATE` resolver rules on the parent's outbound endpoint,
+`INBOUND_DELEGATION` endpoints on the child VPCs and a `DELEGATE` resolver rule on the parent's outbound endpoint,
 tied together with ordinary NS + glue records in the parent zone. A fourth on-premises-role VPC forwards *only*
 the parent domain to the hub, with no per-child conditional forwarder, and all four VPCs are joined by one Transit
 Gateway.
@@ -43,7 +43,7 @@ Gateway.
         PHZ system.example.com    │                          │
           NS dev.system.*  → ns-dev-{1,2}.system.* (glue: DevVpc delegation endpoint IPs)
           NS stg.system.*  → ns-stg-{1,2}.system.* (glue: StgVpc delegation endpoint IPs)
-        ResolverRule DELEGATE(dev.system.*) / DELEGATE(stg.system.*) on Outbound endpoint
+        ResolverRule DELEGATE(system.example.com) on Outbound endpoint: one rule, both children
                               │
         OnPremVpc 10.3.0.0/16 │  ("on-premises role")
         ├─ Private (BIND9 forwarder, SSM endpoints: system.example.com → HubVpc Inbound endpoint IPs)
@@ -61,7 +61,7 @@ No Internet Gateway / NAT Gateway anywhere. Every subnet is PRIVATE_ISOLATED.
 | **`VpcConstruct`** (`@common/constructs/vpc/vpc`) | Builds each VPC's subnet groups: `Private` (workload + SSM endpoints, Hub/OnPrem only), `Resolver` (Hub/Dev/Stg only), `Tgw` (all four). Every subnet is `PRIVATE_ISOLATED`, with no Internet Gateway and no NAT Gateway. |
 | **SSM interface endpoints** (`SSM` / `SSM Messages` / `EC2 Messages`) | One set in HubVpc, one in OnPremVpc, the only two VPCs with an EC2 instance, so Session Manager reaches them with no internet path at all. |
 | **Private hosted zones** | `system.example.com` in HubVpc, `dev.system.example.com` in DevVpc, `stg.system.example.com` in StgVpc, each associated with its own VPC only. |
-| **`DELEGATE` resolver rules** | Two `CfnResolverRule`s (`RuleType: DELEGATE`, one `DelegationRecord` per child zone) on HubVpc's outbound endpoint, associated with HubVpc. |
+| **`DELEGATE` resolver rule** | One `CfnResolverRule` (`RuleType: DELEGATE`, `DelegationRecord` set to the *parent* zone name) on HubVpc's outbound endpoint, associated with HubVpc; handles both children. |
 | **NS + glue records** | In the parent zone: an `NS` record per child domain pointing at two synthetic nameserver hostnames, each backed by an `A` record (glue) resolving to that child's delegation endpoint static IP. |
 | **BIND9 forwarder** | AL2023 EC2 in OnPremVpc, forwarding only `system.example.com` to HubVpc's regular inbound endpoint. `dev.`/`stg.` queries ride the delegation chain transparently. |
 
@@ -79,8 +79,8 @@ No Internet Gateway / NAT Gateway anywhere. Every subnet is PRIVATE_ISOLATED.
 
 ### 1. `DELEGATE` rules, not `FORWARD`, for the parent → child path
 
-**Decision**: HubVpc's outbound endpoint carries two `AWS::Route53Resolver::ResolverRule`s with `RuleType: DELEGATE`
-and a `DelegationRecord` (the child zone name), instead of `FORWARD` rules with static `TargetIps`.
+**Decision**: HubVpc's outbound endpoint carries one `AWS::Route53Resolver::ResolverRule` with `RuleType: DELEGATE`,
+instead of `FORWARD` rules with static `TargetIps`.
 
 **Why**: `DELEGATE` resolves its destination via NS + glue records already present in the zone, the same mechanism
 public DNS has always used to delegate a subdomain, applied here to a private hosted zone hierarchy. The
@@ -88,6 +88,20 @@ alternative, `FORWARD`, would need a hard-coded `TargetIps` list per child, whic
 conditional forwarder" problem this whole feature exists to remove. See the sibling
 [`route53-resolver-endpoints`](../route53-resolver-endpoints/) workspace for where `FORWARD` is still the right
 tool (a destination with a static IP and no Route 53 zone of its own).
+
+**`DelegationRecord` is the *parent* zone name, not each child's**: this is the single most important, and least
+obviously documented, detail of this whole workspace. `AWS::Route53Resolver::ResolverRule`'s `DelegationRecord`
+does not name the subdomain you're delegating; it names the zone whose NS responses this rule should watch. AWS's
+own [Resolver delegation rules tutorial](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/outbound-delegation-tutorial.html)
+calls this "in-zone delegation" (the NS + glue records for the children live inside the parent zone, exactly as
+they do here) and its worked example creates **one** delegation rule keyed on the parent (`hr.example.com`) that
+transparently covers two children (`eu.hr.example.com`, `apac.hr.example.com`); a *separate* rule per child is
+only needed for "out-of-zone" delegation, where the child's NS + glue records live in an entirely different zone
+your account doesn't own. An earlier version of this workspace got this backwards: one `DELEGATE` rule per child,
+each keyed on the child's own name, which deploys and associates without error but silently resolves nothing:
+`dig app.dev.system.example.com` returns empty, no timeout, no error, because the rule never matches an NS
+response in the first place. `ParentDelegateRule`, keyed on `system.example.com`, is what actually routes both
+children's queries.
 
 ### 2. Static IPs on the delegation endpoints, used as glue
 
@@ -103,7 +117,7 @@ synth time (see `ResolverEndpointConstruct`) is what makes an in-template glue r
 ### 3. HubVpc gets *two* endpoints, not one bidirectional endpoint
 
 **Decision**: HubVpc has a separate regular `INBOUND` endpoint (for on-premises → Hub queries) and a separate
-`OUTBOUND` endpoint (carrying the `DELEGATE` rules, for Hub → Dev/Stg queries).
+`OUTBOUND` endpoint (carrying the `DELEGATE` rule, for Hub → Dev/Stg queries).
 
 **Why**: `AWS::Route53Resolver::ResolverEndpoint`'s `Direction` is a single value per endpoint resource; there is
 no "both directions" option. A hub that both answers inbound queries *and* delegates outbound to children
@@ -117,7 +131,7 @@ config at all.
 
 **Why**: this is the entire value proposition of the June 2025 feature, made visible. Before delegation endpoints
 existed, an on-premises DNS administrator would need a conditional-forwarding rule *per subdomain* that changes
-whenever AWS-side ownership changes. With `DELEGATE` rules doing the routing on the AWS side, on-premises needs
+whenever AWS-side ownership changes. With the `DELEGATE` rule doing the routing on the AWS side, on-premises needs
 to know about exactly one domain, ever. Route 53 Resolver follows the delegation chain on its own.
 
 ### 5. Transit Gateway, not four pairs of VPC peering
@@ -210,7 +224,7 @@ npm run destroy:all -w workspaces/route53-phz-delegation
 | Layer | File | What it checks |
 |-------|------|----------------|
 | Snapshot | `test/snapshot/snapshot.test.ts` | Full template + resource-type/count snapshot. |
-| Unit | `test/unit/route53-phz-delegation-stack.test.ts` | 4 VPCs with the expected CIDRs; 1 Transit Gateway meshing all 4; no Internet Gateway/NAT Gateway/public IP anywhere; the SSM interface endpoints in HubVpc and OnPremVpc; 3 private hosted zones; 4 Resolver endpoints (Hub inbound `INBOUND`, Hub outbound `OUTBOUND`, Dev/Stg `INBOUND_DELEGATION` with `Protocols: [Do53]` and 2 IPs each); 2 `DELEGATE` rules (no `TargetIps`) with their associations; NS + glue `A` records in the parent zone for both children; no security group opening DNS to `0.0.0.0/0`. |
+| Unit | `test/unit/route53-phz-delegation-stack.test.ts` | 4 VPCs with the expected CIDRs; 1 Transit Gateway meshing all 4; no Internet Gateway/NAT Gateway/public IP anywhere; the SSM interface endpoints in HubVpc and OnPremVpc; 3 private hosted zones; 4 Resolver endpoints (Hub inbound `INBOUND`, Hub outbound `OUTBOUND`, Dev/Stg `INBOUND_DELEGATION` with `Protocols: [Do53]` and 2 IPs each); exactly one `DELEGATE` rule (no `TargetIps`), keyed on the parent zone name, with its association; NS + glue `A` records in the parent zone for both children; no security group opening DNS to `0.0.0.0/0`. |
 | Compliance | `test/compliance/cdk-nag.test.ts` | `AwsSolutionsChecks` with only scoped, documented suppressions. |
 
 ```bash
@@ -224,9 +238,9 @@ npm run test:snapshot:update -w workspaces/route53-phz-delegation   # after an i
 # From HubVpc's test instance (id from stack outputs)
 aws ssm start-session --target <HubTestInstance id> --profile route53-phz-delegation-dev
 
-dig system.example.com +short          # answered directly by HubVpc's own zone
-dig app.dev.system.example.com +short  # → 10.1.200.10, delegated to DevVpc via DELEGATE
-dig app.stg.system.example.com +short  # → 10.2.200.10, delegated to StgVpc via DELEGATE
+dig app.system.example.com +short      # → 10.0.200.10, answered directly by HubVpc's own zone (no delegation)
+dig app.dev.system.example.com +short  # → 10.1.200.10, delegated to DevVpc via the parent-zone DELEGATE rule
+dig app.stg.system.example.com +short  # → 10.2.200.10, delegated to StgVpc via the same rule
 
 # From the BIND9 host in OnPremVpc, using itself as resolver (only system.example.com is
 # configured as a forward zone - dev./stg. still resolve via the delegation chain)
@@ -239,7 +253,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 | Goal | Change |
 |------|--------|
 | Different zone/domain names | `parentZoneName` / `devZoneName` / `stgZoneName` in `parameters/dev-params.ts`. |
-| A third child environment | Add a `PrdVpc` following the `DevVpc`/`StgVpc` pattern: a `Resolver` + `Tgw` subnet group, a private hosted zone, an `INBOUND_DELEGATION` endpoint, a `DELEGATE` rule + association on Hub's outbound endpoint, and an NS/glue record pair in the parent zone. |
+| A third child environment | Add a `PrdVpc` following the `DevVpc`/`StgVpc` pattern: a `Resolver` + `Tgw` subnet group, a private hosted zone, an `INBOUND_DELEGATION` endpoint, and an NS/glue record pair in the parent zone. The existing `ParentDelegateRule` already covers it; no new `DELEGATE` rule needed, since it's keyed on the parent zone, not the child. |
 | Different CIDRs | `hubVpcConfig` / `devVpcConfig` / `stgVpcConfig` / `onPremVpcConfig` in `parameters/dev-params.ts`. |
 | Reuse the endpoint construct elsewhere | `ResolverEndpointConstruct` only needs `vpc`, `subnets`, `direction`, and `allowedCidrs`, with no dependency on this workspace. |
 
@@ -247,6 +261,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
+| `dig app.dev.system.example.com` returns empty: no answer, no error, no timeout | `DELEGATE` rule's `DelegationRecord` is set to the *child* zone name instead of the *parent* zone name | `DelegationRecord` must be the zone that actually holds the NS + glue records (`system.example.com` here), not the delegated subdomain; see [Design Decision 1](#1-delegate-rules-not-forward-for-the-parent--child-path). `aws route53resolver get-resolver-rule --resolver-rule-id <id>` to check the deployed value. |
 | `dig app.dev.system.example.com` from HubVpc's test instance times out | `DELEGATE` rule not yet associated, or Transit Gateway attachment still `pending` | `aws route53resolver list-resolver-rule-associations`; `aws ec2 describe-transit-gateway-attachments`. |
 | BIND9 can resolve `system.example.com` but not `dev.system.example.com` | HubVpc's regular inbound endpoint SG doesn't allow OnPremVpc's CIDR, or the `DELEGATE` rule/glue records are missing | Confirm `HubInboundEndpoint`'s security group and the `DevNsRecord`/`DevNsGlueRecord*` outputs in the synthesized template. |
 | CloudFormation Validate warns about a Resolver endpoint `Name` | Name contains characters outside `[a-zA-Z0-9\-_ ]` | `ResolverEndpointConstruct` already sanitizes slashes; adjust if `project`/`environment` contain other punctuation. |
@@ -257,6 +272,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 - [Amazon Route 53 Resolver endpoints now support DNS delegation for private hosted zones (AWS What's New, 2025/06/24)](https://aws.amazon.com/about-aws/whats-new/2025/06/amazon-route-53-resolver-endpoints-dns-delegation-private-hosted-zones/)
 - [AWS::Route53Resolver::ResolverEndpoint (CloudFormation reference)](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverendpoint.html)
 - [AWS::Route53Resolver::ResolverRule (CloudFormation reference)](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-route53resolver-resolverrule.html)
+- [Resolver delegation rules tutorial](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/outbound-delegation-tutorial.html): the worked example this workspace's `DelegationRecord` choice (parent zone, not child) is based on.
 - [Resolving DNS queries between VPCs and your network](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
 - Related workspace: [`route53-resolver-endpoints`](../route53-resolver-endpoints/): the simpler 2-VPC inbound/outbound endpoint case, including the config-driven `INBOUND` / `INBOUND_DELEGATION` toggle.
 - Related workspace: [`transit-gateway`](../transit-gateway/): the Transit Gateway construct reused here, documented in isolation.
