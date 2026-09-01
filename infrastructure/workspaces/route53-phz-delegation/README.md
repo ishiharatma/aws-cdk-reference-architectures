@@ -30,24 +30,30 @@ Gateway.
 ![Architecture Diagram](overview.drawio.svg)
 
 ```text
-                              ┌───────────────────────────────┐
-                              │        Transit Gateway         │
-                              └───┬───────┬────────┬───────┬───┘
-        HubVpc 10.0.0.0/16        │  DevVpc 10.1.0.0/16     │  StgVpc 10.2.0.0/16
-        ├─ Private (test EC2, SSM │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
-        │   endpoints)            │  │   Inbound-Delegation  │  │   Inbound-Delegation
-        ├─ Resolver /27 x2 AZ     │  │                       │  │
-        │   ├─ Inbound endpoint ◄─┼──┼── forwards system.*   │  │
-        │   └─ Outbound endpoint ─┼──┤   PHZ dev.system.*    │  │  PHZ stg.system.*
-        ├─ Tgw /28 x2 AZ          │  └─ Tgw /28 x2 AZ        │  └─ Tgw /28 x2 AZ
-        PHZ system.example.com    │                          │
-          NS dev.system.*  → ns-dev-{1,2}.system.* (glue: DevVpc delegation endpoint IPs)
-          NS stg.system.*  → ns-stg-{1,2}.system.* (glue: StgVpc delegation endpoint IPs)
-        ResolverRule DELEGATE(system.example.com) on Outbound endpoint: one rule, both children
-                              │
-        OnPremVpc 10.3.0.0/16 │  ("on-premises role")
-        ├─ Private (BIND9 forwarder, SSM endpoints: system.example.com → HubVpc Inbound endpoint IPs)
-        └─ Tgw /28
+HubVpc 10.0.0.0/16
+├─ Private (test EC2, SSM endpoints)
+├─ Resolver /27 x2 AZ
+│   ├─ Inbound endpoint  ← on-premises queries land here
+│   └─ Outbound endpoint → DELEGATE rule, DelegationRecord=system.example.com
+├─ Tgw /28 x2 AZ
+└─ PHZ system.example.com
+      NS dev.system.* → ns-dev-{1,2}.system.* (glue: DevVpc delegation endpoint IPs)
+      NS stg.system.* → ns-stg-{1,2}.system.* (glue: StgVpc delegation endpoint IPs)
+
+      │
+      ▼ Transit Gateway joins all four VPCs into one shared route table
+      │
+
+DevVpc 10.1.0.0/16
+├─ Resolver /27 x2 AZ, Inbound-Delegation endpoint
+├─ Tgw /28 x2 AZ
+└─ PHZ dev.system.example.com
+      (StgVpc 10.2.0.0/16 has the identical shape: its own Inbound-Delegation
+       endpoint, Tgw subnet, and PHZ stg.system.example.com)
+
+OnPremVpc 10.3.0.0/16  ("on-premises role")
+├─ Private (BIND9 forwarder: system.example.com → HubVpc Inbound endpoint IPs)
+└─ Tgw /28
 
 No Internet Gateway / NAT Gateway anywhere. Every subnet is PRIVATE_ISOLATED.
 ```

@@ -30,24 +30,30 @@
 ![Architecture Diagram](overview.drawio.svg)
 
 ```text
-                              ┌───────────────────────────────┐
-                              │        Transit Gateway         │
-                              └───┬───────┬────────┬───────┬───┘
-        HubVpc 10.0.0.0/16        │  DevVpc 10.1.0.0/16     │  StgVpc 10.2.0.0/16
-        ├─ Private (テストEC2、    │  ├─ Resolver /27 x2 AZ  │  ├─ Resolver /27 x2 AZ
-        │   SSMエンドポイント)      │  │   Inbound-Delegation  │  │   Inbound-Delegation
-        ├─ Resolver /27 x2 AZ     │  │                       │  │
-        │   ├─ インバウンド ◄──────┼──┼── system.* を転送     │  │
-        │   └─ アウトバウンド ─────┼──┤   PHZ dev.system.*    │  │  PHZ stg.system.*
-        ├─ Tgw /28 x2 AZ          │  └─ Tgw /28 x2 AZ        │  └─ Tgw /28 x2 AZ
-        PHZ system.example.com    │                          │
-          NS dev.system.*  → ns-dev-{1,2}.system.*（グルー: DevVpc委任エンドポイントIP）
-          NS stg.system.*  → ns-stg-{1,2}.system.*（グルー: StgVpc委任エンドポイントIP）
-        ResolverRule DELEGATE(system.example.com)（アウトバウンドエンドポイント上、1本で両子ゾーンをカバー）
-                              │
-        OnPremVpc 10.3.0.0/16 │ （「オンプレミス役」）
-        ├─ Private (BIND9 フォワーダー、SSMエンドポイント: system.example.com → HubVpcインバウンドエンドポイントIP)
-        └─ Tgw /28
+HubVpc 10.0.0.0/16
+├─ Private（テストEC2、SSMエンドポイント）
+├─ Resolver /27 x2 AZ
+│   ├─ インバウンド ← オンプレミスからのクエリを受信
+│   └─ アウトバウンド → DELEGATEルール（DelegationRecord=system.example.com）
+├─ Tgw /28 x2 AZ
+└─ PHZ system.example.com
+      NS dev.system.* → ns-dev-{1,2}.system.*（グルー: DevVpc委任エンドポイントIP）
+      NS stg.system.* → ns-stg-{1,2}.system.*（グルー: StgVpc委任エンドポイントIP）
+
+      │
+      ▼ Transit Gatewayが4つのVPCを1つの共有ルートテーブルに接続
+      │
+
+DevVpc 10.1.0.0/16
+├─ Resolver /27 x2 AZ、Inbound-Delegationエンドポイント
+├─ Tgw /28 x2 AZ
+└─ PHZ dev.system.example.com
+      （StgVpc 10.2.0.0/16も同じ構成: 独自のInbound-Delegationエンドポイント、
+        Tgwサブネット、PHZ stg.system.example.comを持つ）
+
+OnPremVpc 10.3.0.0/16 （「オンプレミス役」）
+├─ Private（BIND9フォワーダー: system.example.com → HubVpcインバウンドエンドポイントIP）
+└─ Tgw /28
 
 インターネットゲートウェイ/NAT Gatewayはどこにもなし。全サブネットがPRIVATE_ISOLATED。
 ```
