@@ -52,6 +52,12 @@ Gateway.
 No Internet Gateway / NAT Gateway anywhere. Every subnet is PRIVATE_ISOLATED.
 ```
 
+### DNS Resolution Sequence
+
+The diagrams above show static topology; they don't make clear *in what order* a query actually gets resolved. [`resolution-sequence.drawio.svg`](resolution-sequence.drawio.svg) walks through that order step by step, for both the delegation path (HubTestInstance → HubVpc resolver → NS/glue lookup → `ParentDelegateRule` → Transit Gateway → DevVpc's delegation endpoint) and the on-premises BIND9 path, which rejoins the same flow at HubVpc's regular inbound endpoint.
+
+![DNS Resolution Sequence](resolution-sequence.drawio.svg)
+
 ### Key Components
 
 | Component | Role |

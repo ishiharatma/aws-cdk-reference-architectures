@@ -52,6 +52,12 @@
 インターネットゲートウェイ/NAT Gatewayはどこにもなし。全サブネットがPRIVATE_ISOLATED。
 ```
 
+### DNS解決の順序
+
+上記の図は静的なトポロジーを示すもので、クエリが実際に**どの順序**で解決されるかは分かりにくい。[`resolution-sequence.drawio.svg`](resolution-sequence.drawio.svg) はその順序をステップごとに示す。委任経路（HubTestInstance → HubVpcのリゾルバ → NS/グルーレコード参照 → `ParentDelegateRule` → Transit Gateway → DevVpcの委任エンドポイント）と、オンプレミスBIND9経路（HubVpcの通常インバウンドエンドポイントで同じ流れに合流する）の両方をカバーする。
+
+![DNS Resolution Sequence](resolution-sequence.drawio.svg)
+
 ### 主要コンポーネント
 
 | コンポーネント | 役割 |
