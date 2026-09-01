@@ -28,22 +28,27 @@ inbound endpoint's category (`INBOUND` vs the June 2025 `INBOUND_DELEGATION`) is
 ![Architecture Diagram](overview.drawio.svg)
 
 ```text
-VerifyVpc 10.10.0.0/16 (2 AZ)                     OnPremVpc 10.20.0.0/16 (1 AZ)
-├─ Private /24 (test instance, SSM endpoints)      ├─ Private /24 (BIND9 EC2, SSM endpoints)
-└─ Resolver /27 x2 AZ                              │    authoritative for
-    ├─ Inbound endpoint  (INBOUND | INBOUND_DELEGATION)   onprem.example.com
-    └─ Outbound endpoint (OUTBOUND)  ────────────┐  │
-                                                   │  │
-        VPC Peering (AllowDnsResolutionFromRemoteVpc) │
-        ◄──────────────────────────────────────────┘
+VerifyVpc 10.10.0.0/16 (2 AZ)
+├─ Private /24 (test instance, SSM endpoints)
+└─ Resolver /27 x2 AZ
+      ├─ Inbound endpoint  (INBOUND | INBOUND_DELEGATION)
+      └─ Outbound endpoint (OUTBOUND) → FORWARD rule, domain=onprem.example.com
+
+      │
+      ▼ VPC Peering (AllowDnsResolutionFromRemoteVpc, both directions)
+      │
+
+OnPremVpc 10.20.0.0/16 (1 AZ)
+└─ Private /24 (BIND9 EC2, SSM endpoints)
+      authoritative for onprem.example.com
 
 No Internet Gateway / NAT Gateway anywhere. Every subnet is PRIVATE_ISOLATED.
 
 PrivateHostedZone system.example.com  →  associated with VerifyVpc
-  app.system.example.com  A  10.10.200.10                 (answered locally)
+  app.system.example.com  A  10.10.200.10          (answered locally by the PHZ)
 
 ResolverRule (FORWARD, domain=onprem.example.com)
-  → outbound endpoint → BIND9 private IP                  (answered over peering)
+  → outbound endpoint → BIND9 private IP           (answered over peering)
 ```
 
 ### Key Components

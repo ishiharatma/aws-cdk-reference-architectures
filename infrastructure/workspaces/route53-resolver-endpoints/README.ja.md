@@ -25,22 +25,28 @@
 ![Architecture Diagram](overview.drawio.svg)
 
 ```text
-VerifyVpc 10.10.0.0/16 (2 AZ)                     OnPremVpc 10.20.0.0/16 (1 AZ)
-├─ Private /24 (テストインスタンス、SSMエンドポイント) ├─ Private /24 (BIND9 EC2、SSMエンドポイント)
-└─ Resolver /27 x2 AZ                              │    onprem.example.com の
-    ├─ インバウンドエンドポイント (INBOUND | INBOUND_DELEGATION)  権威DNSサーバー
-    └─ アウトバウンドエンドポイント (OUTBOUND) ─────┐  │
-                                                   │  │
-        VPC ピアリング（双方向でDNS解決を許可）      │  │
-        ◄──────────────────────────────────────────┘
+VerifyVpc 10.10.0.0/16 (2 AZ)
+├─ Private /24（テストインスタンス、SSMエンドポイント）
+└─ Resolver /27 x2 AZ
+      ├─ インバウンドエンドポイント (INBOUND | INBOUND_DELEGATION)
+      └─ アウトバウンドエンドポイント (OUTBOUND)
+            → FORWARDルール（domain=onprem.example.com）
+
+      │
+      ▼ VPCピアリング（双方向でDNS解決を許可）
+      │
+
+OnPremVpc 10.20.0.0/16 (1 AZ)
+└─ Private /24（BIND9 EC2、SSMエンドポイント）
+      onprem.example.com の権威DNSサーバー
 
 インターネットゲートウェイ/NAT Gatewayはどちらにもなし。全サブネットがPRIVATE_ISOLATED。
 
 プライベートホストゾーン system.example.com  →  VerifyVpc に関連付け
-  app.system.example.com  A  10.10.200.10                 （ローカルで応答）
+  app.system.example.com  A  10.10.200.10（ローカルで応答）
 
 Resolver Rule（FORWARD, domain=onprem.example.com）
-  → アウトバウンドエンドポイント → BIND9のプライベートIP        （ピアリング経由で応答）
+  → アウトバウンドエンドポイント → BIND9のプライベートIP（ピアリング経由で応答）
 ```
 
 ### 主要コンポーネント
