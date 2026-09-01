@@ -245,7 +245,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     "DevDelegateRule": {
       "Properties": {
         "DelegationRecord": "dev.system.example.com",
-        "DomainName": "dev.system.example.com",
         "Name": "TestProject-test-dev-delegate",
         "ResolverEndpointId": {
           "Fn::GetAtt": [
@@ -3019,7 +3018,6 @@ systemctl restart named",
     "StgDelegateRule": {
       "Properties": {
         "DelegationRecord": "stg.system.example.com",
-        "DomainName": "stg.system.example.com",
         "Name": "TestProject-test-stg-delegate",
         "ResolverEndpointId": {
           "Fn::GetAtt": [

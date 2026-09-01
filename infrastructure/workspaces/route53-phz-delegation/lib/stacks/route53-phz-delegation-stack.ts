@@ -195,7 +195,8 @@ export class Route53PhzDelegationStack extends cdk.Stack {
         //    answered locally.
         const devDelegateRule = new route53resolver.CfnResolverRule(this, 'DevDelegateRule', {
             ruleType: 'DELEGATE',
-            domainName: devZoneName,
+            // DELEGATE rules identify their domain via delegationRecord only - the API
+            // rejects a rule that also sets domainName (RSLVR-00724).
             delegationRecord: devZoneName,
             resolverEndpointId: hubOutboundEndpoint.endpoint.attrResolverEndpointId,
             name: `${props.project}-${props.environment}-dev-delegate`.slice(0, 64),
@@ -206,7 +207,8 @@ export class Route53PhzDelegationStack extends cdk.Stack {
         });
         const stgDelegateRule = new route53resolver.CfnResolverRule(this, 'StgDelegateRule', {
             ruleType: 'DELEGATE',
-            domainName: stgZoneName,
+            // DELEGATE rules identify their domain via delegationRecord only - the API
+            // rejects a rule that also sets domainName (RSLVR-00724).
             delegationRecord: stgZoneName,
             resolverEndpointId: hubOutboundEndpoint.endpoint.attrResolverEndpointId,
             name: `${props.project}-${props.environment}-stg-delegate`.slice(0, 64),
