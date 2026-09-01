@@ -200,6 +200,30 @@ dig host1.onprem.example.com +short        # → BIND9インスタンスのプ�
 
 スタックが `CREATE_COMPLETE` になってから数秒以内にどちらも解決できるはず。
 
+### インバウンドエンドポイントの手動確認（オンプレミス側から）
+
+上記の確認は*アウトバウンド*経路（`VerifyVpc` → `onprem.example.com`）しか検証していない。
+`inboundEndpointType` が実際に切り替えている*インバウンド*エンドポイントが、外部/オンプレミスの
+リゾルバから使われる想定通りに応答するかを確認するには、`OnPremVpc` に既にデプロイ済みの
+BIND9インスタンス `OnPremDnsServer` から直接クエリを投げればよい。新規EC2は不要——VPCピアリングの
+`AllowDnsResolutionFromRemoteVpc` オプションとインバウンドエンドポイントのセキュリティグループ
+（`allowedCidrs: [OnPremVpcのCIDR]`）が既に許可しており、`useStaticIps: true` によって
+`InboundEndpoint/ResolverEndpointIps` スタック出力から固定IPを取得できる。
+
+```bash
+# OnPremDnsServer にセッションを開く（IDはスタック出力から取得）
+aws ssm start-session --target <OnPremDnsServer id> --profile route53-resolver-endpoints-dev
+
+# インバウンドエンドポイントの静的IPへ直接クエリ - inboundEndpointType が
+# DEFAULT (INBOUND) でも DELEGATION (INBOUND_DELEGATION) でも同じように動く
+dig @<InboundEndpoint/ResolverEndpointIps の1つ目の値> app.system.example.com +short   # → 10.10.200.10
+```
+
+これはBIND9の設定変更を伴わない単発クエリである。実際のオンプレミスDNSサーバーなら、このIPを
+委任するサブドメインのNSレコードのターゲット（委任モード）や、コンディショナルフォワーダーの
+ターゲット（デフォルトモード）として設定する。上記の `dig @<ip>` は、どちらの設定をする前に
+エンドポイントが応答することそのものを確認するステップである。
+
 ## ⚙️ カスタマイズ
 
 | やりたいこと | 変更箇所 |

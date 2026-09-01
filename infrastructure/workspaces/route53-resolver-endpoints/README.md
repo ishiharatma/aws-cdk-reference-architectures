@@ -246,6 +246,30 @@ dig host1.onprem.example.com +short        # → the BIND9 instance's private IP
 
 Both should resolve within a few seconds of the stack reaching `CREATE_COMPLETE`.
 
+### Manual verification of the inbound endpoint (from the on-premises side)
+
+The check above only exercises the *outbound* path (`VerifyVpc` → `onprem.example.com`). To confirm
+the *inbound* endpoint — the one `inboundEndpointType` actually toggles — answers queries the way an
+external/on-premises resolver would use it, query it directly from `OnPremDnsServer`, the BIND9
+instance already deployed in `OnPremVpc`. No extra EC2 instance is needed: the peering connection's
+`AllowDnsResolutionFromRemoteVpc` option and the inbound endpoint's security group
+(`allowedCidrs: [onPremVpc CIDR]`) already permit it, and `useStaticIps: true` gives the endpoint a
+fixed, known IP via the `InboundEndpoint/ResolverEndpointIps` stack output.
+
+```bash
+# Open a session on OnPremDnsServer (id from stack outputs)
+aws ssm start-session --target <OnPremDnsServer id> --profile route53-resolver-endpoints-dev
+
+# Query the inbound endpoint's static IP directly - works the same whether
+# inboundEndpointType is DEFAULT (INBOUND) or DELEGATION (INBOUND_DELEGATION)
+dig @<InboundEndpoint/ResolverEndpointIps, first value> app.system.example.com +short   # → 10.10.200.10
+```
+
+This is a raw one-off query, not a BIND9 configuration change: a real on-premises DNS server would
+instead add this IP as the target of an NS record for whichever subdomain it delegates to Route 53
+(delegation mode), or as a conditional-forwarder target (default mode) — the `dig @<ip>` above is
+just confirming the endpoint answers before wiring up either.
+
 ## ⚙️ Customization
 
 | Goal | Change |
