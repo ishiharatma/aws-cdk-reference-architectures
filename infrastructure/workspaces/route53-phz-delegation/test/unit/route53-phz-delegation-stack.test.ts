@@ -92,17 +92,17 @@ describe('Route53PhzDelegationStack – topology', () => {
         }
     });
 
-    test('creates 2 DELEGATE resolver rules on the Hub outbound endpoint, associated with HubVpc', () => {
-        template.resourceCountIs('AWS::Route53Resolver::ResolverRule', 2);
+    test('creates one DELEGATE resolver rule on the Hub outbound endpoint, keyed on the parent zone', () => {
+        // AWS's delegation tutorial uses a single delegation rule per parent zone for
+        // "in-zone" delegation (NS + glue records living inside the parent zone, as they do
+        // here) - not one rule per child. The parent zone's own NS/glue records are what
+        // route dev. vs stg. queries to different targets.
+        template.resourceCountIs('AWS::Route53Resolver::ResolverRule', 1);
         template.hasResourceProperties('AWS::Route53Resolver::ResolverRule', {
             RuleType: 'DELEGATE',
-            DelegationRecord: 'dev.system.example.com',
+            DelegationRecord: 'system.example.com',
         });
-        template.hasResourceProperties('AWS::Route53Resolver::ResolverRule', {
-            RuleType: 'DELEGATE',
-            DelegationRecord: 'stg.system.example.com',
-        });
-        template.resourceCountIs('AWS::Route53Resolver::ResolverRuleAssociation', 2);
+        template.resourceCountIs('AWS::Route53Resolver::ResolverRuleAssociation', 1);
 
         const rules = template.findResources('AWS::Route53Resolver::ResolverRule');
         for (const rule of Object.values(rules)) {

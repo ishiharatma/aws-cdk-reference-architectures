@@ -190,31 +190,24 @@ export class Route53PhzDelegationStack extends cdk.Stack {
             useStaticIps: true,
         });
 
-        // 5. DELEGATE rules on HubVpc's outbound endpoint: queries matching a delegation
-        //    record in the parent zone are handed off through the endpoint instead of being
-        //    answered locally.
-        const devDelegateRule = new route53resolver.CfnResolverRule(this, 'DevDelegateRule', {
+        // 5. One DELEGATE rule on HubVpc's outbound endpoint, keyed on the PARENT zone name.
+        //    Per AWS's own delegation tutorial, an "in-zone" delegation (the NS + glue records
+        //    for the child live inside the parent zone, as they do here) uses a single
+        //    delegation rule whose delegationRecord is the parent zone - not one rule per
+        //    child. Resolver watches every NS response returned while resolving names under
+        //    that parent zone and, for any of them, hands the query to this outbound endpoint;
+        //    it is the NS + glue records below (not a second rule) that make Dev vs. Stg
+        //    resolve to different targets.
+        const parentDelegateRule = new route53resolver.CfnResolverRule(this, 'ParentDelegateRule', {
             ruleType: 'DELEGATE',
             // DELEGATE rules identify their domain via delegationRecord only - the API
             // rejects a rule that also sets domainName (RSLVR-00724).
-            delegationRecord: devZoneName,
+            delegationRecord: parentZoneName,
             resolverEndpointId: hubOutboundEndpoint.endpoint.attrResolverEndpointId,
-            name: `${props.project}-${props.environment}-dev-delegate`.slice(0, 64),
+            name: `${props.project}-${props.environment}-parent-delegate`.slice(0, 64),
         });
-        new route53resolver.CfnResolverRuleAssociation(this, 'DevDelegateRuleAssociation', {
-            resolverRuleId: devDelegateRule.attrResolverRuleId,
-            vpcId: this.hubVpc.vpc.vpcId,
-        });
-        const stgDelegateRule = new route53resolver.CfnResolverRule(this, 'StgDelegateRule', {
-            ruleType: 'DELEGATE',
-            // DELEGATE rules identify their domain via delegationRecord only - the API
-            // rejects a rule that also sets domainName (RSLVR-00724).
-            delegationRecord: stgZoneName,
-            resolverEndpointId: hubOutboundEndpoint.endpoint.attrResolverEndpointId,
-            name: `${props.project}-${props.environment}-stg-delegate`.slice(0, 64),
-        });
-        new route53resolver.CfnResolverRuleAssociation(this, 'StgDelegateRuleAssociation', {
-            resolverRuleId: stgDelegateRule.attrResolverRuleId,
+        new route53resolver.CfnResolverRuleAssociation(this, 'ParentDelegateRuleAssociation', {
+            resolverRuleId: parentDelegateRule.attrResolverRuleId,
             vpcId: this.hubVpc.vpc.vpcId,
         });
 

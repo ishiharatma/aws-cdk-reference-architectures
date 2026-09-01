@@ -242,48 +242,6 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::Route53::RecordSet",
     },
-    "DevDelegateRule": {
-      "Properties": {
-        "DelegationRecord": "dev.system.example.com",
-        "Name": "TestProject-test-dev-delegate",
-        "ResolverEndpointId": {
-          "Fn::GetAtt": [
-            "HubOutboundEndpoint75D32F8F",
-            "ResolverEndpointId",
-          ],
-        },
-        "RuleType": "DELEGATE",
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "route53-phz-delegation-example",
-          },
-        ],
-      },
-      "Type": "AWS::Route53Resolver::ResolverRule",
-    },
-    "DevDelegateRuleAssociation": {
-      "Properties": {
-        "ResolverRuleId": {
-          "Fn::GetAtt": [
-            "DevDelegateRule",
-            "ResolverRuleId",
-          ],
-        },
-        "VPCId": {
-          "Ref": "HubVpc85493B83",
-        },
-      },
-      "Type": "AWS::Route53Resolver::ResolverRuleAssociation",
-    },
     "DevInboundDelegationEndpoint25436D57": {
       "Properties": {
         "Direction": "INBOUND_DELEGATION",
@@ -2972,6 +2930,48 @@ systemctl restart named",
       },
       "Type": "AWS::EC2::Subnet",
     },
+    "ParentDelegateRule": {
+      "Properties": {
+        "DelegationRecord": "system.example.com",
+        "Name": "TestProject-test-parent-delegate",
+        "ResolverEndpointId": {
+          "Fn::GetAtt": [
+            "HubOutboundEndpoint75D32F8F",
+            "ResolverEndpointId",
+          ],
+        },
+        "RuleType": "DELEGATE",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "route53-phz-delegation-example",
+          },
+        ],
+      },
+      "Type": "AWS::Route53Resolver::ResolverRule",
+    },
+    "ParentDelegateRuleAssociation": {
+      "Properties": {
+        "ResolverRuleId": {
+          "Fn::GetAtt": [
+            "ParentDelegateRule",
+            "ResolverRuleId",
+          ],
+        },
+        "VPCId": {
+          "Ref": "HubVpc85493B83",
+        },
+      },
+      "Type": "AWS::Route53Resolver::ResolverRuleAssociation",
+    },
     "ParentZoneECA3B259": {
       "Properties": {
         "HostedZoneTags": [
@@ -3014,48 +3014,6 @@ systemctl restart named",
         "Type": "A",
       },
       "Type": "AWS::Route53::RecordSet",
-    },
-    "StgDelegateRule": {
-      "Properties": {
-        "DelegationRecord": "stg.system.example.com",
-        "Name": "TestProject-test-stg-delegate",
-        "ResolverEndpointId": {
-          "Fn::GetAtt": [
-            "HubOutboundEndpoint75D32F8F",
-            "ResolverEndpointId",
-          ],
-        },
-        "RuleType": "DELEGATE",
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "route53-phz-delegation-example",
-          },
-        ],
-      },
-      "Type": "AWS::Route53Resolver::ResolverRule",
-    },
-    "StgDelegateRuleAssociation": {
-      "Properties": {
-        "ResolverRuleId": {
-          "Fn::GetAtt": [
-            "StgDelegateRule",
-            "ResolverRuleId",
-          ],
-        },
-        "VPCId": {
-          "Ref": "HubVpc85493B83",
-        },
-      },
-      "Type": "AWS::Route53Resolver::ResolverRuleAssociation",
     },
     "StgInboundDelegationEndpoint6FF63980": {
       "Properties": {
@@ -5003,7 +4961,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
   "AWS::Route53::HostedZone": 3,
   "AWS::Route53::RecordSet": 8,
   "AWS::Route53Resolver::ResolverEndpoint": 4,
-  "AWS::Route53Resolver::ResolverRule": 2,
-  "AWS::Route53Resolver::ResolverRuleAssociation": 2,
+  "AWS::Route53Resolver::ResolverRule": 1,
+  "AWS::Route53Resolver::ResolverRuleAssociation": 1,
 }
 `;
