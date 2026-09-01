@@ -467,6 +467,14 @@ zone "onprem.example.com" IN {
     file "/var/named/onprem.example.com.zone";
     allow-update { none; };
 };
+zone "system.example.com" IN {
+    type forward;
+    forward only;
+    forwarders {
+        10.10.2.10;
+        10.10.2.42;
+    };
+};
 NAMEDCONFEOF
 cat > /var/named/onprem.example.com.zone << ZONEEOF
 \\$TTL 300

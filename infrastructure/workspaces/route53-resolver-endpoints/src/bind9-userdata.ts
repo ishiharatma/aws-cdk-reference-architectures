@@ -1,13 +1,43 @@
 /**
- * Returns user data commands that install and configure BIND9 on Amazon Linux 2023 as a
- * minimal on-premises-role authoritative DNS server.
- *
- * The zone answers one static A record so the Resolver outbound endpoint's FORWARD rule
- * has something to prove: querying `<hostRecordName>.<zoneName>` from the verification
- * VPC should resolve to this instance's own private IP.
+ * BIND9 conditional-forwarder configuration: a `zone { type forward; }` block for a domain
+ * this instance is not authoritative for, pointing at the given resolver IPs.
  */
-export function bind9UserData(zoneName: string, hostRecordName = 'host1'): string[] {
+export interface Bind9ForwardZoneConfig {
+    /** Domain to forward - typically the Route 53 private hosted zone name. */
+    readonly zoneName: string;
+    /** Target IPs to forward to, e.g. the Resolver inbound endpoint's static IPs. */
+    readonly forwarderIps: string[];
+}
+
+/**
+ * Returns user data commands that install and configure BIND9 on Amazon Linux 2023 as a
+ * minimal on-premises-role DNS server.
+ *
+ * The server is authoritative for `zoneName` and answers one static A record, so the
+ * Resolver outbound endpoint's FORWARD rule has something to prove: querying
+ * `<hostRecordName>.<zoneName>` from the verification VPC should resolve to this
+ * instance's own private IP.
+ *
+ * When `forwardZone` is given, the server also gets a conditional forwarder - a second
+ * `zone { type forward; }` block - so it can act as the *querying* side of the inbound
+ * endpoint too: `dig @127.0.0.1 <name>.<forwardZone.zoneName>` from this instance exercises
+ * the full on-premises-resolver round trip through the inbound endpoint, not just a raw
+ * `dig` against the endpoint's IP.
+ */
+export function bind9UserData(zoneName: string, hostRecordName = 'host1', forwardZone?: Bind9ForwardZoneConfig): string[] {
     const zoneFile = `/var/named/${zoneName}.zone`;
+
+    const forwardZoneBlock = forwardZone
+        ? [
+              `zone "${forwardZone.zoneName}" IN {`,
+              '    type forward;',
+              '    forward only;',
+              '    forwarders {',
+              ...forwardZone.forwarderIps.map((ip) => `        ${ip};`),
+              '    };',
+              '};',
+          ]
+        : [];
 
     return [
         'dnf install -y bind bind-utils',
@@ -32,6 +62,7 @@ export function bind9UserData(zoneName: string, hostRecordName = 'host1'): strin
         `    file "${zoneFile}";`,
         '    allow-update { none; };',
         '};',
+        ...forwardZoneBlock,
         'NAMEDCONFEOF',
 
         `cat > ${zoneFile} << ZONEEOF`,

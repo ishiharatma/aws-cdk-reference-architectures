@@ -112,6 +112,27 @@ Resolver Rule（FORWARD, domain=onprem.example.com）
 
 **特定のサブネットグループを指定する方法**: `TestInstance` はもともと `targetSubnetType` しか受け付けなかったが、これは1つのVPCに2つの `PRIVATE_ISOLATED` グループ(ワークロード用の `Private` とエンドポイントENI用の `Resolver`)がある場合には曖昧になる。そこで `targetSubnetGroupName` を追加し、指定時はこちらを優先するようにした。`@common/constructs/ec2/ec2-testinstance` への小さな追加的変更である。
 
+### 7. BIND9は権威サーバーだけでなくコンディショナルフォワーダーでもある
+
+**決定**: `OnPremDnsServer` の `named.conf` には、既存の `onprem.example.com` 向け `type master` ゾーンに加えて、
+`zone "system.example.com" { type forward; forward only; forwarders { <インバウンドエンドポイントの静的IP群> }; }`
+というゾーンブロックをもう1つ持たせている。
+
+**理由**: これがないと、インバウンドエンドポイントが動作していることを証明する唯一の手段は
+`OnPremDnsServer` 自身から `dig @<エンドポイントIP>` を実行することだった——これはエンドポイントの
+IPを明示的に名指しするクエリであり、実際のオンプレミスリゾルバがそのような設定になることはまずない。
+インバウンドエンドポイントの意義は、オンプレミス側のクライアントがその存在を一切知らなくてよい点に
+ある。自分のDNSサーバーに聞くだけでよい。`route53-phz-delegation` のオンプレミスBIND9が既に使っている
+コンディショナルフォワーダーと同じ形をBIND9に持たせることで、このインスタンスからの
+`dig @127.0.0.1 app.system.example.com` が現実的な確認手段になる。生の `dig @<エンドポイントIP>` は、
+BIND9自体の設定からエンドポイントを切り分けたいときの副次的な手段として残している。
+
+**トレードオフ**: フォワーダーのターゲットIPは合成時に埋め込まれるリテラル文字列のため、
+`bind9UserData` が `OnPremDnsServer` のユーザーデータを組み立てる前に、Resolverエンドポイント
+（`useStaticIps: true`）が構築済みである必要がある。そのため、スタックはピアリング接続とBIND9
+インスタンス（ステップ3〜4）より先にResolverエンドポイント（ステップ2）を構築する構成になっており、
+アーキテクチャ図が示すCIDR/ドメインの並び順とは一致していない。
+
 ## 💰 コスト最適化
 
 概算 **ap-northeast-1**、オンデマンド、24時間稼働想定。
@@ -203,26 +224,37 @@ dig host1.onprem.example.com +short        # → BIND9インスタンスのプ�
 ### インバウンドエンドポイントの手動確認（オンプレミス側から）
 
 上記の確認は*アウトバウンド*経路（`VerifyVpc` → `onprem.example.com`）しか検証していない。
-`inboundEndpointType` が実際に切り替えている*インバウンド*エンドポイントが、外部/オンプレミスの
-リゾルバから使われる想定通りに応答するかを確認するには、`OnPremVpc` に既にデプロイ済みの
-BIND9インスタンス `OnPremDnsServer` から直接クエリを投げればよい。新規EC2は不要——VPCピアリングの
-`AllowDnsResolutionFromRemoteVpc` オプションとインバウンドエンドポイントのセキュリティグループ
-（`allowedCidrs: [OnPremVpcのCIDR]`）が既に許可しており、`useStaticIps: true` によって
-`InboundEndpoint/ResolverEndpointIps` スタック出力から固定IPを取得できる。
+`inboundEndpointType` が実際に切り替えている*インバウンド*エンドポイントには、この経路では
+一度もクエリが飛ばない。オンプレミス側、つまり`OnPremVpc`に既にデプロイ済みのBIND9インスタンス
+`OnPremDnsServer` から確認する。このインスタンスには`system.example.com`向けのコンディショナル
+フォワーダーがインバウンドエンドポイントの静的IPを指す形で設定済みなので、実際のオンプレミス
+クライアント——Route 53の存在を意識せず、自分のDNSサーバーに問い合わせるだけ——と同じシナリオを
+そのまま再現できる。
 
 ```bash
 # OnPremDnsServer にセッションを開く（IDはスタック出力から取得）
 aws ssm start-session --target <OnPremDnsServer id> --profile route53-resolver-endpoints-dev
 
-# インバウンドエンドポイントの静的IPへ直接クエリ - inboundEndpointType が
-# DEFAULT (INBOUND) でも DELEGATION (INBOUND_DELEGATION) でも同じように動く
+# BIND9自身のフォワーダーが処理する - クライアント側はインバウンドエンドポイントのIPを一切意識しない
+dig @127.0.0.1 app.system.example.com +short   # → 10.10.200.10
+```
+
+このコマンドはインバウンドエンドポイントのIPをまったく意識していない——知っているのは
+「`system.example.com`はどこかへ転送すべき」ということだけである。フォワーダーの設定ミスを
+切り分けたい場合など、エンドポイント自体を単独で確認したいときは、静的IPへ直接クエリを
+投げることもできる（これも新規EC2は不要——VPCピアリングの`AllowDnsResolutionFromRemoteVpc`
+オプションとインバウンドエンドポイントのセキュリティグループ`allowedCidrs: [OnPremVpcのCIDR]`が
+既に許可している）。
+
+```bash
+# 同じOnPremDnsServerのセッションで。inboundEndpointType が DEFAULT (INBOUND) でも
+# DELEGATION (INBOUND_DELEGATION) でも同じように動く。
 dig @<InboundEndpoint/ResolverEndpointIps の1つ目の値> app.system.example.com +short   # → 10.10.200.10
 ```
 
-これはBIND9の設定変更を伴わない単発クエリである。実際のオンプレミスDNSサーバーなら、このIPを
-委任するサブドメインのNSレコードのターゲット（委任モード）や、コンディショナルフォワーダーの
-ターゲット（デフォルトモード）として設定する。上記の `dig @<ip>` は、どちらの設定をする前に
-エンドポイントが応答することそのものを確認するステップである。
+実際のオンプレミスDNSサーバーなら、このIPを委任するサブドメインのNSレコードのターゲット
+（委任モード）として設定する——ここでBIND9の`forwarders {}`ブロックが単純化のために
+`forward only`で代用している部分そのものである。
 
 ## ⚙️ カスタマイズ
 

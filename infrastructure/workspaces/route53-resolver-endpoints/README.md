@@ -148,6 +148,25 @@ ambiguous once a VPC has two `PRIVATE_ISOLATED` groups (`Private` for workloads,
 It now also accepts `targetSubnetGroupName`, which takes precedence: a small, additive change to
 `@common/constructs/ec2/ec2-testinstance`.
 
+### 7. BIND9 is also a conditional forwarder, not just an authoritative server
+
+**Decision**: `OnPremDnsServer`'s `named.conf` carries a second zone block — `zone "system.example.com" { type
+forward; forward only; forwarders { <inbound endpoint static IPs> }; }` — alongside the `type master` zone it
+already had for `onprem.example.com`.
+
+**Why**: without it, the only way to prove the inbound endpoint works was `dig @<endpoint-ip>` run from
+`OnPremDnsServer` itself — a query that names the endpoint's IP explicitly, which is not how a real on-premises
+resolver would ever be configured. The point of an inbound endpoint is that a client on the on-premises side never
+needs to know it exists; it just asks its own DNS server. Giving BIND9 the same conditional-forwarder shape that
+`route53-phz-delegation`'s on-premises BIND9 already uses makes `dig @127.0.0.1 app.system.example.com` from this
+instance the realistic check, with the raw `dig @<endpoint-ip>` kept only as a secondary way to isolate the
+endpoint from BIND9's own configuration.
+
+**Trade-off**: the Resolver endpoints must exist (with `useStaticIps: true`) before `bind9UserData` builds
+`OnPremDnsServer`'s user data, since the forwarder's target IPs are literal strings baked in at synth time — this
+is why the stack constructs both endpoints (step 2) before the peering connection and BIND9 instance (steps 3–4),
+not in the CIDR/domain order the architecture diagram reads in.
+
 ## 💰 Cost Optimization
 
 Approximate **ap-northeast-1**, on-demand, running 24×7.
@@ -248,27 +267,36 @@ Both should resolve within a few seconds of the stack reaching `CREATE_COMPLETE`
 
 ### Manual verification of the inbound endpoint (from the on-premises side)
 
-The check above only exercises the *outbound* path (`VerifyVpc` → `onprem.example.com`). To confirm
-the *inbound* endpoint — the one `inboundEndpointType` actually toggles — answers queries the way an
-external/on-premises resolver would use it, query it directly from `OnPremDnsServer`, the BIND9
-instance already deployed in `OnPremVpc`. No extra EC2 instance is needed: the peering connection's
-`AllowDnsResolutionFromRemoteVpc` option and the inbound endpoint's security group
-(`allowedCidrs: [onPremVpc CIDR]`) already permit it, and `useStaticIps: true` gives the endpoint a
-fixed, known IP via the `InboundEndpoint/ResolverEndpointIps` stack output.
+The check above only exercises the *outbound* path (`VerifyVpc` → `onprem.example.com`). The *inbound*
+endpoint — the one `inboundEndpointType` actually toggles — never gets a query in that flow. Verify it
+from the on-premises side instead, using `OnPremDnsServer`, the BIND9 instance already deployed in
+`OnPremVpc`. It's pre-configured with a conditional forwarder for `system.example.com` pointed at the
+inbound endpoint's static IPs, so the realistic scenario works exactly like a real on-premises client
+that has no idea Route 53 exists: it just asks its own DNS server.
 
 ```bash
 # Open a session on OnPremDnsServer (id from stack outputs)
 aws ssm start-session --target <OnPremDnsServer id> --profile route53-resolver-endpoints-dev
 
-# Query the inbound endpoint's static IP directly - works the same whether
-# inboundEndpointType is DEFAULT (INBOUND) or DELEGATION (INBOUND_DELEGATION)
+# BIND9's own forwarder does the work - the client never targets the inbound endpoint directly
+dig @127.0.0.1 app.system.example.com +short   # → 10.10.200.10
+```
+
+That single command is unaware of the inbound endpoint's IP entirely; it only knows `system.example.com`
+should be forwarded somewhere. If you want to isolate the endpoint itself from BIND9's forwarder
+config - e.g. while debugging a broken forwarder - you can also query its static IP directly (no
+extra EC2 needed either: the peering connection's `AllowDnsResolutionFromRemoteVpc` option and the
+inbound endpoint's security group, `allowedCidrs: [onPremVpc CIDR]`, already permit it):
+
+```bash
+# Same session on OnPremDnsServer. Works the same whether inboundEndpointType is
+# DEFAULT (INBOUND) or DELEGATION (INBOUND_DELEGATION).
 dig @<InboundEndpoint/ResolverEndpointIps, first value> app.system.example.com +short   # → 10.10.200.10
 ```
 
-This is a raw one-off query, not a BIND9 configuration change: a real on-premises DNS server would
-instead add this IP as the target of an NS record for whichever subdomain it delegates to Route 53
-(delegation mode), or as a conditional-forwarder target (default mode) — the `dig @<ip>` above is
-just confirming the endpoint answers before wiring up either.
+A real on-premises DNS server would use this IP as the target of an NS record for whichever subdomain
+it delegates to Route 53 (delegation mode) — which is exactly what BIND9's `forwarders {}` block
+above stands in for here, using `forward only` instead of a genuine NS delegation for simplicity.
 
 ## ⚙️ Customization
 

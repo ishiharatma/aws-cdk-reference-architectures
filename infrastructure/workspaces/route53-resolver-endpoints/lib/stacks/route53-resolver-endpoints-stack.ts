@@ -28,13 +28,16 @@ export interface Route53ResolverEndpointsStackProps extends cdk.StackProps {
  *   endpoints. The inbound endpoint's direction (`INBOUND` vs `INBOUND_DELEGATION`) is
  *   switched by `params.inboundEndpointType` - no code change required.
  * - `OnPremVpc` stands in for on-premises infrastructure: a BIND9 EC2 instance answers
- *   authoritatively for `onprem.example.com`.
+ *   authoritatively for `onprem.example.com`, and also runs a conditional forwarder for
+ *   `system.example.com` pointed at the inbound endpoint's static IPs, so it can act as the
+ *   querying side of that endpoint too (not just the FORWARD rule's target).
  * - The two VPCs are joined with a simple VPC peering connection (DNS resolution enabled
  *   over the peering by the {@link VpcPeering} construct).
  * - A Resolver FORWARD rule associated with `VerifyVpc` sends `onprem.example.com` queries
  *   out through the outbound endpoint, across the peering, to the BIND9 instance.
  * - A test instance in `VerifyVpc` can `dig` both the private hosted zone record (answered
- *   locally by Route 53) and the on-premises record (forwarded over the peering).
+ *   locally by Route 53) and the on-premises record (forwarded over the peering). The BIND9
+ *   instance itself can `dig` the private hosted zone record too, over its own forwarder.
  * - Every subnet is `PRIVATE_ISOLATED` - there is no Internet Gateway or NAT Gateway.
  *   SSM Session Manager access to the test/BIND9 instances is provided by SSM/SSM
  *   Messages/EC2 Messages interface endpoints in each VPC instead.
@@ -79,58 +82,9 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
         this.addSsmInterfaceEndpoints(this.verifyVpc.vpc, 'Verify');
         this.addSsmInterfaceEndpoints(this.onPremVpc.vpc, 'OnPrem');
 
-        // 2. Connect the two VPCs with a simple peering connection. Routes are added for
-        //    every subnet on both sides so the resolver endpoints and BIND9 instance can
-        //    reach each other regardless of which subnet group they land in.
-        const verifyRoutableSubnets = this.verifyVpc.vpc.isolatedSubnets;
-        const onPremRoutableSubnets = this.onPremVpc.vpc.isolatedSubnets;
-        new VpcPeering(this, 'VerifyToOnPremPeering', {
-            project: props.project,
-            environment: props.environment,
-            vpc: this.verifyVpc.vpc,
-            peerVpc: this.onPremVpc.vpc,
-            targetSubnets: verifyRoutableSubnets,
-            targetPeerSubnets: onPremRoutableSubnets,
-        });
-
-        // 3. On-premises-role BIND9 DNS server, authoritative for onPremDomainName.
-        const onPremDnsSecurityGroup = new ec2.SecurityGroup(this, 'OnPremDnsServerSecurityGroup', {
-            vpc: this.onPremVpc.vpc,
-            description: `BIND9 DNS server security group (authoritative for ${onPremDomainName})`,
-            allowAllOutbound: true,
-        });
-        onPremDnsSecurityGroup.addIngressRule(
-            ec2.Peer.ipv4(this.verifyVpc.vpc.vpcCidrBlock),
-            ec2.Port.tcp(53),
-            `Allow DNS (TCP) from ${this.verifyVpc.vpc.vpcCidrBlock}`,
-        );
-        onPremDnsSecurityGroup.addIngressRule(
-            ec2.Peer.ipv4(this.verifyVpc.vpc.vpcCidrBlock),
-            ec2.Port.udp(53),
-            `Allow DNS (UDP) from ${this.verifyVpc.vpc.vpcCidrBlock}`,
-        );
-        const onPremDnsServer = new TestInstance(this, 'OnPremDnsServer', {
-            project: props.project,
-            environment: props.environment,
-            vpc: this.onPremVpc.vpc,
-            targetSubnetGroupName: 'Private',
-            additionalSecurityGroups: [onPremDnsSecurityGroup],
-            additionalUserData: bind9UserData(onPremDomainName),
-        });
-
-        // 4. Private hosted zone owned by VerifyVpc, with one demo record.
-        const privateHostedZone = new route53.PrivateHostedZone(this, 'PrivateHostedZone', {
-            zoneName: privateHostedZoneName,
-            vpc: this.verifyVpc.vpc,
-        });
-        new route53.ARecord(this, 'AppRecord', {
-            zone: privateHostedZone,
-            recordName: 'app',
-            target: route53.RecordTarget.fromIpAddresses('10.10.200.10'),
-            comment: 'Demo record proving direct private hosted zone resolution.',
-        });
-
-        // 5. Resolver endpoints, both in VerifyVpc's dedicated "Resolver" subnet group.
+        // 2. Resolver endpoints, both in VerifyVpc's dedicated "Resolver" subnet group.
+        //    Built before the BIND9 instance below so its static IPs (useStaticIps: true)
+        //    are known at synth time and can be baked into BIND9's conditional forwarder.
         const resolverSubnets = this.verifyVpc.vpc.selectSubnets({ subnetGroupName: 'Resolver' }).subnets;
 
         this.inboundEndpoint = new ResolverEndpointConstruct(this, 'InboundEndpoint', {
@@ -152,6 +106,63 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
             subnets: resolverSubnets,
             name: 'Outbound',
             allowedCidrs: [this.onPremVpc.vpc.vpcCidrBlock],
+        });
+
+        // 3. Connect the two VPCs with a simple peering connection. Routes are added for
+        //    every subnet on both sides so the resolver endpoints and BIND9 instance can
+        //    reach each other regardless of which subnet group they land in.
+        const verifyRoutableSubnets = this.verifyVpc.vpc.isolatedSubnets;
+        const onPremRoutableSubnets = this.onPremVpc.vpc.isolatedSubnets;
+        new VpcPeering(this, 'VerifyToOnPremPeering', {
+            project: props.project,
+            environment: props.environment,
+            vpc: this.verifyVpc.vpc,
+            peerVpc: this.onPremVpc.vpc,
+            targetSubnets: verifyRoutableSubnets,
+            targetPeerSubnets: onPremRoutableSubnets,
+        });
+
+        // 4. On-premises-role BIND9 DNS server: authoritative for onPremDomainName, and a
+        //    conditional forwarder for privateHostedZoneName pointed at the inbound endpoint,
+        //    so it can also act as the querying side of the inbound-endpoint check (see
+        //    `dig @127.0.0.1 app.<privateHostedZoneName>` in the README).
+        const onPremDnsSecurityGroup = new ec2.SecurityGroup(this, 'OnPremDnsServerSecurityGroup', {
+            vpc: this.onPremVpc.vpc,
+            description: `BIND9 DNS server security group (authoritative for ${onPremDomainName})`,
+            allowAllOutbound: true,
+        });
+        onPremDnsSecurityGroup.addIngressRule(
+            ec2.Peer.ipv4(this.verifyVpc.vpc.vpcCidrBlock),
+            ec2.Port.tcp(53),
+            `Allow DNS (TCP) from ${this.verifyVpc.vpc.vpcCidrBlock}`,
+        );
+        onPremDnsSecurityGroup.addIngressRule(
+            ec2.Peer.ipv4(this.verifyVpc.vpc.vpcCidrBlock),
+            ec2.Port.udp(53),
+            `Allow DNS (UDP) from ${this.verifyVpc.vpc.vpcCidrBlock}`,
+        );
+        const onPremDnsServer = new TestInstance(this, 'OnPremDnsServer', {
+            project: props.project,
+            environment: props.environment,
+            vpc: this.onPremVpc.vpc,
+            targetSubnetGroupName: 'Private',
+            additionalSecurityGroups: [onPremDnsSecurityGroup],
+            additionalUserData: bind9UserData(onPremDomainName, 'host1', {
+                zoneName: privateHostedZoneName,
+                forwarderIps: this.inboundEndpoint.ipAddresses,
+            }),
+        });
+
+        // 5. Private hosted zone owned by VerifyVpc, with one demo record.
+        const privateHostedZone = new route53.PrivateHostedZone(this, 'PrivateHostedZone', {
+            zoneName: privateHostedZoneName,
+            vpc: this.verifyVpc.vpc,
+        });
+        new route53.ARecord(this, 'AppRecord', {
+            zone: privateHostedZone,
+            recordName: 'app',
+            target: route53.RecordTarget.fromIpAddresses('10.10.200.10'),
+            comment: 'Demo record proving direct private hosted zone resolution.',
         });
 
         // 6. FORWARD rule: queries for onPremDomainName leave through the outbound endpoint
