@@ -50,7 +50,7 @@ const devParams: EnvParams = {
     // DNS
     privateHostedZoneName: 'system.example.com',
     onPremDomainName: 'onprem.example.com',
-    inboundEndpointType: 'DEFAULT',
+    inboundEndpointType: 'DELEGATION',
 
     // Verification VPC
     verifyVpcConfig: {
