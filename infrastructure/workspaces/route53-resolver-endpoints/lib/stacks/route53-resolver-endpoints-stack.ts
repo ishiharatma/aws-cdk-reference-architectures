@@ -147,6 +147,10 @@ export class Route53ResolverEndpointsStack extends cdk.Stack {
             vpc: this.onPremVpc.vpc,
             targetSubnetGroupName: 'Private',
             additionalSecurityGroups: [onPremDnsSecurityGroup],
+            // The BIND9 config below (zone name, forwarder IPs) can change between deploys.
+            // A running instance never re-runs its user data, and cdkd cannot update the
+            // UserData attribute in place, so force a replacement whenever it changes.
+            userDataCausesReplacement: true,
             additionalUserData: bind9UserData(onPremDomainName, 'host1', {
                 zoneName: privateHostedZoneName,
                 forwarderIps: this.inboundEndpoint.ipAddresses,

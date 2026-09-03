@@ -42,6 +42,25 @@ export interface TestEC2InstanceProps {
    */
   readonly additionalUserData?: string[];
   /**
+   * Whether a change to the (rendered) user data should force the instance to be
+   * replaced instead of updated in place.
+   *
+   * A running EBS-backed instance does not re-run its user data script when the
+   * `UserData` attribute is changed, so an in-place update leaves the change
+   * unapplied. This is especially relevant when deploying via `cdkd` (SDK / Cloud
+   * Control API): a `UserData` change is either rejected (`createOnlyProperties`)
+   * or silently dropped while the deploy still reports success. Enabling this mixes
+   * a hash of the user data into the `AWS::EC2::Instance` logical id so any change
+   * provisions a fresh instance that actually runs the new user data.
+   *
+   * Enable it for instances whose {@link additionalUserData} is expected to change
+   * over the stack's life (e.g. a config-carrying script). Replacement gives the
+   * instance a new private IP, so update any resource that references it.
+   *
+   * @default false
+   */
+  readonly userDataCausesReplacement?: boolean;
+  /**
    * Cron expression for stopping the instance.
    * If not provided, the instance will not be stopped automatically.
    */
@@ -144,6 +163,9 @@ export class TestInstance extends Construct {
       //availabilityZone: 'ap-northeast-1a',
       ssmSessionPermissions: true, // Used by SSM session manager
       userData: userData,
+      // A running instance does not re-run user data on an in-place update; hash the
+      // user data into the logical id so a change replaces the instance instead.
+      userDataCausesReplacement: props.userDataCausesReplacement ?? false,
       // Security Hub EC2.8
       // https://docs.aws.amazon.com/ja_jp/securityhub/latest/userguide/ec2-controls.html#ec2-8
       requireImdsv2: true,

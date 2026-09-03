@@ -23,7 +23,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     "OnPremDnsServerEC2InstanceId086CCFB2": {
       "Description": "Test Instance",
       "Value": {
-        "Ref": "OnPremDnsServerE03BB6BD",
+        "Ref": "OnPremDnsServerE03BB6BD42b5ee04827bb099",
       },
     },
     "OnPremDnsServerEC2InstanceKeyPairIdBCE88414": {
@@ -51,7 +51,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Description": "BIND9 on-premises-role DNS server private IP",
       "Value": {
         "Fn::GetAtt": [
-          "OnPremDnsServerE03BB6BD",
+          "OnPremDnsServerE03BB6BD42b5ee04827bb099",
           "PrivateIp",
         ],
       },
@@ -376,7 +376,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "OnPremDnsServerE03BB6BD": {
+    "OnPremDnsServerE03BB6BD42b5ee04827bb099": {
       "DependsOn": [
         "OnPremDnsServerInstanceRoleED6D32E7",
       ],
@@ -738,7 +738,7 @@ systemctl restart named",
           {
             "Ip": {
               "Fn::GetAtt": [
-                "OnPremDnsServerE03BB6BD",
+                "OnPremDnsServerE03BB6BD42b5ee04827bb099",
                 "PrivateIp",
               ],
             },
