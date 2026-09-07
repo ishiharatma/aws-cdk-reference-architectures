@@ -1,8 +1,8 @@
 {
-  "name": "aws-fis-chaos-scenarios",
+  "name": "fis-arch-a-ecs-aurora",
   "version": "0.1.0",
   "bin": {
-    "aws-fis-chaos-scenarios": "bin/aws-fis-chaos-scenarios.js"
+    "fis-arch-a-ecs-aurora": "bin/fis-arch-a-ecs-aurora.js"
   },
   "scripts": {
     "build": "tsc",
