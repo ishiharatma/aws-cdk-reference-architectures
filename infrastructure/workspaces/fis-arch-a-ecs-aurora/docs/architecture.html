@@ -1,0 +1,419 @@
+<title>Architecture A — FIS Chaos Scenarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111520;
+  --card: #181d2e;
+  --card2: #1d2338;
+  --border: #283058;
+  --text: #dde3f5;
+  --text-dim: #6e7a9e;
+  --text-label: #9aa4c4;
+  --orange: #ff9900;
+  --fis: #e63946;
+  --fis-bg: rgba(230,57,70,0.10);
+  --aws-purple: #9d58e3;
+  --aws-green: #5fa82a;
+  --aws-blue: #3a8fd4;
+  --sub-pub-bg: rgba(95,168,42,0.08);
+  --sub-pub-border: #3d6e1a;
+  --sub-priv-bg: rgba(58,143,212,0.08);
+  --sub-priv-border: #1e4f80;
+  --sub-iso-bg: rgba(157,88,227,0.07);
+  --sub-iso-border: #5a258a;
+  --vpc-border: #1e4a8a;
+  --arrow: #4a6896;
+  --arrow-fis: #e63946;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef1f8;
+    --card: #ffffff;
+    --card2: #f5f7fc;
+    --border: #c0cae8;
+    --text: #101828;
+    --text-dim: #5a6a90;
+    --text-label: #3a4870;
+    --sub-pub-bg: rgba(95,168,42,0.07);
+    --sub-pub-border: #2d5a10;
+    --sub-priv-bg: rgba(58,143,212,0.07);
+    --sub-priv-border: #1a3a60;
+    --sub-iso-bg: rgba(157,88,227,0.06);
+    --sub-iso-border: #4a1870;
+    --vpc-border: #1a3a70;
+    --arrow: #3a5880;
+    --fis: #cc2230;
+    --fis-bg: rgba(204,34,48,0.07);
+    --arrow-fis: #cc2230;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111520;
+  --card: #181d2e;
+  --card2: #1d2338;
+  --border: #283058;
+  --text: #dde3f5;
+  --text-dim: #6e7a9e;
+  --text-label: #9aa4c4;
+  --sub-pub-bg: rgba(95,168,42,0.08);
+  --sub-pub-border: #3d6e1a;
+  --sub-priv-bg: rgba(58,143,212,0.08);
+  --sub-priv-border: #1e4f80;
+  --sub-iso-bg: rgba(157,88,227,0.07);
+  --sub-iso-border: #5a258a;
+  --vpc-border: #1e4a8a;
+  --arrow: #4a6896;
+  --fis: #e63946;
+  --fis-bg: rgba(230,57,70,0.10);
+  --arrow-fis: #e63946;
+}
+:root[data-theme="light"] {
+  --bg: #eef1f8;
+  --card: #ffffff;
+  --card2: #f5f7fc;
+  --border: #c0cae8;
+  --text: #101828;
+  --text-dim: #5a6a90;
+  --text-label: #3a4870;
+  --sub-pub-bg: rgba(95,168,42,0.07);
+  --sub-pub-border: #2d5a10;
+  --sub-priv-bg: rgba(58,143,212,0.07);
+  --sub-priv-border: #1a3a60;
+  --sub-iso-bg: rgba(157,88,227,0.06);
+  --sub-iso-border: #4a1870;
+  --vpc-border: #1a3a70;
+  --arrow: #3a5880;
+  --fis: #cc2230;
+  --fis-bg: rgba(204,34,48,0.07);
+  --arrow-fis: #cc2230;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+  padding: 24px 28px;
+  min-height: 100vh;
+}
+header { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+header h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--orange);
+  margin: 0 0 4px 0;
+  letter-spacing: 0.04em;
+}
+header .sub { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+.theme-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.theme-btn:hover { border-color: var(--orange); color: var(--orange); }
+.diagram-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+svg { display: block; max-width: 100%; height: auto; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--fis);
+  border-radius: 7px;
+  padding: 14px 16px;
+}
+.badge {
+  display: inline-block;
+  background: var(--fis);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.07em;
+  margin-bottom: 7px;
+}
+.card h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  color: var(--text);
+}
+.card code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 2px 7px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+.card p { font-size: 0.82rem; color: var(--text-label); margin: 0 0 6px 0; line-height: 1.55; }
+.stop { font-size: 0.78rem; color: var(--fis); }
+footer { font-size: 0.75rem; color: var(--text-dim); text-align: center; padding-top: 10px; border-top: 1px solid var(--border); }
+</style>
+
+<header>
+  <div>
+    <h1>Architecture A — FIS Chaos Scenarios</h1>
+    <p class="sub">CloudFront (VPC Origin) · Internal ALB · ECS Fargate · Aurora PostgreSQL &nbsp;|&nbsp; 4 シナリオ</p>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">テーマ切替</button>
+</header>
+
+<div class="diagram-wrap">
+  <figure style="margin:0">
+    <svg viewBox="0 0 1310 740" role="img"
+      aria-label="Architecture A: Internet to CloudFront to ECS Fargate via VPC Origin and Internal ALB, with Aurora PostgreSQL. 4 FIS chaos scenarios annotated."
+      xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4a6896"/>
+        </marker>
+        <marker id="arr-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#9d58e3"/>
+        </marker>
+        <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#3a8fd4"/>
+        </marker>
+        <marker id="arr-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#5fa82a"/>
+        </marker>
+        <marker id="arr-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ff9900"/>
+        </marker>
+        <style>
+          .svc { rx:5; ry:5; }
+          .svc-head { rx:5; ry:5; }
+          .lbl { font-family:'Inter',sans-serif; dominant-baseline:middle; }
+          .lbl-sm { font-size:10px; }
+          .lbl-md { font-size:11.5px; font-weight:600; }
+          .lbl-sub { font-size:9.5px; }
+          .lbl-tag { font-size:9px; font-weight:700; letter-spacing:.06em; }
+          .lbl-subnet { font-size:11px; font-weight:500; font-family:'Inter',sans-serif; }
+          .lbl-vpc { font-size:12.5px; font-weight:600; font-family:'Rajdhani',sans-serif; letter-spacing:.05em; }
+          .lbl-fis { font-size:10.5px; font-weight:700; font-family:'Rajdhani',sans-serif; letter-spacing:.06em; }
+        </style>
+      </defs>
+
+      <!-- ── EXTERNAL LEFT COLUMN ──────────────────────────────── -->
+
+      <!-- Internet globe -->
+      <circle cx="80" cy="70" r="28" fill="none" stroke="#4a6896" stroke-width="1.8"/>
+      <ellipse cx="80" cy="70" rx="13" ry="28" fill="none" stroke="#4a6896" stroke-width="1.3"/>
+      <line x1="52" y1="70" x2="108" y2="70" stroke="#4a6896" stroke-width="1.3"/>
+      <line x1="57" y1="55" x2="103" y2="55" stroke="#4a6896" stroke-width="1.2"/>
+      <line x1="57" y1="85" x2="103" y2="85" stroke="#4a6896" stroke-width="1.2"/>
+      <text x="80" y="108" text-anchor="middle" class="lbl lbl-sm" fill="#6e7a9e">Internet</text>
+
+      <!-- CloudFront box -->
+      <rect x="18" y="130" width="124" height="60" rx="6" fill="#1e1530" stroke="#9d58e3" stroke-width="1.6"/>
+      <rect x="18" y="130" width="124" height="18" rx="6" fill="#9d58e3"/>
+      <rect x="18" y="142" width="124" height="6" fill="#9d58e3"/>
+      <text x="80" y="141" text-anchor="middle" class="lbl lbl-tag" fill="white">NETWORK</text>
+      <text x="80" y="161" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">CloudFront</text>
+      <text x="80" y="177" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">Distribution</text>
+
+      <!-- S3 box (error-page fallback) -->
+      <rect x="18" y="355" width="124" height="60" rx="6" fill="#162210" stroke="#5fa82a" stroke-width="1.6"/>
+      <rect x="18" y="355" width="124" height="18" rx="6" fill="#5fa82a"/>
+      <rect x="18" y="367" width="124" height="6" fill="#5fa82a"/>
+      <text x="80" y="366" text-anchor="middle" class="lbl lbl-tag" fill="white">STORAGE</text>
+      <text x="80" y="387" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">S3 Bucket</text>
+      <text x="80" y="403" text-anchor="middle" class="lbl lbl-sub" fill="#7aba40">Error pages</text>
+
+      <!-- ── VPC BOX ─────────────────────────────────────────── -->
+      <rect x="162" y="36" width="906" height="690" rx="8" fill="rgba(30,74,138,0.05)" stroke="#1e4a8a" stroke-width="2"/>
+      <text x="176" y="56" class="lbl-vpc" fill="#5a7aaa">AMAZON VPC  ·  10.10.0.0/16</text>
+
+      <!-- ── PUBLIC SUBNET ───────────────────────────────────── -->
+      <rect x="182" y="66" width="866" height="158" rx="5" fill="rgba(95,168,42,0.08)" stroke="#3d6e1a" stroke-width="1.5"/>
+      <text x="196" y="84" class="lbl-subnet" fill="#5fa82a">Public Subnet  (ap-northeast-1a / c / d)</text>
+
+      <!-- NAT Gateway -->
+      <rect x="218" y="98" width="132" height="52" rx="5" fill="#0e1e0e" stroke="#3d6e1a" stroke-width="1.5"/>
+      <text x="284" y="121" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">NAT Gateway</text>
+      <text x="284" y="138" text-anchor="middle" class="lbl lbl-sub" fill="#5fa82a">Elastic IP</text>
+
+      <!-- CF VPC Origin ENIs -->
+      <rect x="646" y="98" width="196" height="52" rx="5" fill="#1a1030" stroke="#9d58e3" stroke-width="1.5"/>
+      <text x="744" y="118" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">CF VPC Origin</text>
+      <text x="744" y="135" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">Managed ENIs (public subnet)</text>
+
+      <!-- ── PRIVATE SUBNET ──────────────────────────────────── -->
+      <rect x="182" y="244" width="866" height="248" rx="5" fill="rgba(58,143,212,0.08)" stroke="#1e4f80" stroke-width="1.5"/>
+      <text x="196" y="262" class="lbl-subnet" fill="#3a8fd4">Private Subnet  (ap-northeast-1a / c / d)</text>
+
+      <!-- Internal ALB -->
+      <rect x="218" y="316" width="152" height="58" rx="5" fill="#0e1620" stroke="#3a8fd4" stroke-width="1.5"/>
+      <text x="294" y="341" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">Internal ALB</text>
+      <text x="294" y="358" text-anchor="middle" class="lbl lbl-sub" fill="#3a8fd4">port 80 · scheme: internal</text>
+
+      <!-- ECS Fargate Cluster — A-2 dashed annotation box -->
+      <rect x="416" y="264" width="596" height="214" rx="6"
+            fill="rgba(230,57,70,0.07)" stroke="#e63946" stroke-width="2" stroke-dasharray="9,4"/>
+      <text x="428" y="282" class="lbl-fis" fill="#e63946">[A-2]  ECS Fargate Cluster  —  aws:ecs:stop-task</text>
+
+      <!-- ECS Task 1 -->
+      <rect x="438" y="306" width="138" height="62" rx="5" fill="#180e28" stroke="#9d58e3" stroke-width="1.5"/>
+      <text x="507" y="332" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">ECS Task</text>
+      <text x="507" y="349" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">nginx · port 80</text>
+      <text x="507" y="361" text-anchor="middle" class="lbl lbl-sub" fill="#6e7a9e">platformVersion 1.4</text>
+
+      <!-- ECS Task 2 -->
+      <rect x="618" y="306" width="138" height="62" rx="5" fill="#180e28" stroke="#9d58e3" stroke-width="1.5"/>
+      <text x="687" y="332" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">ECS Task</text>
+      <text x="687" y="349" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">nginx · port 80</text>
+      <text x="687" y="361" text-anchor="middle" class="lbl lbl-sub" fill="#6e7a9e">platformVersion 1.4</text>
+
+      <!-- ── ISOLATED SUBNET ─────────────────────────────────── -->
+      <rect x="182" y="512" width="866" height="200" rx="5" fill="rgba(157,88,227,0.07)" stroke="#5a258a" stroke-width="1.5"/>
+      <text x="196" y="530" class="lbl-subnet" fill="#9d58e3">Isolated Subnet  (ap-northeast-1a / c / d)</text>
+
+      <!-- A-1 annotation box around Aurora pair -->
+      <rect x="360" y="546" width="578" height="152" rx="6"
+            fill="rgba(255,153,0,0.06)" stroke="#ff9900" stroke-width="2" stroke-dasharray="9,4"/>
+      <text x="930" y="564" text-anchor="end" class="lbl-fis" fill="#ff9900">[A-1]  Aurora Failover  —  aws:rds:failover-db-cluster</text>
+
+      <!-- Aurora Writer -->
+      <rect x="376" y="572" width="196" height="96" rx="5" fill="#120c22" stroke="#9d58e3" stroke-width="1.6"/>
+      <rect x="376" y="572" width="196" height="22" rx="5" fill="#7a38c0"/>
+      <rect x="376" y="587" width="196" height="7" fill="#7a38c0"/>
+      <text x="474" y="585" text-anchor="middle" class="lbl lbl-tag" fill="white">DATABASE · WRITER</text>
+      <text x="474" y="612" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">Aurora Writer</text>
+      <text x="474" y="628" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">PostgreSQL 16.4</text>
+      <text x="474" y="642" text-anchor="middle" class="lbl lbl-sub" fill="#6e7a9e">Serverless v2 (0.5–4 ACU)</text>
+
+      <!-- Aurora Reader -->
+      <rect x="616" y="572" width="196" height="96" rx="5" fill="#120c22" stroke="#9d58e3" stroke-width="1.6"/>
+      <rect x="616" y="572" width="196" height="22" rx="5" fill="#5a1890"/>
+      <rect x="616" y="587" width="196" height="7" fill="#5a1890"/>
+      <text x="714" y="585" text-anchor="middle" class="lbl lbl-tag" fill="white">DATABASE · READER</text>
+      <text x="714" y="612" text-anchor="middle" class="lbl lbl-md" fill="#dde3f5">Aurora Reader</text>
+      <text x="714" y="628" text-anchor="middle" class="lbl lbl-sub" fill="#a88dd8">PostgreSQL 16.4</text>
+      <text x="714" y="642" text-anchor="middle" class="lbl lbl-sub" fill="#6e7a9e">Serverless v2 (0.5–4 ACU)</text>
+
+      <!-- ── ARROWS — DATA FLOW ──────────────────────────────── -->
+
+      <!-- 1. Internet → CloudFront -->
+      <line x1="80" y1="98" x2="80" y2="128" stroke="#4a6896" stroke-width="2" marker-end="url(#arr)"/>
+
+      <!-- 2. CloudFront → S3 fallback (dashed green) -->
+      <line x1="80" y1="190" x2="80" y2="353" stroke="#5fa82a" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#arr-green)"/>
+      <text x="93" y="270" class="lbl lbl-sub" fill="#5fa82a">fallback</text>
+      <text x="93" y="282" class="lbl lbl-sub" fill="#5fa82a">502/503/504</text>
+
+      <!-- 3. CloudFront → CF VPC Origin ENIs -->
+      <path d="M142,160 L646,127" fill="none" stroke="#9d58e3" stroke-width="2" marker-end="url(#arr-purple)"/>
+      <text x="390" y="148" text-anchor="middle" class="lbl lbl-sm" fill="#9d58e3">VPC Origin (HTTPS → HTTP)</text>
+
+      <!-- 4. CF VPC Origin ENIs → Internal ALB (down through subnets) -->
+      <path d="M744,150 L744,244 L370,244 L370,316" fill="none" stroke="#3a8fd4" stroke-width="2" marker-end="url(#arr-blue)"/>
+
+      <!-- 5. Internal ALB → ECS Tasks — with A-4 marker -->
+      <line x1="370" y1="345" x2="436" y2="337" stroke="#3a8fd4" stroke-width="2" marker-end="url(#arr-blue)"/>
+      <!-- A-4 block marker -->
+      <circle cx="403" cy="341" r="11" fill="#e63946"/>
+      <line x1="397" y1="335" x2="409" y2="347" stroke="white" stroke-width="2"/>
+      <line x1="409" y1="335" x2="397" y2="347" stroke="white" stroke-width="2"/>
+      <text x="403" y="322" text-anchor="middle" class="lbl lbl-tag" fill="#e63946">[A-4]</text>
+      <text x="403" y="312" text-anchor="middle" class="lbl" font-size="9" fill="#e63946">port 80 blocked</text>
+
+      <!-- Internal ALB → ECS Task 2 also -->
+      <line x1="370" y1="345" x2="616" y2="337" stroke="#3a8fd4" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+
+      <!-- 6. ECS Tasks → Aurora Writer (A-3 on this path) -->
+      <path d="M576,368 L576,512 L474,512 L474,572" fill="none" stroke="#4a6896" stroke-width="2" marker-end="url(#arr)"/>
+      <!-- A-3 block marker -->
+      <circle cx="525" cy="512" r="11" fill="#e63946"/>
+      <line x1="519" y1="506" x2="531" y2="518" stroke="white" stroke-width="2"/>
+      <line x1="531" y1="506" x2="519" y2="518" stroke="white" stroke-width="2"/>
+      <text x="525" y="530" text-anchor="middle" class="lbl lbl-tag" fill="#e63946">[A-3]</text>
+      <text x="525" y="540" text-anchor="middle" class="lbl" font-size="9" fill="#e63946">port 5432 blocked</text>
+
+      <!-- 7. Aurora Writer → Reader failover arrow (A-1) -->
+      <path d="M572,620 L616,620" fill="none" stroke="#ff9900" stroke-width="2.5" stroke-dasharray="7,3" marker-end="url(#arr-orange)"/>
+      <text x="594" y="610" text-anchor="middle" class="lbl lbl-sub" fill="#ff9900">failover</text>
+
+      <!-- ── METADATA FOOTER IN SVG ─────────────────────────── -->
+      <text x="176" y="706" class="lbl lbl-sm" fill="#3a4a70">
+        Tag: fis-target=app-service propagated to ECS tasks via propagateTags: SERVICE
+      </text>
+      <text x="176" y="720" class="lbl lbl-sm" fill="#3a4a70">
+        Stop conditions: ALB 5xx &gt; 50/min  ·  Aurora connections ≈ 0 (A-1 only)  ·  FIS logs → CloudWatch Logs
+      </text>
+
+    </svg>
+    <figcaption style="font-size:.78rem;color:var(--text-dim);text-align:center;margin-top:10px">
+      Architecture A — CloudFront VPC Origin + Internal ALB + ECS Fargate (Fargate 1.4 + ExecuteCommand) + Aurora PostgreSQL Serverless v2
+    </figcaption>
+  </figure>
+</div>
+
+<!-- Scenario cards -->
+<div class="grid">
+  <div class="card">
+    <span class="badge">A-1</span>
+    <h3>Aurora Cluster Failover</h3>
+    <code>aws:rds:failover-db-cluster</code>
+    <p>リーダーをライターに昇格させ、アプリケーションがクラスターエンドポイントを通じて再接続できるかを検証。コネクションプールのリカバリ時間と再試行ロジックを確認する。</p>
+    <p class="stop">⏹ Stop: Aurora接続数がほぼ0になるCWアラーム</p>
+  </div>
+  <div class="card">
+    <span class="badge">A-2</span>
+    <h3>ECS Task 全停止</h3>
+    <code>aws:ecs:stop-task</code>
+    <p>タグ <code>fis-target=app-service</code> が付与されたECSタスクを全停止。ECS Serviceの自動復旧速度と、CloudFrontがS3エラーページへフォールバックする動作を検証する。</p>
+    <p class="stop">⏹ Stop: ALB 5xx &gt; 50/分 CWアラーム</p>
+  </div>
+  <div class="card">
+    <span class="badge">A-3</span>
+    <h3>DB ポート Egress ブラックホール</h3>
+    <code>aws:ecs:network-blackhole-port</code>
+    <p>ECSタスクからポート5432へのTCP egress を遮断。Auroraへの完全な接続喪失をシミュレートし、アプリケーションのエラーハンドリングとタイムアウト設定を検証する。</p>
+    <p class="stop">⏹ Stop: ALB 5xx &gt; 50/分 CWアラーム</p>
+  </div>
+  <div class="card">
+    <span class="badge">A-4</span>
+    <h3>HTTP ポート Ingress ブラックホール</h3>
+    <code>aws:ecs:network-blackhole-port</code>
+    <p>ECSタスクへのポート80 TCP ingress を遮断。ALBヘルスチェックが失敗しタスクが登録解除される。ALBのヘルスチェック感度とCloudFrontフォールバック動作を検証する。</p>
+    <p class="stop">⏹ Stop: ALB 5xx &gt; 50/分 CWアラーム</p>
+  </div>
+</div>
+
+<footer>
+  fis-arch-a-ecs-aurora &nbsp;·&nbsp; CDK Workspace &nbsp;·&nbsp; AWS FIS Chaos Engineering Reference Architecture
+</footer>
+
+<script>
+function toggleTheme() {
+  const root = document.documentElement;
+  const current = root.getAttribute('data-theme');
+  root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+}
+</script>
