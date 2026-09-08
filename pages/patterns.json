@@ -1,5 +1,17 @@
 [
   {
+    "id": "fis-arch-c-ec2-asg-rds",
+    "title": "FIS Chaos: CloudFront + Internal ALB + EC2 Auto Scaling Group + Aurora PostgreSQL",
+    "description": "Four AWS FIS chaos experiment templates for an EC2-based three-tier web architecture: EC2 instance termination (50% PERCENT), CPU stress via SSM (all instances, 5 min), Aurora writer→reader failover, and EC2→DB network blackhole on TCP port 5432 — each with an ALB 5xx CloudWatch Alarm stop condition.",
+    "image": "fis-arch-c-ec2-asg-rds/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "EC2", "Auto Scaling", "ALB", "CloudFront", "Aurora", "PostgreSQL", "SSM"],
+    "link": "fis-arch-c-ec2-asg-rds",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-08",
+    "articles": {}
+  },
+  {
     "id": "fis-arch-b-apigw-lambda",
     "title": "FIS Chaos: CloudFront + API Gateway + Lambda + DynamoDB",
     "description": "Four AWS FIS chaos experiment templates for a serverless CRUD API: DynamoDB internal errors (all ops), write-only throttle, read-only throttle, and Lambda concurrency exhaustion — each with a CloudWatch Alarm stop condition. Uses aws:fis:inject-api-* targeting the Lambda execution role to intercept DynamoDB calls at the control plane without touching function code.",
