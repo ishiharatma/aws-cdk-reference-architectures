@@ -71,18 +71,42 @@ jobs:
           CODE=$(echo "$CHANGED" | grep -vE '\.(md|png|svg)$' | grep -vE '(^|/)LICENSE$' || true)
           echo "--- code-relevant changed files ---"; echo "$CODE"
 
-          # Shared code -> retest every workspace
-          if echo "$CODE" | grep -qE '^infrastructure/(common/|package\.json|package-lock\.json|tsconfig)'; then
-            echo "Shared infrastructure code changed -> testing all workspaces"
+          # common/ or tsconfig changes always require retesting every workspace
+          if echo "$CODE" | grep -qE '^infrastructure/(common/|tsconfig)'; then
+            echo "Shared infrastructure code changed (common/ or tsconfig) -> testing all workspaces"
             echo "list=$(ls -1 "${{ env.WORKSPACES_DIR }}" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # package.json / package-lock.json: only retest all workspaces when root
+          # dependencies or devDependencies actually changed.
+          # A package-lock.json update caused solely by new workspace registration is
+          # already covered by the per-workspace detection below; trigger all only when:
+          #   (a) root package.json deps/devDeps changed, OR
+          #   (b) package-lock.json changed without any workspace code change (e.g. npm update)
+          if echo "$CODE" | grep -qE '^infrastructure/package(-lock)?\.json$'; then
+            OLD_DEPS=$(git show "${BASE_SHA}:infrastructure/package.json" 2>/dev/null \
+              | jq -c '{d:(.dependencies//null),dd:(.devDependencies//null)}' 2>/dev/null || echo 'null')
+            NEW_DEPS=$(git show "${HEAD_SHA}:infrastructure/package.json" 2>/dev/null \
+              | jq -c '{d:(.dependencies//null),dd:(.devDependencies//null)}' 2>/dev/null || echo 'null')
+            WORKSPACE_CODE=$(echo "$CODE" | grep -E '^infrastructure/workspaces/' || true)
+            if [ "$OLD_DEPS" != "$NEW_DEPS" ]; then
+              echo "Root package.json dependencies changed -> testing all workspaces"
+              echo "list=$(ls -1 "${{ env.WORKSPACES_DIR }}" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif echo "$CODE" | grep -qE '^infrastructure/package-lock\.json$' && [ -z "$WORKSPACE_CODE" ]; then
+              echo "package-lock.json changed without workspace code changes -> testing all workspaces (possible npm update)"
+              echo "list=$(ls -1 "${{ env.WORKSPACES_DIR }}" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "package.json/package-lock.json: workspace registration only -> per-workspace detection handles it"
           fi
 
           LIST=$(echo "$CODE" \
             | grep -oE '^infrastructure/workspaces/[^/]+/' \
             | cut -d'/' -f3 \
             | sort -u \
-            | tr '\n' ' ')
+            | tr '\n' ' ' || true)
           echo "list=$LIST" >> "$GITHUB_OUTPUT"
 
       - name: Build matrix
