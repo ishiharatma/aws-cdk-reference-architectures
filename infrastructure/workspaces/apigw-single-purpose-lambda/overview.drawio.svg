@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1040 520" width="1040px" height="520px" font-family="Helvetica, Arial, sans-serif" content="&lt;mxfile host=&quot;app.diagrams.net&quot; agent=&quot;aws-cdk-reference-architectures&quot;&gt;&lt;diagram id=&quot;overview&quot; name=&quot;overview&quot;&gt;&lt;mxGraphModel dx=&quot;1040&quot; dy=&quot;520&quot; grid=&quot;0&quot; page=&quot;1&quot; pageWidth=&quot;1040&quot; pageHeight=&quot;520&quot; background=&quot;#ffffff&quot;&gt;&lt;root&gt;&lt;mxCell id=&quot;0&quot;/&gt;&lt;mxCell id=&quot;1&quot; parent=&quot;0&quot;/&gt;&lt;/root&gt;&lt;/mxGraphModel&gt;&lt;/diagram&gt;&lt;/mxfile&gt;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5A6472"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font-size: 19px; font-weight: 700; fill: #16191F; }
+    .subtitle { font-size: 12px; fill: #5A6472; }
+    .cloudTitle { font-size: 13px; font-weight: 700; fill: #232F3E; }
+    .label { font-size: 12px; font-weight: 600; fill: #16191F; text-anchor: middle; }
+    .sublabel { font-size: 10px; fill: #5A6472; text-anchor: middle; }
+    .tileGlyph { font-size: 13px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+    .edge { stroke: #5A6472; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    .edgeLabel { font-size: 9.5px; fill: #40474F; text-anchor: middle; }
+    .note { font-size: 10.5px; fill: #AF2E19; }
+  </style>
+  <rect x="0" y="0" width="1040" height="520" fill="#ffffff"/>
+  <text x="30" y="34" class="title">API Gateway + Single-Purpose Lambda</text>
+  <text x="30" y="54" class="subtitle">One narrowly-scoped Lambda function per route. API Gateway does the routing; each function does exactly one thing with a least-privilege grant.</text>
+  <line x1="30" y1="66" x2="1010" y2="66" stroke="#ED7100" stroke-width="2.5"/>
+
+  <rect x="30" y="84" width="980" height="410" fill="none" stroke="#232F3E" stroke-width="1.4"/>
+  <text x="46" y="104" class="cloudTitle">AWS Cloud &#183; ap-northeast-1</text>
+
+  <!-- Client -->
+  <rect x="60" y="250" width="56" height="56" rx="6" fill="#232F3D"/>
+  <text x="88" y="283" class="tileGlyph">HTTP</text>
+  <text x="88" y="322" class="label">Client</text>
+  <text x="88" y="337" class="sublabel">curl / SPA / mobile</text>
+
+  <!-- API Gateway -->
+  <rect x="210" y="250" width="56" height="56" rx="6" fill="#E7157B"/>
+  <text x="238" y="283" class="tileGlyph">API</text>
+  <text x="238" y="322" class="label">API Gateway</text>
+  <text x="238" y="337" class="sublabel">REST API (regional)</text>
+  <text x="238" y="351" class="sublabel">/todos &#183; /todos/{todoId}</text>
+  <text x="238" y="365" class="sublabel">access + INFO logging</text>
+
+  <!-- Lambda functions, one per route -->
+  <g>
+    <rect x="470" y="120" width="46" height="46" rx="6" fill="#ED7100"/>
+    <text x="493" y="148" class="tileGlyph">&#402;</text>
+    <text x="600" y="140" class="label">list-todos</text>
+    <text x="600" y="154" class="sublabel">GET /todos &#183; grantReadData</text>
+  </g>
+  <g>
+    <rect x="470" y="186" width="46" height="46" rx="6" fill="#ED7100"/>
+    <text x="493" y="214" class="tileGlyph">&#402;</text>
+    <text x="600" y="206" class="label">create-todo</text>
+    <text x="600" y="220" class="sublabel">POST /todos &#183; grantWriteData</text>
+  </g>
+  <g>
+    <rect x="470" y="252" width="46" height="46" rx="6" fill="#ED7100"/>
+    <text x="493" y="280" class="tileGlyph">&#402;</text>
+    <text x="600" y="272" class="label">get-todo</text>
+    <text x="600" y="286" class="sublabel">GET /todos/{todoId} &#183; grantReadData</text>
+  </g>
+  <g>
+    <rect x="470" y="318" width="46" height="46" rx="6" fill="#ED7100"/>
+    <text x="493" y="346" class="tileGlyph">&#402;</text>
+    <text x="600" y="338" class="label">update-todo</text>
+    <text x="600" y="352" class="sublabel">PUT /todos/{todoId} &#183; grantReadWriteData</text>
+  </g>
+  <g>
+    <rect x="470" y="384" width="46" height="46" rx="6" fill="#ED7100"/>
+    <text x="493" y="412" class="tileGlyph">&#402;</text>
+    <text x="600" y="404" class="label">delete-todo</text>
+    <text x="600" y="418" class="sublabel">DELETE /todos/{todoId} &#183; grantWriteData</text>
+  </g>
+  <text x="540" y="470" class="note">Each function: own IAM role, own log group, own bundle. 5 cold-start surfaces.</text>
+
+  <!-- DynamoDB -->
+  <rect x="880" y="250" width="56" height="56" rx="6" fill="#4D72F3"/>
+  <text x="908" y="283" class="tileGlyph">DDB</text>
+  <text x="908" y="322" class="label">DynamoDB</text>
+  <text x="908" y="337" class="sublabel">Todos table (on-demand)</text>
+  <text x="908" y="351" class="sublabel">PITR + SSE</text>
+
+  <!-- edges -->
+  <path class="edge" d="M 116 278 L 205 278"/>
+  <text x="160" y="271" class="edgeLabel">HTTPS</text>
+
+  <path class="edge" d="M 266 268 L 465 143"/>
+  <path class="edge" d="M 266 272 L 465 209"/>
+  <path class="edge" d="M 266 278 L 465 275"/>
+  <path class="edge" d="M 266 284 L 465 341"/>
+  <path class="edge" d="M 266 290 L 465 407"/>
+  <text x="360" y="196" class="edgeLabel">AWS_PROXY (1 route &#8594; 1 function)</text>
+
+  <path class="edge" d="M 516 143 L 875 268"/>
+  <path class="edge" d="M 516 209 L 875 272"/>
+  <path class="edge" d="M 516 275 L 875 278"/>
+  <path class="edge" d="M 516 341 L 875 284"/>
+  <path class="edge" d="M 516 407 L 875 290"/>
+  <text x="700" y="356" class="edgeLabel">SDK (least-privilege per function)</text>
+</svg>

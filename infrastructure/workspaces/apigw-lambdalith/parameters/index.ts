@@ -1,1 +1,1 @@
-import 'parameters/dev-params';
+export * from './dev-params';

@@ -15,76 +15,88 @@ interface StackProps extends cdk.StackProps {
   readonly params: EnvParams;
 }
 
+/**
+ * Single-Purpose Function pattern (a.k.a. "one Lambda per route").
+ *
+ * Every API Gateway method is backed by its own Lambda function with its own
+ * IAM role, log group, and least-privilege DynamoDB grant (read-only for GET,
+ * write-only for POST/DELETE). API Gateway does the routing; each function does
+ * exactly one thing.
+ */
 export class ApigwSinglePurposeLambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
     const { project, environment, isAutoDeleteObject } = props;
+    const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
+    // Pattern infix so the three companion workspaces can be deployed side by side
+    // under the same project/env without physical-name collisions.
+    const namePrefix = `${project}-${environment}-spl`;
 
     const todosTable = new dynamodb.Table(this, 'TodosTable', {
-      tableName: `${project}-${environment}-todos`,
+      tableName: `${namePrefix}-todos`,
       partitionKey: { name: 'todoId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
-      removalPolicy: isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy,
     });
 
-    const commonProps: Omit<lambdaNodejs.NodejsFunctionProps, 'entry' | 'handler' | 'functionName'> = {
+    const commonProps: Omit<lambdaNodejs.NodejsFunctionProps, 'entry' | 'handler' | 'functionName' | 'logGroup'> = {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      logRetention: logs.RetentionDays.ONE_WEEK,
       environment: {
         TABLE_NAME: todosTable.tableName,
         ENVIRONMENT: environment,
       },
     };
 
-    const listTodosHandler = new lambdaNodejs.NodejsFunction(this, 'ListTodosHandler', {
-      ...commonProps,
-      entry: 'src/handlers/list-todos.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-list-todos`,
-    });
+    /** Create one single-purpose function with its own dedicated log group. */
+    const makeHandler = (idPrefix: string, entryFile: string, name: string): lambdaNodejs.NodejsFunction =>
+      new lambdaNodejs.NodejsFunction(this, `${idPrefix}Handler`, {
+        ...commonProps,
+        entry: `src/handlers/${entryFile}.ts`,
+        handler: 'handler',
+        functionName: `${namePrefix}-${name}`,
+        logGroup: new logs.LogGroup(this, `${idPrefix}LogGroup`, {
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy,
+        }),
+      });
+
+    const listTodosHandler = makeHandler('ListTodos', 'list-todos', 'list-todos');
     todosTable.grantReadData(listTodosHandler);
 
-    const createTodoHandler = new lambdaNodejs.NodejsFunction(this, 'CreateTodoHandler', {
-      ...commonProps,
-      entry: 'src/handlers/create-todo.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-create-todo`,
-    });
+    const createTodoHandler = makeHandler('CreateTodo', 'create-todo', 'create-todo');
     todosTable.grantWriteData(createTodoHandler);
 
-    const getTodoHandler = new lambdaNodejs.NodejsFunction(this, 'GetTodoHandler', {
-      ...commonProps,
-      entry: 'src/handlers/get-todo.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-get-todo`,
-    });
+    const getTodoHandler = makeHandler('GetTodo', 'get-todo', 'get-todo');
     todosTable.grantReadData(getTodoHandler);
 
-    const updateTodoHandler = new lambdaNodejs.NodejsFunction(this, 'UpdateTodoHandler', {
-      ...commonProps,
-      entry: 'src/handlers/update-todo.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-update-todo`,
-    });
+    const updateTodoHandler = makeHandler('UpdateTodo', 'update-todo', 'update-todo');
     todosTable.grantReadWriteData(updateTodoHandler);
 
-    const deleteTodoHandler = new lambdaNodejs.NodejsFunction(this, 'DeleteTodoHandler', {
-      ...commonProps,
-      entry: 'src/handlers/delete-todo.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-delete-todo`,
-    });
+    const deleteTodoHandler = makeHandler('DeleteTodo', 'delete-todo', 'delete-todo');
     todosTable.grantWriteData(deleteTodoHandler);
 
+    const accessLogGroup = new logs.LogGroup(this, 'TodosApiAccessLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy,
+    });
+
     const api = new apigateway.RestApi(this, 'TodosApi', {
-      restApiName: `${project}-${environment}-todos-api`,
+      restApiName: `${namePrefix}-todos-api`,
       description: 'Todos REST API (Single-Purpose Lambda pattern)',
-      deployOptions: { stageName: environment },
+      cloudWatchRole: true,
+      deployOptions: {
+        stageName: environment,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        metricsEnabled: true,
+        accessLogDestination: new apigateway.LogGroupLogDestination(accessLogGroup),
+        accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields(),
+      },
     });
 
     const todosResource = api.root.addResource('todos');
