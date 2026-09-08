@@ -29,9 +29,12 @@ export class ApigwSinglePurposeLambdaStack extends cdk.Stack {
 
     const { project, environment, isAutoDeleteObject } = props;
     const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
+    // Pattern infix so the three companion workspaces can be deployed side by side
+    // under the same project/env without physical-name collisions.
+    const namePrefix = `${project}-${environment}-spl`;
 
     const todosTable = new dynamodb.Table(this, 'TodosTable', {
-      tableName: `${project}-${environment}-todos`,
+      tableName: `${namePrefix}-todos`,
       partitionKey: { name: 'todoId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
@@ -56,7 +59,7 @@ export class ApigwSinglePurposeLambdaStack extends cdk.Stack {
         ...commonProps,
         entry: `src/handlers/${entryFile}.ts`,
         handler: 'handler',
-        functionName: `${project}-${environment}-${name}`,
+        functionName: `${namePrefix}-${name}`,
         logGroup: new logs.LogGroup(this, `${idPrefix}LogGroup`, {
           retention: logs.RetentionDays.ONE_WEEK,
           removalPolicy,
@@ -84,7 +87,7 @@ export class ApigwSinglePurposeLambdaStack extends cdk.Stack {
     });
 
     const api = new apigateway.RestApi(this, 'TodosApi', {
-      restApiName: `${project}-${environment}-todos-api`,
+      restApiName: `${namePrefix}-todos-api`,
       description: 'Todos REST API (Single-Purpose Lambda pattern)',
       cloudWatchRole: true,
       deployOptions: {

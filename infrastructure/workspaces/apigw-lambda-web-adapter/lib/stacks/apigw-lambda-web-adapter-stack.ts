@@ -29,9 +29,12 @@ export class ApigwLambdaWebAdapterStack extends cdk.Stack {
 
     const { project, environment, isAutoDeleteObject } = props;
     const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
+    // Pattern infix so the three companion workspaces can be deployed side by side
+    // under the same project/env without physical-name collisions.
+    const namePrefix = `${project}-${environment}-lwa`;
 
     const todosTable = new dynamodb.Table(this, 'TodosTable', {
-      tableName: `${project}-${environment}-todos`,
+      tableName: `${namePrefix}-todos`,
       partitionKey: { name: 'todoId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
@@ -56,12 +59,25 @@ export class ApigwLambdaWebAdapterStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       entry: 'src/index.ts',
-      handler: 'handler',
-      functionName: `${project}-${environment}-lambda-web-adapter`,
+      // With the managed runtime + Lambda Web Adapter, the function Handler must
+      // be an executable bootstrap script (not `index.handler`). `run.sh` is
+      // written next to the bundled `index.js` by the afterBundling hook below.
+      handler: 'run.sh',
+      functionName: `${namePrefix}-fn`,
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       logGroup: handlerLogGroup,
       layers: [webAdapterLayer],
+      bundling: {
+        commandHooks: {
+          beforeBundling: () => [],
+          beforeInstall: () => [],
+          afterBundling: (_inputDir: string, outputDir: string): string[] => [
+            `printf '#!/bin/sh\\nexec node index.js\\n' > "${outputDir}/run.sh"`,
+            `chmod +x "${outputDir}/run.sh"`,
+          ],
+        },
+      },
       environment: {
         TABLE_NAME: todosTable.tableName,
         ENVIRONMENT: environment,
@@ -81,7 +97,7 @@ export class ApigwLambdaWebAdapterStack extends cdk.Stack {
     const api = new apigateway.LambdaRestApi(this, 'TodosApi', {
       handler: webAdapterHandler,
       proxy: true,
-      restApiName: `${project}-${environment}-todos-api`,
+      restApiName: `${namePrefix}-todos-api`,
       description: 'Todos REST API (Lambda Web Adapter pattern)',
       cloudWatchRole: true,
       deployOptions: {

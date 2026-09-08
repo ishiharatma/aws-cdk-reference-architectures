@@ -84,7 +84,7 @@ exports[`ApigwLambdalithStack Snapshot Complete CloudFormation template snapshot
             },
           },
         },
-        "FunctionName": "test-test-lambdalith",
+        "FunctionName": "test-test-lith-fn",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -199,7 +199,7 @@ exports[`ApigwLambdalithStack Snapshot Complete CloudFormation template snapshot
     "TodosApi10F608BB": {
       "Properties": {
         "Description": "Todos REST API (Lambdalith pattern with Hono)",
-        "Name": "test-test-todos-api",
+        "Name": "test-test-lith-todos-api",
       },
       "Type": "AWS::ApiGateway::RestApi",
     },
@@ -361,7 +361,7 @@ exports[`ApigwLambdalithStack Snapshot Complete CloudFormation template snapshot
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Retain",
     },
-    "TodosApiDeploymentE94EFA29dd90c02df27f06b871d607d8b246b7de": {
+    "TodosApiDeploymentE94EFA29aab2a7430c26d9c6962080e56709393e": {
       "DependsOn": [
         "TodosApiproxyANY8241FE18",
         "TodosApiproxy83B8E22D",
@@ -393,7 +393,7 @@ exports[`ApigwLambdalithStack Snapshot Complete CloudFormation template snapshot
           "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
         },
         "DeploymentId": {
-          "Ref": "TodosApiDeploymentE94EFA29dd90c02df27f06b871d607d8b246b7de",
+          "Ref": "TodosApiDeploymentE94EFA29aab2a7430c26d9c6962080e56709393e",
         },
         "MethodSettings": [
           {
@@ -546,7 +546,7 @@ exports[`ApigwLambdalithStack Snapshot Complete CloudFormation template snapshot
         "SSESpecification": {
           "SSEEnabled": true,
         },
-        "TableName": "test-test-todos",
+        "TableName": "test-test-lith-todos",
       },
       "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Delete",

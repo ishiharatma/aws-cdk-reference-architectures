@@ -84,7 +84,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
             },
           },
         },
-        "FunctionName": "test-test-create-todo",
+        "FunctionName": "test-test-spl-create-todo",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -197,7 +197,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
             },
           },
         },
-        "FunctionName": "test-test-delete-todo",
+        "FunctionName": "test-test-spl-delete-todo",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -310,7 +310,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
             },
           },
         },
-        "FunctionName": "test-test-get-todo",
+        "FunctionName": "test-test-spl-get-todo",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -439,7 +439,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
             },
           },
         },
-        "FunctionName": "test-test-list-todos",
+        "FunctionName": "test-test-spl-list-todos",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -550,7 +550,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
     "TodosApi10F608BB": {
       "Properties": {
         "Description": "Todos REST API (Single-Purpose Lambda pattern)",
-        "Name": "test-test-todos-api",
+        "Name": "test-test-spl-todos-api",
       },
       "Type": "AWS::ApiGateway::RestApi",
     },
@@ -611,7 +611,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Retain",
     },
-    "TodosApiDeploymentE94EFA29e5edd334d4cb1aed3813206b6b8ad010": {
+    "TodosApiDeploymentE94EFA29f990d8bfd54b21e315ad973a386b4434": {
       "DependsOn": [
         "TodosApitodostodoIdDELETE96D7A974",
         "TodosApitodostodoIdGETCE9AA806",
@@ -647,7 +647,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
           "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
         },
         "DeploymentId": {
-          "Ref": "TodosApiDeploymentE94EFA29e5edd334d4cb1aed3813206b6b8ad010",
+          "Ref": "TodosApiDeploymentE94EFA29f990d8bfd54b21e315ad973a386b4434",
         },
         "MethodSettings": [
           {
@@ -1204,7 +1204,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
         "SSESpecification": {
           "SSEEnabled": true,
         },
-        "TableName": "test-test-todos",
+        "TableName": "test-test-spl-todos",
       },
       "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Delete",
@@ -1230,7 +1230,7 @@ exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template
             },
           },
         },
-        "FunctionName": "test-test-update-todo",
+        "FunctionName": "test-test-spl-update-todo",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {

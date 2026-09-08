@@ -66,7 +66,7 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
     "TodosApi10F608BB": {
       "Properties": {
         "Description": "Todos REST API (Lambda Web Adapter pattern)",
-        "Name": "test-test-todos-api",
+        "Name": "test-test-lwa-todos-api",
       },
       "Type": "AWS::ApiGateway::RestApi",
     },
@@ -228,7 +228,7 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Retain",
     },
-    "TodosApiDeploymentE94EFA2908fa5c6ee8d4ed681ad8b5126cb2f39f": {
+    "TodosApiDeploymentE94EFA29fdc9cdcd5d4257c5a89086fca923d99f": {
       "DependsOn": [
         "TodosApiproxyANY8241FE18",
         "TodosApiproxy83B8E22D",
@@ -260,7 +260,7 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
           "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
         },
         "DeploymentId": {
-          "Ref": "TodosApiDeploymentE94EFA2908fa5c6ee8d4ed681ad8b5126cb2f39f",
+          "Ref": "TodosApiDeploymentE94EFA29fdc9cdcd5d4257c5a89086fca923d99f",
         },
         "MethodSettings": [
           {
@@ -413,7 +413,7 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
         "SSESpecification": {
           "SSEEnabled": true,
         },
-        "TableName": "test-test-todos",
+        "TableName": "test-test-lwa-todos",
       },
       "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Delete",
@@ -429,7 +429,7 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "a1784633221c2aef580671a1ff18c7fd6f1626dbc20f98cd6a8d7bfad673abd6.zip",
+          "S3Key": "673e3654cfa60f458e3de9d4696dcd5b420bc0385ba0989f42dd35a417671343.zip",
         },
         "Environment": {
           "Variables": {
@@ -442,8 +442,8 @@ exports[`ApigwLambdaWebAdapterStack Snapshot Complete CloudFormation template sn
             },
           },
         },
-        "FunctionName": "test-test-lambda-web-adapter",
-        "Handler": "index.handler",
+        "FunctionName": "test-test-lwa-fn",
+        "Handler": "run.sh",
         "Layers": [
           "arn:aws:lambda:ap-northeast-1:753240598075:layer:LambdaAdapterLayerArm64:24",
         ],

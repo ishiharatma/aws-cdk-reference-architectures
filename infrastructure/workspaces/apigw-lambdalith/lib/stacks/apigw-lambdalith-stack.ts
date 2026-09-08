@@ -29,9 +29,12 @@ export class ApigwLambdalithStack extends cdk.Stack {
 
     const { project, environment, isAutoDeleteObject } = props;
     const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
+    // Pattern infix so the three companion workspaces can be deployed side by side
+    // under the same project/env without physical-name collisions.
+    const namePrefix = `${project}-${environment}-lith`;
 
     const todosTable = new dynamodb.Table(this, 'TodosTable', {
-      tableName: `${project}-${environment}-todos`,
+      tableName: `${namePrefix}-todos`,
       partitionKey: { name: 'todoId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
@@ -49,7 +52,7 @@ export class ApigwLambdalithStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       entry: 'src/lambda.ts',
       handler: 'handler',
-      functionName: `${project}-${environment}-lambdalith`,
+      functionName: `${namePrefix}-fn`,
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       logGroup: handlerLogGroup,
@@ -68,7 +71,7 @@ export class ApigwLambdalithStack extends cdk.Stack {
     const api = new apigateway.LambdaRestApi(this, 'TodosApi', {
       handler: lambdalithHandler,
       proxy: true,
-      restApiName: `${project}-${environment}-todos-api`,
+      restApiName: `${namePrefix}-todos-api`,
       description: 'Todos REST API (Lambdalith pattern with Hono)',
       cloudWatchRole: true,
       deployOptions: {
