@@ -1,0 +1,3099 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`FIS Chaos Scenario C Stack Snapshots AppStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbDnsName": {
+      "Description": "Internal ALB DNS name (VPC-only)",
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb16C2F182",
+          "DNSName",
+        ],
+      },
+    },
+    "AsgName": {
+      "Description": "Auto Scaling Group name",
+      "Value": {
+        "Ref": "AppAsgASGE6306ECF",
+      },
+    },
+    "DistributionDomainName": {
+      "Description": "CloudFront distribution domain name",
+      "Value": {
+        "Fn::GetAtt": [
+          "Distribution830FAC52",
+          "DomainName",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttAlb16C2F182LoadBalancerFullName73BA17C5": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttAlb16C2F182LoadBalancerFullName73BA17C5",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb16C2F182",
+          "LoadBalancerFullName",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "Alb16C2F182": {
+      "DependsOn": [
+        "AlbLogBucketPolicy222549B1",
+      ],
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+          {
+            "Key": "access_logs.s3.enabled",
+            "Value": "true",
+          },
+          {
+            "Key": "access_logs.s3.bucket",
+            "Value": {
+              "Ref": "AlbLogBucketC26F4D8A",
+            },
+          },
+          {
+            "Key": "access_logs.s3.prefix",
+            "Value": "",
+          },
+        ],
+        "Scheme": "internal",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+          },
+          {
+            "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+          {
+            "Key": "Role",
+            "Value": "fis-chaos-c-internal-alb",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttpListener00C8B33E": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AsgTg59DBBA51",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+          {
+            "Key": "Role",
+            "Value": "fis-chaos-c-internal-alb",
+          },
+        ],
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbLogBucketAutoDeleteObjectsCustomResourceD831170E": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AlbLogBucketPolicy222549B1",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AlbLogBucketC26F4D8A",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlbLogBucketC26F4D8A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlbLogBucketPolicy222549B1": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AlbLogBucketC26F4D8A",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AlbLogBucketC26F4D8A",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AlbLogBucketC26F4D8A",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AlbLogBucketC26F4D8A",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AlbLogBucketC26F4D8A",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:PutObject",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::582318560864:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "AlbLogBucketC26F4D8A",
+                        "Arn",
+                      ],
+                    },
+                    "/AWSLogs/123456789012/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "StringEquals": {
+                  "s3:x-amz-acl": "bucket-owner-full-control",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "delivery.logs.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "AlbLogBucketC26F4D8A",
+                        "Arn",
+                      ],
+                    },
+                    "/AWSLogs/123456789012/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:GetBucketAcl",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "delivery.logs.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "AlbLogBucketC26F4D8A",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "Internal ALB - ingress from CloudFront VPC Origin only",
+        "GroupName": "fis-chaos-c-dev-alb-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AlbSecurityGroupfrompl58a045318057AB35EB": {
+      "Properties": {
+        "Description": "CloudFront VPC Origin traffic",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourcePrefixListId": "pl-58a04531",
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "AppAsgASGE6306ECF": {
+      "Properties": {
+        "DesiredCapacity": "2",
+        "HealthCheckGracePeriod": 180,
+        "HealthCheckType": "ELB",
+        "LaunchConfigurationName": {
+          "Ref": "AppAsgLaunchConfigC986433B",
+        },
+        "MaxSize": "4",
+        "MinSize": "2",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "PropagateAtLaunch": true,
+            "Value": "dev",
+          },
+          {
+            "Key": "fis-target",
+            "PropagateAtLaunch": true,
+            "Value": "app-instance",
+          },
+          {
+            "Key": "Name",
+            "PropagateAtLaunch": true,
+            "Value": "TestAppStack/AppAsg",
+          },
+          {
+            "Key": "Project",
+            "PropagateAtLaunch": true,
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "AsgTg59DBBA51",
+          },
+        ],
+        "VPCZoneIdentifier": [
+          {
+            "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+          },
+          {
+            "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+          },
+        ],
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingScheduledAction": {
+          "IgnoreUnmodifiedGroupSizeProperties": true,
+        },
+      },
+    },
+    "AppAsgInstanceProfile38EFB29C": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "AppAsgLaunchConfigC986433B": {
+      "DependsOn": [
+        "InstanceRoleDefaultPolicy1531605C",
+        "InstanceRole3CCE2F1D",
+      ],
+      "Properties": {
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 20,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "AppAsgInstanceProfile38EFB29C",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61x8664C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.small",
+        "MetadataOptions": {
+          "HttpTokens": "required",
+        },
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "InstanceSecurityGroup896E10BF",
+              "GroupId",
+            ],
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+dnf update -y
+dnf install -y nginx
+TOKEN=$(curl -s -X PUT 'http://169.254.169.254/latest/api/token' -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600')
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+mkdir -p /usr/share/nginx/html
+cat > /usr/share/nginx/html/index.html <<HTMLEOF
+<!DOCTYPE html><html><head><title>FIS Chaos C</title></head><body>
+<h1>FIS Chaos Demo &#8212; Architecture C</h1>
+<p>Instance: $INSTANCE_ID</p>
+<p>AZ: $AZ</p>
+<p>Status: OK</p>
+</body></html>
+HTMLEOF
+systemctl start nginx
+systemctl enable nginx",
+        },
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+    },
+    "AsgTg59DBBA51": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 15,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "instance",
+        "UnhealthyThresholdCount": 3,
+        "VpcId": {
+          "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "97e9ebf0b174a5c8f7faa505739022b7f509edddffcab9211dcd08b759944c4f.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "ErrorPageDeployAwsCliLayerA5880DC9",
+          },
+        ],
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ErrorPageBucketFD04CE26",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ErrorPageBucketFD04CE26",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "AlbLogBucketC26F4D8A",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Distribution830FAC52": {
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "fis-chaos-c-dev FIS chaos C demo",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PUT",
+              "PATCH",
+              "POST",
+              "DELETE",
+            ],
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "Compress": true,
+            "OriginRequestPolicyId": "216adef6-5c7f-47e4-b989-5492eafa07d3",
+            "TargetOriginId": "TestAppStackDistributionOriginGroup13E597615",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "OriginGroups": {
+            "Items": [
+              {
+                "FailoverCriteria": {
+                  "StatusCodes": {
+                    "Items": [
+                      502,
+                      503,
+                      504,
+                    ],
+                    "Quantity": 3,
+                  },
+                },
+                "Id": "TestAppStackDistributionOriginGroup13E597615",
+                "Members": {
+                  "Items": [
+                    {
+                      "OriginId": "TestAppStackDistributionOrigin1DE868A70",
+                    },
+                    {
+                      "OriginId": "TestAppStackDistributionOrigin20DC4DADB",
+                    },
+                  ],
+                  "Quantity": 2,
+                },
+              },
+            ],
+            "Quantity": 1,
+          },
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "Alb16C2F182",
+                  "DNSName",
+                ],
+              },
+              "Id": "TestAppStackDistributionOrigin1DE868A70",
+              "VpcOriginConfig": {
+                "OriginKeepaliveTimeout": 5,
+                "OriginReadTimeout": 10,
+                "VpcOriginId": {
+                  "Fn::GetAtt": [
+                    "DistributionOrigin1VpcOrigin1389D846",
+                    "Id",
+                  ],
+                },
+              },
+            },
+            {
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "ErrorPageBucketFD04CE26",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "TestAppStackDistributionOrigin20DC4DADB",
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "DistributionOrigin2S3OriginAccessControlDC470594",
+                  "Id",
+                ],
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": "",
+              },
+            },
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "DistributionOrigin1VpcOrigin1389D846": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcOriginEndpointConfig": {
+          "Arn": {
+            "Ref": "Alb16C2F182",
+          },
+          "HTTPPort": 80,
+          "Name": "TestAppStackDistributionOrigin1VpcOrigin51C895A5",
+          "OriginProtocolPolicy": "http-only",
+          "OriginSSLProtocols": [
+            "TLSv1.2",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::VpcOrigin",
+    },
+    "DistributionOrigin2S3OriginAccessControlDC470594": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestAppStackDistributionOrigin2S3OriginAccessControl3FA608B6",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "ErrorPageBucketAutoDeleteObjectsCustomResource1CAE4DC3": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "ErrorPageBucketPolicy8EF9E940",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "ErrorPageBucketFD04CE26",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ErrorPageBucketFD04CE26": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:cea1c3b9",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ErrorPageBucketPolicy8EF9E940": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "ErrorPageBucketFD04CE26",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ErrorPageBucketFD04CE26",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ErrorPageBucketFD04CE26",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ErrorPageBucketFD04CE26",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ErrorPageBucketFD04CE26",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudfront::",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":distribution/",
+                        {
+                          "Ref": "Distribution830FAC52",
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "ErrorPageBucketFD04CE26",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "ErrorPageDeployAwsCliLayerA5880DC9": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "ErrorPageDeployCustomResource0F7DC390": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "ErrorPageBucketFD04CE26",
+        },
+        "OutputObjectKeys": true,
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+        ],
+        "SourceMarkers": [
+          {},
+        ],
+        "SourceObjectKeys": [
+          "6ec85951f71e87ec4bc714d742b635057f3200cbd797c99f0979da7ffb21a867.zip",
+        ],
+        "WaitForDistributionInvalidation": true,
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InstanceRole3CCE2F1D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "fis-chaos-c-dev-ec2-instance-role",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "InstanceRoleDefaultPolicy1531605C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "TestBaseStack:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "InstanceRoleDefaultPolicy1531605C",
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "InstanceSecurityGroup896E10BF": {
+      "Properties": {
+        "GroupDescription": "EC2 ASG instances - ingress from ALB on port 80",
+        "GroupName": "fis-chaos-c-dev-ec2-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "ALB health check and HTTP traffic",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "AlbSecurityGroup86A59E99",
+                "GroupId",
+              ],
+            },
+            "ToPort": 80,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "TestBaseStack:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "InstanceSecurityGroupfromTestAppStackAlbSecurityGroup87FDC56380A76F7300": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "InstanceSecurityGroup896E10BF",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario C Stack Snapshots AppStack Resource types and counts 1`] = `
+{
+  "AWS::AutoScaling::AutoScalingGroup": 1,
+  "AWS::AutoScaling::LaunchConfiguration": 1,
+  "AWS::CloudFront::Distribution": 1,
+  "AWS::CloudFront::OriginAccessControl": 1,
+  "AWS::CloudFront::VpcOrigin": 1,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupIngress": 2,
+  "AWS::ElasticLoadBalancingV2::Listener": 1,
+  "AWS::ElasticLoadBalancingV2::LoadBalancer": 1,
+  "AWS::ElasticLoadBalancingV2::TargetGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::LayerVersion": 1,
+  "AWS::S3::Bucket": 2,
+  "AWS::S3::BucketPolicy": 2,
+  "Custom::CDKBucketDeployment": 1,
+  "Custom::S3AutoDeleteObjects": 2,
+}
+`;
+
+exports[`FIS Chaos Scenario C Stack Snapshots BaseStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AuroraClusterArn": {
+      "Description": "Aurora cluster ARN (FIS failover target)",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:",
+            {
+              "Ref": "AWS::Partition",
+            },
+            ":rds:ap-northeast-1:123456789012:cluster:",
+            {
+              "Ref": "Aurora2CBAB212",
+            },
+          ],
+        ],
+      },
+    },
+    "AuroraEndpoint": {
+      "Description": "Aurora writer endpoint",
+      "Value": {
+        "Fn::GetAtt": [
+          "Aurora2CBAB212",
+          "Endpoint.Address",
+        ],
+      },
+    },
+    "ExportsOutputRefAurora2CBAB212533F1A7B": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefAurora2CBAB212533F1A7B",
+      },
+      "Value": {
+        "Ref": "Aurora2CBAB212",
+      },
+    },
+    "ExportsOutputRefAuroraSecret41E6E877B1EAA24F": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+      },
+      "Value": {
+        "Ref": "AuroraSecret41E6E877",
+      },
+    },
+    "ExportsOutputRefVpc49347EA926D099AB": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefVpc49347EA926D099AB",
+      },
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet2Subnet55040997",
+      },
+    },
+    "VpcAvailabilityZones3F7C802F": {
+      "Description": "Availability Zones for fis-chaos-c/dev/fis-chaos-c-vpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcCidr2979DF70": {
+      "Description": "VPC CIDR for fis-chaos-c/dev/fis-chaos-c-vpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "Vpc49347EA9",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcIdBCACDA58": {
+      "Description": "VPC ID for fis-chaos-c/dev/fis-chaos-c-vpc",
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Aurora2CBAB212": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "CopyTagsToSnapshot": true,
+        "DBClusterParameterGroupName": "default.aurora-postgresql16",
+        "DBSubnetGroupName": {
+          "Ref": "AuroraSubnetsC4DF45C9",
+        },
+        "DatabaseName": "appdb",
+        "DeletionProtection": false,
+        "EnableCloudwatchLogsExports": [
+          "postgresql",
+        ],
+        "Engine": "aurora-postgresql",
+        "EngineVersion": "16.4",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AuroraSecret41E6E877",
+              },
+              ":SecretString:password::}}",
+            ],
+          ],
+        },
+        "MasterUsername": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AuroraSecret41E6E877",
+              },
+              ":SecretString:username::}}",
+            ],
+          ],
+        },
+        "Port": 5432,
+        "ServerlessV2ScalingConfiguration": {
+          "MaxCapacity": 4,
+          "MinCapacity": 0.5,
+        },
+        "StorageEncrypted": true,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcSecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "DbSecurityGroupE9D701AD",
+              "GroupId",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBCluster",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuroraLogRetentionpostgresqlBFB2AD06": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/cluster/",
+              {
+                "Ref": "Aurora2CBAB212",
+              },
+              "/postgresql",
+            ],
+          ],
+        },
+        "RetentionInDays": 7,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "AuroraSecret41E6E877": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~\`#$&*()|[]{}:;<>?!'/@"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{"username":"postgres"}",
+        },
+        "Name": "fis-chaos-c-dev-aurora-secret",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuroraSecretAttachment65089D67": {
+      "Properties": {
+        "SecretId": {
+          "Ref": "AuroraSecret41E6E877",
+        },
+        "TargetId": {
+          "Ref": "Aurora2CBAB212",
+        },
+        "TargetType": "AWS::RDS::DBCluster",
+      },
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+    },
+    "AuroraSubnetsC4DF45C9": {
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnets for Aurora database",
+        "SubnetIds": [
+          {
+            "Ref": "VpcIsolatedSubnet1Subnet61CCC9B9",
+          },
+          {
+            "Ref": "VpcIsolatedSubnet2Subnet2B983B3F",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBSubnetGroup",
+    },
+    "Aurorareader1C7647A85": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AurorawriterDC5BC759",
+        "VpcIsolatedSubnet1RouteTableAssociationC8BC0BB8",
+        "VpcIsolatedSubnet2RouteTableAssociation2DD62861",
+      ],
+      "Properties": {
+        "DBClusterIdentifier": {
+          "Ref": "Aurora2CBAB212",
+        },
+        "DBInstanceClass": "db.serverless",
+        "Engine": "aurora-postgresql",
+        "PromotionTier": 1,
+        "PubliclyAccessible": false,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AurorawriterDC5BC759": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "VpcIsolatedSubnet1RouteTableAssociationC8BC0BB8",
+        "VpcIsolatedSubnet2RouteTableAssociation2DD62861",
+      ],
+      "Properties": {
+        "DBClusterIdentifier": {
+          "Ref": "Aurora2CBAB212",
+        },
+        "DBInstanceClass": "db.serverless",
+        "Engine": "aurora-postgresql",
+        "PromotionTier": 0,
+        "PubliclyAccessible": false,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DbSecurityGroupE9D701AD": {
+      "Properties": {
+        "GroupDescription": "Aurora PostgreSQL SG - ingress from VPC CIDR on port 5432",
+        "GroupName": "fis-chaos-c-dev-db-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "Vpc49347EA9",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow PostgreSQL from within the VPC (EC2 ASG instances)",
+            "FromPort": 5432,
+            "IpProtocol": "tcp",
+            "ToPort": 5432,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "Vpc49347EA9": {
+      "Properties": {
+        "CidrBlock": "10.20.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "fis-chaos-c/dev/fis-chaos-c-vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcDynamoDbEndpoint55176AC8": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+          {
+            "Ref": "VpcIsolatedSubnet1RouteTableE83A405A",
+          },
+          {
+            "Ref": "VpcIsolatedSubnet2RouteTable5D00B506",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "fis-chaos-c/dev/fis-chaos-c-vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcIGW5C9F205D": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "fis-chaos-c/dev/fis-chaos-c-vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcIsolatedSubnet1RouteTableAssociationC8BC0BB8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcIsolatedSubnet1RouteTableE83A405A",
+        },
+        "SubnetId": {
+          "Ref": "VpcIsolatedSubnet1Subnet61CCC9B9",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcIsolatedSubnet1RouteTableE83A405A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/IsolatedSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcIsolatedSubnet1Subnet61CCC9B9": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.20.4.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/IsolatedSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcIsolatedSubnet2RouteTable5D00B506": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/IsolatedSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcIsolatedSubnet2RouteTableAssociation2DD62861": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcIsolatedSubnet2RouteTable5D00B506",
+        },
+        "SubnetId": {
+          "Ref": "VpcIsolatedSubnet2Subnet2B983B3F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcIsolatedSubnet2Subnet2B983B3F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.20.5.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/IsolatedSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcNatgatewayEip126B741E5": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "fis-chaos-c/dev/NatgatewayEIP1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcPrivateSubnet1DefaultRouteD0A8C89B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet1NATGateway17DE6361",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1RouteTable5ADAC875": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation11E70C19": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1Subnet7BECC33A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.20.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PrivateSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2DefaultRouteE7D97A6D": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet1NATGateway17DE6361",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2RouteTable0B67C0AD": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociation751D47F2": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet55040997",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet55040997": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.20.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PrivateSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute2826E776": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1NATGateway17DE6361": {
+      "DependsOn": [
+        "VpcPublicSubnet1DefaultRoute2826E776",
+        "VpcPublicSubnet1RouteTableAssociation68C388A6",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcNatgatewayEip126B741E5",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcPublicSubnet1RouteTable6F9AC31B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation68C388A6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet4D933E0A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.20.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PublicSubnet1",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute6D8C6AE6": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2RouteTable20915D60": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationD115202B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet5691B95A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet5691B95A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.20.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestBaseStack/Vpc/Resource/PublicSubnet2",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcS3Endpoint511D1166": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+          {
+            "Ref": "VpcIsolatedSubnet1RouteTableE83A405A",
+          },
+          {
+            "Ref": "VpcIsolatedSubnet2RouteTable5D00B506",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Name",
+            "Value": "fis-chaos-c/dev/fis-chaos-c-vpc",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcVPCGW0B9C0E73": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario C Stack Snapshots BaseStack Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 4,
+  "AWS::EC2::RouteTable": 6,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 6,
+  "AWS::EC2::SubnetRouteTableAssociation": 6,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 2,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::RDS::DBCluster": 1,
+  "AWS::RDS::DBInstance": 2,
+  "AWS::RDS::DBSubnetGroup": 1,
+  "AWS::SecretsManager::Secret": 1,
+  "AWS::SecretsManager::SecretTargetAttachment": 1,
+  "Custom::LogRetention": 1,
+}
+`;
+
+exports[`FIS Chaos Scenario C Stack Snapshots FisStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbStopAlarmArn": {
+      "Description": "ALB 5xx stop-condition alarm ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "AlbTargetErrorAlarmC83884EE",
+          "Arn",
+        ],
+      },
+    },
+    "FisLogGroupName": {
+      "Description": "CloudWatch log group for FIS experiment results",
+      "Value": {
+        "Ref": "FisLogGroupBD16B862",
+      },
+    },
+    "FisRoleArn": {
+      "Description": "FIS IAM role ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "FisRoleF2C479C1",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlbTargetErrorAlarmC83884EE": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "FisAlarmTopic51D832F3",
+          },
+        ],
+        "AlarmDescription": "FIS stop condition — ALB 5xx target errors exceed safety threshold",
+        "AlarmName": "fis-chaos-c-dev-fis-stop-alb-5xx",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttAlb16C2F182LoadBalancerFullName73BA17C5",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Namespace": "AWS/ApplicationELB",
+        "Period": 60,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "Threshold": 50,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FisAlarmTopic51D832F3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+        "TopicName": "fis-chaos-c-dev-fis-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "FisLogGroupBD16B862": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/fis/fis-chaos-c-dev",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisRoleF2C479C1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "fis.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "ec2:TerminateInstances",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:ResourceTag/fis-target": "app-instance",
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:ec2:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":instance/*",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": "ec2:DescribeInstances",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
+                  "Action": "ssm:SendCommand",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:ResourceTag/fis-target": "app-instance",
+                    },
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:ec2:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":instance/*",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": "ssm:SendCommand",
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:ssm:",
+                          {
+                            "Ref": "AWS::Region",
+                          },
+                          "::document/AWSFIS-Run-CPU-Stress",
+                        ],
+                      ],
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:ssm:",
+                          {
+                            "Ref": "AWS::Region",
+                          },
+                          "::document/AWSFIS-Run-Network-Blackhole-Port",
+                        ],
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "Action": [
+                    "ssm:CancelCommand",
+                    "ssm:GetCommandInvocation",
+                    "ssm:ListCommandInvocations",
+                    "ssm:GetDocument",
+                    "ssm:DescribeDocument",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
+                  "Action": [
+                    "rds:FailoverDBCluster",
+                    "rds:DescribeDBClusters",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":rds:ap-northeast-1:123456789012:cluster:",
+                        {
+                          "Fn::ImportValue": "TestBaseStack:ExportsOutputRefAurora2CBAB212533F1A7B",
+                        },
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": "cloudwatch:DescribeAlarms",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "AlbTargetErrorAlarmC83884EE",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogDelivery",
+                    "logs:PutLogEvents",
+                    "logs:GetLogDelivery",
+                    "logs:UpdateLogDelivery",
+                    "logs:DeleteLogDelivery",
+                    "logs:ListLogDeliveries",
+                    "logs:PutResourcePolicy",
+                    "logs:DescribeResourcePolicies",
+                    "logs:DescribeLogGroups",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "FisChaosPolicy",
+          },
+        ],
+        "RoleName": "fis-chaos-c-dev-fis-role",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-c",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ScenarioC1TerminateInstances": {
+      "Properties": {
+        "Actions": {
+          "TerminateInstances": {
+            "ActionId": "aws:ec2:terminate-instances",
+            "Targets": {
+              "Instances": "AppInstances",
+            },
+          },
+        },
+        "Description": "[C-1] EC2 Instance Termination (50%): Terminates half of ASG instances. Validates ASG self-healing, ALB target draining, and CloudFront fallback timing.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "AlbTargetErrorAlarmC83884EE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-ALB-EC2ASG-Aurora",
+          "Environment": "dev",
+          "Name": "fis-chaos-c-dev-C1-ec2-terminate",
+          "Project": "fis-chaos-c",
+          "Scenario": "C-1",
+        },
+        "Targets": {
+          "AppInstances": {
+            "ResourceTags": {
+              "fis-target": "app-instance",
+            },
+            "ResourceType": "aws:ec2:instance",
+            "SelectionMode": "PERCENT(50)",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioC2CpuStress": {
+      "Properties": {
+        "Actions": {
+          "InjectCpuStress": {
+            "ActionId": "aws:ssm:send-command",
+            "Parameters": {
+              "documentArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:ssm:",
+                    {
+                      "Ref": "AWS::Region",
+                    },
+                    "::document/AWSFIS-Run-CPU-Stress",
+                  ],
+                ],
+              },
+              "documentParameters": "{"CPU":"0","DurationSeconds":"300","InstallDependencies":"True"}",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Instances": "AppInstances",
+            },
+          },
+        },
+        "Description": "[C-2] EC2 CPU Stress (100%, 5 min): Injects sustained CPU load via SSM. Validates ASG scale-out policy activation and health-check speed on new instances.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "AlbTargetErrorAlarmC83884EE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-ALB-EC2ASG-Aurora",
+          "Environment": "dev",
+          "Name": "fis-chaos-c-dev-C2-cpu-stress",
+          "Project": "fis-chaos-c",
+          "Scenario": "C-2",
+        },
+        "Targets": {
+          "AppInstances": {
+            "ResourceTags": {
+              "fis-target": "app-instance",
+            },
+            "ResourceType": "aws:ec2:instance",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioC3AuroraFailover": {
+      "Properties": {
+        "Actions": {
+          "FailoverAurora": {
+            "ActionId": "aws:rds:failover-db-cluster",
+            "Targets": {
+              "Clusters": "AuroraCluster",
+            },
+          },
+        },
+        "Description": "[C-3] Aurora DB Failover: Triggers a writer→reader promotion. Validates EC2 app connection-pool retry and reconnect during ~30 s interruption.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "AlbTargetErrorAlarmC83884EE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-ALB-EC2ASG-Aurora",
+          "Environment": "dev",
+          "Name": "fis-chaos-c-dev-C3-aurora-failover",
+          "Project": "fis-chaos-c",
+          "Scenario": "C-3",
+        },
+        "Targets": {
+          "AuroraCluster": {
+            "ResourceArns": [
+              {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":rds:ap-northeast-1:123456789012:cluster:",
+                    {
+                      "Fn::ImportValue": "TestBaseStack:ExportsOutputRefAurora2CBAB212533F1A7B",
+                    },
+                  ],
+                ],
+              },
+            ],
+            "ResourceType": "aws:rds:cluster",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioC4DbNetworkBlackhole": {
+      "Properties": {
+        "Actions": {
+          "BlackholeDbPort": {
+            "ActionId": "aws:ssm:send-command",
+            "Parameters": {
+              "documentArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:ssm:",
+                    {
+                      "Ref": "AWS::Region",
+                    },
+                    "::document/AWSFIS-Run-Network-Blackhole-Port",
+                  ],
+                ],
+              },
+              "documentParameters": "{"Protocol":"tcp","TrafficType":"egress","Port":"5432","DurationSeconds":"300","InstallDependencies":"True"}",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Instances": "AppInstances",
+            },
+          },
+        },
+        "Description": "[C-4] EC2→DB Network Blackhole (TCP egress 5432, 5 min): Blocks PostgreSQL egress via SSM. Validates query-timeout config, circuit-breaker activation, and ALB health-check during DB loss.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "AlbTargetErrorAlarmC83884EE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-ALB-EC2ASG-Aurora",
+          "Environment": "dev",
+          "Name": "fis-chaos-c-dev-C4-db-network-blackhole",
+          "Project": "fis-chaos-c",
+          "Scenario": "C-4",
+        },
+        "Targets": {
+          "AppInstances": {
+            "ResourceTags": {
+              "fis-target": "app-instance",
+            },
+            "ResourceType": "aws:ec2:instance",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario C Stack Snapshots FisStack Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::FIS::ExperimentTemplate": 4,
+  "AWS::IAM::Role": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SNS::Topic": 1,
+}
+`;
