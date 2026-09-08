@@ -1,5 +1,17 @@
 [
   {
+    "id": "fis-arch-b-apigw-lambda",
+    "title": "FIS Chaos: CloudFront + API Gateway + Lambda + DynamoDB",
+    "description": "Four AWS FIS chaos experiment templates for a serverless CRUD API: DynamoDB internal errors (all ops), write-only throttle, read-only throttle, and Lambda concurrency exhaustion — each with a CloudWatch Alarm stop condition. Uses aws:fis:inject-api-* targeting the Lambda execution role to intercept DynamoDB calls at the control plane without touching function code.",
+    "image": "fis-arch-b-apigw-lambda/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "Lambda", "API Gateway", "CloudFront", "DynamoDB"],
+    "link": "fis-arch-b-apigw-lambda",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-08",
+    "articles": {}
+  },
+  {
     "id": "route53-phz-delegation",
     "title": "Route 53 Private Hosted Zone Delegation",
     "description": "Parent private hosted zone system.example.com delegates dev.system.example.com and stg.system.example.com to two child VPCs using the June 2025 Route 53 Resolver DNS delegation feature (INBOUND_DELEGATION endpoints + DELEGATE resolver rules), with a fourth on-premises-role VPC and all four VPCs joined by one Transit Gateway.",

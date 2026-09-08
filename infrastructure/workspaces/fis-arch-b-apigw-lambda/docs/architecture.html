@@ -1,0 +1,476 @@
+<title>Architecture B — FIS Chaos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg:       #f6f8fa;
+    --surface:  #ffffff;
+    --border:   #d0d7de;
+    --text-1:   #1f2328;
+    --text-2:   #57606a;
+    --text-3:   #8c959f;
+
+    /* AWS service accent colors */
+    --cf-c:   #8a4fff;
+    --apigw-c:#e7157b;
+    --fn-c:   #ff9900;
+    --ddb-c:  #2d72b8;
+
+    /* FIS scenario colors */
+    --b1: #f97316;
+    --b2: #f59e0b;
+    --b3: #06b6d4;
+    --b4: #ef4444;
+
+    --radius: 6px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text-1:  #e6edf3;
+      --text-2:  #8b949e;
+      --text-3:  #484f58;
+
+      --cf-c:   #a78bfa;
+      --apigw-c:#f472b6;
+      --fn-c:   #fbbf24;
+      --ddb-c:  #60a5fa;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #30363d;
+    --text-1:  #e6edf3;
+    --text-2:  #8b949e;
+    --text-3:  #484f58;
+    --cf-c:   #a78bfa;
+    --apigw-c:#f472b6;
+    --fn-c:   #fbbf24;
+    --ddb-c:  #60a5fa;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: var(--sans);
+    margin: 0;
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* --- Header --- */
+  .header {
+    margin-bottom: 8px;
+  }
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fn-c);
+    border: 1px solid var(--fn-c);
+    border-radius: 3px;
+    padding: 2px 7px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(18px, 3.5vw, 26px);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 6px;
+    letter-spacing: -.02em;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-2);
+    margin: 0 0 28px;
+  }
+
+  /* --- Architecture SVG panel --- */
+  .arch-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .arch-panel svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* --- Scenario grid --- */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 560px) {
+    .scenario-grid { grid-template-columns: 1fr; }
+  }
+
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .scenario-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .scenario-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .scenario-body {
+    padding: 11px 14px;
+  }
+  .scenario-body p {
+    font-size: 12.5px;
+    color: var(--text-2);
+    line-height: 1.55;
+    margin: 0 0 8px;
+  }
+  .scenario-body p:last-child { margin: 0; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .chip-target {
+    font-size: 10px;
+    border-radius: 2px;
+    padding: 1px 4px;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* --- SVG tokens shared via CSS custom properties --- */
+  .svc-cf   { fill: var(--cf-c); }
+  .svc-apigw { fill: var(--apigw-c); }
+  .svc-fn   { fill: var(--fn-c); }
+  .svc-ddb  { fill: var(--ddb-c); }
+</style>
+
+<div class="page">
+  <header class="header">
+    <div class="badge">Architecture B · FIS Chaos Engineering</div>
+    <h1>CloudFront → API Gateway → Lambda → DynamoDB</h1>
+    <p class="subtitle">AWS Fault Injection Simulator — 4 chaos scenarios targeting the serverless request path</p>
+  </header>
+
+  <!-- Main architecture diagram -->
+  <div class="arch-panel">
+    <figure style="margin:0" role="img" aria-label="Architecture B request flow: User → CloudFront → API Gateway HTTP API → Lambda → DynamoDB with 4 FIS chaos scenario annotations">
+      <svg viewBox="0 0 820 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+
+        <defs>
+          <!-- Arrowhead marker (currentColor forward) -->
+          <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0,0 7,3.5 0,7" fill="currentColor" opacity=".55"/>
+          </marker>
+          <!-- Arrowhead marker (for return arrows, reversed) -->
+          <marker id="arr-ret" markerWidth="7" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <polygon points="7,0 0,3.5 7,7" fill="currentColor" opacity=".45"/>
+          </marker>
+          <!-- B-1 arrowhead (orange) -->
+          <marker id="arr-b1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0,0 7,3.5 0,7" fill="#f97316"/>
+          </marker>
+          <!-- B-4 arrowhead (red) -->
+          <marker id="arr-b4" markerWidth="7" markerHeight="7" refX="1" refY="3.5" orient="auto">
+            <polygon points="7,0 0,3.5 7,7" fill="#ef4444"/>
+          </marker>
+        </defs>
+
+        <!-- ========= Background ========= -->
+        <rect width="820" height="270" fill="var(--bg)"/>
+
+        <!-- ========= FIS Scenario B-1 box (orange, outermost around Lambda+DDB) ========= -->
+        <!-- B-1 outer box -->
+        <rect x="398" y="62" width="352" height="106"
+              fill="none" stroke="#f97316" stroke-width="1.5"
+              stroke-dasharray="6,4" rx="6" opacity=".9"/>
+        <!-- B-1 label tab at top-right -->
+        <rect x="688" y="53" width="62" height="18" rx="3" fill="#f97316"/>
+        <text x="719" y="66" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#fff">B-1</text>
+
+        <!-- ========= FIS Scenario B-4 box (red, tight around Lambda) ========= -->
+        <rect x="406" y="70" width="108" height="90"
+              fill="none" stroke="#ef4444" stroke-width="1.5"
+              stroke-dasharray="4,3" rx="5" opacity=".9"/>
+        <!-- B-4 label tab at top-left -->
+        <rect x="406" y="61" width="44" height="17" rx="3" fill="#ef4444"/>
+        <text x="428" y="73.5" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#fff">B-4</text>
+
+        <!-- ========= User icon ========= -->
+        <!-- body -->
+        <circle cx="40" cy="126" r="9" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+        <path d="M24,152 Q40,138 56,152" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+        <!-- label -->
+        <text x="40" y="167" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="9.5" fill="var(--text-3)">User</text>
+
+        <!-- ========= Arrow: User → CloudFront ========= -->
+        <line x1="58" y1="126" x2="84" y2="126"
+              stroke="currentColor" stroke-width="1.2" opacity=".4"
+              marker-end="url(#arr)"/>
+
+        <!-- ========= CloudFront box ========= -->
+        <rect x="88" y="96" width="98" height="60" rx="5"
+              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+        <!-- left accent bar -->
+        <rect x="88" y="96" width="4" height="60" rx="2" fill="var(--cf-c)"/>
+        <text x="141" y="122" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600"
+              fill="var(--cf-c)">CloudFront</text>
+        <text x="141" y="137" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">CDN / WAF</text>
+
+        <!-- ========= Arrow: CF → API GW ========= -->
+        <line x1="186" y1="126" x2="216" y2="126"
+              stroke="currentColor" stroke-width="1.2" opacity=".4"
+              marker-end="url(#arr)"/>
+        <text x="201" y="121" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8" fill="var(--text-3)">HTTPS</text>
+
+        <!-- ========= API Gateway box ========= -->
+        <rect x="220" y="96" width="118" height="60" rx="5"
+              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+        <rect x="220" y="96" width="4" height="60" rx="2" fill="var(--apigw-c)"/>
+        <text x="282" y="120" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600"
+              fill="var(--apigw-c)">API Gateway</text>
+        <text x="282" y="135" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">HTTP API</text>
+
+        <!-- ========= Arrow: API GW → Lambda ========= -->
+        <line x1="338" y1="126" x2="408" y2="126"
+              stroke="currentColor" stroke-width="1.2" opacity=".4"
+              marker-end="url(#arr)"/>
+        <text x="373" y="121" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8" fill="var(--text-3)">Invoke</text>
+
+        <!-- ========= Lambda box ========= -->
+        <rect x="412" y="78" width="96" height="66" rx="5"
+              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+        <rect x="412" y="78" width="4" height="66" rx="2" fill="var(--fn-c)"/>
+        <text x="462" y="105" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600"
+              fill="var(--fn-c)">Lambda</text>
+        <text x="462" y="119" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8.5" fill="var(--text-3)">Python 3.13</text>
+        <text x="462" y="131" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8" fill="var(--text-3)">256 MB · 29 s</text>
+
+        <!-- ========= Lambda → DynamoDB: write arrow (top) ========= -->
+        <!-- B-2 amber X marker on this arrow -->
+        <line x1="508" y1="107" x2="582" y2="107"
+              stroke="var(--text-3)" stroke-width="1.1" opacity=".5"
+              marker-end="url(#arr)"/>
+        <!-- B-2 marker: amber cross at midpoint -->
+        <circle cx="545" cy="107" r="7" fill="#f59e0b" opacity=".2"/>
+        <text x="545" y="111.5" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="9" font-weight="700" fill="#f59e0b">B-2</text>
+
+        <!-- ========= DynamoDB → Lambda: read return arrow (bottom) ========= -->
+        <!-- B-3 cyan X marker on this arrow -->
+        <line x1="582" y1="120" x2="510" y2="120"
+              stroke="var(--text-3)" stroke-width="1.1" opacity=".5"
+              marker-end="url(#arr-ret)"/>
+        <circle cx="545" cy="120" r="7" fill="#06b6d4" opacity=".2"/>
+        <text x="545" y="124.5" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="9" font-weight="700" fill="#06b6d4">B-3</text>
+
+        <!-- ========= DynamoDB box ========= -->
+        <rect x="586" y="81" width="104" height="68" rx="5"
+              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+        <rect x="586" y="81" width="4" height="68" rx="2" fill="var(--ddb-c)"/>
+        <text x="640" y="110" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="10" font-weight="600"
+              fill="var(--ddb-c)">DynamoDB</text>
+        <text x="640" y="124" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8.5" fill="var(--text-3)">PAY_PER_REQUEST</text>
+        <text x="640" y="136" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="8" fill="var(--text-3)">items table</text>
+
+        <!-- ========= Arrow labels below components ========= -->
+        <text x="141" y="175" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">Edge cache</text>
+        <text x="282" y="175" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">Public endpoint</text>
+        <text x="462" y="175" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">API handler</text>
+        <text x="640" y="175" text-anchor="middle"
+              font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">Items store</text>
+
+        <!-- ========= Scenario legend (bottom) ========= -->
+        <!-- B-1 -->
+        <rect x="32" y="198" width="9" height="9" rx="1"
+              fill="none" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="46" y="207" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#f97316">B-1</text>
+        <text x="68" y="207" font-family="'Inter',sans-serif" font-size="9.5" fill="var(--text-2)">DynamoDB internal error — all operations (5 min)</text>
+        <!-- B-4 -->
+        <rect x="352" y="198" width="9" height="9" rx="1"
+              fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="366" y="207" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#ef4444">B-4</text>
+        <text x="388" y="207" font-family="'Inter',sans-serif" font-size="9.5" fill="var(--text-2)">Lambda concurrency = 0 (5 min)</text>
+
+        <!-- B-2 -->
+        <circle cx="37" cy="226" r="5" fill="#f59e0b" opacity=".25"/>
+        <text x="37" y="230" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="7.5" font-weight="700" fill="#f59e0b">B-2</text>
+        <text x="46" y="230" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#f59e0b">B-2</text>
+        <text x="68" y="230" font-family="'Inter',sans-serif" font-size="9.5" fill="var(--text-2)">DynamoDB write throttle — PutItem, DeleteItem (5 min)</text>
+        <!-- B-3 -->
+        <circle cx="357" cy="226" r="5" fill="#06b6d4" opacity=".25"/>
+        <text x="357" y="230" text-anchor="middle"
+              font-family="'IBM Plex Mono',monospace" font-size="7.5" font-weight="700" fill="#06b6d4">B-3</text>
+        <text x="366" y="230" font-family="'IBM Plex Mono',monospace" font-size="9.5" font-weight="600" fill="#06b6d4">B-3</text>
+        <text x="388" y="230" font-family="'Inter',sans-serif" font-size="9.5" fill="var(--text-2)">DynamoDB read throttle — GetItem, Scan (5 min)</text>
+
+        <!-- divider -->
+        <line x1="32" y1="248" x2="788" y2="248"
+              stroke="var(--border)" stroke-width="0.75" opacity=".6"/>
+
+        <!-- FIS target note -->
+        <text x="32" y="264" font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">
+          B-1/B-2/B-3 target the Lambda execution role via
+        </text>
+        <text x="274" y="264" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">
+          aws:fis:inject-api-*
+        </text>
+        <text x="400" y="264" font-family="'Inter',sans-serif" font-size="9" fill="var(--text-3)">
+          · B-4 targets
+        </text>
+        <text x="452" y="264" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">
+          aws:lambda:put-function-concurrent-executions
+        </text>
+      </svg>
+
+      <figcaption style="padding:10px 16px 12px; font-size:11.5px; color:var(--text-2); font-family:'Inter',sans-serif; border-top:1px solid var(--border); line-height:1.5">
+        Architecture B request path annotated with 4 AWS FIS chaos scenarios.
+        Orange dashed border (B-1) marks the Lambda→DynamoDB injection zone.
+        Red dashed border (B-4) marks Lambda concurrency exhaustion.
+        Coloured markers on the bidirectional arrows indicate write-only (B-2) and read-only (B-3) throttling targets.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Scenario cards -->
+  <div class="scenario-grid">
+
+    <!-- B-1 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#f97316">B-1</span>
+        <span class="scenario-title">DynamoDB Internal Error</span>
+      </div>
+      <div class="scenario-body">
+        <p>Injects <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">InternalError</code> into every DynamoDB API call made by the Lambda execution role for 5 minutes (all of GetItem, PutItem, DeleteItem, Scan).</p>
+        <p><strong>What to verify:</strong> Lambda retry/backoff logic, clean API 500 propagation to clients, CloudWatch alarm activation.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#f97316">target</span> aws:iam:role (Lambda exec role)</span>
+          &nbsp;
+          <span class="chip">action: inject-api-internal-error</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- B-2 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#f59e0b">B-2</span>
+        <span class="scenario-title">DynamoDB Write Throttle</span>
+      </div>
+      <div class="scenario-body">
+        <p>Injects <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">ProvisionedThroughputExceededException</code> into PutItem and DeleteItem for 5 minutes. Reads (GetItem/Scan) remain healthy.</p>
+        <p><strong>What to verify:</strong> Write-path circuit-breaker patterns, graceful read-only degradation, correct 429 surfaced to callers.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#f59e0b">target</span> aws:iam:role (Lambda exec role)</span>
+          &nbsp;
+          <span class="chip">action: inject-api-throttle-error</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- B-3 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#06b6d4">B-3</span>
+        <span class="scenario-title">DynamoDB Read Throttle</span>
+      </div>
+      <div class="scenario-body">
+        <p>Injects <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">ProvisionedThroughputExceededException</code> into GetItem and Scan for 5 minutes. Writes (PutItem/DeleteItem) remain healthy.</p>
+        <p><strong>What to verify:</strong> Read-path cache fallback or degraded-mode response, 429 propagation, Lambda error-rate alarm trigger.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#06b6d4">target</span> aws:iam:role (Lambda exec role)</span>
+          &nbsp;
+          <span class="chip">action: inject-api-throttle-error</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- B-4 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#ef4444">B-4</span>
+        <span class="scenario-title">Lambda Concurrency Exhaustion</span>
+      </div>
+      <div class="scenario-body">
+        <p>Sets the Lambda function's reserved concurrency to 0 for 5 minutes. All new invocations receive <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">TooManyRequestsException</code> immediately.</p>
+        <p><strong>What to verify:</strong> API Gateway error mapping (429→502), CloudFront custom error page activation under sustained 5xx traffic.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#ef4444">target</span> aws:lambda:function</span>
+          &nbsp;
+          <span class="chip">action: put-function-concurrent-executions</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <p style="margin-top:28px; font-size:11px; color:var(--text-3); font-family:'IBM Plex Mono',monospace">
+    FIS experiment templates provisioned via CDK L1 (aws_fis.CfnExperimentTemplate) · Stop condition: Lambda error count ≥ 10 / min
+  </p>
+</div>
