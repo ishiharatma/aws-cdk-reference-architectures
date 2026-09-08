@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
+exports[`ApigwSinglePurposeLambdaStack Snapshot Complete CloudFormation template snapshot 1`] = `
 {
   "Outputs": {
     "ApiUrl": {
@@ -13,17 +13,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
             {
               "Ref": "TodosApi10F608BB",
             },
-            ".execute-api.",
-            {
-              "Ref": "AWS::Region",
-            },
-            ".",
+            ".execute-api.ap-northeast-1.",
             {
               "Ref": "AWS::URLSuffix",
             },
             "/",
             {
-              "Ref": "TodosApiDeploymentStagedev54EE90D3",
+              "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
             },
             "/",
           ],
@@ -39,17 +35,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
             {
               "Ref": "TodosApi10F608BB",
             },
-            ".execute-api.",
-            {
-              "Ref": "AWS::Region",
-            },
-            ".",
+            ".execute-api.ap-northeast-1.",
             {
               "Ref": "AWS::URLSuffix",
             },
             "/",
             {
-              "Ref": "TodosApiDeploymentStagedev54EE90D3",
+              "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
             },
             "/",
           ],
@@ -81,21 +73,24 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
           "arm64",
         ],
         "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "eb7e470491649a756ba919083dbed4d1ca2863cd5e323b5f713e59c65648f1fd.zip",
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "17966364e0d5b96a9841e30bda01ae810d9b55ddd2ac295af4d1463ac4c5ef10.zip",
         },
         "Environment": {
           "Variables": {
-            "ENVIRONMENT": "dev",
+            "ENVIRONMENT": "test",
             "TABLE_NAME": {
               "Ref": "TodosTable250330D8",
             },
           },
         },
-        "FunctionName": "test-dev-create-todo",
+        "FunctionName": "test-test-create-todo",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CreateTodoLogGroup867A0486",
+          },
+        },
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
@@ -107,29 +102,6 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "CreateTodoHandlerLogRetention16358A66": {
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "CreateTodoHandler16206D94",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 7,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "Custom::LogRetention",
     },
     "CreateTodoHandlerServiceRole2C1A9E5C": {
       "Properties": {
@@ -196,6 +168,14 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "CreateTodoLogGroup867A0486": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
     "DeleteTodoHandler6F45F3E1": {
       "DependsOn": [
         "DeleteTodoHandlerServiceRoleDefaultPolicy136D98EE",
@@ -206,21 +186,24 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
           "arm64",
         ],
         "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "4b48cbc43c29126a92cb967cb9f585b55121203a71995d37ec7196c151da5fe6.zip",
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "137ddcf7865a6a08307ccf9e9ac94ddfb54955f4f43cadbee0717c18023f2b0d.zip",
         },
         "Environment": {
           "Variables": {
-            "ENVIRONMENT": "dev",
+            "ENVIRONMENT": "test",
             "TABLE_NAME": {
               "Ref": "TodosTable250330D8",
             },
           },
         },
-        "FunctionName": "test-dev-delete-todo",
+        "FunctionName": "test-test-delete-todo",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "DeleteTodoLogGroup6391C6CC",
+          },
+        },
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
@@ -232,29 +215,6 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "DeleteTodoHandlerLogRetention519F1866": {
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "DeleteTodoHandler6F45F3E1",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 7,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "Custom::LogRetention",
     },
     "DeleteTodoHandlerServiceRoleB136C94F": {
       "Properties": {
@@ -321,6 +281,14 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "DeleteTodoLogGroup6391C6CC": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
     "GetTodoHandlerA1AE2AD3": {
       "DependsOn": [
         "GetTodoHandlerServiceRoleDefaultPolicy839EE9DA",
@@ -331,21 +299,24 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
           "arm64",
         ],
         "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "3830843e42916511b8505454eddddcedc66537782ceca2858184ff265686de9e.zip",
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "95d1ede5d60a85cd788af5826b991be7e13605f7153769fb0b6c7e502536a26e.zip",
         },
         "Environment": {
           "Variables": {
-            "ENVIRONMENT": "dev",
+            "ENVIRONMENT": "test",
             "TABLE_NAME": {
               "Ref": "TodosTable250330D8",
             },
           },
         },
-        "FunctionName": "test-dev-get-todo",
+        "FunctionName": "test-test-get-todo",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetTodoLogGroup5662EFA8",
+          },
+        },
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
@@ -357,29 +328,6 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "GetTodoHandlerLogRetentionC9A5FDD4": {
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "GetTodoHandlerA1AE2AD3",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 7,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "Custom::LogRetention",
     },
     "GetTodoHandlerServiceRole8CC4A2BA": {
       "Properties": {
@@ -462,6 +410,14 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "GetTodoLogGroup5662EFA8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
     "ListTodosHandler15E54C93": {
       "DependsOn": [
         "ListTodosHandlerServiceRoleDefaultPolicy3A8CDE85",
@@ -472,21 +428,24 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
           "arm64",
         ],
         "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "a6b5c05c8c263f9a49df38e5e56c02275eed49ac163e5ca17eecf28202434669.zip",
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "cd74d444754ed950347a11e6015817bcefaf2c87faad2b828758eb71335f1243.zip",
         },
         "Environment": {
           "Variables": {
-            "ENVIRONMENT": "dev",
+            "ENVIRONMENT": "test",
             "TABLE_NAME": {
               "Ref": "TodosTable250330D8",
             },
           },
         },
-        "FunctionName": "test-dev-list-todos",
+        "FunctionName": "test-test-list-todos",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ListTodosLogGroupEEDD2E1C",
+          },
+        },
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
@@ -498,29 +457,6 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "ListTodosHandlerLogRetention8BDC2CA9": {
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "ListTodosHandler15E54C93",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 7,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "Custom::LogRetention",
     },
     "ListTodosHandlerServiceRole9FB32A3A": {
       "Properties": {
@@ -603,91 +539,28 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
-      "DependsOn": [
-        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
-        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
-      ],
+    "ListTodosLogGroupEEDD2E1C": {
+      "DeletionPolicy": "Delete",
       "Properties": {
-        "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
-        },
-        "Handler": "index.handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs24.x",
-        "Timeout": 900,
+        "RetentionInDays": 7,
       },
-      "Type": "AWS::Lambda::Function",
-    },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "logs:PutRetentionPolicy",
-                "logs:DeleteRetentionPolicy",
-              ],
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
-        "Roles": [
-          {
-            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
     },
     "TodosApi10F608BB": {
       "Properties": {
         "Description": "Todos REST API (Single-Purpose Lambda pattern)",
-        "Name": "test-dev-todos-api",
+        "Name": "test-test-todos-api",
       },
       "Type": "AWS::ApiGateway::RestApi",
+    },
+    "TodosApiAccessLogsE24C913D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
     },
     "TodosApiAccount14B1A5F1": {
       "DeletionPolicy": "Retain",
@@ -738,7 +611,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Retain",
     },
-    "TodosApiDeploymentE94EFA29d2e8015c867c6611a0a8dca2302976c9": {
+    "TodosApiDeploymentE94EFA29e5edd334d4cb1aed3813206b6b8ad010": {
       "DependsOn": [
         "TodosApitodostodoIdDELETE96D7A974",
         "TodosApitodostodoIdGETCE9AA806",
@@ -759,18 +632,36 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::ApiGateway::Deployment",
     },
-    "TodosApiDeploymentStagedev54EE90D3": {
+    "TodosApiDeploymentStagetest4ACEE9C7": {
       "DependsOn": [
         "TodosApiAccount14B1A5F1",
       ],
       "Properties": {
-        "DeploymentId": {
-          "Ref": "TodosApiDeploymentE94EFA29d2e8015c867c6611a0a8dca2302976c9",
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "TodosApiAccessLogsE24C913D",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
         },
+        "DeploymentId": {
+          "Ref": "TodosApiDeploymentE94EFA29e5edd334d4cb1aed3813206b6b8ad010",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+          },
+        ],
         "RestApiId": {
           "Ref": "TodosApi10F608BB",
         },
-        "StageName": "dev",
+        "StageName": "test",
       },
       "Type": "AWS::ApiGateway::Stage",
     },
@@ -804,11 +695,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
                 {
                   "Ref": "AWS::Partition",
                 },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":lambda:path/2015-03-31/functions/",
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
                 {
                   "Fn::GetAtt": [
                     "ListTodosHandler15E54C93",
@@ -829,7 +716,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "TodosApitodosGETApiPermissionTestStackTodosApi7298CD93GETtodosFEB6A389": {
+    "TodosApitodosGETApiPermissionApigwSinglePurposeLambdaTodosApi10A6A12EGETtodosCDD4D9E3": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -847,21 +734,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
               "/",
               {
-                "Ref": "TodosApiDeploymentStagedev54EE90D3",
+                "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
               },
               "/GET/todos",
             ],
@@ -870,7 +749,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodosGETApiPermissionTestTestStackTodosApi7298CD93GETtodos656DC1F8": {
+    "TodosApitodosGETApiPermissionTestApigwSinglePurposeLambdaTodosApi10A6A12EGETtodos7CA5F4B5": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -888,15 +767,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
@@ -922,11 +793,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
                 {
                   "Ref": "AWS::Partition",
                 },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":lambda:path/2015-03-31/functions/",
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
                 {
                   "Fn::GetAtt": [
                     "CreateTodoHandler16206D94",
@@ -947,7 +814,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "TodosApitodosPOSTApiPermissionTestStackTodosApi7298CD93POSTtodos3F66E496": {
+    "TodosApitodosPOSTApiPermissionApigwSinglePurposeLambdaTodosApi10A6A12EPOSTtodosA884E3A9": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -965,21 +832,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
               "/",
               {
-                "Ref": "TodosApiDeploymentStagedev54EE90D3",
+                "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
               },
               "/POST/todos",
             ],
@@ -988,7 +847,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodosPOSTApiPermissionTestTestStackTodosApi7298CD93POSTtodos8B0F445C": {
+    "TodosApitodosPOSTApiPermissionTestApigwSinglePurposeLambdaTodosApi10A6A12EPOSTtodos88533CBD": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1006,15 +865,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
@@ -1052,11 +903,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
                 {
                   "Ref": "AWS::Partition",
                 },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":lambda:path/2015-03-31/functions/",
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
                 {
                   "Fn::GetAtt": [
                     "DeleteTodoHandler6F45F3E1",
@@ -1077,7 +924,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "TodosApitodostodoIdDELETEApiPermissionTestStackTodosApi7298CD93DELETEtodostodoIdE38649A5": {
+    "TodosApitodostodoIdDELETEApiPermissionApigwSinglePurposeLambdaTodosApi10A6A12EDELETEtodostodoId167A73C0": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1095,21 +942,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
               "/",
               {
-                "Ref": "TodosApiDeploymentStagedev54EE90D3",
+                "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
               },
               "/DELETE/todos/*",
             ],
@@ -1118,7 +957,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodostodoIdDELETEApiPermissionTestTestStackTodosApi7298CD93DELETEtodostodoId0D377ADE": {
+    "TodosApitodostodoIdDELETEApiPermissionTestApigwSinglePurposeLambdaTodosApi10A6A12EDELETEtodostodoId1C6C682B": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1136,15 +975,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
@@ -1155,7 +986,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodostodoIdGETApiPermissionTestStackTodosApi7298CD93GETtodostodoIdB8DFA43B": {
+    "TodosApitodostodoIdGETApiPermissionApigwSinglePurposeLambdaTodosApi10A6A12EGETtodostodoIdA904F92A": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1173,21 +1004,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
               "/",
               {
-                "Ref": "TodosApiDeploymentStagedev54EE90D3",
+                "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
               },
               "/GET/todos/*",
             ],
@@ -1196,7 +1019,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodostodoIdGETApiPermissionTestTestStackTodosApi7298CD93GETtodostodoIdF5504FB0": {
+    "TodosApitodostodoIdGETApiPermissionTestApigwSinglePurposeLambdaTodosApi10A6A12EGETtodostodoId11B4709F": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1214,15 +1037,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
@@ -1248,11 +1063,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
                 {
                   "Ref": "AWS::Partition",
                 },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":lambda:path/2015-03-31/functions/",
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
                 {
                   "Fn::GetAtt": [
                     "GetTodoHandlerA1AE2AD3",
@@ -1273,7 +1084,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "TodosApitodostodoIdPUTApiPermissionTestStackTodosApi7298CD93PUTtodostodoId0C6DF4A5": {
+    "TodosApitodostodoIdPUTApiPermissionApigwSinglePurposeLambdaTodosApi10A6A12EPUTtodostodoIdCE85C798": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1291,21 +1102,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
               "/",
               {
-                "Ref": "TodosApiDeploymentStagedev54EE90D3",
+                "Ref": "TodosApiDeploymentStagetest4ACEE9C7",
               },
               "/PUT/todos/*",
             ],
@@ -1314,7 +1117,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "TodosApitodostodoIdPUTApiPermissionTestTestStackTodosApi7298CD93PUTtodostodoId0DDB7D1C": {
+    "TodosApitodostodoIdPUTApiPermissionTestApigwSinglePurposeLambdaTodosApi10A6A12EPUTtodostodoId6B17D293": {
       "Properties": {
         "Action": "lambda:InvokeFunction",
         "FunctionName": {
@@ -1332,15 +1135,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
               {
                 "Ref": "AWS::Partition",
               },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region",
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId",
-              },
-              ":",
+              ":execute-api:ap-northeast-1:123456789012:",
               {
                 "Ref": "TodosApi10F608BB",
               },
@@ -1366,11 +1161,7 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
                 {
                   "Ref": "AWS::Partition",
                 },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region",
-                },
-                ":lambda:path/2015-03-31/functions/",
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
                 {
                   "Fn::GetAtt": [
                     "UpdateTodoHandler611F8369",
@@ -1407,10 +1198,13 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
             "KeyType": "HASH",
           },
         ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
         "SSESpecification": {
           "SSEEnabled": true,
         },
-        "TableName": "test-dev-todos",
+        "TableName": "test-test-todos",
       },
       "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Delete",
@@ -1425,21 +1219,24 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
           "arm64",
         ],
         "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "78cff9b2c656377395fa9a816fa6c318cddcbe59a970653f88c14e915f18d244.zip",
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "d253af7d87b78b241db9d3df3ca2340afc5c2ccecd62b3afcc1a9caf075f8c80.zip",
         },
         "Environment": {
           "Variables": {
-            "ENVIRONMENT": "dev",
+            "ENVIRONMENT": "test",
             "TABLE_NAME": {
               "Ref": "TodosTable250330D8",
             },
           },
         },
-        "FunctionName": "test-dev-update-todo",
+        "FunctionName": "test-test-update-todo",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "UpdateTodoLogGroupCAE17976",
+          },
+        },
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
@@ -1451,29 +1248,6 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "UpdateTodoHandlerLogRetention403E0846": {
-      "Properties": {
-        "LogGroupName": {
-          "Fn::Join": [
-            "",
-            [
-              "/aws/lambda/",
-              {
-                "Ref": "UpdateTodoHandler611F8369",
-              },
-            ],
-          ],
-        },
-        "RetentionInDays": 7,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "Custom::LogRetention",
     },
     "UpdateTodoHandlerServiceRole4BB3808D": {
       "Properties": {
@@ -1560,6 +1334,14 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "UpdateTodoLogGroupCAE17976": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
   },
   "Rules": {
     "CheckBootstrapVersion": {
@@ -1588,5 +1370,22 @@ exports[`ApigwSinglePurposeLambdaStack snapshot matches 1`] = `
       ],
     },
   },
+}
+`;
+
+exports[`ApigwSinglePurposeLambdaStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Account": 1,
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 5,
+  "AWS::ApiGateway::Resource": 2,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::IAM::Policy": 5,
+  "AWS::IAM::Role": 6,
+  "AWS::Lambda::Function": 5,
+  "AWS::Lambda::Permission": 10,
+  "AWS::Logs::LogGroup": 6,
 }
 `;

@@ -25,7 +25,10 @@
     "stage:destroy:all": "cross-env cdk destroy '**' -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint \"**/*.ts\" --fix",
-    "format": "prettier --write \"**/*.ts\""
+    "format": "prettier --write \"**/*.ts\"",
+    "delstack": "delstack cdk -f -y -c project=${PROJECT} -c env=${ENV} --profile ${PROJECT}-${ENV}",
+    "docs": "npx typedoc",
+    "clean": "rimraf ./cdk.out ./dist ./node_modules/.cache"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1040 460" width="1040px" height="460px" font-family="Helvetica, Arial, sans-serif" content="&lt;mxfile host=&quot;app.diagrams.net&quot; agent=&quot;aws-cdk-reference-architectures&quot;&gt;&lt;diagram id=&quot;overview&quot; name=&quot;overview&quot;&gt;&lt;mxGraphModel dx=&quot;1040&quot; dy=&quot;460&quot; grid=&quot;0&quot; page=&quot;1&quot; pageWidth=&quot;1040&quot; pageHeight=&quot;460&quot; background=&quot;#ffffff&quot;&gt;&lt;root&gt;&lt;mxCell id=&quot;0&quot;/&gt;&lt;mxCell id=&quot;1&quot; parent=&quot;0&quot;/&gt;&lt;/root&gt;&lt;/mxGraphModel&gt;&lt;/diagram&gt;&lt;/mxfile&gt;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5A6472"/>
+    </marker>
+  </defs>
+  <style>
+    .title { font-size: 19px; font-weight: 700; fill: #16191F; }
+    .subtitle { font-size: 12px; fill: #5A6472; }
+    .cloudTitle { font-size: 13px; font-weight: 700; fill: #232F3E; }
+    .label { font-size: 12px; font-weight: 600; fill: #16191F; text-anchor: middle; }
+    .sublabel { font-size: 10px; fill: #5A6472; text-anchor: middle; }
+    .tileGlyph { font-size: 12px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+    .edge { stroke: #5A6472; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    .edgeLabel { font-size: 9.5px; fill: #40474F; text-anchor: middle; }
+    .codeBox { font-size: 10px; fill: #40474F; }
+    .note { font-size: 10.5px; fill: #AF2E19; }
+  </style>
+  <rect x="0" y="0" width="1040" height="460" fill="#ffffff"/>
+  <text x="30" y="34" class="title">API Gateway + Lambda Web Adapter (Express.js)</text>
+  <text x="30" y="54" class="subtitle">One Lambda runs a standard Express HTTP server. The Lambda Web Adapter layer turns the proxy event into a real HTTP request to localhost:8080.</text>
+  <line x1="30" y1="66" x2="1010" y2="66" stroke="#ED7100" stroke-width="2.5"/>
+
+  <rect x="30" y="84" width="980" height="350" fill="none" stroke="#232F3E" stroke-width="1.4"/>
+  <text x="46" y="104" class="cloudTitle">AWS Cloud &#183; ap-northeast-1</text>
+
+  <!-- Client -->
+  <rect x="60" y="220" width="56" height="56" rx="6" fill="#232F3D"/>
+  <text x="88" y="253" class="tileGlyph">HTTP</text>
+  <text x="88" y="292" class="label">Client</text>
+  <text x="88" y="307" class="sublabel">curl / SPA / mobile</text>
+
+  <!-- API Gateway -->
+  <rect x="220" y="220" width="56" height="56" rx="6" fill="#E7157B"/>
+  <text x="248" y="253" class="tileGlyph">API</text>
+  <text x="248" y="292" class="label">API Gateway</text>
+  <text x="248" y="307" class="sublabel">REST API &#183; ANY /{proxy+}</text>
+  <text x="248" y="321" class="sublabel">access + INFO logging</text>
+
+  <!-- Lambda function with Web Adapter layer -->
+  <rect x="420" y="160" width="260" height="190" rx="8" fill="#FFF3E8" stroke="#ED7100" stroke-width="1.4"/>
+  <text x="550" y="182" class="label">lambda-web-adapter function (ARM64)</text>
+
+  <rect x="440" y="200" width="90" height="40" rx="6" fill="#8C4FFF"/>
+  <text x="485" y="224" class="tileGlyph">LWA layer</text>
+  <text x="485" y="255" class="sublabel">/opt/bootstrap</text>
+  <text x="485" y="268" class="sublabel">wraps the runtime</text>
+
+  <rect x="560" y="200" width="100" height="40" rx="6" fill="#ED7100"/>
+  <text x="610" y="224" class="tileGlyph">Express app</text>
+  <text x="610" y="255" class="sublabel">listens :8080</text>
+  <text x="610" y="268" class="sublabel">GET /health</text>
+
+  <text x="440" y="300" class="codeBox">event &#8594; HTTP request &#8594; Express router &#8594; HTTP response &#8594; event</text>
+  <text x="440" y="320" class="codeBox">app.use('/todos', todosRouter)  //  GET POST GET PUT DELETE</text>
+
+  <!-- DynamoDB -->
+  <rect x="890" y="220" width="56" height="56" rx="6" fill="#4D72F3"/>
+  <text x="918" y="253" class="tileGlyph">DDB</text>
+  <text x="918" y="292" class="label">DynamoDB</text>
+  <text x="918" y="307" class="sublabel">Todos table (on-demand)</text>
+  <text x="918" y="321" class="sublabel">PITR + SSE</text>
+
+  <text x="550" y="378" class="note">Same image runs unchanged on Lambda, Fargate, or a local `node` process.</text>
+
+  <!-- edges -->
+  <path class="edge" d="M 116 248 L 215 248"/>
+  <text x="165" y="241" class="edgeLabel">HTTPS</text>
+  <path class="edge" d="M 276 248 L 415 250"/>
+  <text x="345" y="241" class="edgeLabel">AWS_PROXY (whole API)</text>
+  <path class="edge" d="M 680 250 L 885 248"/>
+  <text x="782" y="241" class="edgeLabel">SDK &#183; grantReadWriteData</text>
+</svg>

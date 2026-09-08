@@ -24,6 +24,42 @@
     "articles": {}
   },
   {
+    "id": "apigw-single-purpose-lambda",
+    "title": "API Gateway + Single-Purpose Lambda",
+    "description": "A Todos REST API where every API Gateway method is backed by its own narrowly-scoped Lambda function, each with an independent IAM role, log group, bundle, and least-privilege DynamoDB grant (read-only for GET, write-only for POST/DELETE). One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.",
+    "image": "apigw-single-purpose-lambda/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "API Gateway", "Lambda", "DynamoDB", "Serverless"],
+    "link": "apigw-single-purpose-lambda",
+    "difficulty": "intermediate",
+    "level": 300,
+    "date": "2026-09-07",
+    "articles": {}
+  },
+  {
+    "id": "apigw-lambdalith",
+    "title": "API Gateway + Lambdalith (Hono)",
+    "description": "The same Todos REST API served by a single Lambda function, with routing done in-process by the Hono framework via its aws-lambda adapter and API Gateway reduced to a thin {proxy+} pass-through. One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.",
+    "image": "apigw-lambdalith/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "API Gateway", "Lambda", "DynamoDB", "Hono", "Serverless"],
+    "link": "apigw-lambdalith",
+    "difficulty": "intermediate",
+    "level": 300,
+    "date": "2026-09-07",
+    "articles": {}
+  },
+  {
+    "id": "apigw-lambda-web-adapter",
+    "title": "API Gateway + Lambda Web Adapter (Express.js)",
+    "description": "The same Todos REST API served by a single Lambda that runs a standard Express.js HTTP server, with the AWS Lambda Web Adapter layer translating the API Gateway proxy event into a real HTTP request so the identical image also runs on Fargate or a local node process. One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.",
+    "image": "apigw-lambda-web-adapter/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "API Gateway", "Lambda", "DynamoDB", "Lambda Web Adapter", "Express", "Serverless"],
+    "link": "apigw-lambda-web-adapter",
+    "difficulty": "intermediate",
+    "level": 300,
+    "date": "2026-09-07",
+    "articles": {}
+  },
+  {
     "id": "route53-phz-delegation",
     "title": "Route 53 Private Hosted Zone Delegation",
     "description": "Parent private hosted zone system.example.com delegates dev.system.example.com and stg.system.example.com to two child VPCs using the June 2025 Route 53 Resolver DNS delegation feature (INBOUND_DELEGATION endpoints + DELEGATE resolver rules), with a fourth on-premises-role VPC and all four VPCs joined by one Transit Gateway.",
