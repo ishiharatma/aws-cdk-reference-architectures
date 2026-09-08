@@ -106,7 +106,7 @@ jobs:
             | grep -oE '^infrastructure/workspaces/[^/]+/' \
             | cut -d'/' -f3 \
             | sort -u \
-            | tr '\n' ' ')
+            | tr '\n' ' ' || true)
           echo "list=$LIST" >> "$GITHUB_OUTPUT"
 
       - name: Build matrix
