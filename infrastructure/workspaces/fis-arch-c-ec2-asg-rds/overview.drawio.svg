@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="1180" height="730" viewBox="0 0 1180 730">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555555"/>
+    </marker>
+    <marker id="arr_red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cc0000"/>
+    </marker>
+  </defs>
+  <rect width="1180" height="730" fill="#fafafa"/>
+<text x="590" y="36" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#1a1a1a">Architecture C: CloudFront + Internal ALB + EC2 Auto Scaling Group + Aurora PostgreSQL</text>
+<rect x="20" y="120" width="100" height="60" rx="8" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+<text x="70" y="150" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internet</text>
+<rect x="165" y="100" width="145" height="100" rx="8" fill="#f0e6ff" stroke="#7928CA" stroke-width="1.5"/>
+<text x="237" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Amazon CloudFront</text>
+<text x="237" y="164" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">VPC Origin + S3 fallback</text>
+<rect x="165" y="215" width="145" height="55" rx="8" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/>
+<text x="237" y="234" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">CloudWatch Alarm</text>
+<text x="237" y="256" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">ALB 5xx ≥ 10/min</text>
+<rect x="355" y="60" width="805" height="600" rx="12" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="365" y="78" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#9e9e9e">VPC  10.20.0.0/16</text>
+<rect x="370" y="85" width="230" height="110" rx="12" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="380" y="103" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#1976d2">Public Subnet /24</text>
+<rect x="385" y="115" width="120" height="55" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="445" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">NAT Gateway</text>
+<rect x="370" y="215" width="775" height="220" rx="12" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="380" y="233" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#388e3c">Private Subnet /24</text>
+<rect x="390" y="255" width="150" height="70" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+<text x="465" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internal ALB</text>
+<rect x="640" y="235" width="240" height="110" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+<text x="760" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">EC2 Auto Scaling Group</text>
+<text x="760" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Amazon Linux 2023 · SSM Agent</text>
+<rect x="650" y="295" width="60" height="40" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="680" y="319" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">EC2</text>
+<rect x="722" y="295" width="60" height="40" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="752" y="319" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">EC2</text>
+<rect x="794" y="295" width="60" height="40" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="824" y="319" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">EC2</text>
+<rect x="780" y="160" width="160" height="50" rx="8" fill="#ede7f6" stroke="#4527a0" stroke-width="1.5"/>
+<text x="860" y="177" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">AWS Systems Manager</text>
+<text x="860" y="199" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Run Command</text>
+<rect x="370" y="455" width="775" height="155" rx="12" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="380" y="473" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">Isolated Subnet /24</text>
+<rect x="400" y="490" width="180" height="85" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="490" y="524" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Writer</text>
+<text x="490" y="546" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16 sv2 · 0.5–4 ACU</text>
+<rect x="640" y="490" width="180" height="85" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="730" y="524" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Reader</text>
+<text x="730" y="546" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16 sv2 · 0.5–4 ACU</text>
+<line x1="580" y1="533" x2="640" y2="533" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+<text x="610" y="527" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#1565c0">replication</text>
+<line x1="120" y1="150" x2="165" y2="150" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<polyline points="310,150 358,150 358,290 390,290" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+<line x1="540" y1="290" x2="640" y2="290" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<polyline points="760,345 760,445 490,445 490,490" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+<polyline points="860,210 860,295" fill="none" stroke="#4527a0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+<text x="865" y="255" font-family="Arial,sans-serif" font-size="9" fill="#4527a0">Run Command</text>
+<rect x="20" y="390" width="310" height="325" rx="12" fill="#ffebee" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="30" y="408" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments</text>
+<rect x="30" y="425" width="290" height="56" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="444" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">C-1: EC2 Instance Termination (50% PERCENT, tag-based)</text>
+<text x="40" y="461" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ec2:terminate-instances</text>
+<rect x="30" y="490" width="290" height="56" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="509" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">C-2: CPU Stress via SSM (AWSFIS-Run-CPU-Stress · 5 min)</text>
+<text x="40" y="526" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ssm:send-command</text>
+<rect x="30" y="555" width="290" height="56" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="574" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">C-3: Aurora Writer→Reader Failover</text>
+<text x="40" y="591" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:rds:failover-db-cluster</text>
+<rect x="30" y="620" width="290" height="56" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="639" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">C-4: EC2→DB Blackhole TCP 5432 (SSM · 5 min)</text>
+<text x="40" y="656" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ssm:send-command + AWSFIS-Run-Network-Blackhole-Port</text>
+<rect x="30" y="688" width="290" height="22" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+<text x="40" y="704" font-family="Arial,sans-serif" font-size="10" fill="#e65100">Stop: ALB 5xx Alarm → auto-stops experiment</text>
+<polyline points="175,390 175,480 400,480 400,490" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+<polyline points="175,390 175,300 640,300" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+</svg>

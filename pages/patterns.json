@@ -1,5 +1,17 @@
 [
   {
+    "id": "fis-arch-a-ecs-aurora",
+    "title": "FIS Chaos: CloudFront + Internal ALB + ECS Fargate + Aurora PostgreSQL",
+    "description": "Four AWS FIS chaos experiment templates for a container-based three-tier web architecture: Aurora writer→reader failover, ECS all-tasks stop (with CloudFront S3 fallback), ECS→DB network blackhole on TCP 5432, and ALB→ECS network blackhole on TCP 80 — each with an ALB 5xx CloudWatch Alarm stop condition.",
+    "image": "fis-arch-a-ecs-aurora/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "ECS", "Fargate", "ALB", "CloudFront", "Aurora", "PostgreSQL", "VPC Origin"],
+    "link": "fis-arch-a-ecs-aurora",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-08",
+    "articles": {}
+  },
+  {
     "id": "fis-arch-c-ec2-asg-rds",
     "title": "FIS Chaos: CloudFront + Internal ALB + EC2 Auto Scaling Group + Aurora PostgreSQL",
     "description": "Four AWS FIS chaos experiment templates for an EC2-based three-tier web architecture: EC2 instance termination (50% PERCENT), CPU stress via SSM (all instances, 5 min), Aurora writer→reader failover, and EC2→DB network blackhole on TCP port 5432 — each with an ALB 5xx CloudWatch Alarm stop condition.",

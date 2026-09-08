@@ -105,7 +105,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -138,7 +138,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -181,7 +181,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -352,7 +352,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
     "AlbSecurityGroup86A59E99": {
       "Properties": {
         "GroupDescription": "Internal ALB ingress from CloudFront VPC Origin only",
-        "GroupName": "fis-chaos-dev-alb-sg",
+        "GroupName": "fis-chaos-test-alb-sg",
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -363,7 +363,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -395,12 +395,12 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
     "AppLogGroup7D8CD952": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/ecs/fis-chaos-dev/app",
+        "LogGroupName": "/ecs/fis-chaos-test/app",
         "RetentionInDays": 7,
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -477,7 +477,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "fis-target",
@@ -525,7 +525,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -567,7 +567,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -723,7 +723,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
     "Distribution830FAC52": {
       "Properties": {
         "DistributionConfig": {
-          "Comment": "fis-chaos-dev FIS chaos demo",
+          "Comment": "fis-chaos-test FIS chaos demo",
           "DefaultCacheBehavior": {
             "AllowedMethods": [
               "GET",
@@ -816,7 +816,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -831,7 +831,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -865,7 +865,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
     },
     "EcsCluster97242B84": {
       "Properties": {
-        "ClusterName": "fis-chaos-dev-cluster",
+        "ClusterName": "fis-chaos-test-cluster",
         "ClusterSettings": [
           {
             "Name": "containerInsights",
@@ -875,7 +875,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -888,7 +888,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
     "EcsSecurityGroup44008BF1": {
       "Properties": {
         "GroupDescription": "ECS Fargate tasks ingress from ALB only",
-        "GroupName": "fis-chaos-dev-ecs-sg",
+        "GroupName": "fis-chaos-test-ecs-sg",
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -913,7 +913,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -958,7 +958,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1022,7 +1022,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1268,7 +1268,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1315,7 +1315,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1406,7 +1406,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1604,11 +1604,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
       },
     },
     "VpcAvailabilityZones3F7C802F": {
-      "Description": "Availability Zones for fis-chaos/dev/fis-chaos-vpc",
+      "Description": "Availability Zones for fis-chaos/test/fis-chaos-vpc",
       "Value": "dummy1a,dummy1b",
     },
     "VpcCidr2979DF70": {
-      "Description": "VPC CIDR for fis-chaos/dev/fis-chaos-vpc",
+      "Description": "VPC CIDR for fis-chaos/test/fis-chaos-vpc",
       "Value": {
         "Fn::GetAtt": [
           "Vpc49347EA9",
@@ -1617,7 +1617,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
       },
     },
     "VpcIdBCACDA58": {
-      "Description": "VPC ID for fis-chaos/dev/fis-chaos-vpc",
+      "Description": "VPC ID for fis-chaos/test/fis-chaos-vpc",
       "Value": {
         "Ref": "Vpc49347EA9",
       },
@@ -1679,7 +1679,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1742,11 +1742,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           "PasswordLength": 30,
           "SecretStringTemplate": "{"username":"postgres"}",
         },
-        "Name": "fis-chaos-dev-aurora-secret",
+        "Name": "fis-chaos-test-aurora-secret",
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1783,7 +1783,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1811,7 +1811,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1839,7 +1839,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1853,7 +1853,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
     "DbSecurityGroupE9D701AD": {
       "Properties": {
         "GroupDescription": "Aurora PostgreSQL security group - ingress from VPC CIDR on port 5432",
-        "GroupName": "fis-chaos-dev-db-sg",
+        "GroupName": "fis-chaos-test-db-sg",
         "SecurityGroupEgress": [
           {
             "CidrIp": "255.255.255.255/32",
@@ -1880,7 +1880,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1914,7 +1914,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1956,7 +1956,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -1999,11 +1999,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
-            "Value": "fis-chaos/dev/fis-chaos-vpc",
+            "Value": "fis-chaos/test/fis-chaos-vpc",
           },
           {
             "Key": "Project",
@@ -2050,11 +2050,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
-            "Value": "fis-chaos/dev/fis-chaos-vpc",
+            "Value": "fis-chaos/test/fis-chaos-vpc",
           },
           {
             "Key": "Project",
@@ -2073,11 +2073,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
-            "Value": "fis-chaos/dev/fis-chaos-vpc",
+            "Value": "fis-chaos/test/fis-chaos-vpc",
           },
           {
             "Key": "Project",
@@ -2103,7 +2103,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2136,7 +2136,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2158,7 +2158,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2202,7 +2202,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2225,11 +2225,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
-            "Value": "fis-chaos/dev/NatgatewayEIP1",
+            "Value": "fis-chaos/test/NatgatewayEIP1",
           },
           {
             "Key": "Project",
@@ -2257,7 +2257,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2301,7 +2301,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2335,7 +2335,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2379,7 +2379,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2429,7 +2429,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2448,7 +2448,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2492,7 +2492,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2529,7 +2529,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2573,7 +2573,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           },
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
@@ -2627,11 +2627,11 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Name",
-            "Value": "fis-chaos/dev/fis-chaos-vpc",
+            "Value": "fis-chaos/test/fis-chaos-vpc",
           },
           {
             "Key": "Project",
@@ -2756,7 +2756,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
           },
         ],
         "AlarmDescription": "FIS stop condition — ALB target 5xx errors exceed safety threshold",
-        "AlarmName": "fis-chaos-dev-fis-stop-alb-5xx",
+        "AlarmName": "fis-chaos-test-fis-stop-alb-5xx",
         "ComparisonOperator": "GreaterThanOrEqualToThreshold",
         "Dimensions": [
           {
@@ -2774,7 +2774,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -2794,7 +2794,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
           },
         ],
         "AlarmDescription": "FIS stop condition — Aurora DB connections drop to zero (unexpected total loss)",
-        "AlarmName": "fis-chaos-dev-fis-stop-aurora-connections",
+        "AlarmName": "fis-chaos-test-fis-stop-aurora-connections",
         "ComparisonOperator": "LessThanOrEqualToThreshold",
         "Dimensions": [
           {
@@ -2812,7 +2812,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -2829,26 +2829,26 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
             "Value": "fis-chaos",
           },
         ],
-        "TopicName": "fis-chaos-dev-fis-alarms",
+        "TopicName": "fis-chaos-test-fis-alarms",
       },
       "Type": "AWS::SNS::Topic",
     },
     "FisLogGroupBD16B862": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/fis/fis-chaos-dev",
+        "LogGroupName": "/fis/fis-chaos-test",
         "RetentionInDays": 30,
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -2967,11 +2967,11 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
             "PolicyName": "FisChaosPolicy",
           },
         ],
-        "RoleName": "fis-chaos-dev-fis-role",
+        "RoleName": "fis-chaos-test-fis-role",
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -3022,8 +3022,8 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         ],
         "Tags": {
           "Architecture": "CloudFront-ALB-ECS-Aurora",
-          "Environment": "dev",
-          "Name": "fis-chaos-dev-A1-aurora-failover",
+          "Environment": "test",
+          "Name": "fis-chaos-test-A1-aurora-failover",
           "Project": "fis-chaos",
           "Scenario": "A-1",
         },
@@ -3094,8 +3094,8 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         ],
         "Tags": {
           "Architecture": "CloudFront-ALB-ECS-Aurora",
-          "Environment": "dev",
-          "Name": "fis-chaos-dev-A2-ecs-task-stop",
+          "Environment": "test",
+          "Name": "fis-chaos-test-A2-ecs-task-stop",
           "Project": "fis-chaos",
           "Scenario": "A-2",
         },
@@ -3168,8 +3168,8 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         ],
         "Tags": {
           "Architecture": "CloudFront-ALB-ECS-Aurora",
-          "Environment": "dev",
-          "Name": "fis-chaos-dev-A3-ecs-db-blackhole",
+          "Environment": "test",
+          "Name": "fis-chaos-test-A3-ecs-db-blackhole",
           "Project": "fis-chaos",
           "Scenario": "A-3",
         },
@@ -3242,8 +3242,8 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         ],
         "Tags": {
           "Architecture": "CloudFront-ALB-ECS-Aurora",
-          "Environment": "dev",
-          "Name": "fis-chaos-dev-A4-alb-ecs-blackhole",
+          "Environment": "test",
+          "Name": "fis-chaos-test-A4-alb-ecs-blackhole",
           "Project": "fis-chaos",
           "Scenario": "A-4",
         },

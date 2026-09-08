@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="1160" height="720" viewBox="0 0 1160 720">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555555"/>
+    </marker>
+    <marker id="arr_red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cc0000"/>
+    </marker>
+  </defs>
+  <rect width="1160" height="720" fill="#fafafa"/>
+<text x="580" y="36" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#1a1a1a">Architecture A: CloudFront + Internal ALB + ECS Fargate + Aurora PostgreSQL</text>
+<rect x="20" y="120" width="100" height="60" rx="8" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+<text x="70" y="150" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internet</text>
+<rect x="165" y="100" width="140" height="100" rx="8" fill="#f0e6ff" stroke="#7928CA" stroke-width="1.5"/>
+<text x="235" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Amazon CloudFront</text>
+<text x="235" y="164" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">VPC Origin + S3 fallback</text>
+<text x="235" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-style="italic" fill="#888">Origin Group fallback</text>
+<rect x="165" y="220" width="140" height="55" rx="8" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/>
+<text x="235" y="239" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">CloudWatch Alarm</text>
+<text x="235" y="261" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">ALB 5xx ≥ 10/min</text>
+<rect x="350" y="60" width="790" height="580" rx="12" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="360" y="78" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#9e9e9e">VPC  10.10.0.0/16</text>
+<rect x="365" y="85" width="230" height="110" rx="12" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="375" y="103" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#1976d2">Public Subnet /24</text>
+<rect x="380" y="115" width="120" height="55" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="440" y="142" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">NAT Gateway</text>
+<rect x="365" y="215" width="760" height="200" rx="12" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="375" y="233" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#388e3c">Private Subnet /24</text>
+<rect x="390" y="255" width="150" height="70" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+<text x="465" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internal ALB</text>
+<rect x="640" y="245" width="200" height="90" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+<text x="740" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">ECS Fargate Service</text>
+<text x="740" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Amazon Linux 2023 tasks</text>
+<rect x="645" y="295" width="50" height="30" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="670" y="315" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">Task</text>
+<rect x="707" y="295" width="50" height="30" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="732" y="315" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">Task</text>
+<rect x="769" y="295" width="50" height="30" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
+<text x="794" y="315" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">Task</text>
+<rect x="365" y="435" width="760" height="145" rx="12" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="375" y="453" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">Isolated Subnet /24</text>
+<rect x="395" y="475" width="180" height="80" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="485" y="507" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Writer</text>
+<text x="485" y="529" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16.4 sv2 · 0.5–4 ACU</text>
+<rect x="625" y="475" width="180" height="80" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="715" y="507" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Reader</text>
+<text x="715" y="529" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16.4 sv2 · 0.5–4 ACU</text>
+<line x1="575" y1="515" x2="625" y2="515" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+<text x="600" y="510" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#1565c0">replication</text>
+<line x1="120" y1="150" x2="165" y2="150" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<polyline points="305,150 350,150 350,290 390,290" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+<line x1="540" y1="290" x2="640" y2="290" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<polyline points="740,335 740,420 485,420 485,475" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+<rect x="20" y="390" width="310" height="310" rx="12" fill="#ffebee" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="30" y="408" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments</text>
+<rect x="30" y="425" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="443" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-1: Aurora Writer→Reader Failover</text>
+<text x="40" y="459" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:rds:failover-db-cluster</text>
+<rect x="30" y="485" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="503" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-2: ECS All-Tasks Stop (100%)</text>
+<text x="40" y="519" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:stop-task</text>
+<rect x="30" y="545" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="563" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-3: ECS→DB Blackhole (egress TCP 5432 · 5 min)</text>
+<text x="40" y="579" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:network-blackhole-port</text>
+<rect x="30" y="605" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="40" y="623" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-4: ALB→ECS Blackhole (ingress TCP 80 · 5 min)</text>
+<text x="40" y="639" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:network-blackhole-port</text>
+<rect x="30" y="670" width="290" height="22" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+<text x="40" y="686" font-family="Arial,sans-serif" font-size="10" fill="#e65100">Stop: ALB 5xx Alarm → auto-stops experiment</text>
+<polyline points="175,390 175,460 395,460 395,475" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+<polyline points="175,390 175,300 640,300" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+</svg>

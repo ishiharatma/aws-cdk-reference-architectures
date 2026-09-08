@@ -14,7 +14,7 @@ const defaultEnv = {
     region: 'ap-northeast-1',
 };
 
-const projectName = 'fis-chaos-b';
+const projectName = 'fis-chaos';
 const envName: Environment = Environment.TEST;
 
 if (!params[envName]) {
@@ -35,6 +35,7 @@ function makeStacks(appId: string) {
         env: defaultEnv,
         isAutoDeleteObject: true,
         terminationProtection: false,
+        vpcConfig: envParams.vpcConfig,
     });
 
     const appStack = new AppStack(app, `${appId}App`, {
@@ -43,7 +44,11 @@ function makeStacks(appId: string) {
         env: defaultEnv,
         isAutoDeleteObject: true,
         terminationProtection: false,
-        table: baseStack.table,
+        vpc: baseStack.vpc,
+        dbSecurityGroup: baseStack.dbSecurityGroup,
+        auroraCluster: baseStack.auroraCluster,
+        auroraSecret: baseStack.auroraSecret,
+        cloudfrontManagedPrefixList: envParams.cloudfrontManagedPrefixList,
     });
 
     const fisStack = new FisStack(app, `${appId}Fis`, {
@@ -51,8 +56,10 @@ function makeStacks(appId: string) {
         environment: envName,
         env: defaultEnv,
         terminationProtection: false,
-        apiFunction: appStack.apiFunction,
-        table: baseStack.table,
+        ecsCluster: appStack.ecsCluster,
+        ecsService: appStack.ecsService,
+        alb: appStack.alb,
+        auroraCluster: baseStack.auroraCluster,
         alarmEmail: envParams.alarmEmail,
     });
 
@@ -60,35 +67,92 @@ function makeStacks(appId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Suppression helper
+// Suppression helpers
 // ---------------------------------------------------------------------------
 
 function suppressBaseStack(stack: BaseStack): void {
-    // PITR is intentionally disabled — this is a chaos-engineering demo table
-    // that costs zero at rest. Point-in-time recovery adds cost with no benefit here.
-    NagSuppressions.addResourceSuppressionsByPath(
+    const p = `/${stack.stackName}`;
+
+    // Aurora deletion protection is intentionally disabled — chaos demo cluster
+    // that is destroyed with the stack and never holds production data.
+    NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/Aurora/Resource`, [
+        {
+            id: 'AwsSolutions-RDS10',
+            reason:
+                'Deletion protection is intentionally disabled for this chaos demo cluster. ' +
+                'The cluster is destroyed with the stack and never holds production data.',
+        },
+    ]);
+
+    // AuroraSecret: automatic rotation is out of scope for a short-lived chaos demo.
+    NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/AuroraSecret/Resource`, [
+        {
+            id: 'AwsSolutions-SMG4',
+            reason:
+                'Automatic secret rotation is not configured. This is a chaos engineering demo ' +
+                'where the cluster and secret are destroyed after the experiment window. ' +
+                'Rotation is out of scope for this short-lived reference pattern.',
+        },
+    ]);
+
+    // DbSecurityGroup: AwsSolutions-EC23 cannot be validated because vpc.vpcCidrBlock
+    // resolves to an intrinsic function (Fn::GetAtt on VPC CidrBlock) at synthesis time.
+    NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/DbSecurityGroup/Resource`, [
+        {
+            id: 'CdkNagValidationFailure',
+            reason:
+                'AwsSolutions-EC23 cannot be validated: vpc.vpcCidrBlock resolves to an ' +
+                'intrinsic function at synthesis time. The actual ingress source is the VPC CIDR ' +
+                '(not 0.0.0.0/0); cdk-nag cannot evaluate intrinsic values at synth time.',
+        },
+    ]);
+
+    // Stack-wide suppressions:
+    // VPC7: VPC Flow Logs are out of scope for this chaos engineering demo.
+    // RDS6: IAM database authentication is not enabled (Secrets Manager credentials used).
+    // IAM4/IAM5: CDK-managed LogRetention Lambda (created by cloudwatchLogsRetention on Aurora)
+    //   uses AWSLambdaBasicExecutionRole and requires wildcard log management permissions.
+    NagSuppressions.addStackSuppressions(
         stack,
-        `/${stack.stackName}/ItemsTable/Resource`,
         [
             {
-                id: 'AwsSolutions-DDB3',
+                id: 'AwsSolutions-VPC7',
                 reason:
-                    'PITR is intentionally disabled for this PAY_PER_REQUEST chaos demo table. ' +
-                    'The table is destroyed with the stack and never holds production data.',
+                    'VPC Flow Logs are not enabled. Network traffic analysis is out of scope ' +
+                    'for this chaos engineering reference pattern.',
+            },
+            {
+                id: 'AwsSolutions-RDS6',
+                reason:
+                    'IAM database authentication is not enabled. Credentials are managed via ' +
+                    'Secrets Manager. IAM auth is out of scope for this chaos engineering reference pattern.',
+            },
+            {
+                id: 'AwsSolutions-IAM4',
+                reason:
+                    'CDK-managed LogRetention Lambda (for Aurora CloudWatch log retention) ' +
+                    'uses AWSLambdaBasicExecutionRole, which is the accepted baseline for internal CDK custom resources.',
+                appliesTo: [
+                    'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+                ],
+            },
+            {
+                id: 'AwsSolutions-IAM5',
+                reason:
+                    'CDK-managed LogRetention Lambda service role requires wildcard permissions ' +
+                    'for log group management (CreateLogGroup, PutRetentionPolicy). These are ' +
+                    'CDK-generated internal resources not under direct author control.',
             },
         ],
+        true,
     );
 }
 
 function suppressAppStack(stack: AppStack): void {
     const p = `/${stack.stackName}`;
 
-    // CloudFront uses the default *.cloudfront.net certificate (no custom domain).
-    // AWS forces TLSv1 availability regardless of minimumProtocolVersion in this case.
-    // WAF is out of scope for this serverless reference pattern.
-    // Access logging is not enabled on the distribution level (access logs would require
-    // a separate S3 bucket with ACL mode, which is out of scope here).
-    // Geo restriction is intentionally absent — this is a public chaos engineering demo API.
+    // CloudFront: default *.cloudfront.net certificate, no WAF, no access logging,
+    // no geo restriction — all intentionally absent for a chaos engineering demo.
     NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/Distribution/Resource`, [
         {
             id: 'AwsSolutions-CFR4',
@@ -98,7 +162,7 @@ function suppressAppStack(stack: AppStack): void {
         },
         {
             id: 'AwsSolutions-CFR2',
-            reason: 'WAF integration is out of scope for this basic serverless chaos reference pattern.',
+            reason: 'WAF integration is out of scope for this ECS chaos reference pattern.',
         },
         {
             id: 'AwsSolutions-CFR3',
@@ -109,66 +173,94 @@ function suppressAppStack(stack: AppStack): void {
         {
             id: 'AwsSolutions-CFR1',
             reason:
-                'Geo restriction is intentionally absent. This is a public demo API for FIS chaos ' +
+                'Geo restriction is intentionally absent. This is a public demo for FIS chaos ' +
                 'engineering — geographic access restrictions are out of scope.',
         },
     ]);
 
-    // API Gateway HTTP API — authorizer is intentionally absent (public demo API).
-    // Access logging IS enabled via CfnStage.accessLogSettings, but cdk-nag inspects
-    // the L1 resource and may not recognise the escape-hatch approach.
-    NagSuppressions.addStackSuppressions(
-        stack,
-        [
-            {
-                id: 'AwsSolutions-APIG4',
-                reason:
-                    'No authorizer is configured by design. This is a public demo API ' +
-                    'used to drive FIS chaos experiments — authentication is out of scope.',
-            },
-            {
-                id: 'AwsSolutions-APIG1',
-                reason:
-                    'Access logging is enabled via CfnStage.accessLogSettings (escape-hatch). ' +
-                    'cdk-nag may not recognise this approach on the HTTP API default stage.',
-            },
-        ],
-        true,
-    );
-
-    // Lambda function: AWSLambdaBasicExecutionRole is an accepted baseline for sample functions.
-    // AwsSolutions-L1 fires because cdk-nag may lag behind AWS runtime releases and not yet
-    // recognise Python 3.13 as the latest runtime. Python 3.13 is the most recent Lambda Python
-    // runtime at the time this workspace was authored.
+    // ECS task execution role uses AmazonECSTaskExecutionRolePolicy (accepted managed policy
+    // for ECS Fargate task execution — pulling images from ECR, writing to CloudWatch Logs).
     NagSuppressions.addStackSuppressions(
         stack,
         [
             {
                 id: 'AwsSolutions-IAM4',
-                reason: 'AWSLambdaBasicExecutionRole is an accepted baseline for Lambda functions in this sample.',
-                appliesTo: [
-                    'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-                ],
-            },
-            {
-                id: 'AwsSolutions-L1',
                 reason:
-                    'Python 3.13 is the latest available Lambda Python runtime. cdk-nag may not yet ' +
-                    'recognise it as the latest due to release lag in the rule definitions.',
+                    'AmazonECSTaskExecutionRolePolicy is the required managed policy for ECS Fargate ' +
+                    'task execution (ECR pull, CloudWatch Logs write). It is the accepted baseline for ECS tasks.',
+                appliesTo: [
+                    'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
+                ],
             },
         ],
         true,
     );
 
-    // table.grantReadWriteData() generates a wildcard on index resources (table/*).
+    // Task role: ssmmessages:* wildcard required for ECS Exec (FIS SSM-based fault injection).
+    // Secret.grantRead() generates wildcard sub-resource ARNs on the Aurora secret.
     NagSuppressions.addStackSuppressions(
         stack,
         [
             {
                 id: 'AwsSolutions-IAM5',
                 reason:
-                    'Wildcard permissions are generated by table.grantReadWriteData() ' +
-                    'for index sub-resources (table/*). The table ARN itself is scoped.',
+                    'ssmmessages:* wildcard is required for ECS Exec (Session Manager channels). ' +
+                    'Secret.grantRead() generates wildcard sub-resource ARNs on the Aurora secret. ' +
+                    'Both are intentional for this chaos engineering reference pattern.',
+            },
+        ],
+        true,
+    );
+
+    // S3 buckets: ALB log bucket and error page bucket have no server access logging.
+    NagSuppressions.addStackSuppressions(
+        stack,
+        [
+            {
+                id: 'AwsSolutions-S1',
+                reason:
+                    'Server access logging is not enabled on the ALB log bucket and error page bucket. ' +
+                    'These are internal operational buckets for a chaos engineering demo, not production stores.',
+            },
+        ],
+        true,
+    );
+
+    // CDK-managed BucketDeployment Lambda (for error page S3 deployment).
+    NagSuppressions.addStackSuppressions(
+        stack,
+        [
+            {
+                id: 'AwsSolutions-L1',
+                reason:
+                    'CDK-managed BucketDeployment Lambda uses a CDK-controlled runtime. ' +
+                    'The runtime is managed by CDK internals and not under direct author control.',
+            },
+            {
+                id: 'AwsSolutions-IAM4',
+                reason:
+                    'CDK-managed BucketDeployment Lambda ServiceRole uses AWSLambdaBasicExecutionRole, ' +
+                    'which is the accepted baseline for CDK internal custom resource Lambdas.',
+                appliesTo: [
+                    'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+                ],
+            },
+        ],
+        true,
+    );
+
+    // ECS task definition: DB_HOST, DB_PORT, DB_NAME are non-secret configuration values.
+    // The actual database credentials are injected at runtime via Secrets Manager (auroraSecret).
+    // Using plaintext environment variables for host/port/database name is acceptable here.
+    NagSuppressions.addStackSuppressions(
+        stack,
+        [
+            {
+                id: 'AwsSolutions-ECS2',
+                reason:
+                    'ECS task definition uses plaintext environment variables (DB_HOST, DB_PORT, DB_NAME) ' +
+                    'for non-sensitive database connection configuration. Actual credentials are injected ' +
+                    'at runtime via Secrets Manager through the auroraSecret grantRead() pattern.',
             },
         ],
         true,
@@ -176,10 +268,9 @@ function suppressAppStack(stack: AppStack): void {
 }
 
 function suppressFisStack(stack: FisStack): void {
-    // FIS log delivery requires a broad set of CloudWatch Logs management permissions;
-    // there is no resource-scoped alternative for log delivery API actions.
-    // The SNS alarm topic is an internal operational topic used only by CloudWatch alarm actions
-    // (no external publishers). Enforcing SSL for publishers is out of scope here.
+    // FIS log delivery requires broad CloudWatch Logs management permissions.
+    // ECS/ALB monitoring actions (DescribeServices, DescribeClusters, etc.) cannot be scoped to a resource.
+    // SNS alarm topic: internal operational topic, only publisher is CloudWatch alarm action.
     NagSuppressions.addStackSuppressions(
         stack,
         [
@@ -188,15 +279,14 @@ function suppressFisStack(stack: FisStack): void {
                 reason:
                     'FIS experiment logging to CloudWatch requires log delivery management actions ' +
                     '(CreateLogDelivery, ListLogDeliveries, etc.) which do not support resource-level ' +
-                    'restrictions — wildcard is the only valid resource for these actions.',
+                    'restrictions. ECS and ALB monitoring actions also require wildcard resources.',
             },
             {
                 id: 'AwsSolutions-SNS3',
                 reason:
                     'The FIS alarm topic is an internal operational topic whose only publisher is ' +
                     'the CloudWatch alarm action. No external publishers exist. ' +
-                    'Enforcing SSL for publishers via an aws:SecureTransport policy is out of scope ' +
-                    'for this chaos engineering reference pattern.',
+                    'Enforcing SSL via aws:SecureTransport is out of scope for this chaos reference pattern.',
             },
         ],
         true,
