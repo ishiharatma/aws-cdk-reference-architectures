@@ -1,0 +1,1103 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ConsumerFunctionArn": {
+      "Description": "Consumer Lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "ConsumerFunction40CB859D",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ConsumerFunction40CB859D",
+          "Arn",
+        ],
+      },
+    },
+    "ProducerFunctionArn": {
+      "Description": "Producer Lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "ProducerFunction96264A1C",
+          "Arn",
+        ],
+      },
+    },
+    "ProducerFunctionUrl": {
+      "Description": "Producer Lambda Function URL (IAM-auth) — POST to send a demo message to SQS",
+      "Value": {
+        "Fn::GetAtt": [
+          "ProducerFunctionFunctionUrl9B4A8CDE",
+          "FunctionUrl",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ConsumerFunction40CB859D": {
+      "DependsOn": [
+        "ConsumerFunctionServiceRoleDefaultPolicy97610FAA",
+        "ConsumerFunctionServiceRole68E8FEB1",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "55f46e5e235b12d31964a540db13f685de87fa7fded812586c2b5e4d54aa955e.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefProcessedRecordsTableDE9E6787B2E8EC24",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-d-test-consumer",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ConsumerFunctionLogGroup4F4CA69F",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "ConsumerFunctionServiceRole68E8FEB1",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ConsumerFunctionLogGroup4F4CA69F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-d-test-consumer",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ConsumerFunctionServiceRole68E8FEB1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ConsumerFunctionServiceRoleDefaultPolicy97610FAA": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttProcessedRecordsTableDE9E6787ArnE708E53E",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076ArnAFBB3B2A",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ConsumerFunctionServiceRoleDefaultPolicy97610FAA",
+        "Roles": [
+          {
+            "Ref": "ConsumerFunctionServiceRole68E8FEB1",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ConsumerFunctionSqsEventSourceTestBaseStackMainQueue51767FE58A1318CE": {
+      "Properties": {
+        "BatchSize": 5,
+        "EventSourceArn": {
+          "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076ArnAFBB3B2A",
+        },
+        "FunctionName": {
+          "Ref": "ConsumerFunction40CB859D",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "ProducerFunction96264A1C": {
+      "DependsOn": [
+        "ProducerFunctionServiceRoleDefaultPolicy6A1EDA0E",
+        "ProducerFunctionServiceRoleB700BBD3",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "e1d53271f77e28f2720a6efa29f96b5df182151ea2dadca6e08ce9b61b2b0ace.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "QUEUE_URL": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefMainQueueD24C6076FE502AD4",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-d-test-producer",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ProducerFunctionLogGroup3F98F533",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ProducerFunctionServiceRoleB700BBD3",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ProducerFunctionFunctionUrl9B4A8CDE": {
+      "Properties": {
+        "AuthType": "AWS_IAM",
+        "Cors": {
+          "AllowMethods": [
+            "POST",
+            "GET",
+          ],
+          "AllowOrigins": [
+            "*",
+          ],
+        },
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "ProducerFunction96264A1C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "ProducerFunctionLogGroup3F98F533": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-d-test-producer",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ProducerFunctionServiceRoleB700BBD3": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ProducerFunctionServiceRoleDefaultPolicy6A1EDA0E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076ArnAFBB3B2A",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ProducerFunctionServiceRoleDefaultPolicy6A1EDA0E",
+        "Roles": [
+          {
+            "Ref": "ProducerFunctionServiceRoleB700BBD3",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario D Stack Snapshots AppStack Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::EventSourceMapping": 1,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::Url": 1,
+  "AWS::Logs::LogGroup": 2,
+}
+`;
+
+exports[`FIS Chaos Scenario D Stack Snapshots BaseStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "DeadLetterQueueUrl": {
+      "Description": "SQS dead-letter queue URL",
+      "Value": {
+        "Ref": "DeadLetterQueue9F481546",
+      },
+    },
+    "ExportsOutputFnGetAttMainQueueD24C6076ArnAFBB3B2A": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076ArnAFBB3B2A",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "MainQueueD24C6076",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttMainQueueD24C6076QueueName84A67AA9": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076QueueName84A67AA9",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "MainQueueD24C6076",
+          "QueueName",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttProcessedRecordsTableDE9E6787ArnE708E53E": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputFnGetAttProcessedRecordsTableDE9E6787ArnE708E53E",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ProcessedRecordsTableDE9E6787",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputRefMainQueueD24C6076FE502AD4": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefMainQueueD24C6076FE502AD4",
+      },
+      "Value": {
+        "Ref": "MainQueueD24C6076",
+      },
+    },
+    "ExportsOutputRefProcessedRecordsTableDE9E6787B2E8EC24": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefProcessedRecordsTableDE9E6787B2E8EC24",
+      },
+      "Value": {
+        "Ref": "ProcessedRecordsTableDE9E6787",
+      },
+    },
+    "QueueUrl": {
+      "Description": "SQS main queue URL",
+      "Value": {
+        "Ref": "MainQueueD24C6076",
+      },
+    },
+    "TableName": {
+      "Description": "DynamoDB processed-records table name",
+      "Value": {
+        "Ref": "ProcessedRecordsTableDE9E6787",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "DeadLetterQueue9F481546": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "fis-chaos-d-test-dlq",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DeadLetterQueuePolicyB1FB890C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DeadLetterQueue9F481546",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "DeadLetterQueue9F481546",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "MainQueueD24C6076": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 345600,
+        "QueueName": "fis-chaos-d-test-main-queue",
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "DeadLetterQueue9F481546",
+              "Arn",
+            ],
+          },
+          "maxReceiveCount": 3,
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+        "VisibilityTimeout": 60,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MainQueuePolicy7EC89565": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MainQueueD24C6076",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "MainQueueD24C6076",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "ProcessedRecordsTableDE9E6787": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": false,
+        },
+        "TableName": "fis-chaos-d-test-processed-records",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario D Stack Snapshots BaseStack Resource types and counts 1`] = `
+{
+  "AWS::DynamoDB::Table": 1,
+  "AWS::SQS::Queue": 2,
+  "AWS::SQS::QueuePolicy": 2,
+}
+`;
+
+exports[`FIS Chaos Scenario D Stack Snapshots FisStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "FisLogGroupName": {
+      "Description": "CloudWatch log group for FIS experiment results",
+      "Value": {
+        "Ref": "FisLogGroupBD16B862",
+      },
+    },
+    "FisRoleArn": {
+      "Description": "FIS IAM role ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "FisRoleF2C479C1",
+          "Arn",
+        ],
+      },
+    },
+    "QueueBacklogStopAlarmArn": {
+      "Description": "SQS backlog stop-condition alarm ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "QueueBacklogAlarm1412E3DE",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "FisAlarmTopic51D832F3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+        "TopicName": "fis-chaos-d-test-fis-d-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "FisLogGroupBD16B862": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/fis/fis-chaos-d-test-d",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisRoleF2C479C1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "fis.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "lambda:PutFunctionConcurrency",
+                    "lambda:DeleteFunctionConcurrency",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+                  },
+                },
+                {
+                  "Action": "cloudwatch:DescribeAlarms",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "QueueBacklogAlarm1412E3DE",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogDelivery",
+                    "logs:PutLogEvents",
+                    "logs:GetLogDelivery",
+                    "logs:UpdateLogDelivery",
+                    "logs:DeleteLogDelivery",
+                    "logs:ListLogDeliveries",
+                    "logs:PutResourcePolicy",
+                    "logs:DescribeResourcePolicies",
+                    "logs:DescribeLogGroups",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "FisChaosPolicyD",
+          },
+        ],
+        "RoleName": "fis-chaos-d-test-fis-d-role",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "QueueBacklogAlarm1412E3DE": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "FisAlarmTopic51D832F3",
+          },
+        ],
+        "AlarmDescription": "FIS stop condition — SQS main queue visible message backlog exceeds safety threshold",
+        "AlarmName": "fis-chaos-d-test-fis-d-stop-queue-backlog",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttMainQueueD24C6076QueueName84A67AA9",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Period": 60,
+        "Statistic": "Maximum",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+        "Threshold": 1000,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "ScenarioD1ConsumerOutageShort": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyZero": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "0",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Functions": "ConsumerFunction",
+            },
+          },
+        },
+        "Description": "[D-1] Consumer Total Outage — short (5 min): Reserved concurrency set to 0 on the SQS consumer Lambda. Validates message redelivery within the visibility timeout and clean recovery once concurrency is restored.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "QueueBacklogAlarm1412E3DE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "SQS-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-d-test-D1-consumer-outage-short",
+          "Project": "fis-chaos-d",
+          "Scenario": "D-1",
+        },
+        "Targets": {
+          "ConsumerFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioD2ConsumerOutageLong": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyZero": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "0",
+              "duration": "PT20M",
+            },
+            "Targets": {
+              "Functions": "ConsumerFunction",
+            },
+          },
+        },
+        "Description": "[D-2] Consumer Total Outage — long, DLQ-inducing (20 min): Reserved concurrency set to 0 on the SQS consumer Lambda for 20 minutes, well beyond visibilityTimeout(60s) x maxReceiveCount(3) = 180s. Deliberately drives messages to the DLQ to validate DLQ routing and replay procedures.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "QueueBacklogAlarm1412E3DE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "SQS-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-d-test-D2-consumer-outage-long-dlq",
+          "Project": "fis-chaos-d",
+          "Scenario": "D-2",
+        },
+        "Targets": {
+          "ConsumerFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioD3ConsumerThroughputCollapse": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyOne": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "1",
+              "duration": "PT10M",
+            },
+            "Targets": {
+              "Functions": "ConsumerFunction",
+            },
+          },
+        },
+        "Description": "[D-3] Consumer Throughput Collapse (10 min): Reserved concurrency limited to 1 on the SQS consumer Lambda. Validates queue backlog growth and latency under severe, non-zero throughput degradation.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "QueueBacklogAlarm1412E3DE",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "SQS-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-d-test-D3-consumer-throughput-collapse",
+          "Project": "fis-chaos-d",
+          "Scenario": "D-3",
+        },
+        "Targets": {
+          "ConsumerFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario D Stack Snapshots FisStack Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::FIS::ExperimentTemplate": 3,
+  "AWS::IAM::Role": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SNS::Topic": 1,
+}
+`;

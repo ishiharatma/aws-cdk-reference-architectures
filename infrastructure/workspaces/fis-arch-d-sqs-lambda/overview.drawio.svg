@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="1100" height="600" viewBox="0 0 1100 600" role="img"
+     aria-label="Architecture D: an Operator's Function URL request produces onto an SQS main queue; a Lambda consumer with a batch-size-5 event source drains it into DynamoDB; unprocessed messages redrive to a DLQ after 3 receives; three FIS experiments throttle the consumer's reserved concurrency to 0 or 1, guarded by a shared CloudWatch backlog alarm.">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/>
+    </marker>
+    <marker id="arr_red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cc2b2b"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="600" fill="#fafafa"/>
+  <text x="550" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="currentColor">Architecture D: SQS (main + DLQ) + Lambda Consumer + DynamoDB</text>
+
+  <!-- ================= Main request/event flow ================= -->
+
+  <!-- Operator -->
+  <rect x="30" y="64" width="120" height="68" rx="8" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+  <text x="90" y="94" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">Operator</text>
+  <text x="90" y="112" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">demo load (curl)</text>
+
+  <!-- Producer Lambda -->
+  <rect x="190" y="64" width="150" height="68" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="265" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">Producer Lambda</text>
+  <text x="265" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Function URL · IAM auth</text>
+  <text x="265" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Python 3.13</text>
+
+  <!-- SQS Main Queue -->
+  <rect x="380" y="64" width="150" height="68" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="455" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">SQS Main Queue</text>
+  <text x="455" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">visibilityTimeout=60s</text>
+  <text x="455" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">maxReceiveCount=3</text>
+
+  <!-- Consumer Lambda -->
+  <rect x="570" y="64" width="150" height="68" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="645" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">Consumer Lambda</text>
+  <text x="645" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">SQS event source</text>
+  <text x="645" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">batchSize=5</text>
+
+  <!-- DynamoDB -->
+  <rect x="760" y="64" width="160" height="68" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="840" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">DynamoDB</text>
+  <text x="840" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">processed-records</text>
+  <text x="840" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">PAY_PER_REQUEST</text>
+
+  <!-- Flow arrows -->
+  <line x1="150" y1="98" x2="190" y2="98" stroke="currentColor" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="170" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" fill="#555555">POST</text>
+
+  <line x1="340" y1="98" x2="380" y2="98" stroke="currentColor" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="360" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" fill="#555555">SendMessage</text>
+
+  <line x1="530" y1="98" x2="570" y2="98" stroke="currentColor" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="550" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" fill="#555555">poll</text>
+
+  <line x1="720" y1="98" x2="760" y2="98" stroke="currentColor" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="740" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" fill="#555555">PutItem</text>
+
+  <!-- ================= DLQ ================= -->
+
+  <rect x="380" y="180" width="150" height="58" rx="8" fill="#fce4ec" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="455" y="204" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">DLQ</text>
+  <text x="455" y="220" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">retention 14d</text>
+
+  <line x1="455" y1="132" x2="455" y2="180" stroke="#ad1457" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+  <text x="620" y="160" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#ad1457">redrive after 3 receives — guaranteed once an outage exceeds 60s × 3 = 180s (see D-2)</text>
+
+  <!-- ================= FIS Experiments ================= -->
+
+  <rect x="30" y="255" width="1040" height="195" rx="12" fill="#fff8f8" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="40" y="273" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments — aws:lambda:put-function-concurrent-executions only (see Key Design Decision below)</text>
+
+  <!-- D-1 -->
+  <rect x="45" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+  <text x="55" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-1: Consumer Outage — short (5 min)</text>
+  <text x="55" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='0', PT5M</text>
+  <text x="55" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="55" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: redelivery within visibilityTimeout,</text>
+  <text x="55" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">clean backlog drain on recovery</text>
+  <text x="55" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Within 180s DLQ threshold — no DLQ routing</text>
+
+  <!-- D-2 -->
+  <rect x="385" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+  <text x="395" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-2: Consumer Outage — long, DLQ (20 min)</text>
+  <text x="395" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='0', PT20M</text>
+  <text x="395" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="395" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: DLQ routing, DLQ alarming,</text>
+  <text x="395" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">replay procedure after recovery</text>
+  <text x="395" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">1200s ≫ 180s DLQ threshold — DLQ guaranteed</text>
+
+  <!-- D-3 -->
+  <rect x="725" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+  <text x="735" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-3: Throughput Collapse (10 min)</text>
+  <text x="735" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='1', PT10M</text>
+  <text x="735" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="735" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: backlog growth and latency under</text>
+  <text x="735" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">severe non-zero throughput degradation</text>
+  <text x="735" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Consumer stays up — partial capacity loss</text>
+
+  <!-- FIS -> Consumer arrow -->
+  <line x1="645" y1="255" x2="645" y2="132" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+  <text x="650" y="150" font-family="Arial,sans-serif" font-size="9" fill="#c62828">D-1 / D-2 / D-3 set reserved concurrency</text>
+
+  <!-- ================= Stop condition ================= -->
+
+  <rect x="30" y="462" width="1040" height="32" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="50" y="483" font-family="Arial,sans-serif" font-size="11" fill="#e65100">Stop Condition (shared by D-1/D-2/D-3): CloudWatch Alarm — SQS ApproximateNumberOfMessagesVisible ≥ 1000</text>
+
+  <!-- ================= Key design decision ================= -->
+
+  <rect x="30" y="504" width="1040" height="80" rx="4" fill="#fff9c4" stroke="#f9a825" stroke-width="1"/>
+  <text x="50" y="524" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#5d4037">Key Design Decision:</text>
+  <text x="50" y="542" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">aws:fis:inject-api-internal-error / inject-api-throttle-error only support service=ec2 or service=kinesis — SQS and DynamoDB are NOT supported.</text>
+  <text x="50" y="559" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">Lambda-extension actions (invocation-error/invocation-add-delay) need an unverified S3/env-var setup, so they are avoided too.</text>
+  <text x="50" y="576" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">Every scenario instead throttles the consumer's reserved concurrency — a proven, supported control point that reproduces the same failure modes.</text>
+</svg>
