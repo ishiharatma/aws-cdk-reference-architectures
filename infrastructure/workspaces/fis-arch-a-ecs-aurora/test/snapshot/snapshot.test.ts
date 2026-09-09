@@ -15,7 +15,7 @@ const defaultEnv = {
 };
 
 const projectName = 'fis-chaos';
-const envName: Environment = Environment.DEVELOPMENT;
+const envName: Environment = Environment.TEST;
 
 if (!params[envName]) {
     throw new Error(`No parameters found for environment: ${envName}`);

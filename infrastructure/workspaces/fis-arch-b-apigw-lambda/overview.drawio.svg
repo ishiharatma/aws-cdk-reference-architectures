@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="1100" height="660" viewBox="0 0 1100 660">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555555"/>
+    </marker>
+    <marker id="arr_red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cc0000"/>
+    </marker>
+  </defs>
+  <rect width="1100" height="660" fill="#fafafa"/>
+<text x="550" y="36" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Architecture B: CloudFront + API Gateway + Lambda + DynamoDB</text>
+<rect x="40" y="90" width="140" height="70" rx="8" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+<text x="110" y="125" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internet</text>
+<rect x="230" y="90" width="140" height="70" rx="8" fill="#f0e6ff" stroke="#7928CA" stroke-width="1.5"/>
+<text x="300" y="117" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Amazon CloudFront</text>
+<text x="300" y="139" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Cache: DISABLED</text>
+<rect x="420" y="90" width="140" height="70" rx="8" fill="#f0e6ff" stroke="#7928CA" stroke-width="1.5"/>
+<text x="490" y="117" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">API Gateway</text>
+<text x="490" y="139" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">HTTP API</text>
+<rect x="610" y="90" width="140" height="70" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+<text x="680" y="117" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">AWS Lambda</text>
+<text x="680" y="139" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Python 3.13</text>
+<rect x="800" y="90" width="160" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+<text x="880" y="117" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Amazon DynamoDB</text>
+<text x="880" y="139" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PAY_PER_REQUEST</text>
+<line x1="180" y1="125" x2="230" y2="125" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<line x1="370" y1="125" x2="420" y2="125" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<line x1="560" y1="125" x2="610" y2="125" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<line x1="750" y1="125" x2="800" y2="125" stroke="#555555" stroke-width="1.8"  marker-end="url(#arr)"/>
+<rect x="30" y="210" width="1040" height="340" rx="12" fill="#fff8f8" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+<text x="40" y="228" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments</text>
+<rect x="45" y="245" width="505" height="100" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="55" y="267" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">B-1: DynamoDB InternalError (all ops · 5 min)</text>
+<text x="55" y="289" font-family="Arial,sans-serif" font-size="10" fill="#555555">aws:fis:inject-api-internal-error → Lambda Execution Role</text>
+<text x="55" y="307" font-family="Arial,sans-serif" font-size="10" fill="#555555">Tests: Lambda retry/backoff · 500 propagation to API consumers</text>
+<rect x="565" y="245" width="505" height="100" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="575" y="267" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">B-2: DynamoDB Write Throttle (PutItem/DeleteItem · 5 min)</text>
+<text x="575" y="289" font-family="Arial,sans-serif" font-size="10" fill="#555555">aws:fis:inject-api-throttle-error → Lambda Execution Role</text>
+<text x="575" y="307" font-family="Arial,sans-serif" font-size="10" fill="#555555">Tests: Write-path circuit breaker · read ops stay healthy</text>
+<rect x="45" y="360" width="505" height="100" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="55" y="382" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">B-3: DynamoDB Read Throttle (GetItem/Scan · 5 min)</text>
+<text x="55" y="404" font-family="Arial,sans-serif" font-size="10" fill="#555555">aws:fis:inject-api-throttle-error → Lambda Execution Role</text>
+<text x="55" y="422" font-family="Arial,sans-serif" font-size="10" fill="#555555">Tests: Read-path fallback · write ops stay healthy</text>
+<rect x="565" y="360" width="505" height="100" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+<text x="575" y="382" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">B-4: Lambda Reserved Concurrency = 0 (5 min)</text>
+<text x="575" y="404" font-family="Arial,sans-serif" font-size="10" fill="#555555">aws:lambda:put-function-concurrent-executions → Lambda Function</text>
+<text x="575" y="422" font-family="Arial,sans-serif" font-size="10" fill="#555555">Tests: API GW 429 mapping · CloudFront error page activation</text>
+<polyline points="880,210 880,160" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+<text x="885" y="235" font-family="Arial,sans-serif" font-size="9" fill="#c62828">B-1/2/3 via IAM role</text>
+<polyline points="680,210 680,160" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+<text x="685" y="235" font-family="Arial,sans-serif" font-size="9" fill="#c62828">B-4 concurrency=0</text>
+<rect x="30" y="495" width="1040" height="30" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+<text x="50" y="515" font-family="Arial,sans-serif" font-size="11" fill="#e65100">Stop Condition: Lambda Error Count ≥ 10/min (CloudWatch Alarm)</text>
+<rect x="30" y="535" width="1040" height="45" rx="4" fill="#fff9c4" stroke="#f9a825" stroke-width="1"/>
+<text x="50" y="553" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#5d4037">Key Insight:</text>
+<text x="130" y="553" font-family="Arial,sans-serif" font-size="11" fill="#5d4037">aws:fis:inject-api-* targets the IAM role, not the AWS resource.</text>
+<text x="50" y="571" font-family="Arial,sans-serif" font-size="10" fill="#777777">FIS intercepts outbound AWS API calls at the control plane — no code change, no VPC manipulation.</text>
+</svg>

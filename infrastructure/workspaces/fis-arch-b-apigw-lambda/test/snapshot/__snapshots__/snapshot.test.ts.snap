@@ -102,7 +102,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
             },
           },
         },
-        "FunctionName": "fis-chaos-b-dev-api-handler",
+        "FunctionName": "fis-chaos-b-test-api-handler",
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
@@ -120,7 +120,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -134,12 +134,12 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
     "ApiFunctionLogGroup00D1AC73": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/aws/lambda/fis-chaos-b-dev-api-handler",
+        "LogGroupName": "/aws/lambda/fis-chaos-b-test-api-handler",
         "RetentionInDays": 7,
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -181,7 +181,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -242,12 +242,12 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
     "ApiGwLogGroupA37B636E": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/aws/apigateway/fis-chaos-b-dev-http-api",
+        "LogGroupName": "/aws/apigateway/fis-chaos-b-test-http-api",
         "RetentionInDays": 7,
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -261,7 +261,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
     "Distribution830FAC52": {
       "Properties": {
         "DistributionConfig": {
-          "Comment": "fis-chaos-b-dev API CloudFront distribution",
+          "Comment": "fis-chaos-b-test API CloudFront distribution",
           "DefaultCacheBehavior": {
             "AllowedMethods": [
               "GET",
@@ -313,7 +313,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -406,7 +406,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         "AutoDeploy": true,
         "StageName": "$default",
         "Tags": {
-          "Environment": "dev",
+          "Environment": "test",
           "Project": "fis-chaos-b",
         },
       },
@@ -414,12 +414,12 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
     },
     "HttpApiF5A9A8A7": {
       "Properties": {
-        "Description": "FIS chaos B — API Gateway HTTP API for fis-chaos-b dev",
+        "Description": "FIS chaos B — API Gateway HTTP API for fis-chaos-b test",
         "DisableExecuteApiEndpoint": false,
-        "Name": "fis-chaos-b-dev-http-api",
+        "Name": "fis-chaos-b-test-http-api",
         "ProtocolType": "HTTP",
         "Tags": {
-          "Environment": "dev",
+          "Environment": "test",
           "Project": "fis-chaos-b",
         },
       },
@@ -536,11 +536,11 @@ exports[`FIS Chaos Scenario B Stack Snapshots BaseStack Complete CloudFormation 
         "PointInTimeRecoverySpecification": {
           "PointInTimeRecoveryEnabled": false,
         },
-        "TableName": "fis-chaos-b-dev-items",
+        "TableName": "fis-chaos-b-test-items",
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -629,26 +629,26 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
             "Value": "fis-chaos-b",
           },
         ],
-        "TopicName": "fis-chaos-b-dev-fis-b-alarms",
+        "TopicName": "fis-chaos-b-test-fis-b-alarms",
       },
       "Type": "AWS::SNS::Topic",
     },
     "FisLogGroupBD16B862": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "LogGroupName": "/fis/fis-chaos-b-dev-b",
+        "LogGroupName": "/fis/fis-chaos-b-test-b",
         "RetentionInDays": 30,
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -728,11 +728,11 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
             "PolicyName": "FisChaosPolicyB",
           },
         ],
-        "RoleName": "fis-chaos-b-dev-fis-b-role",
+        "RoleName": "fis-chaos-b-test-fis-b-role",
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -750,7 +750,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
           },
         ],
         "AlarmDescription": "FIS stop condition — Lambda error count exceeds safety threshold",
-        "AlarmName": "fis-chaos-b-dev-fis-b-stop-lambda-errors",
+        "AlarmName": "fis-chaos-b-test-fis-b-stop-lambda-errors",
         "ComparisonOperator": "GreaterThanOrEqualToThreshold",
         "Dimensions": [
           {
@@ -768,7 +768,7 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         "Tags": [
           {
             "Key": "Environment",
-            "Value": "dev",
+            "Value": "test",
           },
           {
             "Key": "Project",
@@ -827,8 +827,8 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         ],
         "Tags": {
           "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "dev",
-          "Name": "fis-chaos-b-dev-B1-dynamo-internal-error",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B1-dynamo-internal-error",
           "Project": "fis-chaos-b",
           "Scenario": "B-1",
         },
@@ -893,8 +893,8 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         ],
         "Tags": {
           "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "dev",
-          "Name": "fis-chaos-b-dev-B2-dynamo-write-throttle",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B2-dynamo-write-throttle",
           "Project": "fis-chaos-b",
           "Scenario": "B-2",
         },
@@ -959,8 +959,8 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         ],
         "Tags": {
           "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "dev",
-          "Name": "fis-chaos-b-dev-B3-dynamo-read-throttle",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B3-dynamo-read-throttle",
           "Project": "fis-chaos-b",
           "Scenario": "B-3",
         },
@@ -1023,8 +1023,8 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         ],
         "Tags": {
           "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "dev",
-          "Name": "fis-chaos-b-dev-B4-lambda-concurrency-zero",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B4-lambda-concurrency-zero",
           "Project": "fis-chaos-b",
           "Scenario": "B-4",
         },
