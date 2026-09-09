@@ -16,7 +16,7 @@ if (!params[envName]) {
   throw new Error(`No parameters found for environment: ${envName}`);
 }
 
-const envParams = params[envName]!;
+const envParams = params[envName];
 
 validateDeployment(pjName, envName, envParams.accountId);
 
