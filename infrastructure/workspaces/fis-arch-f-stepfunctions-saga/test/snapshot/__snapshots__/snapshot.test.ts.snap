@@ -1,0 +1,1757 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ConfirmOrderFunctionArn": {
+      "Description": "ConfirmOrder Lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "ConfirmOrderFunction5E3C06DA",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttConfirmOrderFunction5E3C06DAArn6C45243C": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttConfirmOrderFunction5E3C06DAArn6C45243C",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ConfirmOrderFunction5E3C06DA",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttProcessPaymentFunctionCEC77858ArnEE52CDF2": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttProcessPaymentFunctionCEC77858ArnEE52CDF2",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ProcessPaymentFunctionCEC77858",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttReserveInventoryFunction15B81C05Arn9BEDE410": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttReserveInventoryFunction15B81C05Arn9BEDE410",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ReserveInventoryFunction15B81C05",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputRefSagaStateMachine1A568E4D6BB3F71B": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputRefSagaStateMachine1A568E4D6BB3F71B",
+      },
+      "Value": {
+        "Ref": "SagaStateMachine1A568E4D",
+      },
+    },
+    "ProcessPaymentFunctionArn": {
+      "Description": "ProcessPayment Lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "ProcessPaymentFunctionCEC77858",
+          "Arn",
+        ],
+      },
+    },
+    "ReserveInventoryFunctionArn": {
+      "Description": "ReserveInventory Lambda function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "ReserveInventoryFunction15B81C05",
+          "Arn",
+        ],
+      },
+    },
+    "StateMachineArn": {
+      "Description": "Order Saga Step Functions state machine ARN",
+      "Value": {
+        "Ref": "SagaStateMachine1A568E4D",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ConfirmOrderFunction5E3C06DA": {
+      "DependsOn": [
+        "ConfirmOrderFunctionServiceRoleDefaultPolicyF2B76D97",
+        "ConfirmOrderFunctionServiceRoleA062DCAF",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "3127d7ecd9b51c8f8deb0eb2493b4c188845e06735b700160a611c88808e4220.zip",
+        },
+        "Description": "Saga step 3 (forward, final): confirm the order",
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-f-test-confirm-order",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ConfirmOrderFunctionLogGroup5857BCE0",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ConfirmOrderFunctionServiceRoleA062DCAF",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ConfirmOrderFunctionLogGroup5857BCE0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-f-test-confirm-order",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ConfirmOrderFunctionServiceRoleA062DCAF": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ConfirmOrderFunctionServiceRoleDefaultPolicyF2B76D97": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ConfirmOrderFunctionServiceRoleDefaultPolicyF2B76D97",
+        "Roles": [
+          {
+            "Ref": "ConfirmOrderFunctionServiceRoleA062DCAF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ProcessPaymentFunctionCEC77858": {
+      "DependsOn": [
+        "ProcessPaymentFunctionServiceRoleDefaultPolicy28B84791",
+        "ProcessPaymentFunctionServiceRole2A8D1A25",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ed857ae6e79cebdf44cb766f2e27b32003e83431ba7073e3dfde256057dcb619.zip",
+        },
+        "Description": "Saga step 2 (forward): process customer payment",
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-f-test-process-payment",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ProcessPaymentFunctionLogGroup4F2A4CD1",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ProcessPaymentFunctionServiceRole2A8D1A25",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ProcessPaymentFunctionLogGroup4F2A4CD1": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-f-test-process-payment",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ProcessPaymentFunctionServiceRole2A8D1A25": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ProcessPaymentFunctionServiceRoleDefaultPolicy28B84791": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ProcessPaymentFunctionServiceRoleDefaultPolicy28B84791",
+        "Roles": [
+          {
+            "Ref": "ProcessPaymentFunctionServiceRole2A8D1A25",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "RefundPaymentFunction8E0AE9CB": {
+      "DependsOn": [
+        "RefundPaymentFunctionServiceRoleDefaultPolicy64BA2EF3",
+        "RefundPaymentFunctionServiceRole3CDB03B9",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "04b86500a97265d8cbcb715b5a32e52b13cc21c995aa2e83beb1194aa95fea8e.zip",
+        },
+        "Description": "Saga compensation: refund a previously processed payment",
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-f-test-refund-payment",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RefundPaymentFunctionLogGroup4966E99F",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "RefundPaymentFunctionServiceRole3CDB03B9",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "RefundPaymentFunctionLogGroup4966E99F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-f-test-refund-payment",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RefundPaymentFunctionServiceRole3CDB03B9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "RefundPaymentFunctionServiceRoleDefaultPolicy64BA2EF3": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "RefundPaymentFunctionServiceRoleDefaultPolicy64BA2EF3",
+        "Roles": [
+          {
+            "Ref": "RefundPaymentFunctionServiceRole3CDB03B9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ReleaseInventoryFunction945A6FD7": {
+      "DependsOn": [
+        "ReleaseInventoryFunctionServiceRoleDefaultPolicy7BE40549",
+        "ReleaseInventoryFunctionServiceRoleE853CF3F",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "d34d4a3baf48a162ab98683fb02952da0a9e1ee5bcced4bdfac40a67002f1452.zip",
+        },
+        "Description": "Saga compensation: release previously reserved inventory",
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-f-test-release-inventory",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ReleaseInventoryFunctionLogGroupC7A72F41",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ReleaseInventoryFunctionServiceRoleE853CF3F",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ReleaseInventoryFunctionLogGroupC7A72F41": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-f-test-release-inventory",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ReleaseInventoryFunctionServiceRoleDefaultPolicy7BE40549": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ReleaseInventoryFunctionServiceRoleDefaultPolicy7BE40549",
+        "Roles": [
+          {
+            "Ref": "ReleaseInventoryFunctionServiceRoleE853CF3F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ReleaseInventoryFunctionServiceRoleE853CF3F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ReserveInventoryFunction15B81C05": {
+      "DependsOn": [
+        "ReserveInventoryFunctionServiceRoleDefaultPolicy509E162A",
+        "ReserveInventoryFunctionServiceRole4B0937DE",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ea9ccc4f4ceae3b5cc6d0bfe533395f5b50a0891dc974788faa786ffa1176065.zip",
+        },
+        "Description": "Saga step 1 (forward): reserve inventory for the order",
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+            },
+          },
+        },
+        "FunctionName": "fis-chaos-f-test-reserve-inventory",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ReserveInventoryFunctionLogGroupCC690685",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ReserveInventoryFunctionServiceRole4B0937DE",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ReserveInventoryFunctionLogGroupCC690685": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/fis-chaos-f-test-reserve-inventory",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ReserveInventoryFunctionServiceRole4B0937DE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ReserveInventoryFunctionServiceRoleDefaultPolicy509E162A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ReserveInventoryFunctionServiceRoleDefaultPolicy509E162A",
+        "Roles": [
+          {
+            "Ref": "ReserveInventoryFunctionServiceRole4B0937DE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SagaStateMachine1A568E4D": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "SagaStateMachineRoleDefaultPolicy94E02636",
+        "SagaStateMachineRole15C0C256",
+      ],
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Join": [
+            "",
+            [
+              "{"StartAt":"ReserveInventory","States":{"ReserveInventory":{"Next":"ProcessPayment","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2},{"ErrorEquals":["States.ALL"],"IntervalSeconds":2,"MaxAttempts":2,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.error","Next":"OrderFailedNoCompensationNeeded"}],"Type":"Task","Comment":"Saga step 1 (forward)","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "ReserveInventoryFunction15B81C05",
+                  "Arn",
+                ],
+              },
+              ""},"ProcessPayment":{"Next":"ConfirmOrder","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2},{"ErrorEquals":["States.ALL"],"IntervalSeconds":2,"MaxAttempts":2,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.error","Next":"ReleaseInventoryCompensation"}],"Type":"Task","Comment":"Saga step 2 (forward)","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "ProcessPaymentFunctionCEC77858",
+                  "Arn",
+                ],
+              },
+              ""},"ConfirmOrder":{"Next":"OrderSucceeded","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2},{"ErrorEquals":["States.ALL"],"IntervalSeconds":2,"MaxAttempts":2,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"ResultPath":"$.error","Next":"RefundPaymentCompensation1"}],"Type":"Task","Comment":"Saga step 3 (forward, final)","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "ConfirmOrderFunction5E3C06DA",
+                  "Arn",
+                ],
+              },
+              ""},"OrderSucceeded":{"Type":"Succeed","Comment":"All 3 forward steps completed — order confirmed."},"RefundPaymentCompensation1":{"Next":"ReleaseInventoryCompensation2","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Comment":"Compensating transaction 1/2 for a ConfirmOrder failure","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "RefundPaymentFunction8E0AE9CB",
+                  "Arn",
+                ],
+              },
+              ""},"ReleaseInventoryCompensation2":{"Next":"OrderFailedAfterFullCompensation","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Comment":"Compensating transaction 2/2 for a ConfirmOrder failure","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "ReleaseInventoryFunction945A6FD7",
+                  "Arn",
+                ],
+              },
+              ""},"OrderFailedAfterFullCompensation":{"Type":"Fail","Error":"ConfirmOrderFailed","Cause":"Order confirmation failed after payment was processed. Compensation complete, in order: payment refunded, then inventory released."},"ReleaseInventoryCompensation":{"Next":"OrderFailedAfterInventoryReleased","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Comment":"Compensating transaction for a ProcessPayment failure","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "ReleaseInventoryFunction945A6FD7",
+                  "Arn",
+                ],
+              },
+              ""},"OrderFailedAfterInventoryReleased":{"Type":"Fail","Error":"ProcessPaymentFailed","Cause":"Payment processing failed after inventory was reserved. Compensation complete: inventory has been released."},"OrderFailedNoCompensationNeeded":{"Type":"Fail","Error":"ReserveInventoryFailed","Cause":"Inventory reservation failed before any resource was committed — no compensating transaction is required."}},"TimeoutSeconds":300}",
+            ],
+          ],
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "SagaStateMachineLogGroupBAF3627E",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+          ],
+          "IncludeExecutionData": true,
+          "Level": "ALL",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "SagaStateMachineRole15C0C256",
+            "Arn",
+          ],
+        },
+        "StateMachineName": "fis-chaos-f-test-order-saga",
+        "StateMachineType": "STANDARD",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "TracingConfiguration": {
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SagaStateMachineLogGroupBAF3627E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/vendedlogs/states/fis-chaos-f-test-saga",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SagaStateMachineRole15C0C256": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SagaStateMachineRoleDefaultPolicy94E02636": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ReserveInventoryFunction15B81C05",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ReserveInventoryFunction15B81C05",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ProcessPaymentFunctionCEC77858",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ProcessPaymentFunctionCEC77858",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConfirmOrderFunction5E3C06DA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConfirmOrderFunction5E3C06DA",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RefundPaymentFunction8E0AE9CB",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RefundPaymentFunction8E0AE9CB",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ReleaseInventoryFunction945A6FD7",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ReleaseInventoryFunction945A6FD7",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+                "xray:GetSamplingRules",
+                "xray:GetSamplingTargets",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SagaStateMachineRoleDefaultPolicy94E02636",
+        "Roles": [
+          {
+            "Ref": "SagaStateMachineRole15C0C256",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario F Stack Snapshots AppStack Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 6,
+  "AWS::IAM::Role": 6,
+  "AWS::Lambda::Function": 5,
+  "AWS::Logs::LogGroup": 6,
+  "AWS::StepFunctions::StateMachine": 1,
+}
+`;
+
+exports[`FIS Chaos Scenario F Stack Snapshots BaseStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputRefOrdersTable315BB997F7C1D27E": {
+      "Export": {
+        "Name": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
+      },
+      "Value": {
+        "Ref": "OrdersTable315BB997",
+      },
+    },
+    "TableArn": {
+      "Description": "DynamoDB orders table ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn",
+        ],
+      },
+    },
+    "TableName": {
+      "Description": "DynamoDB orders table name",
+      "Value": {
+        "Ref": "OrdersTable315BB997",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "OrdersTable315BB997": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "orderId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "orderId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": false,
+        },
+        "TableName": "fis-chaos-f-test-orders",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario F Stack Snapshots BaseStack Resource types and counts 1`] = `
+{
+  "AWS::DynamoDB::Table": 1,
+}
+`;
+
+exports[`FIS Chaos Scenario F Stack Snapshots FisStack Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "FisLogGroupName": {
+      "Description": "CloudWatch log group for FIS experiment results",
+      "Value": {
+        "Ref": "FisLogGroupBD16B862",
+      },
+    },
+    "FisRoleArn": {
+      "Description": "FIS IAM role ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "FisRoleF2C479C1",
+          "Arn",
+        ],
+      },
+    },
+    "SagaFailedStopAlarmArn": {
+      "Description": "Step Functions ExecutionsFailed stop-condition alarm ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "SagaExecutionsFailedAlarm293CA887",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "FisAlarmTopic51D832F3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "TopicName": "fis-chaos-f-test-fis-f-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "FisLogGroupBD16B862": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/fis/fis-chaos-f-test-f",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisRoleF2C479C1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "fis.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "lambda:PutFunctionConcurrency",
+                    "lambda:DeleteFunctionConcurrency",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttReserveInventoryFunction15B81C05Arn9BEDE410",
+                    },
+                    {
+                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttProcessPaymentFunctionCEC77858ArnEE52CDF2",
+                    },
+                    {
+                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConfirmOrderFunction5E3C06DAArn6C45243C",
+                    },
+                  ],
+                },
+                {
+                  "Action": "cloudwatch:DescribeAlarms",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "SagaExecutionsFailedAlarm293CA887",
+                      "Arn",
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogDelivery",
+                    "logs:PutLogEvents",
+                    "logs:GetLogDelivery",
+                    "logs:UpdateLogDelivery",
+                    "logs:DeleteLogDelivery",
+                    "logs:ListLogDeliveries",
+                    "logs:PutResourcePolicy",
+                    "logs:DescribeResourcePolicies",
+                    "logs:DescribeLogGroups",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "FisChaosPolicyF",
+          },
+        ],
+        "RoleName": "fis-chaos-f-test-fis-f-role",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SagaExecutionsFailedAlarm293CA887": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "FisAlarmTopic51D832F3",
+          },
+        ],
+        "AlarmDescription": "FIS stop condition — Step Functions Saga ExecutionsFailed exceeds safety threshold",
+        "AlarmName": "fis-chaos-f-test-fis-f-stop-executions-failed",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "StateMachineArn",
+            "Value": {
+              "Fn::ImportValue": "TestAppStack:ExportsOutputRefSagaStateMachine1A568E4D6BB3F71B",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ExecutionsFailed",
+        "Namespace": "AWS/States",
+        "Period": 60,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+        "Threshold": 5,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "ScenarioF1ProcessPaymentOutage": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyZero": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "0",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Functions": "ProcessPaymentFunction",
+            },
+          },
+        },
+        "Description": "[F-1] ProcessPayment Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately. Validates Retry exhaustion and the ReleaseInventory compensating transaction.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "SagaExecutionsFailedAlarm293CA887",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "StepFunctions-Lambda-Saga",
+          "Environment": "test",
+          "Name": "fis-chaos-f-test-F1-process-payment-outage",
+          "Project": "fis-chaos-f",
+          "Scenario": "F-1",
+        },
+        "Targets": {
+          "ProcessPaymentFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttProcessPaymentFunctionCEC77858ArnEE52CDF2",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioF2ReserveInventoryOutage": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyZero": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "0",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Functions": "ReserveInventoryFunction",
+            },
+          },
+        },
+        "Description": "[F-2] ReserveInventory Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately. Validates the fail-fast path (no compensation needed) when the Saga fails at its very first step.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "SagaExecutionsFailedAlarm293CA887",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "StepFunctions-Lambda-Saga",
+          "Environment": "test",
+          "Name": "fis-chaos-f-test-F2-reserve-inventory-outage",
+          "Project": "fis-chaos-f",
+          "Scenario": "F-2",
+        },
+        "Targets": {
+          "ReserveInventoryFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttReserveInventoryFunction15B81C05Arn9BEDE410",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioF3ConfirmOrderOutage": {
+      "Properties": {
+        "Actions": {
+          "SetConcurrencyZero": {
+            "ActionId": "aws:lambda:put-function-concurrent-executions",
+            "Parameters": {
+              "ConcurrentExecutions": "0",
+              "duration": "PT5M",
+            },
+            "Targets": {
+              "Functions": "ConfirmOrderFunction",
+            },
+          },
+        },
+        "Description": "[F-3] ConfirmOrder Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately, after payment has already been processed. Validates the two-stage compensation (RefundPayment, then ReleaseInventory) runs in the correct order.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "SagaExecutionsFailedAlarm293CA887",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "StepFunctions-Lambda-Saga",
+          "Environment": "test",
+          "Name": "fis-chaos-f-test-F3-confirm-order-outage",
+          "Project": "fis-chaos-f",
+          "Scenario": "F-3",
+        },
+        "Targets": {
+          "ConfirmOrderFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConfirmOrderFunction5E3C06DAArn6C45243C",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`FIS Chaos Scenario F Stack Snapshots FisStack Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::FIS::ExperimentTemplate": 3,
+  "AWS::IAM::Role": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SNS::Topic": 1,
+}
+`;

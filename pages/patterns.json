@@ -36,6 +36,42 @@
     "articles": {}
   },
   {
+    "id": "fis-arch-d-sqs-lambda",
+    "title": "FIS Chaos: SQS + Lambda Event-Driven Consumer + DynamoDB",
+    "description": "Three AWS FIS chaos experiment templates for a serverless event-driven consumer: Lambda concurrency=0 for 5 min (short outage/recovery), concurrency=0 for 20 min (forces DLQ routing past the visibility-timeout × maxReceiveCount threshold), and concurrency=1 for 10 min (severe throughput degradation) — each with a CloudWatch Alarm stop condition on queue backlog depth. Uses only aws:lambda:put-function-concurrent-executions since FIS has no native SQS-targeting action.",
+    "image": "fis-arch-d-sqs-lambda/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "SQS", "Lambda", "DynamoDB", "Serverless", "DLQ"],
+    "link": "fis-arch-d-sqs-lambda",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-09",
+    "articles": {}
+  },
+  {
+    "id": "fis-arch-f-stepfunctions-saga",
+    "title": "FIS Chaos: Step Functions Saga + Lambda + DynamoDB",
+    "description": "Three AWS FIS chaos experiment templates for a Saga-pattern order workflow (Reserve Inventory → Process Payment → Confirm Order, each with Retry/Catch and compensating transactions): payment-step outage triggering inventory-release compensation, first-step outage with no compensation needed, and final-step outage triggering the two-stage refund-then-release compensation chain — each with a CloudWatch Alarm stop condition on Step Functions ExecutionsFailed. Uses aws:lambda:put-function-concurrent-executions to drive Saga error handling indirectly, since FIS has no native Step Functions action.",
+    "image": "fis-arch-f-stepfunctions-saga/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "Step Functions", "Lambda", "DynamoDB", "Saga Pattern", "Serverless"],
+    "link": "fis-arch-f-stepfunctions-saga",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-09",
+    "articles": {}
+  },
+  {
+    "id": "fis-arch-g-multiaz-network",
+    "title": "FIS Chaos: Multi-AZ Network Disruption — NLB + EC2 ASG + Aurora",
+    "description": "Four AWS FIS chaos experiment templates for a Multi-AZ resilient architecture: cross-AZ connectivity disruption (VPC-internal traffic only), full AZ isolation (all traffic blocked), Aurora writer→reader failover, and tagged EC2 instance termination — each with a CloudWatch Alarm stop condition on NLB UnHealthyHostCount. Centers on aws:network:disrupt-connectivity, the only FIS action for simulating AZ-level network partitions.",
+    "image": "fis-arch-g-multiaz-network/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "Multi-AZ", "NLB", "EC2", "Auto Scaling", "Aurora", "Networking"],
+    "link": "fis-arch-g-multiaz-network",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-09",
+    "articles": {}
+  },
+  {
     "id": "route53-phz-delegation",
     "title": "Route 53 Private Hosted Zone Delegation",
     "description": "Parent private hosted zone system.example.com delegates dev.system.example.com and stg.system.example.com to two child VPCs using the June 2025 Route 53 Resolver DNS delegation feature (INBOUND_DELEGATION endpoints + DELEGATE resolver rules), with a fourth on-premises-role VPC and all four VPCs joined by one Transit Gateway.",

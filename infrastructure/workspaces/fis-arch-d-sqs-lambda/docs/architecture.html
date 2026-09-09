@@ -1,0 +1,394 @@
+<title>Architecture D — FIS Chaos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg:       #f6f8fa;
+    --surface:  #ffffff;
+    --border:   #d0d7de;
+    --text-1:   #1f2328;
+    --text-2:   #57606a;
+    --text-3:   #8c959f;
+
+    /* AWS service accent colors */
+    --sqs-c:  #e7157b;
+    --fn-c:   #ff9900;
+    --ddb-c:  #2d72b8;
+    --dlq-c:  #ad1457;
+
+    /* FIS scenario colors */
+    --d1: #f97316;
+    --d2: #ef4444;
+    --d3: #06b6d4;
+
+    --radius: 6px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text-1:  #e6edf3;
+      --text-2:  #8b949e;
+      --text-3:  #484f58;
+
+      --sqs-c:  #f472b6;
+      --fn-c:   #fbbf24;
+      --ddb-c:  #60a5fa;
+      --dlq-c:  #f06292;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #30363d;
+    --text-1:  #e6edf3;
+    --text-2:  #8b949e;
+    --text-3:  #484f58;
+    --sqs-c:  #f472b6;
+    --fn-c:   #fbbf24;
+    --ddb-c:  #60a5fa;
+    --dlq-c:  #f06292;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: var(--sans);
+    margin: 0;
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+  }
+
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  /* --- Header --- */
+  .header {
+    margin-bottom: 8px;
+  }
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fn-c);
+    border: 1px solid var(--fn-c);
+    border-radius: 3px;
+    padding: 2px 7px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(18px, 3.5vw, 26px);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 6px;
+    letter-spacing: -.02em;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-2);
+    margin: 0 0 28px;
+  }
+
+  /* --- Architecture SVG panel --- */
+  .arch-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .arch-panel svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* --- Design decision callout --- */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--fn-c);
+    border-left: 4px solid var(--fn-c);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 28px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+  .callout strong { color: var(--text-1); }
+  .callout code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+
+  /* --- Scenario grid --- */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 760px) {
+    .scenario-grid { grid-template-columns: 1fr; }
+  }
+
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .scenario-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .scenario-title {
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .scenario-body {
+    padding: 11px 14px;
+  }
+  .scenario-body p {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.55;
+    margin: 0 0 8px;
+  }
+  .scenario-body p:last-child { margin: 0; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .chip-target {
+    font-size: 9.5px;
+    border-radius: 2px;
+    padding: 1px 4px;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* --- SVG tokens shared via CSS custom properties --- */
+  .svc-sqs  { fill: var(--sqs-c); }
+  .svc-fn   { fill: var(--fn-c); }
+  .svc-ddb  { fill: var(--ddb-c); }
+  .svc-dlq  { fill: var(--dlq-c); }
+</style>
+
+<div class="page">
+  <header class="header">
+    <div class="badge">Architecture D · FIS Chaos Engineering</div>
+    <h1>SQS (main + DLQ) → Lambda Consumer → DynamoDB</h1>
+    <p class="subtitle">AWS Fault Injection Simulator — 3 chaos scenarios targeting the SQS-triggered Lambda consumer</p>
+  </header>
+
+  <!-- Main architecture diagram -->
+  <div class="arch-panel">
+    <figure style="margin:0" role="img" aria-label="Architecture D event flow: Operator sends a message through a Producer Lambda Function URL into the SQS main queue; a Consumer Lambda drains the queue via an SQS event source into DynamoDB; unprocessed messages redrive to a DLQ after 3 receives; FIS scenarios D-1/D-2/D-3 throttle the Consumer Lambda's reserved concurrency">
+      <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+
+        <defs>
+          <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0,0 7,3.5 0,7" fill="currentColor" opacity=".55"/>
+          </marker>
+          <marker id="arr-d" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0,0 7,3.5 0,7" fill="#ef4444"/>
+          </marker>
+          <marker id="arr-dlq" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <polygon points="0,0 7,3.5 0,7" fill="var(--dlq-c)"/>
+          </marker>
+        </defs>
+
+        <rect width="820" height="300" fill="var(--bg)"/>
+
+        <!-- FIS D-1/D-2/D-3 box around Consumer Lambda -->
+        <rect x="486" y="62" width="120" height="92" fill="none" stroke="#ef4444"
+              stroke-width="1.5" stroke-dasharray="4,3" rx="5" opacity=".9"/>
+        <rect x="486" y="53" width="128" height="17" rx="3" fill="#ef4444"/>
+        <text x="550" y="65.5" text-anchor="middle" font-family="'IBM Plex Mono',monospace"
+              font-size="9.5" font-weight="600" fill="#fff">D-1 · D-2 · D-3</text>
+
+        <!-- Operator icon -->
+        <circle cx="40" cy="118" r="9" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+        <path d="M24,144 Q40,130 56,144" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+        <text x="40" y="159" text-anchor="middle" font-family="'IBM Plex Mono',monospace"
+              font-size="9.5" fill="var(--text-3)">Operator</text>
+
+        <!-- Operator -> Producer -->
+        <line x1="58" y1="118" x2="84" y2="118" stroke="currentColor" stroke-width="1.2" opacity=".4" marker-end="url(#arr)"/>
+        <text x="71" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--text-3)">POST</text>
+
+        <!-- Producer Lambda -->
+        <rect x="88" y="88" width="98" height="60" rx="5" fill="none" stroke="var(--fn-c)" stroke-width="1.5"/>
+        <text x="137" y="112" text-anchor="middle" font-family="'Inter',sans-serif" font-size="10.5" font-weight="600" class="svc-fn">Producer λ</text>
+        <text x="137" y="127" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">Function URL</text>
+        <text x="137" y="139" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">IAM auth</text>
+
+        <!-- Producer -> Queue -->
+        <line x1="186" y1="118" x2="222" y2="118" stroke="currentColor" stroke-width="1.2" opacity=".4" marker-end="url(#arr)"/>
+        <text x="204" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--text-3)">SendMessage</text>
+
+        <!-- SQS Main Queue -->
+        <rect x="226" y="82" width="120" height="72" rx="5" fill="none" stroke="var(--sqs-c)" stroke-width="1.5"/>
+        <text x="286" y="106" text-anchor="middle" font-family="'Inter',sans-serif" font-size="10.5" font-weight="600" class="svc-sqs">SQS Main Queue</text>
+        <text x="286" y="121" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">visibility=60s</text>
+        <text x="286" y="133" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">maxReceive=3</text>
+
+        <!-- Queue -> Consumer -->
+        <line x1="346" y1="118" x2="482" y2="118" stroke="currentColor" stroke-width="1.2" opacity=".4" marker-end="url(#arr)"/>
+        <text x="414" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--text-3)">event source · batchSize=5</text>
+
+        <!-- Consumer Lambda -->
+        <rect x="500" y="82" width="92" height="72" rx="5" fill="none" stroke="var(--fn-c)" stroke-width="1.5"/>
+        <text x="546" y="106" text-anchor="middle" font-family="'Inter',sans-serif" font-size="10.5" font-weight="600" class="svc-fn">Consumer λ</text>
+        <text x="546" y="121" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">Python 3.13</text>
+        <text x="546" y="133" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">reservedConcurrency</text>
+
+        <!-- Consumer -> DynamoDB -->
+        <line x1="618" y1="118" x2="652" y2="118" stroke="currentColor" stroke-width="1.2" opacity=".4" marker-end="url(#arr)"/>
+        <text x="635" y="110" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="var(--text-3)">PutItem</text>
+
+        <!-- DynamoDB -->
+        <rect x="656" y="82" width="120" height="72" rx="5" fill="none" stroke="var(--ddb-c)" stroke-width="1.5"/>
+        <text x="716" y="112" text-anchor="middle" font-family="'Inter',sans-serif" font-size="10.5" font-weight="600" class="svc-ddb">DynamoDB</text>
+        <text x="716" y="127" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">processed-records</text>
+        <text x="716" y="139" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">PAY_PER_REQUEST</text>
+
+        <!-- Queue -> DLQ -->
+        <line x1="286" y1="154" x2="286" y2="220" stroke="var(--dlq-c)" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arr-dlq)"/>
+        <rect x="226" y="224" width="120" height="52" rx="5" fill="none" stroke="var(--dlq-c)" stroke-width="1.5"/>
+        <text x="286" y="246" text-anchor="middle" font-family="'Inter',sans-serif" font-size="10.5" font-weight="600" class="svc-dlq">DLQ</text>
+        <text x="286" y="261" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">retention 14d</text>
+        <text x="352" y="192" font-family="'Inter',sans-serif" font-size="8.5" fill="var(--dlq-c)">redrive after maxReceiveCount=3</text>
+        <text x="352" y="204" font-family="'Inter',sans-serif" font-size="8.5" fill="var(--dlq-c)">(guaranteed once outage &gt; 180s — see D-2)</text>
+
+        <!-- FIS -> Consumer arrow -->
+        <line x1="546" y1="62" x2="546" y2="82" stroke="#ef4444" stroke-width="1.4" stroke-dasharray="4,3" marker-end="url(#arr-d)"/>
+        <text x="630" y="70" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="8" fill="#ef4444">
+          aws:lambda:put-function-concurrent-executions
+        </text>
+
+        <!-- Stop condition strip -->
+        <rect x="14" y="284" width="792" height="1" fill="var(--border)"/>
+        <text x="14" y="296" font-family="'IBM Plex Mono',monospace" font-size="8.5" fill="var(--text-3)">
+          Stop condition (shared): CloudWatch Alarm on SQS ApproximateNumberOfMessagesVisible ≥ 1000
+        </text>
+      </svg>
+
+      <figcaption style="padding:10px 16px 12px; font-size:11.5px; color:var(--text-2); font-family:'Inter',sans-serif; border-top:1px solid var(--border); line-height:1.5">
+        Architecture D event path annotated with 3 AWS FIS chaos scenarios.
+        Red dashed border marks the Consumer Lambda targeted by every scenario via reserved-concurrency manipulation.
+        Pink dashed arrow shows the DLQ redrive path that D-2 is designed to trigger deterministically.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Design decision callout -->
+  <div class="callout">
+    <strong>Why concurrency-only?</strong> As of this writing, <code>aws:fis:inject-api-internal-error</code> and
+    <code>aws:fis:inject-api-throttle-error</code> only support <code>service: 'ec2'</code> or <code>service: 'kinesis'</code> —
+    SQS and DynamoDB are <strong>not</strong> supported service values, so FIS cannot directly inject API-level faults into this
+    pipeline's data plane. The Lambda-extension-based <code>invocation-error</code> / <code>invocation-add-delay</code> actions
+    were also ruled out: their exact setup (S3 layer structure, required environment variables) could not be confirmed from
+    primary AWS documentation. All 3 scenarios below therefore use the one FIS action verified to work reliably against a
+    Lambda target — <code>aws:lambda:put-function-concurrent-executions</code> — which still reproduces the operational
+    failure modes that matter for an SQS+Lambda consumer: a stalled or degraded processor, a growing backlog, and (at
+    sufficient duration) DLQ routing.
+  </div>
+
+  <!-- Scenario cards -->
+  <div class="scenario-grid">
+
+    <!-- D-1 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#f97316">D-1</span>
+        <span class="scenario-title">Consumer Outage — short</span>
+      </div>
+      <div class="scenario-body">
+        <p>Sets the Consumer Lambda's reserved concurrency to <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">0</code> for 5 minutes. No message can be processed at all during the window.</p>
+        <p><strong>What to verify:</strong> messages redeliver correctly within the 60s visibility timeout, no message loss, clean backlog drain once concurrency is restored.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#f97316">target</span> aws:lambda:function</span>
+          &nbsp;
+          <span class="chip">ConcurrentExecutions='0' · PT5M</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- D-2 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#ef4444">D-2</span>
+        <span class="scenario-title">Consumer Outage — long (DLQ)</span>
+      </div>
+      <div class="scenario-body">
+        <p>Sets reserved concurrency to <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">0</code> for 20 minutes — far beyond visibilityTimeout(60s) × maxReceiveCount(3) = 180s, so every in-flight message is guaranteed to exhaust its receive count.</p>
+        <p><strong>What to verify:</strong> DLQ routing actually happens, DLQ depth is visible/alarmable, and the team has a replay procedure.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#ef4444">target</span> aws:lambda:function</span>
+          &nbsp;
+          <span class="chip">ConcurrentExecutions='0' · PT20M</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- D-3 -->
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-tag" style="background:#06b6d4">D-3</span>
+        <span class="scenario-title">Throughput Collapse</span>
+      </div>
+      <div class="scenario-body">
+        <p>Limits reserved concurrency to <code style="font-family:'IBM Plex Mono',monospace;font-size:11px">1</code> for 10 minutes. The consumer keeps running, just at a fraction of normal throughput.</p>
+        <p><strong>What to verify:</strong> queue backlog growth rate, end-to-end processing latency, and whether alarms fire before the backlog becomes unmanageable.</p>
+        <p>
+          <span class="chip"><span class="chip-target" style="background:#06b6d4">target</span> aws:lambda:function</span>
+          &nbsp;
+          <span class="chip">ConcurrentExecutions='1' · PT10M</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <p style="margin-top:28px; font-size:11px; color:var(--text-3); font-family:'IBM Plex Mono',monospace">
+    FIS experiment templates provisioned via CDK L1 (aws_fis.CfnExperimentTemplate) · Stop condition: SQS ApproximateNumberOfMessagesVisible ≥ 1000
+  </p>
+</div>
