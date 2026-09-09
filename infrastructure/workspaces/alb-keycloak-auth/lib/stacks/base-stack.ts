@@ -64,7 +64,7 @@ export class BaseStack extends cdk.Stack {
     this.keycloakAlbSg = new ec2.SecurityGroup(this, 'KeycloakAlbSg', {
       vpc,
       securityGroupName: `${props.project}-${props.environment}-keycloak-alb-sg`,
-      description: 'Keycloak ALB — inbound HTTP/HTTPS',
+      description: 'Keycloak ALB - inbound HTTP/HTTPS',
       allowAllOutbound: true,
     });
     addAlbIngress(this.keycloakAlbSg, 'keycloak-alb');
@@ -73,7 +73,7 @@ export class BaseStack extends cdk.Stack {
     this.appAlbSg = new ec2.SecurityGroup(this, 'AppAlbSg', {
       vpc,
       securityGroupName: `${props.project}-${props.environment}-app-alb-sg`,
-      description: 'App ALB — inbound HTTP/HTTPS',
+      description: 'App ALB - inbound HTTP/HTTPS',
       allowAllOutbound: true,
     });
     addAlbIngress(this.appAlbSg, 'app-alb');
@@ -108,7 +108,7 @@ export class BaseStack extends cdk.Stack {
     this.dbSg = new ec2.SecurityGroup(this, 'DbSg', {
       vpc,
       securityGroupName: `${props.project}-${props.environment}-db-sg`,
-      description: 'Aurora PostgreSQL — inbound from Keycloak ECS',
+      description: 'Aurora PostgreSQL - inbound from Keycloak ECS',
       allowAllOutbound: false,
     });
     this.dbSg.addIngressRule(
