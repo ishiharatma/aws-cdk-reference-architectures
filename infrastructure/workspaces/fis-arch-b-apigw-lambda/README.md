@@ -7,18 +7,21 @@
 
 ## Introduction
 
-This project is a reference implementation for AWS Fault Injection Simulator (FIS) chaos engineering on a **serverless web API** architecture. A single CloudFront distribution routes all traffic through an API Gateway HTTP API to a Python Lambda function, which reads and writes a DynamoDB table.
+This project is a reference implementation for AWS Fault Injection Service (FIS) chaos engineering on a **serverless web API** architecture. A single CloudFront distribution routes all traffic through an API Gateway HTTP API to a Python Lambda function, which reads and writes a DynamoDB table.
 
-Four FIS experiment templates inject distinct failure modes at the DynamoDB and Lambda layers, covering the realistic failure scenarios operators need to validate before production:
+Four FIS experiment templates inject faults **into Lambda invocations** using the `aws:lambda:function` actions. These actions require the AWS FIS Lambda extension (attached as a layer) — the function code itself is never modified.
 
 | Scenario | Fault Injected | Duration | What It Validates |
 | -------- | -------------- | -------- | ----------------- |
-| **B-1** DynamoDB Internal Error | `InternalError` on all DynamoDB operations | 5 min | Lambda retry/backoff logic, 500 propagation through API GW and CloudFront |
-| **B-2** DynamoDB Write Throttle | `ProvisionedThroughputExceededException` on PutItem + DeleteItem | 5 min | Write-path circuit-breaker patterns; read operations remain healthy |
-| **B-3** DynamoDB Read Throttle | `ProvisionedThroughputExceededException` on GetItem + Scan | 5 min | Read-path fallback / graceful degradation; writes remain healthy |
-| **B-4** Lambda Concurrency Zero | Reserved concurrency set to 0 for the API function | 5 min | API GW error mapping and CloudFront custom-error-page fallback |
+| **B-1** Invocation Error — hard outage | `aws:lambda:invocation-error`, `preventExecution=true`, 100% | 5 min | Every request fails with 500 **without the handler running**. API 500 propagation, CloudFront error handling, client retry behaviour during a total outage |
+| **B-2** Invocation Latency | `aws:lambda:invocation-add-delay`, `+10 s`, 100% | 5 min | A fixed 10 s delay is added to the start of every invocation (still under the 29 s function / 30 s API GW timeout). Timeout budgets, client deadlines, latency alarms |
+| **B-3** Partial Invocation Error | `aws:lambda:invocation-error`, `preventExecution=false`, 50% | 5 min | Half of invocations fail **after** executing the handler, so side effects may already have happened. Idempotency, partial-failure handling, retry amplification |
+| **B-4** Overridden HTTP Integration Response | `aws:lambda:invocation-http-integration-response`, `statusCode=500` | 5 min | API Gateway receives a synthetic 500 `application/json` response without the handler running. API GW → CloudFront error-page behaviour for a well-formed-but-failing upstream |
 
-All experiments share a CloudWatch Alarm stop condition that automatically halts the experiment if the Lambda error count exceeds 10 per minute, providing a safety net against extended outages.
+All experiments share a CloudWatch Alarm stop condition that automatically halts the experiment if the Lambda error count exceeds **100 per minute** — set well above the load these experiments generate, so it catches a runaway blast radius rather than the injected faults themselves.
+
+> ### ⚠️ Why not inject DynamoDB faults directly?
+> An earlier version of this workspace tried `aws:fis:inject-api-internal-error` / `aws:fis:inject-api-throttle-error` with `service: dynamodb`, and a fictional `aws:lambda:put-function-concurrent-executions` action. **Both fail at deploy time.** The `aws:fis:inject-api-*` actions do not support `dynamodb` as a service value (the API rejects it with *"The service parameter value is not supported for the action"*), and no FIS action sets Lambda reserved concurrency. The only supported way to inject faults into this serverless path today is the `aws:lambda:function` action family, which is what B-1–B-4 now use. See [Implementation Highlights](#6-lessons-learned).
 
 ## Architecture Overview
 
@@ -35,24 +38,21 @@ API Gateway HTTP API  (default stage, access logging to CW Logs)
     │  Lambda proxy integration
     ▼
 Lambda Function  (Python 3.13, 256 MB, 29 s timeout)
-    │  GetItem / PutItem / DeleteItem / Scan
+    │  + AWS FIS Lambda extension layer (fault injection)
+    │  GET / POST / DELETE  /items
     ▼
 DynamoDB Table  (PAY_PER_REQUEST, string partition key: id)
 
+FIS ⇄ extension config exchange:
+    S3 bucket  <project>-<env>-b-fis-config-<account>  (prefix FisConfigs/)
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FIS Experiment Templates (FisStack)
+FIS Experiment Templates (FisStack)   target: aws:lambda:function (API handler ARN)
 
-B-1  aws:fis:inject-api-internal-error ──────► Lambda execution role
-     service=dynamodb, ops=GetItem,PutItem,DeleteItem,Scan, 100%, 5m
-
-B-2  aws:fis:inject-api-throttle-error ─────► Lambda execution role
-     service=dynamodb, ops=PutItem,DeleteItem, 100%, 5m
-
-B-3  aws:fis:inject-api-throttle-error ─────► Lambda execution role
-     service=dynamodb, ops=GetItem,Scan, 100%, 5m
-
-B-4  aws:lambda:put-function-concurrent-executions ► Lambda function
-     ConcurrentExecutions=0, 5m
+B-1  aws:lambda:invocation-error                  preventExecution=true,  100%, PT5M
+B-2  aws:lambda:invocation-add-delay              startupDelayMilliseconds=10000, 100%, PT5M
+B-3  aws:lambda:invocation-error                  preventExecution=false, 50%,  PT5M
+B-4  aws:lambda:invocation-http-integration-response  statusCode=500, contentTypeHeader=application/json, PT5M
 ```
 
 ### Key Design Benefits
@@ -60,9 +60,10 @@ B-4  aws:lambda:put-function-concurrent-executions ► Lambda function
 | Feature | Benefit |
 | ------- | ------- |
 | No VPC required | Fully serverless — no NAT Gateway, no subnet planning, no VPC hourly charges |
-| `aws:fis:inject-api-*` targets IAM role | FIS intercepts outbound DynamoDB calls by the Lambda execution role; the function code is untouched |
-| Distinct B-2 / B-3 scenarios | Write-only throttle vs. read-only throttle reveal asymmetric fallback behavior that a "throttle all" test would miss |
-| Shared stop condition | One CloudWatch Alarm (≥ 10 Lambda errors / min) halts any of the four experiments automatically |
+| `aws:lambda:function` actions | FIS injects faults into function invocations through the FIS Lambda extension; the handler code is untouched |
+| `preventExecution` toggle (B-1 vs B-3) | The same action models both a fail-fast outage (handler never runs) and a fail-after-work error (side effects already committed) |
+| HTTP integration response override (B-4) | Simulates a well-formed 500 from the integration — distinct from a Lambda crash — to exercise API GW/CloudFront error mapping |
+| Shared stop condition | One CloudWatch Alarm halts any of the four experiments automatically |
 | CloudFront as stable front door | Stable domain, WAF attachment point, and a natural place to observe 4xx/5xx rates during experiments |
 
 ## Prerequisites
@@ -71,9 +72,9 @@ B-4  aws:lambda:put-function-concurrent-executions ► Lambda function
 - Node.js 20 or later
 - AWS CDK CLI (`npm install -g aws-cdk`)
 - Basic knowledge of TypeScript and Python
-- AWS account with FIS service-linked role created (auto-created on first FIS use)
+- AWS account with the FIS service-linked role (auto-created on first FIS use)
 
-> **No VPC or NAT Gateway costs**: this architecture uses only serverless services. The dominant ongoing cost at rest is zero (DynamoDB PAY_PER_REQUEST, Lambda invocations).
+> **No VPC or NAT Gateway costs**: this architecture uses only serverless services. The dominant ongoing cost at rest is zero (DynamoDB PAY_PER_REQUEST, Lambda invocations, S3 config bucket near-empty). See [Cost Estimation](#cost-estimation).
 
 ## Project Directory Structure
 
@@ -89,8 +90,8 @@ fis-arch-b-apigw-lambda/
 │   │   └── fis-chaos-stage.ts             # Stage: BaseStack → AppStack → FisStack
 │   └── stacks/
 │       ├── base-stack.ts                  # DynamoDB table
-│       ├── app-stack.ts                   # Lambda + API GW HTTP API + CloudFront
-│       └── fis-stack.ts                   # 4 FIS experiment templates + IAM + alarms
+│       ├── app-stack.ts                   # Lambda (+ FIS extension layer) + API GW HTTP API + CloudFront + FIS config bucket
+│       └── fis-stack.ts                   # 4 FIS experiment templates + IAM + alarm
 ├── parameters/
 │   ├── environments.ts                    # Environment parameter type
 │   ├── dev-params.ts                      # Development environment parameters
@@ -99,7 +100,7 @@ fis-arch-b-apigw-lambda/
 │   ├── compliance/
 │   │   └── cdk-nag.test.ts               # cdk-nag AwsSolutions compliance checks
 │   └── snapshot/
-│       └── snapshot.test.ts              # CDK snapshot tests (12 test cases)
+│       └── snapshot.test.ts              # CDK snapshot tests
 ├── docs/
 │   └── architecture.html                 # Interactive SVG architecture diagram
 ├── cdk.json
@@ -113,172 +114,117 @@ fis-arch-b-apigw-lambda/
 Viewer (browser or curl)
   │  HTTPS
   ▼
-CloudFront Distribution
-  │  Cache-disabled (CACHING_DISABLED policy)
-  │  ALL_VIEWER_EXCEPT_HOST_HEADER origin request policy
+CloudFront Distribution   (CACHING_DISABLED, ALL_VIEWER_EXCEPT_HOST_HEADER)
   ▼
-API Gateway HTTP API  (/items, /items/{id})
-  │  Lambda proxy integration — entire HTTP request forwarded
+API Gateway HTTP API  ($default route → Lambda proxy integration)
   ▼
-Lambda Function (Python 3.13)
+Lambda Function (Python 3.13)   ── AWS FIS Lambda extension intercepts the invocation ──►
   ├── GET  /items          → table.scan()
-  ├── POST /items          → table.put_item()  (body: {"name": "...", "value": "..."})
+  ├── POST /items          → table.put_item()   (body: {"name": "..."} )
   ├── GET  /items/{id}     → table.get_item()
-  └── DELETE /items/{id}  → table.delete_item()
+  └── DELETE /items/{id}   → table.delete_item()
   ▼
-DynamoDB Table  (partition key: id, string UUID generated by Lambda on POST)
+DynamoDB Table  (partition key: id, UUID generated by the handler on POST)
 ```
 
 ### FIS Injection Point
 
-`aws:fis:inject-api-*` actions intercept outbound AWS API calls **made by a specified IAM role**. Because the Lambda execution role is the target, every DynamoDB call from inside the Lambda function receives the injected error — the function code itself is never modified. This is why B-1/B-2/B-3 target `aws:iam:role` (the Lambda execution role ARN), not `aws:dynamodb:table`.
+The `aws:lambda:function` actions inject faults through the **AWS FIS Lambda extension**, attached to the function as a layer. When an experiment starts, FIS writes the active fault configuration to an S3 prefix; the extension polls that prefix and applies the fault (return an error, add a delay, or override the integration response) around the handler invocation. Nothing in `index.py` changes.
+
+Because the extension only *polls*, faults are not instantaneous:
+
+- **Ramp-up**: up to ~60 s from experiment start until every invocation is affected (the extension's slow-poll interval). B-1 and B-4 in practice reach full effect within 15–60 s; B-3 (50%) took ~2.5 min to converge in our runs.
+- **Ramp-down**: up to ~20 s after the action ends before invocations are clean again.
 
 ## Key Components and Design Points
 
 | Component | Design Points |
 | --------- | ------------- |
 | DynamoDB Table | PAY_PER_REQUEST billing; costs zero at rest; PITR disabled for minimal cost during experiments |
-| Lambda Function | Python 3.13, 256 MB, 29 s timeout (1 s under API GW's 30 s limit) |
-| API Gateway HTTP API | Default stage, access logging to CloudWatch Logs, no custom authorizer (public demo) |
-| CloudFront Distribution | `CACHING_DISABLED` cache policy, `ALL_VIEWER_EXCEPT_HOST_HEADER` origin request policy (passes all query strings and headers to API GW) |
-| FIS IAM Role | Minimal: `fis:InjectApiInternalError` + `fis:InjectApiThrottleError` on the Lambda exec role; `lambda:PutFunctionConcurrency` + `lambda:DeleteFunctionConcurrency` on the Lambda function; `cloudwatch:DescribeAlarms` on the stop-condition alarm |
-| CloudWatch Stop Alarm | `LambdaErrors >= 10` over 1 minute — shared by all 4 templates |
-| FIS Log Group | `/fis/{project}-{env}-b` — ONE_MONTH retention, auto-deleted on stack destroy |
+| Lambda Function | Python 3.13, 256 MB, 29 s timeout (1 s under API GW's 30 s limit). Carries the FIS extension layer + `AWS_LAMBDA_EXEC_WRAPPER=/opt/aws-fis/bootstrap`, `AWS_FIS_CONFIGURATION_LOCATION=arn:aws:s3:::<bucket>/FisConfigs/`, `AWS_FIS_POLL_MAX_WAIT_MILLISECONDS=2000` |
+| FIS extension layer | Resolved per-Region from the public SSM parameter `/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x` (x86_64 matches the default Lambda architecture) |
+| FIS config bucket | `<project>-<env>-b-fis-config-<account>` — S3-managed encryption, all public access blocked, 1-day lifecycle expiry, one per Region. FIS writes fault config here; the extension reads it |
+| API Gateway HTTP API | Default stage, `$default` catch-all route, access logging to CloudWatch Logs, no authorizer (public demo) |
+| CloudFront Distribution | `CACHING_DISABLED` cache policy, `ALL_VIEWER_EXCEPT_HOST_HEADER` origin request policy |
+| FIS IAM Role | `s3:PutObject`/`s3:DeleteObject` on `<bucket>/FisConfigs/*`; `lambda:GetFunction` and `tag:GetResources` on `*`; `cloudwatch:DescribeAlarms` on the stop-condition alarm; CloudWatch Logs delivery permissions |
+| CloudWatch Stop Alarm | `LambdaErrors >= 100` over 1 minute — shared by all 4 templates |
+| FIS Log Group | `/fis/<project>-<env>-b` — ONE_MONTH retention, auto-deleted on stack destroy |
 
 ## Implementation Highlights
 
 ### 1. Lambda CRUD handler for DynamoDB
 
-The Lambda function is intentionally simple — it exists as a target for FIS fault injection, not as a production-grade service:
+The Lambda function is intentionally simple — it exists as a target for FIS fault injection, not as a production-grade service. It propagates DynamoDB exceptions to API Gateway as HTTP 500, so faults are immediately visible in the HTTP response-code distribution and in CloudWatch metrics.
 
-```python
-# lambda/api-handler/index.py (excerpt)
-TABLE_NAME = os.environ["TABLE_NAME"]
-table = boto3.resource("dynamodb").Table(TABLE_NAME)
+### 2. The FIS Lambda extension is a hard prerequisite
 
-def handler(event, context):
-    method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
-    path   = event.get("rawPath", "/items")
-    item_id = path.split("/items/", 1)[1] if "/items/" in path else None
-
-    if method == "GET" and not item_id:
-        result = table.scan()
-        return ok(result.get("Items", []))
-    elif method == "POST":
-        body = json.loads(event.get("body") or "{}")
-        item = {"id": str(uuid.uuid4()), **body}
-        table.put_item(Item=item)
-        return ok(item, 201)
-    # ... GET /{id} and DELETE /{id}
-```
-
-The function propagates DynamoDB exceptions directly to API Gateway as HTTP 500 (or 429 for throttles), so the experiment's effect is immediately visible in CloudWatch metrics and in the API's HTTP response code distribution.
-
-### 2. FIS API error injection targets the Lambda execution role
-
-The key to understanding B-1, B-2, and B-3 is that `aws:fis:inject-api-*` actions target an **IAM role**, not a resource:
+`aws:lambda:function` actions **do not work on a bare function**. The one-time setup (all in `app-stack.ts`) is:
 
 ```typescript
-// lib/stacks/fis-stack.ts (excerpt — scenario B-1)
-const lambdaExecRoleArn = props.apiFunction.role!.roleArn;
+// Resolve the extension layer ARN for this Region from a public SSM parameter
+const fisExtensionLayerArn = ssm.StringParameter.valueForStringParameter(
+    this, '/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x',
+);
 
-targets: {
-    LambdaExecRole: {
-        resourceType: 'aws:iam:role',
-        resourceArns: [lambdaExecRoleArn],  // the Lambda execution role
-        selectionMode: 'ALL',
+new lambda.Function(this, 'ApiFunction', {
+    // ...
+    layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'FisExtensionLayer', fisExtensionLayerArn)],
+    environment: {
+        TABLE_NAME: props.table.tableName,
+        AWS_LAMBDA_EXEC_WRAPPER: '/opt/aws-fis/bootstrap',
+        AWS_FIS_CONFIGURATION_LOCATION: `arn:aws:s3:::${this.fisConfigBucket.bucketName}/FisConfigs/`,
+        AWS_FIS_POLL_MAX_WAIT_MILLISECONDS: '2000', // recommended when preventExecution=true
     },
-},
-actions: {
-    InjectDynamoInternalError: {
-        actionId: 'aws:fis:inject-api-internal-error',
-        parameters: {
-            service: 'dynamodb',
-            operations: 'GetItem,PutItem,DeleteItem,Scan',
-            percentage: '100',
-            duration: 'PT5M',
-        },
-        targets: { Roles: 'LambdaExecRole' },
-    },
-},
+});
+
+// The extension (running in the function's execution role) reads fault config from S3
+this.apiFunction.addToRolePolicy(new iam.PolicyStatement({
+    actions: ['s3:GetObject'],
+    resources: [`${this.fisConfigBucket.bucketArn}/FisConfigs/*`],
+}));
 ```
 
-FIS intercepts every call the Lambda function makes to DynamoDB and returns `InternalError` instead. No code change, no mocking, no VPC traffic manipulation — the injection happens at the AWS control plane.
+The S3 bucket is the communication channel between FIS and the extension: FIS's role has `s3:PutObject`/`s3:DeleteObject` on the prefix; the function's role has `s3:GetObject`/`s3:ListBucket`.
 
-### 3. Scenario B-2 vs. B-3: asymmetric throttle scenarios
-
-Scenarios B-2 and B-3 inject throttle errors on complementary operation sets:
+### 3. B-1 vs B-3 — `preventExecution` models two very different failures
 
 ```typescript
-// B-2: write-only throttle — reads (GetItem/Scan) remain healthy
-parameters: {
-    service: 'dynamodb',
-    operations: 'PutItem,DeleteItem',   // writes only
-    percentage: '100',
-    duration: 'PT5M',
-},
+// B-1: fail fast — handler never runs, no side effects, 100% of requests
+parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: 'true' }
 
-// B-3: read-only throttle — writes (PutItem/DeleteItem) remain healthy
-parameters: {
-    service: 'dynamodb',
-    operations: 'GetItem,Scan',         // reads only
-    percentage: '100',
-    duration: 'PT5M',
-},
+// B-3: fail after work — handler runs (writes may commit), then 50% return an error
+parameters: { duration: 'PT5M', invocationPercentage: '50',  preventExecution: 'false' }
 ```
 
-This is intentional: real production DynamoDB throttling often hits one dimension (writes or reads) before the other. Running both experiments reveals whether the application falls back gracefully when reads fail (does it serve cached data?) vs. when writes fail (does it queue retries?).
+B-1 answers *"does the front end degrade cleanly when the API is entirely down?"*. B-3 answers the harder question *"when a write succeeds in DynamoDB but the caller sees a 500 and retries, do we double-write?"* — i.e. it is an idempotency test.
 
-### 4. Scenario B-4: Lambda concurrency exhaustion
-
-B-4 uses a different FIS mechanism — it directly manipulates the Lambda function's **reserved concurrency**:
+### 4. B-2 latency and B-4 integration-response override
 
 ```typescript
-// B-4: set reserved concurrency to 0 for 5 minutes
-targets: {
-    ApiFunction: {
-        resourceType: 'aws:lambda:function',
-        resourceArns: [props.apiFunction.functionArn],
-        selectionMode: 'ALL',
-    },
-},
-actions: {
-    SetConcurrencyZero: {
-        actionId: 'aws:lambda:put-function-concurrent-executions',
-        parameters: {
-            ConcurrentExecutions: '0',
-            duration: 'PT5M',
-        },
-        targets: { Functions: 'ApiFunction' },
-    },
-},
+// B-2: a fixed 10 s pre-invocation delay — deliberately < the 29 s / 30 s timeouts
+{ actionId: 'aws:lambda:invocation-add-delay',
+  parameters: { duration: 'PT5M', invocationPercentage: '100', startupDelayMilliseconds: '10000' } }
+
+// B-4: API Gateway gets a synthetic 500 without the handler running
+{ actionId: 'aws:lambda:invocation-http-integration-response',
+  parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: 'true',
+                statusCode: '500', contentTypeHeader: 'application/json' } }
 ```
 
-With `reservedConcurrency: 0`, all Lambda invocations immediately return `TooManyRequestsException` (HTTP 429) without executing. API Gateway maps this to a `429` or `502` response depending on integration configuration. CloudFront, if configured with a custom error page for 4xx/5xx codes, should surface a user-friendly fallback.
+B-4 differs from B-1 in *shape*: B-1 is a Lambda error (API Gateway synthesises the 502/500), B-4 is a well-formed 500 response body from the integration. Error dashboards and alarms that key off `Lambda Errors` vs `5xx` will see these differently.
 
 ### 5. Shared stop condition and automatic recovery
 
-All four templates reference the same CloudWatch Alarm:
+All four templates reference one CloudWatch Alarm (`LambdaErrors >= 100` in 1 minute). If the blast radius runs away, FIS stops the experiment and the extension reverts within the ramp-down window. The alarm also notifies an SNS topic (optional email via the `alarmEmail` parameter).
 
-```typescript
-const lambdaErrorAlarm = new cw.Alarm(this, 'LambdaErrorAlarm', {
-    metric: props.apiFunction.metricErrors({
-        period: cdk.Duration.minutes(1),
-        statistic: 'Sum',
-    }),
-    threshold: 10,
-    evaluationPeriods: 1,
-    comparisonOperator: cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-    treatMissingData: cw.TreatMissingData.NOT_BREACHING,
-});
+### 6. Lessons learned
 
-const stopConditions = [{
-    source: 'aws:cloudwatch:alarm',
-    value: lambdaErrorAlarm.alarmArn,
-}];
-```
-
-If the error rate exceeds the safety threshold, FIS stops the experiment and the Lambda execution role reverts to normal operation. The alarm also sends a notification to the SNS topic (with optional email subscription via `alarmEmail` parameter).
+- **`aws fis list-actions` is the source of truth.** The original design used `aws:lambda:put-function-concurrent-executions`, which does not exist — CloudFormation fails with `Invalid actionId ... Status Code: 404`. Always confirm an action ID against `aws fis list-actions` in the target Region before writing the template.
+- **`aws:fis:inject-api-*` has a short service allow-list.** `service: dynamodb` is rejected outright. As of this writing these actions are practical only for a small set of services (e.g. EC2); they are **not** a general "make any AWS API fail" tool.
+- **The extension polls — plan for ramp-up.** Health checks and dashboards need ~60 s of tolerance after `start-experiment` before the fault is fully in effect, and B-3-style partial percentages take longer still to converge.
+- **`AWS_FIS_POLL_MAX_WAIT_MILLISECONDS` matters for `preventExecution=true`.** Without it, the very first invocations in the ramp-up window can slip through before the extension has the config. 2000 ms is the documented recommendation.
+- **One S3 config bucket per Region.** The bucket must exist in the Region you start the experiment from; it can be shared across experiments and accounts.
+- **Response streaming is incompatible** with the FIS Lambda extension — the extension suppresses streaming even when no fault is active. Not an issue here (buffered JSON responses).
 
 ## Deployment Guide
 
@@ -294,53 +240,72 @@ npm ci
 Edit `parameters/dev-params.ts` to set your region and optionally an alarm email:
 
 ```typescript
-// parameters/dev-params.ts
-export const devParams: EnvParams = {
+const devParams: EnvParams = {
     region: 'ap-northeast-1',
-    // alarmEmail: 'ops@example.com',  // uncomment to receive alarm notifications
+    // alarmEmail: 'ops@example.com',
 };
 ```
 
 ### 3. Bootstrap CDK (first time only)
 
 ```bash
-PROJECT=fis-chaos-b ENV=dev npm run bootstrap
+PROJECT=<project> ENV=dev npm run bootstrap -w workspaces/fis-arch-b-apigw-lambda
 ```
 
 ### 4. Deploy all stacks
 
 ```bash
-PROJECT=fis-chaos-b ENV=dev npm run stage:deploy:all
+PROJECT=<project> ENV=dev npm run stage:deploy:all -w workspaces/fis-arch-b-apigw-lambda -- --require-approval never
 ```
 
-This deploys the three stacks in dependency order:
-1. `fis-chaos-b-dev-b-base` — DynamoDB table
-2. `fis-chaos-b-dev-b-app` — Lambda + API GW + CloudFront
-3. `fis-chaos-b-dev-b-fis` — FIS templates + IAM + alarms
+Deploys the three stacks in dependency order:
+1. `<project>-dev-b-base` — DynamoDB table
+2. `<project>-dev-b-app` — Lambda + FIS extension layer + API GW + CloudFront + FIS config bucket
+3. `<project>-dev-b-fis` — FIS templates + IAM + alarm
 
-### 5. Test the API
-
-After deployment, retrieve the CloudFront domain from the stack output:
+### 5. Smoke-test the API
 
 ```bash
-# List items
-curl https://<cloudfront-domain>/items
+CF=$(aws cloudformation describe-stacks --stack-name <project>-dev-b-app \
+  --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDomain'].OutputValue" --output text)
 
-# Create an item
-curl -X POST https://<cloudfront-domain>/items \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"test","value":"hello"}'
-
-# Get one item
-curl https://<cloudfront-domain>/items/<id>
-
-# Delete an item
-curl -X DELETE https://<cloudfront-domain>/items/<id>
+curl -s https://$CF/items                                   # → {"items": []}
+curl -s -XPOST https://$CF/items -d '{"name":"hello"}'      # → 201 {"id": "...", "name": "hello"}
+curl -s https://$CF/items                                   # → the item is listed
 ```
 
 ### 6. Run a FIS experiment
 
-Navigate to the AWS FIS console, select one of the four experiment templates (`B-1` through `B-4`), click **Start experiment**, and observe the Lambda error count in CloudWatch.
+**Console**: FIS → Experiment templates → pick `B-1`…`B-4` (the `Scenario` tag) → **Start experiment**.
+
+**CLI**:
+
+```bash
+# Find the template IDs (they are tagged Scenario=B-1 .. B-4)
+aws fis list-experiment-templates \
+  --query "experimentTemplates[].{id:id, scenario:tags.Scenario, desc:description}" --output table
+
+# Start one and capture the experiment id
+EXP=$(aws fis start-experiment --experiment-template-id <EXT...> \
+      --query "experiment.id" --output text)
+
+# Watch it
+watch -n5 "aws fis get-experiment --id $EXP --query 'experiment.state'"
+
+# In another shell, watch the effect
+while true; do curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' https://$CF/items; sleep 2; done
+```
+
+### Observed results (ap-northeast-1, 5-minute runs)
+
+| Scenario | During the experiment | Recovery |
+| -------- | --------------------- | -------- |
+| **B-1** | API and CloudFront return **HTTP 500** for the full window; handler does not run (no DynamoDB writes) | 200 within seconds of the experiment completing |
+| **B-2** | After a ~60 s ramp-up, response time goes from ~0.09 s to **~11.2 s**; status stays 200 | Latency back to baseline within ~60 s |
+| **B-3** | After a ~2.5 min ramp-up, ~**50% of requests return 500**; the rest run normally (writes commit) | Clean within ~20 s |
+| **B-4** | After a ~60 s ramp-up, API/CloudFront return **500 with an empty body**; handler does not run | 200 within seconds |
+
+The stop-condition alarm (`LambdaErrors >= 100/min`) did **not** fire in any run — the demo's request rate is far below 100/min. Raise the request rate or lower the threshold to exercise the automatic-halt path.
 
 ## Testing
 
@@ -348,81 +313,97 @@ Navigate to the AWS FIS console, select one of the four experiment templates (`B
 cd infrastructure
 npm ci
 
-# Run all tests for this workspace
-npm run test --workspace=fis-arch-b-apigw-lambda
+npm run test         -w workspaces/fis-arch-b-apigw-lambda
+npm run test:snapshot -w workspaces/fis-arch-b-apigw-lambda
+npm run test:compliance -w workspaces/fis-arch-b-apigw-lambda
 
-# Snapshot tests only (12 test cases across 3 stacks)
-npm run test:snapshot --workspace=fis-arch-b-apigw-lambda
-
-# CDK Nag compliance checks
-npm run test:compliance --workspace=fis-arch-b-apigw-lambda
-
-# Update snapshots after intentional changes
-npm run test:snapshot:update --workspace=fis-arch-b-apigw-lambda
+# After intentional changes:
+npm run test:snapshot:update -w workspaces/fis-arch-b-apigw-lambda
 ```
-
-### What the tests cover
 
 | Test suite | File | Assertions |
 | ---------- | ---- | ---------- |
-| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; Lambda Python 3.13; CloudFront distribution count; API GW HTTP API count; exactly 4 FIS templates; all templates have stop conditions |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions pack — no unsuppressed warnings or errors |
+| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; Lambda Python 3.13 with the FIS extension layer; CloudFront + API GW counts; exactly 4 FIS templates; every template has a stop condition |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions pack — no unsuppressed findings |
 
 ## Cost Estimation
 
-All services are serverless (pay-per-use), so the cost at rest is effectively **zero**.
+Pricing is **on-demand list price, September 2026**, and excludes the AWS Free Tier (which covers most of the non-FIS usage below). Two regions are shown: **US East (N. Virginia) `us-east-1`** and **Asia Pacific (Tokyo) `ap-northeast-1`**.
 
-| Service | Billing Model | Estimated cost during experiments |
-| ------- | ------------- | --------------------------------- |
-| DynamoDB | PAY_PER_REQUEST | ~$0 at idle; <$0.01 for a few hundred test requests |
-| Lambda | Per invocation + duration | <$0.01 for 5-minute experiment at 10 req/s |
-| API Gateway HTTP API | Per request | <$0.01 for 5-minute experiment |
-| CloudFront | Per request + data transfer | <$0.01 |
-| CloudWatch | Metrics + logs | ~$0.01/month for experiment logs |
-| FIS | Free | No charge for FIS itself |
-| **Total (experiments only)** | | **< $0.10 per experiment run** |
+### Idle / steady-state (per month, no traffic)
+
+Everything here is pay-per-use and scales to (almost) zero when the API is not being called.
+
+| Service | Basis | us-east-1 | ap-northeast-1 |
+| ------- | ----- | --------- | -------------- |
+| DynamoDB (PAY_PER_REQUEST) | no RCU/WCU reservation; storage of a handful of tiny items | ~$0.00 | ~$0.00 |
+| Lambda | no invocations | $0.00 | $0.00 |
+| API Gateway HTTP API | no requests | $0.00 | $0.00 |
+| CloudFront | no requests / transfer | $0.00 | $0.00 |
+| S3 FIS config bucket | near-empty, 1-day expiry | <$0.01 | <$0.01 |
+| CloudWatch | 1 alarm ($0.10) + minimal log storage | ~$0.10 | ~$0.10 |
+| **Total** | | **≈ $0.10 / month** | **≈ $0.12 / month** |
+
+### One test cycle (deploy → run all 4 experiments → destroy, ~1–2 h)
+
+| Service | Usage assumption | us-east-1 | ap-northeast-1 |
+| ------- | ---------------- | --------- | -------------- |
+| **FIS** | 4 experiments × 1 action × ~5 action-minutes = **~20 action-minutes** @ $0.10 | **$2.00** | **$2.00** |
+| Lambda | ~a few thousand invocations, 256 MB, <300 ms | <$0.02 | <$0.02 |
+| DynamoDB | a few thousand read/write request units | <$0.01 | <$0.01 |
+| API Gateway HTTP API | a few thousand requests @ $1.00–$1.11 / million | <$0.01 | <$0.01 |
+| CloudFront | a few thousand HTTPS requests + <1 GB out (within Free Tier) | ~$0.00 | ~$0.00 |
+| CloudWatch Logs | experiment + access + function logs, well under 1 GB @ $0.50 / $0.76 per GB | <$0.05 | <$0.05 |
+| **Total per cycle** | | **≈ $2.10** | **≈ $2.10** |
+
+**Key correction vs. earlier versions of this doc:** FIS is **not free**. It bills **$0.10 per action-minute** (same in both regions); an "action-minute" is one minute of one running action. A 5-minute single-action experiment costs ~$0.50; running B-1 through B-4 once costs ~$2.00. Experiment reports (opt-in) are an extra $5 each and are not used here.
+
+Pricing references (list price, retrieved via the AWS Price List API, Sep 2026):
+FIS `ActionMinute` $0.10 (both regions) · Lambda / DynamoDB / API GW near-identical between the two regions · CloudWatch alarm $0.10 · CloudWatch Logs ingestion $0.50/GB (us-east-1) vs $0.76/GB (ap-northeast-1).
 
 ## Security Considerations
 
-- **Lambda execution role follows least privilege**: the role only has `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:DeleteItem`, and `dynamodb:Scan` on the specific table (granted via `table.grantReadWriteData()`).
-- **FIS role follows least privilege**: scoped to `fis:InjectApiInternalError` / `fis:InjectApiThrottleError` on the Lambda execution role ARN, and `lambda:PutFunctionConcurrency` / `lambda:DeleteFunctionConcurrency` on the specific Lambda function ARN.
-- **No VPC exposure**: there is no VPC, no public subnet, and no security group — the attack surface is the CloudFront/API GW public endpoint, which is appropriate for a public demo API.
-- **API is unauthenticated by design**: this reference pattern focuses on FIS behavior. For production, add a Cognito authorizer or IAM auth to the API Gateway route.
-- **Stop condition is mandatory**: all FIS templates include the Lambda error alarm stop condition, which limits maximum experiment blast radius.
+- **Lambda execution role — least privilege**: `dynamodb:GetItem/PutItem/DeleteItem/Scan` on the specific table (via `table.grantReadWriteData()`), plus `s3:GetObject`/`s3:ListBucket` scoped to the `FisConfigs/` prefix of the config bucket (for the extension).
+- **FIS role — least privilege**: `s3:PutObject`/`s3:DeleteObject` scoped to `<bucket>/FisConfigs/*`; `lambda:GetFunction` and `tag:GetResources` (target resolution); `cloudwatch:DescribeAlarms` on the one stop-condition alarm; CloudWatch Logs delivery actions. No `lambda:UpdateFunctionConfiguration`, no DynamoDB access.
+- **FIS config bucket**: all public access blocked, S3-managed encryption, TLS enforced, 1-day object expiry so stale fault configs do not linger.
+- **No VPC exposure**: no VPC, subnet or security group. The only surface is the CloudFront / API GW public endpoint — appropriate for a public demo API. For production add a Cognito or IAM authorizer to the route.
+- **Stop condition is mandatory**: every template carries the Lambda-error alarm stop condition, bounding the maximum blast radius.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Resolution |
 | ------- | ------------ | ---------- |
-| `cdk deploy` fails with `No parameters found for environment` | Missing `dev-params.ts` export | Verify `parameters/index.ts` exports `devParams` under the `dev` key |
-| Lambda returns 500 during B-1 experiment | Expected — FIS is injecting `InternalError` | Check CloudWatch Lambda metrics; verify experiment is running |
-| FIS experiment stops immediately | Stop condition alarm is already in `ALARM` state | Reset the alarm first (`aws cloudwatch set-alarm-state --alarm-name ... --state-value OK`) |
-| CloudFront returns 403 on API calls | Missing `ALL_VIEWER_EXCEPT_HOST_HEADER` origin request policy | Verify the CloudFront distribution behavior includes the policy |
-| `Table not found` Lambda error | BaseStack not yet deployed | Deploy stacks in order: Base → App → FIS |
+| `cdk deploy` fails: `No parameters found for environment` | Missing `dev-params.ts` registration | Verify `parameters/index.ts` imports `dev-params` and it calls `params[Environment.DEVELOPMENT] = …` |
+| FIS template create fails: `Invalid actionId ... 404` | An action ID that does not exist in the Region | Check `aws fis list-actions` |
+| FIS template create fails: `The service parameter value is not supported for the action` | `aws:fis:inject-api-*` with an unsupported `service` (e.g. `dynamodb`) | Use the `aws:lambda:function` actions instead (as this workspace does) |
+| Experiment runs but the API never returns errors | Function is missing the FIS extension layer / env vars, or the S3 config bucket is unreachable | Confirm the layer + `AWS_LAMBDA_EXEC_WRAPPER` + `AWS_FIS_CONFIGURATION_LOCATION`; check the function log for `AWS FIS EXTENSION` lines |
+| Errors take ~1 minute to appear | Expected — extension slow-poll ramp-up | Wait ~60 s; for partial-% scenarios allow 2–3 min |
+| Experiment stops immediately | Stop-condition alarm already in `ALARM` | `aws cloudwatch set-alarm-state --alarm-name <name> --state-value OK --state-reason reset` |
 
 ## Clean-up
 
 ```bash
-PROJECT=fis-chaos-b ENV=dev npm run stage:destroy:all
+PROJECT=<project> ENV=dev npm run stage:destroy:all -w workspaces/fis-arch-b-apigw-lambda -- --force
 ```
 
-All resources have `removalPolicy: DESTROY`, so the destroy command removes the DynamoDB table, Lambda, API GW, CloudFront distribution, FIS templates, and CloudWatch log groups completely.
+All resources use `removalPolicy: DESTROY` (and `autoDeleteObjects` on the S3 config bucket), so destroy removes the DynamoDB table, Lambda, API GW, CloudFront distribution, FIS templates, S3 config bucket and CloudWatch log groups completely.
 
 ## Summary
 
-This workspace demonstrates FIS chaos engineering on a serverless CRUD API architecture. The four scenarios cover distinct failure modes:
+This workspace demonstrates FIS chaos engineering on a serverless CRUD API using the `aws:lambda:function` action family and the AWS FIS Lambda extension:
 
-- **B-1** verifies that the application fails safely when the data layer is completely unavailable.
-- **B-2** verifies write-path resilience while reads remain healthy — a common DynamoDB capacity pattern.
-- **B-3** verifies read-path resilience (cache fallback, graceful degradation) while writes remain healthy.
-- **B-4** verifies the API tier's behavior when Lambda cannot execute at all, testing CloudFront's error-page capability.
+- **B-1** — fail-fast total outage (handler never runs): does the front end degrade cleanly?
+- **B-2** — +10 s invocation latency: are timeout budgets and latency alarms correct?
+- **B-3** — 50% fail-after-execution: is the write path idempotent under client retries?
+- **B-4** — synthetic 500 integration response: does API GW / CloudFront error mapping behave?
 
-The serverless architecture keeps experiment costs minimal (< $0.10 per run) and eliminates VPC management overhead, making it easy to iterate quickly on resilience scenarios.
+The serverless architecture keeps steady-state cost at ~$0.10/month; a full four-experiment test cycle costs about **$2** and is dominated by FIS action-minute charges.
 
 ## References
 
-- [AWS FIS — Supported actions](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
-- [aws:fis:inject-api-internal-error action reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html#fis-actions-reference-fis)
-- [aws:lambda:put-function-concurrent-executions action reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html#fis-actions-reference-lambda)
-- [CDK aws-fis module (L1 constructs)](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_fis-readme.html)
+- [AWS FIS — Actions reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
+- [Use the AWS FIS `aws:lambda:function` actions](https://docs.aws.amazon.com/fis/latest/userguide/use-lambda-actions.html)
+- [Available versions of the AWS FIS extension for Lambda](https://docs.aws.amazon.com/fis/latest/userguide/actions-lambda-extension-arns.html)
+- [AWS FIS pricing](https://aws.amazon.com/fis/pricing/)
+- [CDK `aws-fis` module (L1 constructs)](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_fis-readme.html)
 - [API Gateway HTTP API — Lambda integration](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html)

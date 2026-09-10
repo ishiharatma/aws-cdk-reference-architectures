@@ -187,24 +187,30 @@ function suppressAppStack(stack: AppStack): void {
                 id: 'AwsSolutions-IAM4',
                 reason:
                     'AmazonECSTaskExecutionRolePolicy is the required managed policy for ECS Fargate ' +
-                    'task execution (ECR pull, CloudWatch Logs write). It is the accepted baseline for ECS tasks.',
+                    'task execution (ECR pull, CloudWatch Logs write). AmazonSSMManagedInstanceCore is ' +
+                    'the managed policy the AWS FIS user guide mandates on the ECS task SSM ' +
+                    'managed-instance role (needed for aws:ecs:task-* fault injection). Both are ' +
+                    'accepted baselines.',
                 appliesTo: [
                     'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
+                    'Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore',
                 ],
             },
         ],
         true,
     );
 
-    // Task role: ssmmessages:* wildcard required for ECS Exec (FIS SSM-based fault injection).
-    // Secret.grantRead() generates wildcard sub-resource ARNs on the Aurora secret.
+    // Task role: ssm:CreateActivation / ssm:AddTagsToResource on '*' are required by the AWS
+    // FIS SSM sidecar to self-register the task as a managed instance. Secret.grantRead()
+    // generates wildcard sub-resource ARNs on the Aurora secret.
     NagSuppressions.addStackSuppressions(
         stack,
         [
             {
                 id: 'AwsSolutions-IAM5',
                 reason:
-                    'ssmmessages:* wildcard is required for ECS Exec (Session Manager channels). ' +
+                    'ssm:CreateActivation / ssm:AddTagsToResource require resource "*" (the FIS ' +
+                    'sidecar self-registers the task as an SSM managed instance). ' +
                     'Secret.grantRead() generates wildcard sub-resource ARNs on the Aurora secret. ' +
                     'Both are intentional for this chaos engineering reference pattern.',
             },

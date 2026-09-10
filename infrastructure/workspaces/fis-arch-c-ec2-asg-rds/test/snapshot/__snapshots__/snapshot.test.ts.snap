@@ -773,10 +773,6 @@ systemctl enable nginx",
               "GET",
               "HEAD",
               "OPTIONS",
-              "PUT",
-              "PATCH",
-              "POST",
-              "DELETE",
             ],
             "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
             "Compress": true,
@@ -1422,7 +1418,7 @@ exports[`FIS Chaos Scenario C Stack Snapshots BaseStack Complete CloudFormation 
           "postgresql",
         ],
         "Engine": "aurora-postgresql",
-        "EngineVersion": "16.4",
+        "EngineVersion": "16.13",
         "MasterUserPassword": {
           "Fn::Join": [
             "",
@@ -2703,6 +2699,7 @@ exports[`FIS Chaos Scenario C Stack Snapshots FisStack Complete CloudFormation t
                 },
                 {
                   "Action": [
+                    "ssm:ListCommands",
                     "ssm:CancelCommand",
                     "ssm:GetCommandInvocation",
                     "ssm:ListCommandInvocations",
@@ -2733,6 +2730,11 @@ exports[`FIS Chaos Scenario C Stack Snapshots FisStack Complete CloudFormation t
                       ],
                     ],
                   },
+                },
+                {
+                  "Action": "tag:GetResources",
+                  "Effect": "Allow",
+                  "Resource": "*",
                 },
                 {
                   "Action": "cloudwatch:DescribeAlarms",

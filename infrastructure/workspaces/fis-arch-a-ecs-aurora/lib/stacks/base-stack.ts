@@ -63,7 +63,7 @@ export class BaseStack extends cdk.Stack {
 
         this.auroraCluster = new rds.DatabaseCluster(this, 'Aurora', {
             engine: rds.DatabaseClusterEngine.auroraPostgres({
-                version: rds.AuroraPostgresEngineVersion.VER_16_4,
+                version: rds.AuroraPostgresEngineVersion.VER_16_13,
             }),
             writer: rds.ClusterInstance.serverlessV2('writer', {
                 scaleWithWriter: true,

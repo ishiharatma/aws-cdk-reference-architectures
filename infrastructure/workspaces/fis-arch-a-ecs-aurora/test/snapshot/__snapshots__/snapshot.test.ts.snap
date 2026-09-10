@@ -40,6 +40,17 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         ],
       },
     },
+    "ExportsOutputFnGetAttAppServiceA2F9036CName3792259A": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputFnGetAttAppServiceA2F9036CName3792259A",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AppServiceA2F9036C",
+          "Name",
+        ],
+      },
+    },
     "ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A": {
       "Export": {
         "Name": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
@@ -439,7 +450,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         },
         "DesiredCount": 2,
         "EnableECSManagedTags": false,
-        "EnableExecuteCommand": true,
+        "EnableExecuteCommand": false,
         "HealthCheckGracePeriodSeconds": 60,
         "LaunchType": "FARGATE",
         "LoadBalancers": [
@@ -729,10 +740,6 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
               "GET",
               "HEAD",
               "OPTIONS",
-              "PUT",
-              "PATCH",
-              "POST",
-              "DELETE",
             ],
             "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
             "Compress": true,
@@ -1201,6 +1208,66 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
+    "SsmManagedInstanceRole09C3EF1F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ssm:DeleteActivation",
+                    "ssm:DeregisterManagedInstance",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "DeregisterOnShutdown",
+          },
+        ],
+        "RoleName": "fis-chaos-test-ecs-fis-mi-role",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
     "TaskDef54694570": {
       "Properties": {
         "ContainerDefinitions": [
@@ -1251,8 +1318,39 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
               },
             ],
           },
+          {
+            "Command": [
+              "set -e; dnf upgrade -y; dnf install jq procps awscli -y; term_handler() { echo "Deleting SSM activation $ACTIVATION_ID"; if ! aws ssm delete-activation --activation-id $ACTIVATION_ID --region $ECS_TASK_REGION; then echo "SSM activation $ACTIVATION_ID failed to be deleted" 1>&2; fi; MANAGED_INSTANCE_ID=$(jq -e -r .ManagedInstanceID /var/lib/amazon/ssm/registration); echo "Deregistering SSM Managed Instance $MANAGED_INSTANCE_ID"; if ! aws ssm deregister-managed-instance --instance-id $MANAGED_INSTANCE_ID --region $ECS_TASK_REGION; then echo "SSM Managed Instance $MANAGED_INSTANCE_ID failed to be deregistered" 1>&2; fi; kill -SIGTERM $SSM_AGENT_PID; }; trap term_handler SIGTERM SIGINT; if [[ -z $MANAGED_INSTANCE_ROLE_NAME ]]; then echo "Environment variable MANAGED_INSTANCE_ROLE_NAME not set, exiting" 1>&2; exit 1; fi; if ! ps ax | grep amazon-ssm-agent | grep -v grep > /dev/null; then if [[ -n $ECS_CONTAINER_METADATA_URI_V4 ]] ; then echo "Found ECS Container Metadata, running activation with metadata"; TASK_METADATA=$(curl "\${ECS_CONTAINER_METADATA_URI_V4}/task"); ECS_TASK_AVAILABILITY_ZONE=$(echo $TASK_METADATA | jq -e -r '.AvailabilityZone'); ECS_TASK_ARN=$(echo $TASK_METADATA | jq -e -r '.TaskARN'); ECS_TASK_REGION=$(echo $ECS_TASK_AVAILABILITY_ZONE | sed 's/.$//'); ECS_TASK_AVAILABILITY_ZONE_REGEX='^(af|ap|ca|cn|eu|me|sa|us|us-gov)-(central|north|(north(east|west))|south|south(east|west)|east|west)-[0-9]{1}[a-z]{1}$'; if ! [[ $ECS_TASK_AVAILABILITY_ZONE =~ $ECS_TASK_AVAILABILITY_ZONE_REGEX ]]; then echo "Error extracting Availability Zone from ECS Container Metadata, exiting" 1>&2; exit 1; fi; ECS_TASK_ARN_REGEX='^arn:(aws|aws-cn|aws-us-gov):ecs:[a-z0-9-]+:[0-9]{12}:task/[a-zA-Z0-9_-]+/[a-zA-Z0-9]+$'; if ! [[ $ECS_TASK_ARN =~ $ECS_TASK_ARN_REGEX ]]; then echo "Error extracting Task ARN from ECS Container Metadata, exiting" 1>&2; exit 1; fi; CREATE_ACTIVATION_OUTPUT=$(aws ssm create-activation --iam-role $MANAGED_INSTANCE_ROLE_NAME --tags Key=ECS_TASK_AVAILABILITY_ZONE,Value=$ECS_TASK_AVAILABILITY_ZONE Key=ECS_TASK_ARN,Value=$ECS_TASK_ARN Key=FAULT_INJECTION_SIDECAR,Value=true --region $ECS_TASK_REGION); ACTIVATION_CODE=$(echo $CREATE_ACTIVATION_OUTPUT | jq -e -r .ActivationCode); ACTIVATION_ID=$(echo $CREATE_ACTIVATION_OUTPUT | jq -e -r .ActivationId); if ! amazon-ssm-agent -register -code $ACTIVATION_CODE -id $ACTIVATION_ID -region $ECS_TASK_REGION; then echo "Failed to register with AWS Systems Manager (SSM), exiting" 1>&2; exit 1; fi; amazon-ssm-agent & SSM_AGENT_PID=$!; wait $SSM_AGENT_PID; else echo "ECS Container Metadata not found, exiting" 1>&2; exit 1; fi; else echo "SSM agent is already running, exiting" 1>&2; exit 1; fi",
+            ],
+            "EntryPoint": [
+              "/bin/bash",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "MANAGED_INSTANCE_ROLE_NAME",
+                "Value": {
+                  "Ref": "SsmManagedInstanceRole09C3EF1F",
+                },
+              },
+            ],
+            "Essential": false,
+            "Image": "public.ecr.aws/amazon-ssm-agent/amazon-ssm-agent:latest",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "AppLogGroup7D8CD952",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "ssm-agent",
+              },
+            },
+            "Name": "amazon-ssm-agent",
+          },
         ],
-        "Cpu": "256",
+        "Cpu": "512",
+        "EnableFaultInjection": true,
         "ExecutionRoleArn": {
           "Fn::GetAtt": [
             "TaskExecutionRole250D2532",
@@ -1260,11 +1358,16 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
           ],
         },
         "Family": "TestAppStackTaskDefE83E29F1",
-        "Memory": "512",
+        "Memory": "1024",
         "NetworkMode": "awsvpc",
+        "PidMode": "task",
         "RequiresCompatibilities": [
           "FARGATE",
         ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "X86_64",
+          "OperatingSystemFamily": "LINUX",
+        },
         "Tags": [
           {
             "Key": "Environment",
@@ -1374,13 +1477,21 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
               "Statement": [
                 {
                   "Action": [
-                    "ssmmessages:CreateControlChannel",
-                    "ssmmessages:CreateDataChannel",
-                    "ssmmessages:OpenControlChannel",
-                    "ssmmessages:OpenDataChannel",
+                    "ssm:CreateActivation",
+                    "ssm:AddTagsToResource",
                   ],
                   "Effect": "Allow",
                   "Resource": "*",
+                },
+                {
+                  "Action": "iam:PassRole",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "SsmManagedInstanceRole09C3EF1F",
+                      "Arn",
+                    ],
+                  },
                 },
                 {
                   "Action": [
@@ -1400,7 +1511,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
               ],
               "Version": "2012-10-17",
             },
-            "PolicyName": "EcsExecPolicy",
+            "PolicyName": "FisSidecarPolicy",
           },
         ],
         "Tags": [
@@ -1429,30 +1540,6 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
               "Resource": {
                 "Fn::ImportValue": "TestBaseStack:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
               },
-            },
-            {
-              "Action": [
-                "ssmmessages:CreateControlChannel",
-                "ssmmessages:CreateDataChannel",
-                "ssmmessages:OpenControlChannel",
-                "ssmmessages:OpenDataChannel",
-              ],
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-            {
-              "Action": "logs:DescribeLogGroups",
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-            {
-              "Action": [
-                "logs:CreateLogStream",
-                "logs:DescribeLogStreams",
-                "logs:PutLogEvents",
-              ],
-              "Effect": "Allow",
-              "Resource": "*",
             },
           ],
           "Version": "2012-10-17",
@@ -1511,7 +1598,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Resource types and counts 1
   "AWS::ElasticLoadBalancingV2::LoadBalancer": 1,
   "AWS::ElasticLoadBalancingV2::TargetGroup": 1,
   "AWS::IAM::Policy": 3,
-  "AWS::IAM::Role": 4,
+  "AWS::IAM::Role": 5,
   "AWS::Lambda::Function": 2,
   "AWS::Lambda::LayerVersion": 1,
   "AWS::Logs::LogGroup": 1,
@@ -1645,7 +1732,7 @@ exports[`FIS Chaos Scenario Stack Snapshots BaseStack Complete CloudFormation te
           "postgresql",
         ],
         "Engine": "aurora-postgresql",
-        "EngineVersion": "16.4",
+        "EngineVersion": "16.13",
         "MasterUserPassword": {
           "Fn::Join": [
             "",
@@ -2786,44 +2873,6 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
       },
       "Type": "AWS::CloudWatch::Alarm",
     },
-    "AuroraConnectionAlarmB7AE0E91": {
-      "Properties": {
-        "AlarmActions": [
-          {
-            "Ref": "FisAlarmTopic51D832F3",
-          },
-        ],
-        "AlarmDescription": "FIS stop condition — Aurora DB connections drop to zero (unexpected total loss)",
-        "AlarmName": "fis-chaos-test-fis-stop-aurora-connections",
-        "ComparisonOperator": "LessThanOrEqualToThreshold",
-        "Dimensions": [
-          {
-            "Name": "DBClusterIdentifier",
-            "Value": {
-              "Fn::ImportValue": "TestBaseStack:ExportsOutputRefAurora2CBAB212533F1A7B",
-            },
-          },
-        ],
-        "EvaluationPeriods": 1,
-        "MetricName": "DatabaseConnections",
-        "Namespace": "AWS/RDS",
-        "Period": 180,
-        "Statistic": "Sum",
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "test",
-          },
-          {
-            "Key": "Project",
-            "Value": "fis-chaos",
-          },
-        ],
-        "Threshold": 0,
-        "TreatMissingData": "notBreaching",
-      },
-      "Type": "AWS::CloudWatch::Alarm",
-    },
     "FisAlarmTopic51D832F3": {
       "Properties": {
         "Tags": [
@@ -2922,6 +2971,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
                     "ec2:DescribeNetworkInterfaces",
                     "ssm:CancelCommand",
                     "ssm:GetCommandInvocation",
+                    "ssm:ListCommands",
                     "ssm:ListCommandInvocations",
                     "ssm:SendCommand",
                   ],
@@ -2929,22 +2979,19 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
                   "Resource": "*",
                 },
                 {
+                  "Action": "tag:GetResources",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
                   "Action": "cloudwatch:DescribeAlarms",
                   "Effect": "Allow",
-                  "Resource": [
-                    {
-                      "Fn::GetAtt": [
-                        "AlbTargetErrorAlarmC83884EE",
-                        "Arn",
-                      ],
-                    },
-                    {
-                      "Fn::GetAtt": [
-                        "AuroraConnectionAlarmB7AE0E91",
-                        "Arn",
-                      ],
-                    },
-                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "AlbTargetErrorAlarmC83884EE",
+                      "Arn",
+                    ],
+                  },
                 },
                 {
                   "Action": [
@@ -3014,7 +3061,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
             "Source": "aws:cloudwatch:alarm",
             "Value": {
               "Fn::GetAtt": [
-                "AuroraConnectionAlarmB7AE0E91",
+                "AlbTargetErrorAlarmC83884EE",
                 "Arn",
               ],
             },
@@ -3101,18 +3148,13 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         },
         "Targets": {
           "AppTasks": {
-            "Filters": [
-              {
-                "Path": "cluster.clusterArn",
-                "Values": [
-                  {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
-                  },
-                ],
+            "Parameters": {
+              "cluster": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
               },
-            ],
-            "ResourceTags": {
-              "fis-target": "app-service",
+              "service": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttAppServiceA2F9036CName3792259A",
+              },
             },
             "ResourceType": "aws:ecs:task",
             "SelectionMode": "ALL",
@@ -3125,12 +3167,13 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
       "Properties": {
         "Actions": {
           "BlackholeDbPort": {
-            "ActionId": "aws:ecs:network-blackhole-port",
+            "ActionId": "aws:ecs:task-network-blackhole-port",
             "Parameters": {
               "duration": "PT5M",
               "port": "5432",
               "protocol": "tcp",
               "trafficType": "egress",
+              "useEcsFaultInjectionEndpoints": "true",
             },
             "Targets": {
               "Tasks": "AppTasks",
@@ -3175,18 +3218,13 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         },
         "Targets": {
           "AppTasks": {
-            "Filters": [
-              {
-                "Path": "cluster.clusterArn",
-                "Values": [
-                  {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
-                  },
-                ],
+            "Parameters": {
+              "cluster": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
               },
-            ],
-            "ResourceTags": {
-              "fis-target": "app-service",
+              "service": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttAppServiceA2F9036CName3792259A",
+              },
             },
             "ResourceType": "aws:ecs:task",
             "SelectionMode": "ALL",
@@ -3199,12 +3237,13 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
       "Properties": {
         "Actions": {
           "BlackholeHttpIngress": {
-            "ActionId": "aws:ecs:network-blackhole-port",
+            "ActionId": "aws:ecs:task-network-blackhole-port",
             "Parameters": {
               "duration": "PT5M",
               "port": "80",
               "protocol": "tcp",
               "trafficType": "ingress",
+              "useEcsFaultInjectionEndpoints": "true",
             },
             "Targets": {
               "Tasks": "AppTasks",
@@ -3249,18 +3288,13 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
         },
         "Targets": {
           "AppTasks": {
-            "Filters": [
-              {
-                "Path": "cluster.clusterArn",
-                "Values": [
-                  {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
-                  },
-                ],
+            "Parameters": {
+              "cluster": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttEcsCluster97242B84ArnEAEDD48A",
               },
-            ],
-            "ResourceTags": {
-              "fis-target": "app-service",
+              "service": {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttAppServiceA2F9036CName3792259A",
+              },
             },
             "ResourceType": "aws:ecs:task",
             "SelectionMode": "ALL",
@@ -3302,7 +3336,7 @@ exports[`FIS Chaos Scenario Stack Snapshots FisStack Complete CloudFormation tem
 
 exports[`FIS Chaos Scenario Stack Snapshots FisStack Resource types and counts 1`] = `
 {
-  "AWS::CloudWatch::Alarm": 2,
+  "AWS::CloudWatch::Alarm": 1,
   "AWS::FIS::ExperimentTemplate": 4,
   "AWS::IAM::Role": 1,
   "AWS::Logs::LogGroup": 1,
