@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ALB + Keycloak OIDC Authentication Architecture
+  ================================================
+  Traffic flow (top path — Keycloak):
+    Internet → Keycloak ALB (HTTP/HTTPS) → Keycloak ECS (8080) → Aurora Serverless V2 (5432)
+
+  Traffic flow (bottom path — App with OIDC):
+    Internet → App ALB (HTTP/HTTPS)
+      └─ OIDC redirect ──→ Keycloak ECS (authenticates user)
+      └─ after token ──→ App ECS nginx (80)
+
+  Security group topology:
+    keycloakAlbSg  → keycloakEcsSg (8080)
+    appAlbSg       → appEcsSg      (80)
+    keycloakEcsSg  → dbSg          (5432)
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1240 720"
+     role="img"
+     aria-label="ALB OIDC Authentication with Keycloak on ECS Fargate and Aurora Serverless V2 architecture diagram">
+
+  <title>ALB Keycloak Auth — Architecture Overview</title>
+
+  <defs>
+    <!-- Drop shadow for service cards -->
+    <filter id="card-shadow" x="-4%" y="-4%" width="108%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000018"/>
+    </filter>
+
+    <!-- Arrow markers -->
+    <marker id="arr" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="#546E7A"/>
+    </marker>
+    <marker id="arr-oidc" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="#C62828"/>
+    </marker>
+    <marker id="arr-sec" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="#B71C1C"/>
+    </marker>
+    <marker id="arr-saml" markerWidth="9" markerHeight="7" refX="7" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" fill="#6A1B9A"/>
+    </marker>
+
+    <!-- Reusable ALB icon (80×50 internal canvas) -->
+    <symbol id="alb-icon" viewBox="0 0 80 50">
+      <!-- Distribution: one input, three outputs -->
+      <circle cx="12" cy="25" r="5" fill="white"/>
+      <line x1="17" y1="25" x2="38" y2="12" stroke="white" stroke-width="2.5"/>
+      <line x1="17" y1="25" x2="38" y2="25" stroke="white" stroke-width="2.5"/>
+      <line x1="17" y1="25" x2="38" y2="38" stroke="white" stroke-width="2.5"/>
+      <circle cx="42" cy="12" r="4" fill="white"/>
+      <circle cx="42" cy="25" r="4" fill="white"/>
+      <circle cx="42" cy="38" r="4" fill="white"/>
+    </symbol>
+
+    <!-- Reusable ECS icon (80×50) -->
+    <symbol id="ecs-icon" viewBox="0 0 80 50">
+      <!-- 2×2 container grid -->
+      <rect x="10" y="10" width="22" height="14" rx="3" fill="white" opacity="0.95"/>
+      <rect x="36" y="10" width="22" height="14" rx="3" fill="white" opacity="0.95"/>
+      <rect x="10" y="28" width="22" height="14" rx="3" fill="white" opacity="0.95"/>
+      <rect x="36" y="28" width="22" height="14" rx="3" fill="white" opacity="0.95"/>
+    </symbol>
+
+    <!-- Lock icon for Secrets Manager (48×48) -->
+    <symbol id="lock-icon" viewBox="0 0 48 48">
+      <rect x="10" y="22" width="28" height="20" rx="4" fill="white"/>
+      <path d="M16 22 L16 15 Q24 7 32 15 L32 22" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="24" cy="33" r="4" fill="#DD344C"/>
+      <rect x="22" y="33" width="4" height="6" rx="1" fill="#DD344C"/>
+    </symbol>
+  </defs>
+
+  <!-- ══════════════════════════════════════════════════════
+       PAGE BACKGROUND
+       ══════════════════════════════════════════════════════ -->
+  <rect width="1240" height="720" fill="#F7F8FA"/>
+
+  <!-- ══════════════════════════════════════════════════════
+       INTERNET / USERS  (left of VPC)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Globe: grid lines on a circle -->
+  <circle cx="54" cy="355" r="36" fill="none" stroke="#1565C0" stroke-width="2.5"/>
+  <ellipse cx="54" cy="355" rx="20" ry="36" fill="none" stroke="#1565C0" stroke-width="1.5"/>
+  <line x1="18" y1="355" x2="90" y2="355" stroke="#1565C0" stroke-width="1.5"/>
+  <ellipse cx="54" cy="355" rx="36" ry="12" fill="none" stroke="#1565C0" stroke-width="1" opacity="0.6"/>
+  <ellipse cx="54" cy="355" rx="36" ry="24" fill="none" stroke="#1565C0" stroke-width="1" opacity="0.4"/>
+  <text x="54" y="406" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="12" fill="#1565C0" font-weight="600">Internet</text>
+  <text x="54" y="420" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="12" fill="#1565C0">Users</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       VPC BOUNDARY
+       ══════════════════════════════════════════════════════ -->
+  <rect x="100" y="25" width="1130" height="670" rx="10"
+        fill="none" stroke="#7B53C1" stroke-width="2" stroke-dasharray="12,6"/>
+  <!-- VPC label chip -->
+  <rect x="108" y="16" width="145" height="20" rx="4" fill="#7B53C1"/>
+  <text x="181" y="30" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="white" font-weight="600">VPC  (ap-northeast-1)</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       PUBLIC SUBNET  (ALBs)
+       ══════════════════════════════════════════════════════ -->
+  <rect x="118" y="52" width="275" height="628" rx="8"
+        fill="#E3F2FD" stroke="#90CAF9" stroke-width="1.5"/>
+  <!-- subnet label chip -->
+  <rect x="130" y="44" width="130" height="18" rx="3" fill="#1565C0"/>
+  <text x="195" y="56" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="white" font-weight="600">Public Subnets</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       PRIVATE SUBNET  (ECS tasks + Aurora)
+       ══════════════════════════════════════════════════════ -->
+  <rect x="408" y="52" width="812" height="628" rx="8"
+        fill="#FFFDE7" stroke="#FDD835" stroke-width="1.5"/>
+  <!-- subnet label chip -->
+  <rect x="425" y="44" width="135" height="18" rx="3" fill="#F9A825"/>
+  <text x="492" y="56" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="white" font-weight="600">Private Subnets</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       KEYCLOAK ALB  (public subnet, top)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Security group dashed border -->
+  <rect x="128" y="148" width="253" height="115" rx="9"
+        fill="none" stroke="#E65100" stroke-width="1" stroke-dasharray="5,3" opacity="0.7"/>
+  <text x="255" y="143" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#E65100" font-weight="500">keycloakAlbSg</text>
+
+  <!-- Card body -->
+  <rect x="136" y="155" width="237" height="100" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <!-- Colored header bar -->
+  <rect x="136" y="155" width="237" height="36" rx="7" fill="#ED7515"/>
+  <rect x="136" y="173" width="237" height="18" fill="#ED7515"/>
+  <!-- ALB icon in header -->
+  <use href="#alb-icon" x="140" y="157" width="52" height="32"/>
+  <!-- Header text -->
+  <text x="220" y="179" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="white" font-weight="700">Keycloak ALB</text>
+  <!-- Body text -->
+  <text x="254" y="210" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#37474F">Application Load Balancer</text>
+  <text x="254" y="225" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#546E7A">HTTP :80 · HTTPS :443</text>
+  <text x="254" y="241" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">Internet-facing</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       APP ALB  (public subnet, bottom)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Security group dashed border -->
+  <rect x="128" y="455" width="253" height="130" rx="9"
+        fill="none" stroke="#C62828" stroke-width="1" stroke-dasharray="5,3" opacity="0.7"/>
+  <text x="255" y="450" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#C62828" font-weight="500">appAlbSg</text>
+
+  <!-- Card body -->
+  <rect x="136" y="462" width="237" height="115" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <rect x="136" y="462" width="237" height="36" rx="7" fill="#ED7515"/>
+  <rect x="136" y="480" width="237" height="18" fill="#ED7515"/>
+  <use href="#alb-icon" x="140" y="464" width="52" height="32"/>
+  <text x="220" y="486" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="white" font-weight="700">App ALB</text>
+  <text x="254" y="518" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#37474F">Application Load Balancer</text>
+  <text x="254" y="533" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#546E7A">HTTP :80 · HTTPS :443</text>
+  <!-- OIDC badge -->
+  <rect x="185" y="547" width="138" height="20" rx="10" fill="#FFCDD2"/>
+  <text x="254" y="561" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#C62828" font-weight="600">OIDC Authentication</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       KEYCLOAK ECS FARGATE  (private subnet, top)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Security group dashed border -->
+  <rect x="418" y="128" width="258" height="165" rx="9"
+        fill="none" stroke="#E65100" stroke-width="1" stroke-dasharray="5,3" opacity="0.7"/>
+  <text x="547" y="123" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#E65100" font-weight="500">keycloakEcsSg</text>
+
+  <!-- Card body -->
+  <rect x="426" y="135" width="242" height="150" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <rect x="426" y="135" width="242" height="36" rx="7" fill="#FF9900"/>
+  <rect x="426" y="153" width="242" height="18" fill="#FF9900"/>
+  <use href="#ecs-icon" x="430" y="138" width="50" height="30"/>
+  <text x="555" y="159" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="white" font-weight="700">Keycloak (Fargate)</text>
+  <text x="547" y="192" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#37474F">quay.io/keycloak/keycloak</text>
+  <text x="547" y="207" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#546E7A">v26.1 · Port 8080</text>
+  <text x="547" y="222" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">KC_DB=postgres</text>
+  <text x="547" y="237" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">KC_HEALTH_ENABLED=true</text>
+  <text x="547" y="252" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">ECS Exec enabled</text>
+  <text x="547" y="267" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">Circuit breaker: rollback</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       APP ECS FARGATE  (private subnet, bottom)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Security group dashed border -->
+  <rect x="418" y="450" width="258" height="140" rx="9"
+        fill="none" stroke="#E65100" stroke-width="1" stroke-dasharray="5,3" opacity="0.7"/>
+  <text x="547" y="445" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#E65100" font-weight="500">appEcsSg</text>
+
+  <!-- Card body -->
+  <rect x="426" y="458" width="242" height="125" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <rect x="426" y="458" width="242" height="36" rx="7" fill="#FF9900"/>
+  <rect x="426" y="476" width="242" height="18" fill="#FF9900"/>
+  <use href="#ecs-icon" x="430" y="461" width="50" height="30"/>
+  <text x="555" y="482" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="white" font-weight="700">App nginx (Fargate)</text>
+  <text x="547" y="516" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#37474F">public.ecr.aws/nginx/nginx</text>
+  <text x="547" y="531" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#546E7A">stable-alpine · Port 80</text>
+  <text x="547" y="546" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">Receives user + OIDC headers</text>
+  <text x="547" y="561" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">ECS Exec enabled</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       AURORA SERVERLESS V2  (private subnet, center-right)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Security group dashed border (oval around cylinder) -->
+  <ellipse cx="908" cy="358" rx="96" ry="138"
+           fill="none" stroke="#1565C0" stroke-width="1" stroke-dasharray="5,3" opacity="0.7"/>
+  <text x="908" y="214" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#1565C0" font-weight="500">dbSg  (allowAllOutbound=false)</text>
+
+  <!-- Cylinder: top cap -->
+  <ellipse cx="908" cy="270" rx="72" ry="22" fill="#6B92FF"/>
+  <!-- Cylinder body -->
+  <rect x="836" y="270" width="144" height="130" fill="#527FFF"/>
+  <!-- Cylinder bottom cap -->
+  <ellipse cx="908" cy="400" rx="72" ry="22" fill="#3D6FE0"/>
+  <!-- Highlight stripe -->
+  <line x1="862" y1="276" x2="862" y2="394" stroke="white" stroke-width="1.5" opacity="0.25"/>
+  <!-- DB label inside cylinder -->
+  <text x="908" y="320" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="white" font-weight="700">Aurora</text>
+  <text x="908" y="337" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="12" fill="white">Serverless V2</text>
+  <text x="908" y="355" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="rgba(255,255,255,0.88)">PostgreSQL 16.4</text>
+  <text x="908" y="373" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="rgba(255,255,255,0.75)">0.5 – 4 ACU</text>
+  <text x="908" y="430" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="12" fill="#37474F" font-weight="600">Aurora Serverless V2</text>
+  <text x="908" y="447" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#546E7A">Keycloak session store</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECRETS MANAGER  (Keycloak admin credentials)
+       ══════════════════════════════════════════════════════ -->
+  <rect x="710" y="98" width="170" height="74" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <rect x="710" y="98" width="170" height="28" rx="7" fill="#DD344C"/>
+  <rect x="710" y="115" width="170" height="11" fill="#DD344C"/>
+  <use href="#lock-icon" x="714" y="100" width="24" height="24"/>
+  <text x="810" y="116" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="white" font-weight="600">Secrets Manager</text>
+  <text x="795" y="143" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#37474F">Keycloak admin creds</text>
+  <text x="795" y="156" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">/keycloak/admin</text>
+
+  <!-- Secrets Manager  (Aurora DB credentials) -->
+  <rect x="710" y="565" width="170" height="74" rx="7"
+        fill="white" filter="url(#card-shadow)"/>
+  <rect x="710" y="565" width="170" height="28" rx="7" fill="#DD344C"/>
+  <rect x="710" y="582" width="170" height="11" fill="#DD344C"/>
+  <use href="#lock-icon" x="714" y="567" width="24" height="24"/>
+  <text x="810" y="583" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="white" font-weight="600">Secrets Manager</text>
+  <text x="795" y="610" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#37474F">Aurora DB credentials</text>
+  <text x="795" y="623" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#78909C">/aurora/credentials</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       ARROWS — PRIMARY TRAFFIC FLOWS
+       ══════════════════════════════════════════════════════ -->
+
+  <!-- Internet → Keycloak ALB -->
+  <line x1="88" y1="335" x2="134" y2="213"
+        stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Internet → App ALB -->
+  <line x1="88" y1="378" x2="134" y2="503"
+        stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Label for both Internet connections -->
+  <rect x="25" y="420" width="90" height="18" rx="9" fill="#E3F2FD"/>
+  <text x="70" y="433" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#1565C0">HTTP/HTTPS</text>
+
+  <!-- Keycloak ALB → Keycloak ECS (:8080) -->
+  <line x1="373" y1="207" x2="424" y2="207"
+        stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="383" y="194" width="32" height="16" rx="8" fill="#ECEFF1"/>
+  <text x="399" y="205" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#37474F">:8080</text>
+
+  <!-- App ALB → App ECS (:80) -->
+  <line x1="373" y1="520" x2="424" y2="520"
+        stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="385" y="507" width="24" height="16" rx="8" fill="#ECEFF1"/>
+  <text x="397" y="518" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#37474F">:80</text>
+
+  <!-- Keycloak ECS → Aurora (:5432 PostgreSQL) -->
+  <line x1="668" y1="215" x2="834" y2="278"
+        stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+  <!-- Port label on diagonal arrow (rotated) -->
+  <g transform="translate(744,237) rotate(24)">
+    <rect x="-28" y="-10" width="56" height="18" rx="9" fill="#ECEFF1"/>
+    <text x="0" y="4" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+          font-size="10" fill="#37474F">JDBC :5432</text>
+  </g>
+
+  <!-- ══════════════════════════════════════════════════════
+       OIDC AUTHENTICATION FLOW  (the key mechanism)
+       App ALB redirects user to Keycloak, then exchanges token
+       ══════════════════════════════════════════════════════ -->
+  <!-- Curved red dashed arrow: App ALB → Keycloak ECS -->
+  <path d="M 373,500  C 430,420 430,330 424,235"
+        fill="none" stroke="#C62828" stroke-width="2.5" stroke-dasharray="7,4"
+        marker-end="url(#arr-oidc)"/>
+
+  <!-- OIDC label box alongside the curved arrow -->
+  <rect x="385" y="353" width="115" height="46" rx="6" fill="#FFEBEE" stroke="#EF9A9A" stroke-width="1"/>
+  <text x="442" y="371" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="11" fill="#C62828" font-weight="700">OIDC redirect</text>
+  <text x="442" y="385" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#C62828">auth + token exchange</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       SECRETS MANAGER CONNECTIONS  (dashed, credential reads)
+       ══════════════════════════════════════════════════════ -->
+  <!-- Keycloak ECS reads admin secret -->
+  <line x1="668" y1="178" x2="708" y2="143"
+        stroke="#DD344C" stroke-width="1.2" stroke-dasharray="4,3"
+        marker-end="url(#arr-sec)"/>
+
+  <!-- Keycloak ECS reads Aurora DB secret -->
+  <line x1="668" y1="248" x2="708" y2="579"
+        stroke="#DD344C" stroke-width="1.2" stroke-dasharray="4,3"
+        marker-end="url(#arr-sec)"/>
+
+  <!-- ══════════════════════════════════════════════════════
+       OPTIONAL: EXTERNAL SAML IdP  (Pattern B)
+       ══════════════════════════════════════════════════════ -->
+  <rect x="1065" y="148" width="155" height="105" rx="8"
+        fill="#F3E5F5" stroke="#9C27B0" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <!-- Label chip -->
+  <rect x="1078" y="140" width="128" height="18" rx="4" fill="#9C27B0"/>
+  <text x="1142" y="153" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="white" font-weight="600">Optional — Pattern B</text>
+  <text x="1142" y="182" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="#6A1B9A" font-weight="700">External</text>
+  <text x="1142" y="198" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="13" fill="#6A1B9A" font-weight="700">SAML IdP</text>
+  <text x="1142" y="218" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#7B1FA2">(AD FS, Entra ID…)</text>
+  <text x="1142" y="232" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#7B1FA2">Keycloak as SAML SP</text>
+
+  <!-- SAML federation arrow (Keycloak ECS ↔ SAML IdP) -->
+  <line x1="668" y1="196" x2="1063" y2="200"
+        stroke="#9C27B0" stroke-width="1.5" stroke-dasharray="6,4"
+        marker-end="url(#arr-saml)"/>
+  <rect x="806" y="186" width="86" height="16" rx="8" fill="#E1BEE7"/>
+  <text x="849" y="197" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="9" fill="#6A1B9A">SAML assertion</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       LEGEND / KEY
+       ══════════════════════════════════════════════════════ -->
+  <rect x="118" y="684" width="742" height="28" rx="5"
+        fill="white" stroke="#CFD8DC" stroke-width="1"/>
+
+  <!-- solid arrow = primary traffic -->
+  <line x1="132" y1="698" x2="158" y2="698" stroke="#546E7A" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="165" y="702" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#546E7A">Traffic flow</text>
+
+  <!-- dashed red = OIDC -->
+  <line x1="240" y1="698" x2="268" y2="698" stroke="#C62828" stroke-width="2"
+        stroke-dasharray="5,3" marker-end="url(#arr-oidc)"/>
+  <text x="275" y="702" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#C62828">OIDC authentication</text>
+
+  <!-- dashed red thin = secrets read -->
+  <line x1="392" y1="698" x2="418" y2="698" stroke="#DD344C" stroke-width="1.2"
+        stroke-dasharray="4,3" marker-end="url(#arr-sec)"/>
+  <text x="425" y="702" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#DD344C">Reads secret</text>
+
+  <!-- dashed orange box = SG -->
+  <rect x="514" y="690" width="20" height="14" rx="2"
+        fill="none" stroke="#E65100" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="540" y="702" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#E65100">Security Group boundary</text>
+
+  <!-- dashed purple = SAML -->
+  <line x1="670" y1="698" x2="698" y2="698" stroke="#9C27B0" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr-saml)"/>
+  <text x="705" y="702" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="10" fill="#9C27B0">SAML (Pattern B)</text>
+
+  <!-- ══════════════════════════════════════════════════════
+       PAGE TITLE
+       ══════════════════════════════════════════════════════ -->
+  <text x="620" y="18" text-anchor="middle" font-family="'Amazon Ember', -apple-system, sans-serif"
+        font-size="15" fill="#232F3E" font-weight="700">
+    ALB OIDC Authentication — Keycloak on ECS Fargate + Aurora Serverless V2
+  </text>
+
+</svg>
