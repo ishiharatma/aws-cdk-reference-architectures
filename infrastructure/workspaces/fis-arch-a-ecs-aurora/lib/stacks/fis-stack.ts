@@ -89,25 +89,12 @@ export class FisStack extends cdk.Stack {
         });
         albTargetErrorAlarm.addAlarmAction(new cwActions.SnsAction(alarmTopic));
 
-        // RDS failover-specific stop condition: writer instance unavailable for > 3 minutes
-        const auroraConnectionAlarm = new cw.Alarm(this, 'AuroraConnectionAlarm', {
-            alarmName: `${props.project}-${props.environment}-fis-stop-aurora-connections`,
-            alarmDescription: 'FIS stop condition — Aurora DB connections drop to zero (unexpected total loss)',
-            metric: new cw.Metric({
-                namespace: 'AWS/RDS',
-                metricName: 'DatabaseConnections',
-                dimensionsMap: {
-                    DBClusterIdentifier: props.auroraCluster.clusterIdentifier,
-                },
-                period: cdk.Duration.minutes(3),
-                statistic: 'Sum',
-            }),
-            threshold: 0,
-            evaluationPeriods: 1,
-            comparisonOperator: cw.ComparisonOperator.LESS_THAN_OR_EQUAL_TO_THRESHOLD,
-            treatMissingData: cw.TreatMissingData.NOT_BREACHING,
-        });
-        auroraConnectionAlarm.addAlarmAction(new cwActions.SnsAction(alarmTopic));
+        // Note: an earlier version added a second stop condition on Aurora
+        // `DatabaseConnections <= 0`. That alarm sits permanently in ALARM for this
+        // demo — the nginx workload never opens a DB connection — so FIS refuses to
+        // start A-1 ("alarms were not in state OK"). All four scenarios now share the
+        // ALB 5xx stop condition, which is the meaningful "the failover broke the
+        // app" signal regardless of DB client behaviour.
 
         // --- FIS IAM Role ---
         // FIS assumes this role when running experiments.
@@ -140,7 +127,10 @@ export class FisStack extends cdk.Stack {
                                 },
                             },
                         }),
-                        // ECS network blackhole (requires SSM for sidecar agent)
+                        // ECS task network blackhole (A-3 / A-4) — aws:ecs:task-network-blackhole-port
+                        // drives the fault through an SSM SendCommand against the task's
+                        // fault-injection endpoint, so ssm:SendCommand / ListCommands /
+                        // CancelCommand are all required alongside ecs:DescribeTasks.
                         new iam.PolicyStatement({
                             actions: [
                                 'ecs:DescribeTasks',
@@ -148,18 +138,21 @@ export class FisStack extends cdk.Stack {
                                 'ec2:DescribeNetworkInterfaces',
                                 'ssm:CancelCommand',
                                 'ssm:GetCommandInvocation',
+                                'ssm:ListCommands',
                                 'ssm:ListCommandInvocations',
                                 'ssm:SendCommand',
                             ],
                             resources: ['*'],
                         }),
+                        // Tag-based target resolution (A-2 / A-3 / A-4 select tasks by tag)
+                        new iam.PolicyStatement({
+                            actions: ['tag:GetResources'],
+                            resources: ['*'],
+                        }),
                         // CloudWatch stop conditions
                         new iam.PolicyStatement({
                             actions: ['cloudwatch:DescribeAlarms'],
-                            resources: [
-                                albTargetErrorAlarm.alarmArn,
-                                auroraConnectionAlarm.alarmArn,
-                            ],
+                            resources: [albTargetErrorAlarm.alarmArn],
                         }),
                         // FIS experiment logging to CloudWatch
                         new iam.PolicyStatement({
@@ -206,12 +199,7 @@ export class FisStack extends cdk.Stack {
                 '[A-1] Aurora DB Failover: Triggers a writer→reader failover. ' +
                 'Validates connection pool retry logic and application resilience during ~30s interruption.',
             roleArn: fisRole.roleArn,
-            stopConditions: [
-                {
-                    source: 'aws:cloudwatch:alarm',
-                    value: auroraConnectionAlarm.alarmArn,
-                },
-            ],
+            stopConditions,
             targets: {
                 AuroraCluster: {
                     resourceType: 'aws:rds:cluster',
@@ -249,15 +237,14 @@ export class FisStack extends cdk.Stack {
             targets: {
                 AppTasks: {
                     resourceType: 'aws:ecs:task',
-                    resourceTags: {
-                        'fis-target': 'app-service',
+                    // aws:ecs:task is resolved via the `cluster` + `service`
+                    // target parameters (NOT a `cluster.clusterArn` filter — that
+                    // path does not exist in DescribeTasks output and resolves to
+                    // an empty set). See FIS "Targets" → Resource parameters.
+                    parameters: {
+                        cluster: props.ecsCluster.clusterArn,
+                        service: props.ecsService.serviceName,
                     },
-                    filters: [
-                        {
-                            path: 'cluster.clusterArn',
-                            values: [props.ecsCluster.clusterArn],
-                        },
-                    ],
                     selectionMode: 'ALL',
                 },
             },
@@ -291,26 +278,26 @@ export class FisStack extends cdk.Stack {
             targets: {
                 AppTasks: {
                     resourceType: 'aws:ecs:task',
-                    resourceTags: {
-                        'fis-target': 'app-service',
+                    // aws:ecs:task is resolved via the `cluster` + `service`
+                    // target parameters (NOT a `cluster.clusterArn` filter — that
+                    // path does not exist in DescribeTasks output and resolves to
+                    // an empty set). See FIS "Targets" → Resource parameters.
+                    parameters: {
+                        cluster: props.ecsCluster.clusterArn,
+                        service: props.ecsService.serviceName,
                     },
-                    filters: [
-                        {
-                            path: 'cluster.clusterArn',
-                            values: [props.ecsCluster.clusterArn],
-                        },
-                    ],
                     selectionMode: 'ALL',
                 },
             },
             actions: {
                 BlackholeDbPort: {
-                    actionId: 'aws:ecs:network-blackhole-port',
+                    actionId: 'aws:ecs:task-network-blackhole-port',
                     parameters: {
                         port: '5432',
                         protocol: 'tcp',
                         trafficType: 'egress',
                         duration: 'PT5M',
+                        useEcsFaultInjectionEndpoints: 'true',
                     },
                     targets: {
                         Tasks: 'AppTasks',
@@ -339,26 +326,26 @@ export class FisStack extends cdk.Stack {
             targets: {
                 AppTasks: {
                     resourceType: 'aws:ecs:task',
-                    resourceTags: {
-                        'fis-target': 'app-service',
+                    // aws:ecs:task is resolved via the `cluster` + `service`
+                    // target parameters (NOT a `cluster.clusterArn` filter — that
+                    // path does not exist in DescribeTasks output and resolves to
+                    // an empty set). See FIS "Targets" → Resource parameters.
+                    parameters: {
+                        cluster: props.ecsCluster.clusterArn,
+                        service: props.ecsService.serviceName,
                     },
-                    filters: [
-                        {
-                            path: 'cluster.clusterArn',
-                            values: [props.ecsCluster.clusterArn],
-                        },
-                    ],
                     selectionMode: 'ALL',
                 },
             },
             actions: {
                 BlackholeHttpIngress: {
-                    actionId: 'aws:ecs:network-blackhole-port',
+                    actionId: 'aws:ecs:task-network-blackhole-port',
                     parameters: {
                         port: '80',
                         protocol: 'tcp',
                         trafficType: 'ingress',
                         duration: 'PT5M',
+                        useEcsFaultInjectionEndpoints: 'true',
                     },
                     targets: {
                         Tasks: 'AppTasks',

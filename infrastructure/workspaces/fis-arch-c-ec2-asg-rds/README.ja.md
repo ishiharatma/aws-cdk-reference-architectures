@@ -125,7 +125,7 @@ Aurora PostgreSQL Serverless v2
 | コンポーネント | 設計のポイント |
 | -------------- | -------------- |
 | VPC | CIDR 10.20.0.0/16; パブリック / プライベート / Isolated の 3 サブネット層、NAT Gateway × 1 |
-| Aurora PostgreSQL Serverless v2 | エンジン v16.4; ライター 1 台 + リーダー 1 台; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
+| Aurora PostgreSQL Serverless v2 | エンジン v16.13; ライター 1 台 + リーダー 1 台; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
 | EC2 Auto Scaling Group | t3.small; AL2023 (SSM エージェントプリインストール); requireImdsv2; EBS gp3 20 GB 暗号化; タグ `fis-target: app-instance` |
 | Internal ALB | CloudFront VPC Origin 受信 (マネージドプレフィックスリスト); HTTP/80; ターゲット登録解除遅延 30 秒 |
 | CloudFront Distribution | VPC Origin（プライマリ）→ S3（502/503/504 フォールバック）; CACHING_DISABLED; REDIRECT_TO_HTTPS |
@@ -178,6 +178,12 @@ actions: {
 ```
 
 SSM ドキュメント ARN は `arn:aws:ssm:REGION::document/AWSFIS-*`（アカウント ID なし）の形式です。これらは AWS 所有のマネージドドキュメントのため、アカウント ID を含みません。FIS IAM ロールは、インスタンスリソース（タグ条件でスコープ）とドキュメント ARN に対して別々の `ssm:SendCommand` ポリシーを付与します。
+
+> **`ssm:ListCommands` が必須。** `aws:ssm:send-command` は `ssm:ListCommands` でコマンド状態を
+> ポーリングします。これがないと SSM コマンドは開始される（CPU 負荷が一瞬見える）ものの、
+> *"Not enough privileges to perform the required action"* で失敗しキャンセルされます。FIS ロールは
+> `ssm:ListCommands` / `ssm:ListCommandInvocations` / `ssm:GetCommandInvocation` /
+> `ssm:CancelCommand` を `*` に付与します。
 
 ### 2. タグベースの EC2 ターゲティング（C-1、C-2、C-4）
 
@@ -264,6 +270,13 @@ PROJECT=fis-chaos-c ENV=dev npm run stage:deploy:all
 2. `fis-chaos-c-dev-c-app` — EC2 ASG + Internal ALB + CloudFront
 3. `fis-chaos-c-dev-c-fis` — FIS テンプレート + IAM + アラーム
 
+> **アーキテクチャ A との名前衝突**: 本ワークスペースと `fis-arch-a-ecs-aurora` は
+> どちらも `<project>-<env>-aurora-secret` という Aurora シークレットと
+> `<project>-<env>-fis-role` という FIS ロールを作成します。同一アカウント + リージョンには
+> A / C を同時にデプロイしないでください。以前の A デプロイでシークレットが残っている場合は
+> 先に強制削除します:
+> `aws secretsmanager delete-secret --secret-id <project>-<env>-aurora-secret --force-delete-without-recovery`
+
 ### 5. アプリケーションのテスト
 
 デプロイ後、スタックの出力から CloudFront ドメインを取得します。
@@ -281,11 +294,31 @@ curl https://<cloudfront-domain>/
 
 ### 6. FIS 実験の実行
 
-AWS FIS コンソールから実験テンプレート（C-1 〜 C-4）を選択し、**実験を開始**をクリックして、次の項目を観察します。
-- C-1: EC2/ALB コンソールの ALB ターゲットヘルス
-- C-2: CloudWatch CPU メトリクスと ASG アクティビティ
-- C-3: RDS コンソールの Aurora フェイルオーバーイベント
-- C-4: ALB 5xx レートと SSM コマンド履歴
+**コンソール**: FIS → 実験テンプレート → `C-1`〜`C-4`（`Scenario` タグ）を選択 → **実験を開始**。
+
+**CLI**:
+
+```bash
+aws fis list-experiment-templates \
+  --query "experimentTemplates[?tags.Architecture=='CloudFront-ALB-EC2ASG-Aurora'].{id:id,scenario:tags.Scenario}" \
+  --output table
+EXP=$(aws fis start-experiment --experiment-template-id <EXT...> --query "experiment.id" --output text)
+watch -n5 "aws fis get-experiment --id $EXP --query 'experiment.state'"
+```
+
+サイドチャネル: C-1 は ALB ターゲットヘルス / ASG スケーリングアクティビティ、C-2 は
+`AWS/EC2 CPUUtilization`、C-3 は `aws rds describe-events`、C-2 / C-4 は `aws ssm list-commands`。
+
+### 実測結果（ap-northeast-1）
+
+| シナリオ | 起きたこと | 備考 |
+| -------- | ---------- | ---- |
+| **C-1** | FIS が 2 台中 1 台を終了 → ASG が *"an instance was taken out of service … EC2 health check indicating it has been terminated"* を記録し約2秒後に代替を起動。CloudFront は約90秒間 S3 フォールバックオリジンから `404`、新インスタンスが ALB ヘルスチェックを通過後 200 に回復 | ASG 自己修復 + Origin Group フォールバックを確認 |
+| **C-2** | `AWSFIS-Run-CPU-Stress` が `CPUUtilization` を約16% → **100%** に上げ、5分間維持。CloudFront は 200 維持（静的 nginx ページは CPU バウンドでない）。ASG は 2 のまま — 本ワークスペースには**スケールアウトポリシーが未定義**のため「CPU 負荷でのスケールアウト」は実際には検証されない。検証するには `scaleOnCpuUtilization` ターゲット追跡ポリシーを追加する | |
+| **C-3** | `describe-events` に *"Started cross AZ failover to … reader1"*。実験は約45秒で完了。CloudFront は 200 維持（nginx デモは再接続対象の DB 接続を持たない） | |
+| **C-4** | `AWSFIS-Run-Network-Blackhole-Port` が**両方**のインスタンスで実行（2/2 成功）、TCP 5432 送信を 5 分間ブロック。ワークロード影響なし（nginx は DB 接続を張らない） | SSM 送信ブラックホール経路をエンドツーエンドで確認 |
+
+ALB-5xx 停止条件はどの実行でも発火しませんでした。
 
 ## テスト
 
@@ -315,17 +348,37 @@ npm run test:snapshot:update --workspace=fis-arch-c-ec2-asg-rds
 
 ## コスト見積もり
 
-Aurora Serverless v2 と EC2 インスタンスはアイドル時でも時間課金が発生します。実験終了後は速やかにスタックを削除してください。
+価格は **オンデマンドのリスト価格（2026 年 9 月、AWS Price List API で取得）**で、AWS 無料利用枠は除外。
+リージョンは **バージニア北部 `us-east-1`** と **東京 `ap-northeast-1`**。Aurora Serverless v2・EC2・
+NAT Gateway はアイドル時でも時間課金されます。実験終了後は速やかにスタックを削除してください。
 
-| サービス | 課金モデル | 概算コスト（1 時間の実験ウィンドウ） |
-| -------- | ---------- | ------------------------------------- |
-| EC2 (t3.small × 2) | 時間課金 | 約 $0.04/時間 |
-| Aurora Serverless v2 (最小 0.5 ACU × 2 インスタンス) | ACU 時間課金 | 約 $0.06/時間 |
-| NAT Gateway | 時間課金 + データ転送 | 約 $0.05/時間 |
-| ALB | 時間課金 | 約 $0.02/時間 |
-| CloudFront | リクエスト + データ転送 | < $0.01 |
-| FIS | 無料 | 課金なし |
-| **合計（1 時間）** | | **約 $0.17/時間** |
+### アイドル / 定常状態（月あたり、約730時間、トラフィックなし）
+
+| サービス | 基準 | us-east-1 | ap-northeast-1 |
+| -------- | ---- | --------- | -------------- |
+| Aurora Serverless v2 | 2 インスタンス × 0.5 ACU 下限 × 730h × ($0.12 / $0.15 per ACU-h) | ~$87.60 | ~$109.50 |
+| NAT Gateway (×1) | 730h × ($0.045 / $0.062 per h) + わずかなデータ | ~$33 | ~$46 |
+| EC2 (t3.small × 2) | 730h × ($0.0208 / $0.0272 per h) | ~$30 | ~$40 |
+| EBS gp3 ルート (2 × 20 GB) | $0.08 / $0.096 per GB-month | ~$3.20 | ~$3.84 |
+| ALB | 730h × ($0.0225 / $0.0243 per h) + 約1 LCU × $0.008 | ~$22 | ~$24 |
+| Secrets Manager | シークレット 1 個 × $0.40 | $0.40 | $0.40 |
+| Aurora ストレージ / CloudWatch アラーム | 数 GB + アラーム 1 個 ($0.10) | ~$1 | ~$1 |
+| **合計（24×7 稼働）** | | **≈ $177 / 月** | **≈ $265 / 月** |
+
+### 1 テストサイクル（デプロイ → 4 実験すべて実行 → 削除、約 1.5〜2 時間の稼働）
+
+| サービス | 使用量の前提 | us-east-1 | ap-northeast-1 |
+| -------- | ------------ | --------- | -------------- |
+| **FIS** | C-1 は短時間、C-2 + C-3 + C-4 ≈ 各 PT5M → **約 15〜16 アクション分** @ $0.10 | **~$1.50〜1.60** | **~$1.50〜1.60** |
+| EC2 | 約2h × 2 インスタンス（+ C-2 の一時スケールアウト） | ~$0.09 | ~$0.12 |
+| Aurora Serverless v2 | 約2h × 2 × 0.5 ACU | ~$0.24 | ~$0.30 |
+| NAT + ALB + EBS | 上記アイドルレートで約2h | ~$0.15 | ~$0.20 |
+| **1 サイクル合計** | | **≈ $2** | **≈ $2.3** |
+
+**このドキュメントの以前のバージョンからの訂正:** FIS は**無料ではありません** — **アクション分あたり
+$0.10**（両リージョン同一）で課金されます。5 分・単一アクションの実験は約 $0.50、C-1〜C-4 を 1 回ずつ
+実行すると約 $1.50〜2.00 です。定常コスト（月 ~$177 us-east-1 / ~$265 東京）は EC2 ではなく、
+常時稼働の Aurora ACU ×2 と NAT Gateway が支配的です。
 
 ## セキュリティ上の考慮事項
 

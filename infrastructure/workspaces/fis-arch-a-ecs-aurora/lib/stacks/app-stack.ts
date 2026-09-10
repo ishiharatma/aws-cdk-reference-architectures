@@ -127,20 +127,46 @@ export class AppStack extends cdk.Stack {
             ],
         });
 
-        // Task role with SSM Exec permissions (required for ECS Exec and FIS network/memory actions)
-        const taskRole = new iam.Role(this, 'TaskRole', {
-            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+        // --- SSM Managed-Instance role for the FIS sidecar ---
+        // The aws:ecs:task-* FIS actions (A-3 / A-4) drive faults through an SSM
+        // document. That requires each task to be registered as an SSM managed
+        // instance by an `amazon-ssm-agent` sidecar container. The sidecar calls
+        // ssm:CreateActivation with --iam-role pointing at THIS role, which is
+        // what the resulting managed instance assumes.
+        const ssmManagedInstanceRole = new iam.Role(this, 'SsmManagedInstanceRole', {
+            roleName: `${props.project}-${props.environment}-ecs-fis-mi-role`,
+            assumedBy: new iam.ServicePrincipal('ssm.amazonaws.com'),
+            managedPolicies: [
+                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+            ],
             inlinePolicies: {
-                EcsExecPolicy: new iam.PolicyDocument({
+                DeregisterOnShutdown: new iam.PolicyDocument({
                     statements: [
                         new iam.PolicyStatement({
                             actions: [
-                                'ssmmessages:CreateControlChannel',
-                                'ssmmessages:CreateDataChannel',
-                                'ssmmessages:OpenControlChannel',
-                                'ssmmessages:OpenDataChannel',
+                                'ssm:DeleteActivation',
+                                'ssm:DeregisterManagedInstance',
                             ],
                             resources: ['*'],
+                        }),
+                    ],
+                }),
+            },
+        });
+
+        // Task role — permissions the FIS SSM sidecar needs to self-register.
+        const taskRole = new iam.Role(this, 'TaskRole', {
+            assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+            inlinePolicies: {
+                FisSidecarPolicy: new iam.PolicyDocument({
+                    statements: [
+                        new iam.PolicyStatement({
+                            actions: ['ssm:CreateActivation', 'ssm:AddTagsToResource'],
+                            resources: ['*'],
+                        }),
+                        new iam.PolicyStatement({
+                            actions: ['iam:PassRole'],
+                            resources: [ssmManagedInstanceRole.roleArn],
                         }),
                         new iam.PolicyStatement({
                             actions: [
@@ -159,12 +185,23 @@ export class AppStack extends cdk.Stack {
         // Grant ECS task read access to Aurora credentials secret
         props.auroraSecret.grantRead(taskRole);
 
-        // Task definition: nginx as the demo application
+        // Task definition: nginx as the demo application.
+        // pidMode: TASK and enableFaultInjection are both required by the
+        // aws:ecs:task-network-blackhole-port action (scenarios A-3 / A-4).
+        // CPU/memory are sized up from the 256/512 minimum to leave headroom for
+        // the SSM sidecar (which runs `dnf upgrade` on start).
         const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
-            memoryLimitMiB: 512,
-            cpu: 256,
+            memoryLimitMiB: 1024,
+            cpu: 512,
             executionRole,
             taskRole,
+            // pidMode: TASK requires an explicit runtimePlatform on Fargate.
+            runtimePlatform: {
+                operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
+                cpuArchitecture: ecs.CpuArchitecture.X86_64,
+            },
+            pidMode: ecs.PidMode.TASK,
+            enableFaultInjection: true,
         });
 
         const container = taskDefinition.addContainer('app', {
@@ -188,10 +225,70 @@ export class AppStack extends cdk.Stack {
         });
         container.addPortMappings({ containerPort: 80 });
 
+        // --- AWS FIS SSM Agent sidecar ---
+        // Verbatim registration script from the AWS FIS user guide
+        // (https://docs.aws.amazon.com/fis/latest/userguide/ecs-task-actions.html):
+        // creates an SSM activation, registers the task as a managed instance, and
+        // deregisters/deletes the activation on SIGTERM. `essential: false` so a
+        // sidecar exit does not kill the task.
+        const fisSidecarCommand =
+            'set -e; dnf upgrade -y; dnf install jq procps awscli -y; ' +
+            'term_handler() { echo "Deleting SSM activation $ACTIVATION_ID"; ' +
+            'if ! aws ssm delete-activation --activation-id $ACTIVATION_ID --region $ECS_TASK_REGION; then ' +
+            'echo "SSM activation $ACTIVATION_ID failed to be deleted" 1>&2; fi; ' +
+            'MANAGED_INSTANCE_ID=$(jq -e -r .ManagedInstanceID /var/lib/amazon/ssm/registration); ' +
+            'echo "Deregistering SSM Managed Instance $MANAGED_INSTANCE_ID"; ' +
+            'if ! aws ssm deregister-managed-instance --instance-id $MANAGED_INSTANCE_ID --region $ECS_TASK_REGION; then ' +
+            'echo "SSM Managed Instance $MANAGED_INSTANCE_ID failed to be deregistered" 1>&2; fi; ' +
+            'kill -SIGTERM $SSM_AGENT_PID; }; ' +
+            'trap term_handler SIGTERM SIGINT; ' +
+            'if [[ -z $MANAGED_INSTANCE_ROLE_NAME ]]; then ' +
+            'echo "Environment variable MANAGED_INSTANCE_ROLE_NAME not set, exiting" 1>&2; exit 1; fi; ' +
+            'if ! ps ax | grep amazon-ssm-agent | grep -v grep > /dev/null; then ' +
+            'if [[ -n $ECS_CONTAINER_METADATA_URI_V4 ]] ; then ' +
+            'echo "Found ECS Container Metadata, running activation with metadata"; ' +
+            'TASK_METADATA=$(curl "${ECS_CONTAINER_METADATA_URI_V4}/task"); ' +
+            "ECS_TASK_AVAILABILITY_ZONE=$(echo $TASK_METADATA | jq -e -r '.AvailabilityZone'); " +
+            "ECS_TASK_ARN=$(echo $TASK_METADATA | jq -e -r '.TaskARN'); " +
+            "ECS_TASK_REGION=$(echo $ECS_TASK_AVAILABILITY_ZONE | sed 's/.$//'); " +
+            "ECS_TASK_AVAILABILITY_ZONE_REGEX='^(af|ap|ca|cn|eu|me|sa|us|us-gov)-(central|north|(north(east|west))|south|south(east|west)|east|west)-[0-9]{1}[a-z]{1}$'; " +
+            'if ! [[ $ECS_TASK_AVAILABILITY_ZONE =~ $ECS_TASK_AVAILABILITY_ZONE_REGEX ]]; then ' +
+            'echo "Error extracting Availability Zone from ECS Container Metadata, exiting" 1>&2; exit 1; fi; ' +
+            "ECS_TASK_ARN_REGEX='^arn:(aws|aws-cn|aws-us-gov):ecs:[a-z0-9-]+:[0-9]{12}:task/[a-zA-Z0-9_-]+/[a-zA-Z0-9]+$'; " +
+            'if ! [[ $ECS_TASK_ARN =~ $ECS_TASK_ARN_REGEX ]]; then ' +
+            'echo "Error extracting Task ARN from ECS Container Metadata, exiting" 1>&2; exit 1; fi; ' +
+            'CREATE_ACTIVATION_OUTPUT=$(aws ssm create-activation --iam-role $MANAGED_INSTANCE_ROLE_NAME ' +
+            '--tags Key=ECS_TASK_AVAILABILITY_ZONE,Value=$ECS_TASK_AVAILABILITY_ZONE Key=ECS_TASK_ARN,Value=$ECS_TASK_ARN Key=FAULT_INJECTION_SIDECAR,Value=true ' +
+            '--region $ECS_TASK_REGION); ' +
+            'ACTIVATION_CODE=$(echo $CREATE_ACTIVATION_OUTPUT | jq -e -r .ActivationCode); ' +
+            'ACTIVATION_ID=$(echo $CREATE_ACTIVATION_OUTPUT | jq -e -r .ActivationId); ' +
+            'if ! amazon-ssm-agent -register -code $ACTIVATION_CODE -id $ACTIVATION_ID -region $ECS_TASK_REGION; then ' +
+            'echo "Failed to register with AWS Systems Manager (SSM), exiting" 1>&2; exit 1; fi; ' +
+            'amazon-ssm-agent & SSM_AGENT_PID=$!; wait $SSM_AGENT_PID; ' +
+            'else echo "ECS Container Metadata not found, exiting" 1>&2; exit 1; fi; ' +
+            'else echo "SSM agent is already running, exiting" 1>&2; exit 1; fi';
+
+        taskDefinition.addContainer('amazon-ssm-agent', {
+            image: ecs.ContainerImage.fromRegistry(
+                'public.ecr.aws/amazon-ssm-agent/amazon-ssm-agent:latest',
+            ),
+            essential: false,
+            entryPoint: ['/bin/bash', '-c'],
+            command: [fisSidecarCommand],
+            environment: {
+                MANAGED_INSTANCE_ROLE_NAME: ssmManagedInstanceRole.roleName,
+            },
+            logging: ecs.LogDrivers.awsLogs({
+                streamPrefix: 'ssm-agent',
+                logGroup,
+            }),
+        });
+
         // --- ECS Fargate Service ---
-        // Platform 1.4 required for FIS aws:ecs:network-blackhole-port action
-        // enableExecuteCommand: true required for FIS SSM-based fault injection
-        // propagateTags: SERVICE allows FIS to target tasks by service tags
+        // Platform 1.4 required for the aws:ecs:task-network-blackhole-port action.
+        // ECS Exec is deliberately DISABLED: the AWS FIS user guide requires it to
+        // be off for aws:ecs:task-* actions (the FIS SSM sidecar provides the agent).
+        // propagateTags: SERVICE allows FIS to target tasks by service tags.
 
         const targetGroup = new elbv2.ApplicationTargetGroup(this, 'EcsTg', {
             vpc: props.vpc,
@@ -218,7 +315,7 @@ export class AppStack extends cdk.Stack {
             vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
             securityGroups: [ecsSecurityGroup],
             platformVersion: ecs.FargatePlatformVersion.VERSION1_4,
-            enableExecuteCommand: true,
+            enableExecuteCommand: false,
             propagateTags: ecs.PropagatedTagSource.SERVICE,
             circuitBreaker: { rollback: true },
             deploymentController: { type: ecs.DeploymentControllerType.ECS },
@@ -273,7 +370,10 @@ export class AppStack extends cdk.Stack {
                 viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
                 originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-                allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+                // CloudFront forbids POST/PUT/PATCH/DELETE on a behavior bound to an
+                // origin group. The demo workload is a read-only status page, so
+                // GET/HEAD/OPTIONS is sufficient.
+                allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
             },
         });
 

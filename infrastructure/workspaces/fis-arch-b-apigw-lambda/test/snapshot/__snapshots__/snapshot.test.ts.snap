@@ -38,23 +38,26 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
     },
-    "ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C": {
-      "Export": {
-        "Name": "TestAppStack:ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C",
-      },
-      "Value": {
-        "Fn::GetAtt": [
-          "ApiFunctionServiceRole52B9747B",
-          "Arn",
-        ],
-      },
-    },
     "ExportsOutputRefApiFunctionCE271BD4E67A95CA": {
       "Export": {
         "Name": "TestAppStack:ExportsOutputRefApiFunctionCE271BD4E67A95CA",
       },
       "Value": {
         "Ref": "ApiFunctionCE271BD4",
+      },
+    },
+    "ExportsOutputRefFisConfigBucket3BD8C2637C8D589B": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+      },
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
+      },
+    },
+    "FisConfigBucketName": {
+      "Description": "S3 bucket distributing AWS FIS Lambda fault configurations",
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
       },
     },
     "HttpApiEndpoint": {
@@ -83,6 +86,10 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
       "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
+    "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
   },
   "Resources": {
     "ApiFunctionCE271BD4": {
@@ -97,6 +104,20 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         },
         "Environment": {
           "Variables": {
+            "AWS_FIS_CONFIGURATION_LOCATION": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:s3:::",
+                  {
+                    "Ref": "FisConfigBucket3BD8C263",
+                  },
+                  "/FisConfigs/",
+                ],
+              ],
+            },
+            "AWS_FIS_POLL_MAX_WAIT_MILLISECONDS": "2000",
+            "AWS_LAMBDA_EXEC_WRAPPER": "/opt/aws-fis/bootstrap",
             "TABLE_NAME": {
               "Fn::ImportValue": "TestBaseStack:ExportsOutputRefItemsTable5AAC2C4611DBACFF",
             },
@@ -104,6 +125,11 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         },
         "FunctionName": "fis-chaos-b-test-api-handler",
         "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+        ],
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "ApiFunctionLogGroup00D1AC73",
@@ -227,6 +253,43 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
                 },
               ],
             },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "FisConfigs/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FisConfigBucket3BD8C263",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowListingFisConfigLocation",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FisConfigBucket3BD8C263",
+                        "Arn",
+                      ],
+                    },
+                    "/FisConfigs/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowReadingFisConfig",
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -257,6 +320,62 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FisConfigBucket3BD8C263",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
     },
     "Distribution830FAC52": {
       "Properties": {
@@ -322,6 +441,156 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
       "Type": "AWS::CloudFront::Distribution",
+    },
+    "FisConfigBucket3BD8C263": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "fis-chaos-b-test-b-fis-config-123456789012",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 1,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-b",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketAutoDeleteObjectsCustomResourceC5F5F35A": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FisConfigBucketPolicyBDCFF443",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketPolicyBDCFF443": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
     },
     "HttpApiDefaultRoute146696CE": {
       "Properties": {
@@ -464,10 +733,13 @@ exports[`FIS Chaos Scenario B Stack Snapshots AppStack Resource types and counts
   "AWS::ApiGatewayV2::Stage": 1,
   "AWS::CloudFront::Distribution": 1,
   "AWS::IAM::Policy": 1,
-  "AWS::IAM::Role": 1,
-  "AWS::Lambda::Function": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 2,
   "AWS::Lambda::Permission": 1,
   "AWS::Logs::LogGroup": 2,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "Custom::S3AutoDeleteObjects": 1,
 }
 `;
 
@@ -679,23 +951,35 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
               "Statement": [
                 {
                   "Action": [
-                    "fis:InjectApiInternalError",
-                    "fis:InjectApiThrottleError",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
                   ],
                   "Effect": "Allow",
                   "Resource": {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C",
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Fn::ImportValue": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+                        },
+                        "/FisConfigs/*",
+                      ],
+                    ],
                   },
+                  "Sid": "WriteLambdaFaultConfig",
                 },
                 {
-                  "Action": [
-                    "lambda:PutFunctionConcurrency",
-                    "lambda:DeleteFunctionConcurrency",
-                  ],
+                  "Action": "lambda:GetFunction",
                   "Effect": "Allow",
-                  "Resource": {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionCE271BD4Arn4729005E",
-                  },
+                  "Resource": "*",
+                  "Sid": "InspectTargetFunction",
+                },
+                {
+                  "Action": "tag:GetResources",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "ResolveTargetsByTag",
                 },
                 {
                   "Action": "cloudwatch:DescribeAlarms",
@@ -775,224 +1059,27 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
             "Value": "fis-chaos-b",
           },
         ],
-        "Threshold": 10,
+        "Threshold": 100,
         "TreatMissingData": "notBreaching",
       },
       "Type": "AWS::CloudWatch::Alarm",
     },
-    "ScenarioB1DynamoInternalError": {
+    "ScenarioB1InvocationError": {
       "Properties": {
         "Actions": {
-          "InjectDynamoInternalError": {
-            "ActionId": "aws:fis:inject-api-internal-error",
+          "InjectInvocationError": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
               "duration": "PT5M",
-              "operations": "GetItem,PutItem,DeleteItem,Scan",
-              "percentage": "100",
-              "service": "dynamodb",
-            },
-            "Targets": {
-              "Roles": "LambdaExecRole",
-            },
-          },
-        },
-        "Description": "[B-1] DynamoDB Internal Error — all operations (5 min): InternalError injected into every Lambda→DynamoDB call. Validates retry/backoff implementation and clean API 500 propagation.",
-        "LogConfiguration": {
-          "CloudWatchLogsConfiguration": {
-            "LogGroupArn": {
-              "Fn::GetAtt": [
-                "FisLogGroupBD16B862",
-                "Arn",
-              ],
-            },
-          },
-          "LogSchemaVersion": 2,
-        },
-        "RoleArn": {
-          "Fn::GetAtt": [
-            "FisRoleF2C479C1",
-            "Arn",
-          ],
-        },
-        "StopConditions": [
-          {
-            "Source": "aws:cloudwatch:alarm",
-            "Value": {
-              "Fn::GetAtt": [
-                "LambdaErrorAlarm646BFA4C",
-                "Arn",
-              ],
-            },
-          },
-        ],
-        "Tags": {
-          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "test",
-          "Name": "fis-chaos-b-test-B1-dynamo-internal-error",
-          "Project": "fis-chaos-b",
-          "Scenario": "B-1",
-        },
-        "Targets": {
-          "LambdaExecRole": {
-            "ResourceArns": [
-              {
-                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C",
-              },
-            ],
-            "ResourceType": "aws:iam:role",
-            "SelectionMode": "ALL",
-          },
-        },
-      },
-      "Type": "AWS::FIS::ExperimentTemplate",
-    },
-    "ScenarioB2DynamoWriteThrottle": {
-      "Properties": {
-        "Actions": {
-          "InjectDynamoWriteThrottle": {
-            "ActionId": "aws:fis:inject-api-throttle-error",
-            "Parameters": {
-              "duration": "PT5M",
-              "operations": "PutItem,DeleteItem",
-              "percentage": "100",
-              "service": "dynamodb",
-            },
-            "Targets": {
-              "Roles": "LambdaExecRole",
-            },
-          },
-        },
-        "Description": "[B-2] DynamoDB Write Throttle (5 min): ProvisionedThroughputExceededException injected into PutItem and DeleteItem. Reads remain healthy. Validates write-path circuit-breaker and graceful degradation.",
-        "LogConfiguration": {
-          "CloudWatchLogsConfiguration": {
-            "LogGroupArn": {
-              "Fn::GetAtt": [
-                "FisLogGroupBD16B862",
-                "Arn",
-              ],
-            },
-          },
-          "LogSchemaVersion": 2,
-        },
-        "RoleArn": {
-          "Fn::GetAtt": [
-            "FisRoleF2C479C1",
-            "Arn",
-          ],
-        },
-        "StopConditions": [
-          {
-            "Source": "aws:cloudwatch:alarm",
-            "Value": {
-              "Fn::GetAtt": [
-                "LambdaErrorAlarm646BFA4C",
-                "Arn",
-              ],
-            },
-          },
-        ],
-        "Tags": {
-          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "test",
-          "Name": "fis-chaos-b-test-B2-dynamo-write-throttle",
-          "Project": "fis-chaos-b",
-          "Scenario": "B-2",
-        },
-        "Targets": {
-          "LambdaExecRole": {
-            "ResourceArns": [
-              {
-                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C",
-              },
-            ],
-            "ResourceType": "aws:iam:role",
-            "SelectionMode": "ALL",
-          },
-        },
-      },
-      "Type": "AWS::FIS::ExperimentTemplate",
-    },
-    "ScenarioB3DynamoReadThrottle": {
-      "Properties": {
-        "Actions": {
-          "InjectDynamoReadThrottle": {
-            "ActionId": "aws:fis:inject-api-throttle-error",
-            "Parameters": {
-              "duration": "PT5M",
-              "operations": "GetItem,Scan",
-              "percentage": "100",
-              "service": "dynamodb",
-            },
-            "Targets": {
-              "Roles": "LambdaExecRole",
-            },
-          },
-        },
-        "Description": "[B-3] DynamoDB Read Throttle (5 min): ProvisionedThroughputExceededException injected into GetItem and Scan. Writes remain healthy. Validates read-path fallback and 429 propagation.",
-        "LogConfiguration": {
-          "CloudWatchLogsConfiguration": {
-            "LogGroupArn": {
-              "Fn::GetAtt": [
-                "FisLogGroupBD16B862",
-                "Arn",
-              ],
-            },
-          },
-          "LogSchemaVersion": 2,
-        },
-        "RoleArn": {
-          "Fn::GetAtt": [
-            "FisRoleF2C479C1",
-            "Arn",
-          ],
-        },
-        "StopConditions": [
-          {
-            "Source": "aws:cloudwatch:alarm",
-            "Value": {
-              "Fn::GetAtt": [
-                "LambdaErrorAlarm646BFA4C",
-                "Arn",
-              ],
-            },
-          },
-        ],
-        "Tags": {
-          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
-          "Environment": "test",
-          "Name": "fis-chaos-b-test-B3-dynamo-read-throttle",
-          "Project": "fis-chaos-b",
-          "Scenario": "B-3",
-        },
-        "Targets": {
-          "LambdaExecRole": {
-            "ResourceArns": [
-              {
-                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionServiceRole52B9747BArnD652720C",
-              },
-            ],
-            "ResourceType": "aws:iam:role",
-            "SelectionMode": "ALL",
-          },
-        },
-      },
-      "Type": "AWS::FIS::ExperimentTemplate",
-    },
-    "ScenarioB4LambdaConcurrencyZero": {
-      "Properties": {
-        "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
-            "Parameters": {
-              "ConcurrentExecutions": "0",
-              "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ApiFunction",
             },
           },
         },
-        "Description": "[B-4] Lambda Concurrency Exhaustion (5 min): Sets reserved concurrency to 0 — all invocations receive TooManyRequestsException. Validates API Gateway error mapping and CloudFront error-page fallback.",
+        "Description": "[B-1] Lambda Invocation Error — hard outage (5 min): every invocation returns an error without executing the handler. Validates API 500 propagation, CloudFront error handling, and client retry behaviour.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {
@@ -1024,7 +1111,204 @@ exports[`FIS Chaos Scenario B Stack Snapshots FisStack Complete CloudFormation t
         "Tags": {
           "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
           "Environment": "test",
-          "Name": "fis-chaos-b-test-B4-lambda-concurrency-zero",
+          "Name": "fis-chaos-b-test-B1-invocation-error",
+          "Project": "fis-chaos-b",
+          "Scenario": "B-1",
+        },
+        "Targets": {
+          "ApiFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionCE271BD4Arn4729005E",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioB2InvocationDelay": {
+      "Properties": {
+        "Actions": {
+          "InjectInvocationDelay": {
+            "ActionId": "aws:lambda:invocation-add-delay",
+            "Parameters": {
+              "duration": "PT5M",
+              "invocationPercentage": "100",
+              "startupDelayMilliseconds": "10000",
+            },
+            "Targets": {
+              "Functions": "ApiFunction",
+            },
+          },
+        },
+        "Description": "[B-2] Lambda Invocation Latency (+10 s, 5 min): a fixed 10 s delay is added to the start of every invocation, staying under the 29 s function / 30 s API Gateway timeout. Validates timeout budgets, client deadlines, and latency alarms.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "LambdaErrorAlarm646BFA4C",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B2-invocation-delay",
+          "Project": "fis-chaos-b",
+          "Scenario": "B-2",
+        },
+        "Targets": {
+          "ApiFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionCE271BD4Arn4729005E",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioB3PartialInvocationError": {
+      "Properties": {
+        "Actions": {
+          "InjectPartialInvocationError": {
+            "ActionId": "aws:lambda:invocation-error",
+            "Parameters": {
+              "duration": "PT5M",
+              "invocationPercentage": "50",
+              "preventExecution": "false",
+            },
+            "Targets": {
+              "Functions": "ApiFunction",
+            },
+          },
+        },
+        "Description": "[B-3] Partial Lambda Invocation Error (50%, 5 min): half of invocations fail AFTER executing the handler, so side effects may already have occurred. Validates idempotency, partial-failure handling, and retry amplification.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "LambdaErrorAlarm646BFA4C",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B3-partial-invocation-error",
+          "Project": "fis-chaos-b",
+          "Scenario": "B-3",
+        },
+        "Targets": {
+          "ApiFunction": {
+            "ResourceArns": [
+              {
+                "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttApiFunctionCE271BD4Arn4729005E",
+              },
+            ],
+            "ResourceType": "aws:lambda:function",
+            "SelectionMode": "ALL",
+          },
+        },
+      },
+      "Type": "AWS::FIS::ExperimentTemplate",
+    },
+    "ScenarioB4HttpIntegrationResponse": {
+      "Properties": {
+        "Actions": {
+          "InjectHttpIntegrationResponse": {
+            "ActionId": "aws:lambda:invocation-http-integration-response",
+            "Parameters": {
+              "contentTypeHeader": "application/json",
+              "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
+              "statusCode": "500",
+            },
+            "Targets": {
+              "Functions": "ApiFunction",
+            },
+          },
+        },
+        "Description": "[B-4] Overridden HTTP Integration Response (5 min): API Gateway receives a synthetic 500 application/json response without the handler running. Validates API Gateway → CloudFront error-page behaviour for a well-formed but failing upstream response.",
+        "LogConfiguration": {
+          "CloudWatchLogsConfiguration": {
+            "LogGroupArn": {
+              "Fn::GetAtt": [
+                "FisLogGroupBD16B862",
+                "Arn",
+              ],
+            },
+          },
+          "LogSchemaVersion": 2,
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "FisRoleF2C479C1",
+            "Arn",
+          ],
+        },
+        "StopConditions": [
+          {
+            "Source": "aws:cloudwatch:alarm",
+            "Value": {
+              "Fn::GetAtt": [
+                "LambdaErrorAlarm646BFA4C",
+                "Arn",
+              ],
+            },
+          },
+        ],
+        "Tags": {
+          "Architecture": "CloudFront-APIGW-Lambda-DynamoDB",
+          "Environment": "test",
+          "Name": "fis-chaos-b-test-B4-http-integration-response",
           "Project": "fis-chaos-b",
           "Scenario": "B-4",
         },

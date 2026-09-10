@@ -243,7 +243,10 @@ export class AppStack extends cdk.Stack {
                 viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
                 originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-                allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+                // CloudFront forbids POST/PUT/PATCH/DELETE on a behavior bound to an
+                // origin group. The demo workload is a read-only status page, so
+                // GET/HEAD/OPTIONS is sufficient.
+                allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
             },
         });
 

@@ -1,0 +1,2170 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests AppStack matches snapshot 1`] = `
+{
+  "Outputs": {
+    "AppAlbDns": {
+      "Description": "Application ALB DNS name",
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb16C2F182",
+          "DNSName",
+        ],
+      },
+    },
+    "OidcClientSecretArn": {
+      "Description": "OIDC client secret ARN — update clientSecret field after keycloak-setup.sh",
+      "Value": {
+        "Ref": "OidcClientSecret79E221D6",
+      },
+    },
+    "OidcEnabled": {
+      "Description": "Whether ALB OIDC authentication is active",
+      "Value": "false",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alb16C2F182": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Name": "testproject-test-app",
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputFnGetAttAppAlbSgF1539037GroupId318F7C97",
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+          },
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttp7966E42E": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "TgBB611D2A",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "ClusterEB0386A7": {
+      "Properties": {
+        "ClusterName": "testproject-test-app",
+        "ClusterSettings": [
+          {
+            "Name": "containerInsights",
+            "Value": "enabled",
+          },
+        ],
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "ExecutionRole605A040B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ExecutionRoleDefaultPolicyA5B92313": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "LogGroupF5B46931",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ExecutionRoleDefaultPolicyA5B92313",
+        "Roles": [
+          {
+            "Ref": "ExecutionRole605A040B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LogGroupF5B46931": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/testproject-test/app",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OidcClientSecret79E221D6": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Keycloak OIDC client credentials for ALB. Update clientSecret after keycloak-setup.sh.",
+        "Name": "/testproject/test/keycloak/oidc-client",
+        "SecretString": "{"clientId":"alb-client","clientSecret":"REPLACE_AFTER_KEYCLOAK_SETUP"}",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ServiceD69D759B": {
+      "DependsOn": [
+        "AlbHttp7966E42E",
+        "TaskDefTaskRoleDefaultPolicyA592CB18",
+        "TaskDefTaskRole1EDB4A67",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterEB0386A7",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 50,
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "EnableExecuteCommand": true,
+        "HealthCheckGracePeriodSeconds": 60,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "app",
+            "ContainerPort": 80,
+            "TargetGroupArn": {
+              "Ref": "TgBB611D2A",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputFnGetAttAppEcsSg2C05F895GroupId09F4C03B",
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+              },
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+              },
+            ],
+          },
+        },
+        "TaskDefinition": {
+          "Ref": "TaskDef54694570",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "TaskDef54694570": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Essential": true,
+            "HealthCheck": {
+              "Command": [
+                "CMD-SHELL",
+                "curl -f http://localhost/ || exit 1",
+              ],
+              "Interval": 15,
+              "Retries": 3,
+              "StartPeriod": 10,
+              "Timeout": 5,
+            },
+            "Image": "public.ecr.aws/nginx/nginx:stable-alpine",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "LogGroupF5B46931",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "app",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "ExecutionRole605A040B",
+            "Arn",
+          ],
+        },
+        "Family": "AppTaskDefCC54C0A5",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "TaskDefTaskRole1EDB4A67",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "TaskDefTaskRole1EDB4A67": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TaskDefTaskRoleDefaultPolicyA592CB18": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "logs:DescribeLogGroups",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TaskDefTaskRoleDefaultPolicyA592CB18",
+        "Roles": [
+          {
+            "Ref": "TaskDefTaskRole1EDB4A67",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "TgBB611D2A": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 15,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 3,
+        "VpcId": {
+          "Fn::ImportValue": "Base:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests BaseStack matches snapshot 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttAppAlbSgF1539037GroupId318F7C97": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttAppAlbSgF1539037GroupId318F7C97",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AppAlbSgF1539037",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttAppEcsSg2C05F895GroupId09F4C03B": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttAppEcsSg2C05F895GroupId09F4C03B",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AppEcsSg2C05F895",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "DbSg495F8305",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttKeycloakAlbSg56697A01GroupId1ABC77EA": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttKeycloakAlbSg56697A01GroupId1ABC77EA",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "KeycloakAlbSg56697A01",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttKeycloakEcsSg1E7FF2C2GroupId1D1B5225": {
+      "Export": {
+        "Name": "Base:ExportsOutputFnGetAttKeycloakEcsSg1E7FF2C2GroupId1D1B5225",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "KeycloakEcsSg1E7FF2C2",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputRefVpc49347EA926D099AB": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpc49347EA926D099AB",
+      },
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet2Subnet55040997",
+      },
+    },
+    "ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+      },
+      "Value": {
+        "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+      },
+    },
+    "ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694": {
+      "Export": {
+        "Name": "Base:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+      },
+      "Value": {
+        "Ref": "VpcPublicSubnet2Subnet5691B95A",
+      },
+    },
+    "VpcAvailabilityZones3F7C802F": {
+      "Description": "Availability Zones for testproject/test/TestVpc",
+      "Value": "dummy1a,dummy1b",
+    },
+    "VpcCidr2979DF70": {
+      "Description": "VPC CIDR for testproject/test/TestVpc",
+      "Value": {
+        "Fn::GetAtt": [
+          "Vpc49347EA9",
+          "CidrBlock",
+        ],
+      },
+    },
+    "VpcIdBCACDA58": {
+      "Description": "VPC ID for testproject/test/TestVpc",
+      "Value": {
+        "Ref": "Vpc49347EA9",
+      },
+    },
+    "VpcNatInstanceId1D5513348": {
+      "Value": {
+        "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AppAlbSgF1539037": {
+      "Properties": {
+        "GroupDescription": "App ALB - inbound HTTP/HTTPS",
+        "GroupName": "testproject-test-app-alb-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTP app-alb from 0.0.0.0/0",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS app-alb from 0.0.0.0/0",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AppEcsSg2C05F895": {
+      "Properties": {
+        "GroupDescription": "App ECS tasks",
+        "GroupName": "testproject-test-app-ecs-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "App HTTP from ALB",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "AppAlbSgF1539037",
+                "GroupId",
+              ],
+            },
+            "ToPort": 80,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AppEcsSgfromBaseAppAlbSgF04AD76380A0EF41BB": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AppEcsSg2C05F895",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AppAlbSgF1539037",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "DbSg495F8305": {
+      "Properties": {
+        "GroupDescription": "Aurora PostgreSQL - inbound from Keycloak ECS",
+        "GroupName": "testproject-test-db-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "PostgreSQL from Keycloak ECS",
+            "FromPort": 5432,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "KeycloakEcsSg1E7FF2C2",
+                "GroupId",
+              ],
+            },
+            "ToPort": 5432,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "KeycloakAlbSg56697A01": {
+      "Properties": {
+        "GroupDescription": "Keycloak ALB - inbound HTTP/HTTPS",
+        "GroupName": "testproject-test-keycloak-alb-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTP keycloak-alb from 0.0.0.0/0",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS keycloak-alb from 0.0.0.0/0",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "KeycloakEcsSg1E7FF2C2": {
+      "Properties": {
+        "GroupDescription": "Keycloak ECS tasks",
+        "GroupName": "testproject-test-keycloak-ecs-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "Description": "Keycloak HTTP from ALB",
+            "FromPort": 8080,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "KeycloakAlbSg56697A01",
+                "GroupId",
+              ],
+            },
+            "ToPort": 8080,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "KeycloakEcsSgfromBaseKeycloakAlbSgD95121868080B6E6DBF6": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 8080,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "KeycloakEcsSg1E7FF2C2",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "KeycloakAlbSg56697A01",
+            "GroupId",
+          ],
+        },
+        "ToPort": 8080,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "Vpc49347EA9": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcDynamoDbEndpoint55176AC8": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".dynamodb",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/TestVpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcIGW5C9F205D": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcNatEipAssociation0FB9327F6": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcNatinstanceEip1893E2B75",
+            "AllocationId",
+          ],
+        },
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+      },
+      "Type": "AWS::EC2::EIPAssociation",
+    },
+    "VpcNatSecurityGroupB1DB96D3": {
+      "Properties": {
+        "GroupDescription": "Security Group for NAT instances",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "Vpc49347EA9",
+                "CidrBlock",
+              ],
+            },
+            "Description": "Allow all traffic from VPC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/TestVpc",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VpcNatinstanceEip1893E2B75": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/NatinstanceEIP1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcPrivateSubnet1DefaultRouteD0A8C89B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1RouteTable5ADAC875": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation11E70C19": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet7BECC33A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1Subnet7BECC33A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2DefaultRouteE7D97A6D": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "InstanceId": {
+          "Ref": "VpcPublicSubnet1NatInstanceC78DDF68",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2RouteTable0B67C0AD": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociation751D47F2": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet55040997",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet55040997": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute2826E776": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1NatInstanceC78DDF68": {
+      "DependsOn": [
+        "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "IamInstanceProfile": {
+          "Ref": "VpcPublicSubnet1NatInstanceInstanceProfile5E04429E",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcNatSecurityGroupB1DB96D3",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": false,
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1/NatInstance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+yum install iptables-services -y
+systemctl enable iptables
+systemctl start iptables
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/custom-ip-forwarding.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+sudo /sbin/iptables -t nat -A POSTROUTING -o $(route | awk '/^default/{print $NF}') -j MASQUERADE
+sudo /sbin/iptables -F FORWARD
+sudo service iptables save",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "VpcPublicSubnet1NatInstanceInstanceProfile5E04429E": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "VpcPublicSubnet1NatInstanceInstanceRole88FCCC1F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1/NatInstance",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcPublicSubnet1RouteTable6F9AC31B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation68C388A6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet4D933E0A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet4D933E0A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute6D8C6AE6": {
+      "DependsOn": [
+        "VpcVPCGW0B9C0E73",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2RouteTable20915D60": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationD115202B": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable20915D60",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet5691B95A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet5691B95A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Base/Vpc/Resource/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcS3Endpoint511D1166": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "VpcPrivateSubnet1RouteTable5ADAC875",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2RouteTable0B67C0AD",
+          },
+          {
+            "Ref": "VpcPublicSubnet1RouteTable6F9AC31B",
+          },
+          {
+            "Ref": "VpcPublicSubnet2RouteTable20915D60",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "testproject/test/TestVpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcVPCGW0B9C0E73": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGW5C9F205D",
+        },
+        "VpcId": {
+          "Ref": "Vpc49347EA9",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests DatabaseStack matches snapshot 1`] = `
+{
+  "Outputs": {
+    "AuroraDatabaseName": {
+      "Description": "Keycloak database name",
+      "Value": "keycloakdb",
+    },
+    "AuroraEndpoint": {
+      "Description": "Aurora Serverless V2 writer endpoint",
+      "Value": {
+        "Fn::GetAtt": [
+          "AuroraCluster23D869C0",
+          "Endpoint.Address",
+        ],
+      },
+    },
+    "AuroraSecretArn": {
+      "Description": "Keycloak DB credentials secret ARN",
+      "Value": {
+        "Ref": "AuroraSecret41E6E877",
+      },
+    },
+    "ExportsOutputFnGetAttAuroraCluster23D869C0EndpointAddress064B8907": {
+      "Export": {
+        "Name": "Database:ExportsOutputFnGetAttAuroraCluster23D869C0EndpointAddress064B8907",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "AuroraCluster23D869C0",
+          "Endpoint.Address",
+        ],
+      },
+    },
+    "ExportsOutputRefAuroraSecret41E6E877B1EAA24F": {
+      "Export": {
+        "Name": "Database:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+      },
+      "Value": {
+        "Ref": "AuroraSecret41E6E877",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AuroraCluster23D869C0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "CopyTagsToSnapshot": true,
+        "DBClusterParameterGroupName": "default.aurora-postgresql16",
+        "DBSubnetGroupName": {
+          "Ref": "AuroraClusterSubnetsF3E9E6AD",
+        },
+        "DatabaseName": "keycloakdb",
+        "DeletionProtection": false,
+        "EnableCloudwatchLogsExports": [
+          "postgresql",
+        ],
+        "Engine": "aurora-postgresql",
+        "EngineVersion": "16.4",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AuroraSecret41E6E877",
+              },
+              ":SecretString:password::}}",
+            ],
+          ],
+        },
+        "MasterUsername": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "AuroraSecret41E6E877",
+              },
+              ":SecretString:username::}}",
+            ],
+          ],
+        },
+        "Port": 5432,
+        "ServerlessV2ScalingConfiguration": {
+          "MaxCapacity": 4,
+          "MinCapacity": 0.5,
+        },
+        "StorageEncrypted": true,
+        "VpcSecurityGroupIds": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputFnGetAttDbSg495F8305GroupIdA39418C8",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBCluster",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuroraClusterLogRetentionpostgresql3202E189": {
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/rds/cluster/",
+              {
+                "Ref": "AuroraCluster23D869C0",
+              },
+              "/postgresql",
+            ],
+          ],
+        },
+        "RetentionInDays": 7,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "AuroraClusterSubnetsF3E9E6AD": {
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnets for AuroraCluster database",
+        "SubnetIds": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+          },
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBSubnetGroup",
+    },
+    "AuroraClusterwriter499C523E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DBClusterIdentifier": {
+          "Ref": "AuroraCluster23D869C0",
+        },
+        "DBInstanceClass": "db.serverless",
+        "Engine": "aurora-postgresql",
+        "PromotionTier": 0,
+        "PubliclyAccessible": false,
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuroraSecret41E6E877": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~\`#$&*()|[]{}:;<>?!'/@"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{"username":"keycloak"}",
+        },
+        "Name": "/testproject/test/aurora/credentials",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuroraSecretAttachment65089D67": {
+      "Properties": {
+        "SecretId": {
+          "Ref": "AuroraSecret41E6E877",
+        },
+        "TargetId": {
+          "Ref": "AuroraCluster23D869C0",
+        },
+        "TargetType": "AWS::RDS::DBCluster",
+      },
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+      "DependsOn": [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": [
+          {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests KeycloakStack matches snapshot 1`] = `
+{
+  "Outputs": {
+    "AdminSecretArn": {
+      "Description": "Keycloak admin credentials secret ARN",
+      "Value": {
+        "Ref": "AdminSecretB9452750",
+      },
+    },
+    "KeycloakAdminConsole": {
+      "Description": "Keycloak admin console URL",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "Alb16C2F182",
+                "DNSName",
+              ],
+            },
+            "/admin",
+          ],
+        ],
+      },
+    },
+    "KeycloakAlbDns": {
+      "Description": "Keycloak ALB DNS name",
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb16C2F182",
+          "DNSName",
+        ],
+      },
+    },
+    "KeycloakBaseUrl": {
+      "Description": "Keycloak base URL",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "Alb16C2F182",
+                "DNSName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "RealmOidcDiscovery": {
+      "Description": "Keycloak OIDC discovery URL for the realm",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "Alb16C2F182",
+                "DNSName",
+              ],
+            },
+            "/realms/testrealm/.well-known/openid-configuration",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AdminSecretB9452750": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Keycloak admin credentials",
+        "GenerateSecretString": {
+          "ExcludeCharacters": ""@/\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 24,
+          "SecretStringTemplate": "{"username":"admin"}",
+        },
+        "Name": "/testproject/test/keycloak/admin",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Alb16C2F182": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Name": "testproject-test-kc",
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputFnGetAttKeycloakAlbSg56697A01GroupId1ABC77EA",
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet1Subnet4D933E0ADF9CAD8B",
+          },
+          {
+            "Fn::ImportValue": "Base:ExportsOutputRefVpcPublicSubnet2Subnet5691B95A2987F694",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttp7966E42E": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "TgBB611D2A",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "ClusterEB0386A7": {
+      "Properties": {
+        "ClusterName": "testproject-test-keycloak",
+        "ClusterSettings": [
+          {
+            "Name": "containerInsights",
+            "Value": "enabled",
+          },
+        ],
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "ExecutionRole605A040B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ExecutionRoleDefaultPolicyA5B92313": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Database:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+              },
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "AdminSecretB9452750",
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "LogGroupF5B46931",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ExecutionRoleDefaultPolicyA5B92313",
+        "Roles": [
+          {
+            "Ref": "ExecutionRole605A040B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LogGroupF5B46931": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/testproject-test/keycloak",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ServiceD69D759B": {
+      "DependsOn": [
+        "AlbHttp7966E42E",
+        "TaskDefTaskRoleDefaultPolicyA592CB18",
+        "TaskDefTaskRole1EDB4A67",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterEB0386A7",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 50,
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "EnableExecuteCommand": true,
+        "HealthCheckGracePeriodSeconds": 60,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "keycloak",
+            "ContainerPort": 8080,
+            "TargetGroupArn": {
+              "Ref": "TgBB611D2A",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputFnGetAttKeycloakEcsSg1E7FF2C2GroupId1D1B5225",
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet1Subnet7BECC33A2ECF0B6C",
+              },
+              {
+                "Fn::ImportValue": "Base:ExportsOutputRefVpcPrivateSubnet2Subnet5504099791F78793",
+              },
+            ],
+          },
+        },
+        "TaskDefinition": {
+          "Ref": "TaskDef54694570",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "TaskDef54694570": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "start",
+            ],
+            "Environment": [
+              {
+                "Name": "KC_DB",
+                "Value": "postgres",
+              },
+              {
+                "Name": "KC_DB_URL",
+                "Value": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "jdbc:postgresql://",
+                      {
+                        "Fn::ImportValue": "Database:ExportsOutputFnGetAttAuroraCluster23D869C0EndpointAddress064B8907",
+                      },
+                      ":5432/keycloakdb",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "KC_HOSTNAME_STRICT",
+                "Value": "false",
+              },
+              {
+                "Name": "KC_PROXY_HEADERS",
+                "Value": "xforwarded",
+              },
+              {
+                "Name": "KC_HTTP_ENABLED",
+                "Value": "true",
+              },
+              {
+                "Name": "KC_HEALTH_ENABLED",
+                "Value": "true",
+              },
+              {
+                "Name": "KC_METRICS_ENABLED",
+                "Value": "true",
+              },
+              {
+                "Name": "KC_LOG_LEVEL",
+                "Value": "info",
+              },
+            ],
+            "Essential": true,
+            "HealthCheck": {
+              "Command": [
+                "CMD-SHELL",
+                "curl -f http://localhost:8080/health/ready || exit 1",
+              ],
+              "Interval": 30,
+              "Retries": 5,
+              "StartPeriod": 180,
+              "Timeout": 10,
+            },
+            "Image": "quay.io/keycloak/keycloak:26.1",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "LogGroupF5B46931",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "keycloak",
+              },
+            },
+            "Name": "keycloak",
+            "PortMappings": [
+              {
+                "ContainerPort": 8080,
+                "Protocol": "tcp",
+              },
+            ],
+            "Secrets": [
+              {
+                "Name": "KC_DB_USERNAME",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Database:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+                      },
+                      ":username::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "KC_DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Database:ExportsOutputRefAuroraSecret41E6E877B1EAA24F",
+                      },
+                      ":password::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "KEYCLOAK_ADMIN",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "AdminSecretB9452750",
+                      },
+                      ":username::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "KEYCLOAK_ADMIN_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "AdminSecretB9452750",
+                      },
+                      ":password::",
+                    ],
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+        "Cpu": "1024",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "ExecutionRole605A040B",
+            "Arn",
+          ],
+        },
+        "Family": "KeycloakTaskDefBEEC079C",
+        "Memory": "2048",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "TaskDefTaskRole1EDB4A67",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "TaskDefTaskRole1EDB4A67": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TaskDefTaskRoleDefaultPolicyA592CB18": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "logs:DescribeLogGroups",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TaskDefTaskRoleDefaultPolicyA592CB18",
+        "Roles": [
+          {
+            "Ref": "TaskDefTaskRole1EDB4A67",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "TgBB611D2A": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/health/ready",
+        "HealthCheckTimeoutSeconds": 10,
+        "HealthyThresholdCount": 2,
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 8080,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "60",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 5,
+        "VpcId": {
+          "Fn::ImportValue": "Base:ExportsOutputRefVpc49347EA926D099AB",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

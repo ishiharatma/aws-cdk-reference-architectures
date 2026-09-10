@@ -1,5 +1,17 @@
 [
   {
+    "id": "alb-keycloak-auth",
+    "title": "ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless",
+    "description": "AWS ALB built-in OIDC authentication backed by Keycloak running on ECS Fargate with Aurora Serverless V2 (PostgreSQL) as the session store. Two patterns: Pattern A uses Keycloak as a direct OIDC provider; Pattern B adds SAML identity brokering so Keycloak acts as both an OIDC provider to ALB and a SAML service provider to a corporate IdP. Includes setup scripts for realm/client configuration and ECS Exec enabled for connection testing.",
+    "image": "alb-keycloak-auth/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "ALB", "OIDC", "Keycloak", "ECS", "Fargate", "Aurora", "Serverless", "Security", "IAM", "SAML"],
+    "link": "alb-keycloak-auth",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-09",
+    "articles": {}
+  },
+  {
     "id": "fis-arch-a-ecs-aurora",
     "title": "FIS Chaos: CloudFront + Internal ALB + ECS Fargate + Aurora PostgreSQL",
     "description": "Four AWS FIS chaos experiment templates for a container-based three-tier web architecture: Aurora writer→reader failover, ECS all-tasks stop (with CloudFront S3 fallback), ECS→DB network blackhole on TCP 5432, and ALB→ECS network blackhole on TCP 80 — each with an ALB 5xx CloudWatch Alarm stop condition.",
@@ -45,6 +57,7 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-09",
+    "draft": true,
     "articles": {}
   },
   {
@@ -57,6 +70,7 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-09",
+    "draft": true,
     "articles": {}
   },
   {
@@ -69,6 +83,7 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-09",
+    "draft": true,
     "articles": {}
   },
   {

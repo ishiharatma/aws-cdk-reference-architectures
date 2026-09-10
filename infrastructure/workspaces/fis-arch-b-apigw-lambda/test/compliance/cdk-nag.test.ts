@@ -52,7 +52,7 @@ function makeStacks(appId: string) {
         env: defaultEnv,
         terminationProtection: false,
         apiFunction: appStack.apiFunction,
-        table: baseStack.table,
+        fisConfigBucket: appStack.fisConfigBucket,
         alarmEmail: envParams.alarmEmail,
     });
 
@@ -82,6 +82,18 @@ function suppressBaseStack(stack: BaseStack): void {
 
 function suppressAppStack(stack: AppStack): void {
     const p = `/${stack.stackName}`;
+
+    // The FIS Lambda-extension config bucket holds only transient FIS-written JSON
+    // (1-day lifecycle expiry) and is not a data store — server access logging adds
+    // a second bucket for no operational benefit in this reference pattern.
+    NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/FisConfigBucket/Resource`, [
+        {
+            id: 'AwsSolutions-S1',
+            reason:
+                'Transient FIS fault-config distribution bucket (1-day object expiry, tiny JSON ' +
+                'only). Access logging would require a second bucket for no benefit here.',
+        },
+    ]);
 
     // CloudFront uses the default *.cloudfront.net certificate (no custom domain).
     // AWS forces TLSv1 availability regardless of minimumProtocolVersion in this case.

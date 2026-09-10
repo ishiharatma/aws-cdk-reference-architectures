@@ -61,7 +61,7 @@ export class FisChaosStage extends cdk.Stage {
             project: pj,
             environment: env,
             apiFunction: appStack.apiFunction,
-            table: baseStack.table,
+            fisConfigBucket: appStack.fisConfigBucket,
             alarmEmail: props.params.alarmEmail,
         });
 
