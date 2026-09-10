@@ -2,39 +2,51 @@ import * as cdk from 'aws-cdk-lib';
 import { Annotations, Match } from 'aws-cdk-lib/assertions';
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { Environment } from '@common/parameters/environments';
+import { RepositoryStack } from 'lib/stacks/repository-stack';
 import { PipelineStack } from 'lib/stacks/pipeline-stack';
-import { CrossAccountRoleStack } from 'lib/stacks/cross-account-role-stack';
-import { testEnvParamsMap, testSharedParams } from 'test/parameters/test-params';
+import { getTestEnvParams, testEnvParamsMap, testSharedParams } from 'test/parameters/test-params';
 
 describe('CDK Nag AwsSolutions Pack', () => {
   let app: cdk.App;
-  let pipelineStack: PipelineStack;
-  let crossAccountRoleStack: CrossAccountRoleStack;
+  let repositoryStack: RepositoryStack;
+  let devPipelineStack: PipelineStack;
+  let stgPipelineStack: PipelineStack;
 
   beforeAll(() => {
     app = new cdk.App();
 
-    pipelineStack = new PipelineStack(app, 'NagPipeline', {
+    repositoryStack = new RepositoryStack(app, 'NagRepository', {
       env: { account: '111111111111', region: 'ap-northeast-1' },
-      isAutoDeleteObject: true,
       project: 'testproject',
       sharedParams: testSharedParams,
       envParamsMap: testEnvParamsMap,
     });
 
-    crossAccountRoleStack = new CrossAccountRoleStack(app, 'NagCrossAccountRole', {
-      env: { account: '222222222222', region: 'ap-northeast-1' },
+    devPipelineStack = new PipelineStack(app, 'NagPipelineDev', {
+      env: { account: '111111111111', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
       project: 'testproject',
-      targetEnv: Environment.STAGING,
-      devAccountId: '111111111111',
+      environment: Environment.DEVELOPMENT,
+      sharedParams: testSharedParams,
+      envParams: getTestEnvParams(Environment.DEVELOPMENT),
+    });
+
+    stgPipelineStack = new PipelineStack(app, 'NagPipelineStg', {
+      env: { account: '222222222222', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      project: 'testproject',
+      environment: Environment.STAGING,
+      sharedParams: testSharedParams,
+      envParams: getTestEnvParams(Environment.STAGING),
     });
 
     cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
   });
 
   test.each([
-    ['PipelineStack', () => pipelineStack],
-    ['CrossAccountRoleStack', () => crossAccountRoleStack],
+    ['RepositoryStack', () => repositoryStack],
+    ['PipelineStack (dev)', () => devPipelineStack],
+    ['PipelineStack (stg)', () => stgPipelineStack],
   ])('%s: no unsuppressed warnings', (_name, getStack) => {
     const warnings = Annotations.fromStack(getStack()).findWarning('*', Match.stringLikeRegexp('AwsSolutions-.*'));
     if (warnings.length > 0) {
@@ -49,8 +61,9 @@ describe('CDK Nag AwsSolutions Pack', () => {
   });
 
   test.each([
-    ['PipelineStack', () => pipelineStack],
-    ['CrossAccountRoleStack', () => crossAccountRoleStack],
+    ['RepositoryStack', () => repositoryStack],
+    ['PipelineStack (dev)', () => devPipelineStack],
+    ['PipelineStack (stg)', () => stgPipelineStack],
   ])('%s: no unsuppressed errors', (_name, getStack) => {
     const errors = Annotations.fromStack(getStack()).findError('*', Match.stringLikeRegexp('AwsSolutions-.*'));
     if (errors.length > 0) {

@@ -1,159 +1,94 @@
-import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codecommit from 'aws-cdk-lib/aws-codecommit';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
-import * as cr from 'aws-cdk-lib/custom-resources';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as events_targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';
-import { pascalCase } from 'change-case-commonjs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams, SharedParams } from 'lib/types';
+import { pipelineRoleName, sourceActionRoleName } from 'lib/stacks/naming';
 
 export interface PipelineStackProps extends cdk.StackProps {
   readonly project: string;
+  readonly environment: Environment;
   readonly isAutoDeleteObject: boolean;
   readonly sharedParams: SharedParams;
-  /** Parameters for every environment (dev/stg/prd) — each gets its own pipeline. */
-  readonly envParamsMap: Partial<Record<Environment, EnvParams>>;
+  readonly envParams: EnvParams;
 }
 
 /**
- * CodeCommit + Pipeline Stack
+ * Pipeline Stack
  *
- * Deployed once, into the dev account. Creates:
- * - The CodeCommit repository (seeded with the sample app on `main`), plus
- *   `develop`/`staging` branches auto-created from that same initial commit
- * - Three CodePipelines (dev/stg/prd), one per branch, each running
- *   Source → Test → Build → (optional Approve) → Deploy
+ * Deployed once PER ENVIRONMENT, into THAT environment's own account
+ * (dev/stg/prd) — this is the cross-account part of the architecture: the
+ * pipeline itself lives next to whatever it deploys, not in the dev account
+ * alongside CodeCommit.
  *
- * All three pipelines run in this (dev) account. Only the Deploy stage's
- * CodeBuild project crosses accounts, by assuming the role created in the
- * matching target account by CrossAccountRoleStack.
+ * Runs Source → Test → Build → (optional Approve) → Deploy, all within this
+ * one account. Only the Source stage crosses accounts (for stg/prd, whose
+ * CodeCommit repository lives in the dev account):
+ * - `CodeCommitSourceAction.role` is set to the fixed-name role that
+ *   RepositoryStack created in the dev account for this account to assume
+ * - Since CodeCommit only emits push events in the account that owns the
+ *   repository, RepositoryStack forwards them to this account's default
+ *   event bus; this stack's own EventBridge rule reacts to that forwarded
+ *   event to start the pipeline (a plain EventBridge rule on the resource
+ *   ARN works for the dev environment, which owns the repository directly)
  */
 export class PipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: PipelineStackProps) {
     super(scope, id, props);
 
-    const devAccountId = cdk.Stack.of(this).account;
-
-    /* ─── CodeCommit repository, seeded with the sample app ─────────────*/
-    const repository = new codecommit.Repository(this, 'Repository', {
-      repositoryName: props.sharedParams.repositoryName,
-      description: `${props.project} sample application repository for the cross-account CI/CD demo`,
-      code: codecommit.Code.fromDirectory(path.join(__dirname, '../../sample-app'), 'main'),
-    });
-
-    /* ─── Auto-create develop/staging branches from main's initial commit ──
-     * codecommit.Code.fromDirectory only seeds a single branch (main).
-     * develop/staging are created here, pointing at that same commit, so a
-     * fresh `cdk deploy` leaves all three branches ready to receive pushes.
-     */
-    const getMainBranch = new cr.AwsCustomResource(this, 'GetMainBranch', {
-      onCreate: {
-        service: 'CodeCommit',
-        action: 'getBranch',
-        parameters: {
-          repositoryName: repository.repositoryName,
-          branchName: 'main',
-        },
-        physicalResourceId: cr.PhysicalResourceId.of('GetMainBranch'),
-      },
-      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({ resources: [repository.repositoryArn] }),
-    });
-    // No explicit node.addDependency(repository) here: Repository.onCommit()
-    // (used internally by CodeCommitSourceAction's EventBridge trigger below)
-    // adds its Rule as a CHILD of the repository construct. A construct-level
-    // dependency on `repository` would therefore transitively depend on that
-    // Rule too — which targets the pipeline, which in turn depends on the
-    // branch-creation custom resources below, creating a cycle. The IAM
-    // policy above already references `repository.repositoryArn`, which is
-    // enough for CloudFormation to sequence this after the repository exists.
-    const mainCommitId = getMainBranch.getResponseField('branch.commitId');
-
-    const branchCreations: Record<string, cr.AwsCustomResource> = {};
-    for (const branchName of ['develop', 'staging']) {
-      const createBranch = new cr.AwsCustomResource(this, `CreateBranch${pascalCase(branchName)}`, {
-        onCreate: {
-          service: 'CodeCommit',
-          action: 'createBranch',
-          parameters: {
-            repositoryName: repository.repositoryName,
-            branchName,
-            // Referencing mainCommitId (a token from GetMainBranch's response)
-            // is enough to sequence this after GetMainBranch — no explicit
-            // node.addDependency() needed (see note above).
-            commitId: mainCommitId,
-          },
-          physicalResourceId: cr.PhysicalResourceId.of(`CreateBranch-${branchName}`),
-        },
-        policy: cr.AwsCustomResourcePolicy.fromSdkCalls({ resources: [repository.repositoryArn] }),
-      });
-      branchCreations[branchName] = createBranch;
-    }
-
-    /* ─── One pipeline per environment ───────────────────────────────*/
-    const targetEnvs: Environment[] = [Environment.DEVELOPMENT, Environment.STAGING, Environment.PRODUCTION];
-    for (const targetEnv of targetEnvs) {
-      const envParams = props.envParamsMap[targetEnv];
-      if (!envParams) {
-        continue;
-      }
-      const pipeline = this.createPipeline(props, devAccountId, repository, targetEnv, envParams);
-      const branchDependency = branchCreations[envParams.branchName];
-      if (branchDependency) {
-        pipeline.node.addDependency(branchDependency);
-      }
-    }
-
-    NagSuppressions.addStackSuppressions(
-      this,
-      [
-        {
-          id: 'AwsSolutions-S1',
-          reason: 'These are pipeline artifact buckets for a sample workspace; server access logging is not required for the demo.',
-        },
-        {
-          id: 'AwsSolutions-CB4',
-          reason: 'Test/Build/Deploy CodeBuild projects use the default AWS-managed encryption key rather than a customer-managed KMS key, matching this repo\'s other CI/CD reference workspaces (e.g. cicd-cloudfront-s3).',
-        },
-        {
-          id: 'AwsSolutions-IAM4',
-          reason: 'AWSLambdaBasicExecutionRole (used by the CDK-provided AwsCustomResource singleton Lambda for the branch-creation custom resources) is acceptable for this sample.',
-        },
-        {
-          id: 'AwsSolutions-IAM5',
-          reason:
-            'Wildcard permissions here are CDK auto-grants scoped as narrowly as each API allows: CodePipeline/CodeBuild action roles need bucket/* object-level S3 access and lambda:ListFunctions; the branch-creation custom resource Lambda needs CloudWatch Logs log-stream wildcards; CodeCommit GetBranch/CreateBranch are scoped to this one repository ARN.',
-        },
-      ],
-      true
-    );
-  }
-
-  private createPipeline(
-    props: PipelineStackProps,
-    devAccountId: string,
-    repository: codecommit.IRepository,
-    targetEnv: Environment,
-    envParams: EnvParams
-  ): codepipeline.Pipeline {
-    const { project, isAutoDeleteObject } = props;
+    const { project, environment, envParams, sharedParams, isAutoDeleteObject } = props;
+    const accountId = cdk.Stack.of(this).account;
+    const region = cdk.Stack.of(this).region;
     const logRetentionDays = logs.RetentionDays.ONE_MONTH;
-    const targetAccountId = envParams.accountId ?? devAccountId;
-    const deployBuildRoleName = `${project}-${targetEnv}-deploy-build-role`;
-    const crossAccountRoleArn = `arn:aws:iam::${targetAccountId}:role/${project}-${targetEnv}-cross-account-deploy-role`;
 
-    /* ─── Artifact bucket (one per environment pipeline) ─────────────*/
-    const artifactBucket = new s3.Bucket(this, `ArtifactBucket${pascalCase(targetEnv)}`, {
-      bucketName: `${project}-${targetEnv}-cicd-artifact-${devAccountId}`.toLowerCase(),
+    const codecommitAccountId = sharedParams.codecommitAccountId ?? accountId;
+    const isCrossAccountSource = codecommitAccountId !== accountId;
+
+    /* ─── Pipeline execution role (fixed name — trusted by name from the
+     * dev account's RepositoryStack when this is a cross-account source) ──*/
+    const pipelineRole = new iam.Role(this, 'PipelineRole', {
+      roleName: pipelineRoleName(project, environment),
+      assumedBy: new iam.ServicePrincipal('codepipeline.amazonaws.com'),
+      description: `${project}-${environment} CodePipeline execution role`,
+    });
+
+    /* ─── CodeCommit repository reference ────────────────────────────*/
+    const repository: codecommit.IRepository = isCrossAccountSource
+      ? codecommit.Repository.fromRepositoryArn(
+          this,
+          'Repository',
+          `arn:aws:codecommit:${region}:${codecommitAccountId}:${sharedParams.repositoryName}`
+        )
+      : codecommit.Repository.fromRepositoryName(this, 'Repository', sharedParams.repositoryName);
+
+    /* ─── Artifact bucket ─────────────────────────────────────────*/
+    // A cross-account Source action requires the artifact bucket to be
+    // encrypted with a customer-managed KMS key (CodePipeline needs to grant
+    // the other account's source-action role decrypt/encrypt access to it) —
+    // S3-managed encryption is only sufficient for same-account pipelines.
+    const artifactKey = isCrossAccountSource
+      ? new kms.Key(this, 'ArtifactBucketKey', {
+          description: `${project}-${environment} pipeline artifact bucket encryption key`,
+          enableKeyRotation: true,
+          removalPolicy: isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
+        })
+      : undefined;
+    const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
+      bucketName: `${project}-${environment}-cicd-artifact-${accountId}`.toLowerCase(),
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
+      encryption: artifactKey ? s3.BucketEncryption.KMS : s3.BucketEncryption.S3_MANAGED,
+      encryptionKey: artifactKey,
       enforceSSL: true,
       removalPolicy: isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN,
       autoDeleteObjects: isAutoDeleteObject,
@@ -164,13 +99,13 @@ export class PipelineStack extends cdk.Stack {
 
     const commonEnvVars: Record<string, codebuild.BuildEnvironmentVariable> = {
       PROJECT: { value: project },
-      ENV: { value: targetEnv },
+      ENV: { value: environment },
       TARGET_BRANCH: { value: envParams.branchName },
     };
 
     /* ─── CodeBuild: Test ─────────────────────────────────────────*/
-    const testProject = new codebuild.PipelineProject(this, `TestProject${pascalCase(targetEnv)}`, {
-      projectName: `${project}-${targetEnv}-test`,
+    const testProject = new codebuild.PipelineProject(this, 'TestProject', {
+      projectName: `${project}-${environment}-test`,
       buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-test.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
@@ -179,8 +114,8 @@ export class PipelineStack extends cdk.Stack {
       },
       logging: {
         cloudWatch: {
-          logGroup: new logs.LogGroup(this, `TestLogGroup${pascalCase(targetEnv)}`, {
-            logGroupName: `/${project}/${targetEnv}/codebuild/test`,
+          logGroup: new logs.LogGroup(this, 'TestLogGroup', {
+            logGroupName: `/${project}/${environment}/codebuild/test`,
             retention: logRetentionDays,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
           }),
@@ -189,8 +124,8 @@ export class PipelineStack extends cdk.Stack {
     });
 
     /* ─── CodeBuild: Build ────────────────────────────────────────*/
-    const buildProject = new codebuild.PipelineProject(this, `BuildProject${pascalCase(targetEnv)}`, {
-      projectName: `${project}-${targetEnv}-build`,
+    const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
+      projectName: `${project}-${environment}-build`,
       buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-build.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
@@ -199,8 +134,8 @@ export class PipelineStack extends cdk.Stack {
       },
       logging: {
         cloudWatch: {
-          logGroup: new logs.LogGroup(this, `BuildLogGroup${pascalCase(targetEnv)}`, {
-            logGroupName: `/${project}/${targetEnv}/codebuild/build`,
+          logGroup: new logs.LogGroup(this, 'BuildLogGroup', {
+            logGroupName: `/${project}/${environment}/codebuild/build`,
             retention: logRetentionDays,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
           }),
@@ -208,72 +143,54 @@ export class PipelineStack extends cdk.Stack {
       },
     });
 
-    /* ─── CodeBuild: Deploy (the cross-account hop) ──────────────────
-     * Uses a fixed-name role so CrossAccountRoleStack (deployed separately,
-     * into the targetEnv account) can trust it by name in its own
-     * AssumeRolePolicy — see lib/stacks/cross-account-role-stack.ts.
+    /* ─── CodeBuild: Deploy ───────────────────────────────────────
+     * Runs entirely within this account now — the pipeline itself already
+     * lives next to whatever it deploys, so no further AssumeRole hop is
+     * needed here (contrast with a design where the pipeline stays in the
+     * dev account and only Deploy crosses accounts).
      */
-    const deployRole = new iam.Role(this, `DeployBuildRole${pascalCase(targetEnv)}`, {
-      roleName: deployBuildRoleName,
-      assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
-      description: `${project} ${targetEnv} Deploy CodeBuild project role - assumes ${crossAccountRoleArn} to deploy`,
-    });
-    deployRole.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'AllowAssumeCrossAccountDeployRole',
-        actions: ['sts:AssumeRole'],
-        resources: [crossAccountRoleArn],
-      })
-    );
-
-    const deployProject = new codebuild.PipelineProject(this, `DeployProject${pascalCase(targetEnv)}`, {
-      projectName: `${project}-${targetEnv}-deploy`,
-      role: deployRole,
+    const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
+      projectName: `${project}-${environment}-deploy`,
       buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-deploy.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
-        environmentVariables: {
-          ...commonEnvVars,
-          TARGET_ENV: { value: targetEnv },
-          TARGET_ACCOUNT_ID: { value: targetAccountId },
-          CROSS_ACCOUNT_ROLE_ARN: { value: crossAccountRoleArn },
-        },
+        environmentVariables: commonEnvVars,
       },
       logging: {
         cloudWatch: {
-          logGroup: new logs.LogGroup(this, `DeployLogGroup${pascalCase(targetEnv)}`, {
-            logGroupName: `/${project}/${targetEnv}/codebuild/deploy`,
+          logGroup: new logs.LogGroup(this, 'DeployLogGroup', {
+            logGroupName: `/${project}/${environment}/codebuild/deploy`,
             retention: logRetentionDays,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
           }),
         },
       },
     });
-    NagSuppressions.addResourceSuppressions(
-      deployRole,
-      [
-        {
-          id: 'AwsSolutions-IAM4',
-          reason: 'AWSLambdaBasicExecutionRole-equivalent CodeBuild managed policy is out of scope here; only the explicit AssumeRole statement above is hand-written.',
-        },
-      ],
-      true
-    );
+
+    /* ─── Source action: cross-account only for stg/prd ─────────────*/
+    const sourceAction = new codepipeline_actions.CodeCommitSourceAction({
+      actionName: 'Source',
+      repository,
+      branch: envParams.branchName,
+      output: sourceOutput,
+      // A dedicated EventBridge rule (below) starts the pipeline instead —
+      // required for the cross-account case (CodeCommit events only exist in
+      // the account that owns the repository) and used uniformly here so
+      // dev/stg/prd all follow the same trigger path.
+      trigger: codepipeline_actions.CodeCommitTrigger.NONE,
+      role: isCrossAccountSource
+        ? iam.Role.fromRoleArn(
+            this,
+            'SourceActionRole',
+            `arn:aws:iam::${codecommitAccountId}:role/${sourceActionRoleName(project, accountId)}`
+          )
+        : undefined,
+    });
 
     /* ─── Pipeline stages ────────────────────────────────────────*/
     const stages: codepipeline.StageProps[] = [
-      {
-        stageName: 'Source',
-        actions: [
-          new codepipeline_actions.CodeCommitSourceAction({
-            actionName: 'Source',
-            repository,
-            branch: envParams.branchName,
-            output: sourceOutput,
-          }),
-        ],
-      },
+      { stageName: 'Source', actions: [sourceAction] },
       {
         stageName: 'Test',
         actions: [
@@ -304,9 +221,9 @@ export class PipelineStack extends cdk.Stack {
           new codepipeline_actions.ManualApprovalAction({
             actionName: 'Approve',
             notificationTopic: envParams.approvalTopicArn
-              ? sns.Topic.fromTopicArn(this, `ApprovalTopic${pascalCase(targetEnv)}`, envParams.approvalTopicArn)
+              ? sns.Topic.fromTopicArn(this, 'ApprovalTopic', envParams.approvalTopicArn)
               : undefined,
-            additionalInformation: `Approve deployment of ${project} to the ${targetEnv} account`,
+            additionalInformation: `Approve deployment of ${project} to the ${environment} account`,
           }),
         ],
       });
@@ -324,12 +241,66 @@ export class PipelineStack extends cdk.Stack {
       ],
     });
 
-    const pipeline = new codepipeline.Pipeline(this, `Pipeline${pascalCase(targetEnv)}`, {
-      pipelineName: `${project}-${targetEnv}-pipeline`,
+    const pipeline = new codepipeline.Pipeline(this, 'Resource', {
+      pipelineName: `${project}-${environment}-pipeline`,
+      role: pipelineRole,
       artifactBucket,
       stages,
     });
 
-    return pipeline;
+    /* ─── Pipeline trigger ──────────────────────────────────────────
+     * Same-account (dev): react to this repository's own push events.
+     * Cross-account (stg/prd): react to the events RepositoryStack forwards
+     * into this account's default event bus — first authorizing the dev
+     * account to publish onto it.
+     */
+    if (isCrossAccountSource) {
+      new events.CfnEventBusPolicy(this, 'AllowRepositoryAccountPutEvents', {
+        statementId: `Allow-${codecommitAccountId}-PutEvents`,
+        statement: {
+          Effect: 'Allow',
+          Principal: { AWS: `arn:aws:iam::${codecommitAccountId}:root` },
+          Action: 'events:PutEvents',
+          Resource: `arn:aws:events:${region}:${accountId}:event-bus/default`,
+        },
+      });
+    }
+
+    const triggerRule = new events.Rule(this, 'PipelineTriggerRule', {
+      ruleName: `${project}-${environment}-pipeline-trigger`,
+      eventPattern: {
+        source: ['aws.codecommit'],
+        detailType: ['CodeCommit Repository State Change'],
+        // Cross-account: the forwarded event still carries the dev account's
+        // repository ARN, so this filter works unchanged in both cases.
+        resources: [`arn:aws:codecommit:${region}:${codecommitAccountId}:${sharedParams.repositoryName}`],
+        detail: {
+          event: ['referenceCreated', 'referenceUpdated'],
+          referenceType: ['branch'],
+          referenceName: [envParams.branchName],
+        },
+      },
+    });
+    triggerRule.addTarget(new events_targets.CodePipeline(pipeline));
+
+    NagSuppressions.addStackSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-S1',
+          reason: 'This is a pipeline artifact bucket for a sample workspace; server access logging is not required for the demo.',
+        },
+        {
+          id: 'AwsSolutions-CB4',
+          reason: "Test/Build/Deploy CodeBuild projects use the default AWS-managed encryption key rather than a customer-managed KMS key, matching this repo's other CI/CD reference workspaces (e.g. cicd-cloudfront-s3).",
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'Wildcard permissions here are CDK auto-grants scoped as narrowly as each API allows: CodePipeline/CodeBuild action roles need bucket/* object-level S3 access and lambda:ListFunctions; EventBridge target roles need PutEvents/StartPipelineExecution scoped to this one rule/pipeline.',
+        },
+      ],
+      true
+    );
   }
 }

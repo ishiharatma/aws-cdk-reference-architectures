@@ -8,24 +8,24 @@
 
 This is a reference implementation of a **cross-account CI/CD pipeline** built
 entirely with AWS CodePipeline and CodeBuild, sourced from a single AWS
-CodeCommit repository in a dev account and deploying into three separate AWS
-accounts (dev / stg / prd).
+CodeCommit repository in a dev account, with **each environment's pipeline
+deployed into its own account** (dev / stg / prd).
 
 This architecture demonstrates:
 
 - A single CodeCommit repository, created in the dev account, with three
   long-lived branches (`develop` / `staging` / `main`) auto-created from the
   same initial commit
-- Three independent CodePipelines — one per branch — each running
-  `Source → Test → Build → (optional Approve) → Deploy`, driven by
-  `buildspec-test.yml` / `buildspec-build.yml` / `buildspec-deploy.yml`
-  checked into the repository itself
-- The cross-account hop implemented as a plain `sts:AssumeRole` inside the
-  Deploy stage's CodeBuild project — no CDK Pipelines, no cross-account
-  bootstrap trust required
-- A fixed-name IAM role per environment, created by a **separate stack
-  deployed directly into each target account**, trusting only that
-  environment's Deploy CodeBuild role by ARN
+- Three independent CodePipelines, **each deployed into its own account**
+  (dev/stg/prd) — the pipeline lives next to whatever it deploys, not
+  centralized in the dev account
+- The cross-account hop happens only at the **Source** stage: the stg/prd
+  pipelines' `CodeCommitSourceAction` assumes a fixed-name IAM role created
+  in the dev account for exactly that purpose
+- Since CodeCommit only emits push events in the account that owns the
+  repository, the dev account **forwards** each branch's push events to the
+  matching account's default EventBridge bus, where that account's own rule
+  starts its pipeline
 - `dev-params` / `stg-params` / `prd-params` for per-environment
   configuration and a `shared-params` for values that don't vary by
   environment — except the CodeCommit account ID, which is intentionally
@@ -36,10 +36,10 @@ This architecture demonstrates:
 
 | Feature | Benefit |
 | ------- | ------- |
-| Pipelines stay in the dev account | Only the Deploy CodeBuild project crosses accounts (via `AssumeRole`); CodeCommit, CodePipeline, and the Test/Build projects are all same-account, which keeps IAM and networking simple |
-| Fixed-name IAM roles | The Deploy CodeBuild role (dev account) and the CrossAccountDeployRole (target account) are both named deterministically, so the trust relationship between them can be expressed as a plain ARN string — no cross-stack references across accounts needed |
-| One stack per target account | `CrossAccountRoleStack` is deployed once per account (dev/stg/prd), each time against that account's own CLI profile — the same code path handles the dev (self-trust) and stg/prd (true cross-account) cases identically |
-| Auto-created branches | `develop`/`staging` are created from `main`'s initial commit via a Custom Resource, so a single `cdk deploy` leaves all three branches ready to receive pushes |
+| Pipeline deployed next to what it deploys | Test/Build/Deploy all run in the same account as the resources they touch — no cross-account `AssumeRole` needed anywhere except reading the source |
+| Cross-account hop isolated to Source | Only `CodeCommitSourceAction` crosses accounts; a fixed-name role (`<project>-pipeline-source-action-<accountId>`) in the dev account is the only thing stg/prd need to trust |
+| Explicit event forwarding | CodeCommit events never leave the dev account on their own — `RepositoryStack` forwards each branch's push events to the matching account's own default event bus, where a plain EventBridge rule starts that account's pipeline |
+| Fixed-name IAM roles | The Source-action role (dev account) and each account's pipeline role are both named deterministically, so the trust relationship between them is a plain ARN string — no cross-account CloudFormation exports needed |
 
 ## Architecture Overview
 
@@ -49,29 +49,33 @@ This architecture demonstrates:
 
 | Component | Design Points |
 | --------- | ------------- |
-| CodeCommit repository (dev account) | Created by this stack, seeded with `sample-app/` on `main`; `develop`/`staging` are created from that same commit via `AwsCustomResource` |
-| 3x CodePipeline (dev account) | `<project>-dev-pipeline`, `<project>-stg-pipeline`, `<project>-prd-pipeline`, each sourced from its matching branch |
-| Test / Build CodeBuild projects | Run `buildspec-test.yml` / `buildspec-build.yml` from the repository — same-account, no special IAM |
-| Deploy CodeBuild project | Runs `buildspec-deploy.yml`; its IAM role has a fixed name (`<project>-<env>-deploy-build-role`) and is granted `sts:AssumeRole` on that environment's cross-account role |
-| CrossAccountRoleStack (dev/stg/prd accounts) | Deployed separately into each target account; creates `<project>-<env>-cross-account-deploy-role`, trusting only the matching Deploy CodeBuild role's ARN |
+| CodeCommit repository (dev account, `RepositoryStack`) | Created by this stack, seeded with `sample-app/` on `main`; `develop`/`staging` are created from that same commit via `AwsCustomResource` |
+| Source-action role (dev account, one per stg/prd) | `<project>-pipeline-source-action-<accountId>`, trusted only by that account's own pipeline role; grants `codecommit:GitPull` and friends scoped to this one repository |
+| Event-forwarding rule (dev account, one per stg/prd) | Forwards `referenceCreated`/`referenceUpdated` events for that branch onto the target account's default event bus |
+| CodePipeline (dev/stg/prd, `PipelineStack`, one per account) | `<project>-<env>-pipeline`: Source → Test → Build → [Approve] → Deploy, entirely within that account |
+| EventBusPolicy + trigger rule (stg/prd) | Authorizes the dev account to `PutEvents` on this account's default bus, then a rule reacts to the forwarded event to start this account's pipeline |
+| KMS key on the artifact bucket (stg/prd only) | A cross-account `CodeCommitSourceAction` requires the artifact bucket to use a customer-managed key so CodePipeline can grant the dev account's source-action role decrypt access |
 
 ### Data Flow
 
 ```text
-Dev account
-├── CodeCommit repo (develop / staging / main branches)
-│
-├── <project>-dev-pipeline   (Source: develop) ─┐
-├── <project>-stg-pipeline   (Source: staging)  ├─ Source → Test → Build → [Approve] → Deploy
-└── <project>-prd-pipeline   (Source: main)     ┘
-                                                    │
-                                    Deploy CodeBuild role (fixed name, dev account)
-                                                    │  sts:AssumeRole
-                     ┌──────────────────────────────┼──────────────────────────────┐
-                     ▼                              ▼                              ▼
-         dev account (self-trust)          stg account                    prd account
-   <project>-dev-cross-account-      <project>-stg-cross-account-  <project>-prd-cross-account-
-        deploy-role                       deploy-role                    deploy-role
+Dev account                              Stg account            Prd account
+┌─────────────────────────────┐          ┌──────────────────┐   ┌──────────────────┐
+│ CodeCommit repo              │          │                  │   │                  │
+│  (develop/staging/main)      │          │                  │   │                  │
+│                               │          │                  │   │                  │
+│ push → forward event ────────┼─────────►│ default event bus│   │ default event bus│
+│         (staging branch)     │          │  → trigger rule  │   │  → trigger rule  │
+│ push → forward event ─────────────────────────────────────────►│                  │
+│         (main branch)        │          │        │         │   │        │         │
+│                               │          │        ▼         │   │        ▼         │
+│ push (develop) → local rule  │          │  <project>-stg-   │   │  <project>-prd-   │
+│        │                     │          │  pipeline         │   │  pipeline         │
+│        ▼                     │          │  Source ◄─assume─┼───┼── role in dev    │
+│ <project>-dev-pipeline       │          │  (cross-account)  │   │  account         │
+│  Source (same account)       │          │  Test→Build→Deploy│   │  Test→Build→Deploy│
+│  Test→Build→Deploy           │          │  (same account)   │   │  (same account)   │
+└─────────────────────────────┘          └──────────────────┘   └──────────────────┘
 ```
 
 ### Architecture Characteristics
@@ -80,58 +84,74 @@ Dev account
 |---------------|-------|-----------|
 | Availability | Single-region, no HA required | A CI/CD control plane; a failed pipeline run is retried, it doesn't take an application down |
 | Scalability | Fully managed (CodePipeline/CodeBuild) | No servers to scale; CodeBuild concurrency is the only limit that matters at higher build volume |
-| Security | Cross-account access via short-lived `AssumeRole` credentials only | No long-lived cross-account credentials are ever stored |
+| Security | Cross-account access limited to reading the source; no cross-account role for Test/Build/Deploy | Blast radius of a compromised pipeline role is contained to its own account |
 | Cost | Pay-per-use | No idle compute; cost scales with pipeline executions, not with time |
 
 ## Design Decisions & Best Practices
 
-### 1. Pipelines live in the dev account; only Deploy crosses accounts
+### 1. The pipeline lives in the same account as what it deploys
 
-**Decision**: CodeCommit and all three CodePipelines are created by a single
-`PipelineStack`, deployed only into the dev account (`ENV=dev`). Only the
-Deploy stage's CodeBuild project performs a genuine cross-account hop.
-
-**Rationale**:
-- ✅ Avoids CDK Pipelines' cross-account bootstrap trust setup
-  (`cdk bootstrap --trust <pipeline-account>`) entirely — a plain
-  `sts:AssumeRole` needs nothing beyond the target account's own IAM role
-- ✅ CodeCommit repository events, CodePipeline executions, and CodeBuild
-  logs all stay observable from a single account
-- ✅ The Deploy buildspec (`sample-app/buildspec-deploy.yml`) is identical
-  for all three environments — it always assumes `CROSS_ACCOUNT_ROLE_ARN`,
-  even for dev, where that role happens to live in the same account
-
-**Trade-offs**:
-- ❌ The dev account becomes a single point of administration for the CI/CD
-  control plane itself — losing access to it means losing the ability to
-  deploy to any environment
-
-### 2. Fixed-name IAM roles instead of cross-stack references
-
-**Decision**: The Deploy CodeBuild role (`<project>-<env>-deploy-build-role`)
-and the target account's `CrossAccountDeployRole`
-(`<project>-<env>-cross-account-deploy-role`) both have deterministic names
-computed the same way in both stacks.
+**Decision**: `PipelineStack` is deployed once per environment, into that
+environment's own account. Only the Source stage (`CodeCommitSourceAction`)
+crosses accounts for stg/prd; Test, Build, and Deploy all run locally.
 
 **Rationale**:
-- ✅ CDK cross-stack references (`Fn::ImportValue`, SSM parameter lookups)
-  don't work across AWS accounts without extra plumbing; a fixed-name
-  `iam.ArnPrincipal` sidesteps that entirely
-- ✅ `CrossAccountRoleStack` deploys independently of `PipelineStack` — the
-  target account only needs to know the dev account ID (`CODECOMMIT_ACCOUNT_ID`)
-  and the naming convention, not any CloudFormation output
+- ✅ Deploy's CodeBuild project can act on that account's resources directly
+  — no `sts:AssumeRole` hop, no fixed-name deploy role to keep in sync
+- ✅ Blast radius: a compromised pipeline role in stg can't reach prd, and
+  vice versa — each pipeline only has permissions in its own account
+- ✅ Matches how CodeCommit-sourced pipelines are typically built when the
+  source repo and the deploy targets are in different accounts (see this
+  repo's own `common/constructs/pipeline/infra-pipeline-construct.ts` for
+  the same pattern applied to a CI-only pipeline)
 
 **Trade-offs**:
-- ❌ Renaming `<project>` or the naming convention itself requires
-  redeploying both sides in lockstep
+- ❌ Three separate CodePipeline consoles to check instead of one — no
+  single pane of glass for pipeline status across environments
 
-### 3. `shared-params` for common values, except the one that's sensitive
+### 2. Cross-account Source via a fixed-name role, not CDK's automatic support stack
+
+**Decision**: `CodeCommitSourceAction.role` is set explicitly to a
+fixed-name role (`<project>-pipeline-source-action-<accountId>`) created by
+`RepositoryStack` in the dev account, rather than leaving `role` unset and
+letting CDK auto-generate a `CrossAccountSupportStack`.
+
+**Rationale**:
+- ✅ CDK's automatic cross-account support requires `cdk bootstrap --trust
+  <pipeline-account>` on the CodeCommit account ahead of time — a fixed-name
+  role sidesteps that bootstrap trust setup entirely
+- ✅ The trust relationship is a plain ARN string computed the same way on
+  both sides (`lib/stacks/naming.ts`), so `RepositoryStack` and
+  `PipelineStack` can be deployed independently, in either order after the
+  first dev deployment
+
+**Trade-offs**:
+- ❌ Renaming `<project>` requires redeploying both `RepositoryStack` (dev)
+  and every target account's `PipelineStack` in lockstep
+
+### 3. Explicit EventBridge forwarding, not a shared event bus
+
+**Decision**: `RepositoryStack` forwards each branch's push events to the
+matching account's own default event bus (`events_targets.EventBus`); that
+account's `PipelineStack` authorizes the dev account via
+`AWS::Events::EventBusPolicy` and reacts with its own rule.
+
+**Rationale**:
+- ✅ CodeCommit only publishes `CodeCommit Repository State Change` events
+  in the account that owns the repository — stg/prd can't see them without
+  this forwarding step
+- ✅ Same-account (dev) and cross-account (stg/prd) pipelines both end up
+  triggered by "a rule reacting to a CodeCommit-shaped event in this
+  account" — the forwarded event preserves the original repository ARN, so
+  the trigger rule's `resources` filter is identical in both cases
+
+### 4. `shared-params` for common values, except the one that's sensitive
 
 **Decision**: `parameters/shared-params.ts` holds values common to every
 environment. The CodeCommit account ID conceptually belongs there too — it's
-always the dev account, regardless of which environment's pipeline is
-running — but since this is a **public repository**, it's read from the
-`CODECOMMIT_ACCOUNT_ID` environment variable instead of being hard-coded.
+always the dev account — but since this is a **public repository**, it's
+read from the `CODECOMMIT_ACCOUNT_ID` environment variable instead of being
+hard-coded.
 
 ```typescript
 // parameters/shared-params.ts
@@ -141,7 +161,7 @@ export const sharedParams: SharedParams = {
 };
 ```
 
-### 4. Auto-created `develop`/`staging` branches
+### 5. Auto-created `develop`/`staging` branches
 
 **Decision**: `codecommit.Code.fromDirectory()` only seeds a single branch
 (`main`) at repository-creation time. Two `AwsCustomResource` calls
@@ -152,23 +172,16 @@ that same initial commit.
 - ✅ A single `cdk deploy` (`ENV=dev`) leaves the repository fully ready —
   no manual `git push origin HEAD:develop` step required before the
   pipelines can be exercised
-- ⚠️ The custom resource depends on the repository's IAM ARN, not the
-  `Repository` construct itself — `Repository.onCommit()` (used internally
-  by the pipelines' `CodeCommitSourceAction`) adds its EventBridge rule as a
-  *child* of the `Repository` construct, so a construct-level dependency on
-  `repository` would transitively pull in that rule too, which targets the
-  pipeline, which depends on the branch-creation resource — a cycle. See the
-  comment in `lib/stacks/pipeline-stack.ts`.
 
-### 5. Well-Architected Framework Alignment
+### 6. Well-Architected Framework Alignment
 
 | Pillar | Implementation |
 |--------|---------------|
 | **Operational Excellence** | Structured CodeBuild logs (1-month retention) per environment and stage |
-| **Security** | No long-lived cross-account credentials; `AssumeRole` sessions capped at 1 hour; `AwsSolutionsChecks` (CDK Nag) with documented, resource-scoped suppressions |
+| **Security** | Cross-account access limited to a single, narrowly-scoped Source role per environment; `AwsSolutionsChecks` (CDK Nag) with documented, resource-scoped suppressions |
 | **Reliability** | Managed CodePipeline/CodeBuild — no servers to patch or fail |
 | **Performance Efficiency** | `BUILD_GENERAL1_SMALL` CodeBuild compute is sufficient for a sample pipeline |
-| **Cost Optimization** | Pay-per-use pipeline/build; no idle compute |
+| **Cost Optimization** | Pay-per-use pipeline/build; no idle compute; KMS key only created where cross-account access actually requires it |
 
 ## Prerequisites
 
@@ -180,9 +193,9 @@ that same initial commit.
 
 ### Required IAM Permissions
 
-The deploying user/role needs permissions to create/manage:
-- In the dev account: CodeCommit, CodePipeline, CodeBuild, IAM, S3 (artifact buckets)
-- In the stg/prd accounts: IAM (the cross-account deploy role only)
+The deploying user/role needs permissions to create/manage, in EACH account:
+CodeCommit (dev only), CodePipeline, CodeBuild, IAM, S3 (artifact bucket),
+EventBridge, KMS (stg/prd only).
 
 ## Deployment Guide
 
@@ -198,8 +211,9 @@ export PROJECT=myproject
 
 ### 2. Deploy to the dev account first
 
-This creates the CodeCommit repository, all three branches, all three
-pipelines, **and** the dev account's own (self-trust) cross-account role.
+This creates the CodeCommit repository, all three branches, the
+cross-account source-access plumbing for stg/prd, **and** the dev
+environment's own pipeline.
 
 ```bash
 export ENV=dev
@@ -207,10 +221,11 @@ npm run bootstrap    # first time only, against the dev profile
 npm run stage:deploy:all -- --project=$PROJECT --env=dev
 ```
 
-### 3. Deploy the cross-account role into stg and prd
+### 3. Deploy the pipeline into stg and prd
 
 Run against **each account's own CLI profile** — `CODECOMMIT_ACCOUNT_ID`
-must still point at the dev account so the trust policy is correct.
+must still point at the dev account so the Source stage trusts the right
+role.
 
 ```bash
 export ENV=stg
@@ -228,22 +243,22 @@ npm run stage:deploy:all -- --project=$PROJECT --env=prd
 # repositoryName defaults to "sample-app" (parameters/shared-params.ts)
 git clone codecommit::ap-northeast-1://sample-app
 cd sample-app
-git checkout develop
-git commit --allow-empty -m "trigger dev pipeline"
-git push origin develop     # triggers <project>-dev-pipeline
+git checkout staging
+git commit --allow-empty -m "trigger stg pipeline"
+git push origin staging     # forwarded to the stg account, triggers <project>-stg-pipeline
 ```
 
-Push to `staging` / `main` to trigger the stg / prd pipelines respectively.
+Push to `develop` / `main` to trigger the dev / prd pipelines respectively.
 
 ### 5. Verify
 
 ```bash
-aws codepipeline get-pipeline-state --name <project>-dev-pipeline --profile <dev-profile>
+aws codepipeline get-pipeline-state --name myproject-stg-pipeline --profile <stg-profile>
 ```
 
 The Deploy stage's CodeBuild logs show `aws sts get-caller-identity` running
-under the target account's assumed-role credentials — proof the
-cross-account hop actually happened.
+under that account's own credentials — the pipeline, not just the
+deployment, is genuinely running in that account.
 
 ## Testing Strategy
 
@@ -252,10 +267,10 @@ test/
 ├── compliance/
 │   └── cdk-nag.test.ts             # AwsSolutionsChecks with resource-scoped suppressions
 ├── snapshot/
-│   └── snapshot.test.ts            # Full template snapshots for both stacks
+│   └── snapshot.test.ts            # Full template snapshots for RepositoryStack + both pipeline shapes
 └── unit/
-    ├── pipeline-stack.test.ts      # Repository/pipeline/role resource assertions
-    └── cross-account-role-stack.test.ts  # Trust-policy assertions
+    ├── repository-stack.test.ts    # Source-role/event-forwarding assertions
+    └── pipeline-stack.test.ts      # Same-account vs cross-account Source behavior
 ```
 
 ```bash
@@ -264,14 +279,17 @@ npm test -w workspaces/cicd-codecommit-cross-account
 
 ## Security Considerations
 
-- ✅ No long-lived cross-account IAM users/keys — only short-lived
-  `sts:AssumeRole` sessions (max 1 hour)
-- ✅ Each `CrossAccountDeployRole` trusts exactly one principal: the ARN of
-  that same environment's Deploy CodeBuild role, by name
+- ✅ Cross-account access is limited to a single Source-action role per
+  environment, scoped to `codecommit:GitPull` and friends on this one
+  repository ARN — Test/Build/Deploy never assume a cross-account role
+- ✅ Each account explicitly authorizes only the dev account
+  (`AWS::Events::EventBusPolicy`) to publish onto its default event bus
+- ✅ The artifact bucket's KMS key (created only for cross-account
+  pipelines) has automatic key rotation enabled
 - ✅ `AwsSolutionsChecks` (CDK Nag) runs in `test/compliance/`; every
   remaining wildcard/managed-policy finding is suppressed with a written
-  reason (see `lib/stacks/pipeline-stack.ts` and
-  `lib/stacks/cross-account-role-stack.ts`)
+  reason (see `lib/stacks/repository-stack.ts` and
+  `lib/stacks/pipeline-stack.ts`)
 
 ## Customization
 
@@ -280,7 +298,8 @@ npm test -w workspaces/cicd-codecommit-cross-account
 Edit `sample-app/buildspec-deploy.yml` — the `echo` / `aws sts
 get-caller-identity` lines are placeholders. Replace them with real
 deployment commands (`cdk deploy`, `aws s3 sync`, `aws ecs update-service`,
-...) run under the assumed role's credentials.
+...); no `AssumeRole` is needed since Deploy already runs in the target
+account.
 
 ### Enabling manual approval
 
@@ -292,29 +311,33 @@ approvalTopicArn: 'arn:aws:sns:ap-northeast-1:333333333333:cicd-x-account-prd-ap
 
 ## Troubleshooting
 
-### Issue: `AccessDenied` on `sts:AssumeRole` in the Deploy stage
+### Issue: stg/prd pipeline never starts on push
 
-**Symptoms**: The Deploy CodeBuild log shows `AccessDenied` calling
-`sts:AssumeRole`.
-
-**Solutions**:
-1. Confirm `CrossAccountRoleStack` was deployed into the target account
-   (`ENV=stg`/`ENV=prd` against that account's own profile)
-2. Confirm `CODECOMMIT_ACCOUNT_ID` was the same value in both the dev
-   deployment and the target account's deployment — the trust policy is
-   built from it
-
-### Issue: Pipeline doesn't start on push
-
-**Symptoms**: Pushing to `develop`/`staging`/`main` doesn't trigger the
-matching pipeline.
+**Symptoms**: Pushing to `staging`/`main` doesn't trigger the matching
+pipeline.
 
 **Solutions**:
-1. Confirm the branch actually exists in CodeCommit (`develop`/`staging`
-   are created by a Custom Resource during the dev deployment — check its
-   CloudFormation event log if they're missing)
-2. `CodeCommitSourceAction` uses the default EventBridge trigger — confirm
-   the corresponding `AWS::Events::Rule` exists and targets the pipeline
+1. Confirm `RepositoryStack` was deployed (`ENV=dev`) — it creates the
+   event-forwarding rule for that branch
+2. Confirm that account's `PipelineStack` was deployed against its own
+   profile — it creates the `AWS::Events::EventBusPolicy` that lets the dev
+   account publish onto its bus, and the trigger rule that reacts to it
+3. Confirm `CODECOMMIT_ACCOUNT_ID` was the same value in both the dev
+   deployment and the target account's deployment — both the source-action
+   role's ARN and the trigger rule's `resources` filter are built from it
+
+### Issue: `AccessDenied` on the Source stage in stg/prd
+
+**Symptoms**: The pipeline starts but the Source stage fails with an
+IAM-related error.
+
+**Solutions**:
+1. Confirm `RepositoryStack`'s source-action role
+   (`<project>-pipeline-source-action-<accountId>`) exists in the dev
+   account and trusts this account's pipeline role
+   (`<project>-<env>-pipeline-role`) by ARN
+2. Confirm the artifact bucket's KMS key exists — a cross-account Source
+   action requires customer-managed encryption on the artifact bucket
 
 ## References
 
@@ -322,7 +345,8 @@ matching pipeline.
 - [AWS CodePipeline User Guide](https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html)
 - [AWS CodeCommit User Guide](https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html)
 - [AWS CodeBuild User Guide](https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html)
-- [IAM cross-account roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_common-scenarios_aws-accounts.html)
+- [Cross-account and cross-region actions in CodePipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-create-cross-account.html)
+- [Sending and receiving Amazon EventBridge events between AWS accounts](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-cross-account.html)
 
 ### AWS CDK
 - [aws-codepipeline-actions module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codepipeline_actions-readme.html)

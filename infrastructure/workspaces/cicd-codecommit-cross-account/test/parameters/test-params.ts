@@ -38,3 +38,11 @@ export const testSharedParams: SharedParams = {
   repositoryName: 'sample-app',
   codecommitAccountId: '111111111111',
 };
+
+export function getTestEnvParams(env: Environment): EnvParams {
+  const envParams = testEnvParamsMap[env];
+  if (!envParams) {
+    throw new Error(`No test parameters found for environment: ${env}`);
+  }
+  return envParams;
+}

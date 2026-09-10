@@ -1,9 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
+import { RepositoryStack } from 'lib/stacks/repository-stack';
 import { PipelineStack } from 'lib/stacks/pipeline-stack';
-import { CrossAccountRoleStack } from 'lib/stacks/cross-account-role-stack';
-import { testEnvParamsMap, testSharedParams } from 'test/parameters/test-params';
+import { getTestEnvParams, testEnvParamsMap, testSharedParams } from 'test/parameters/test-params';
 
 /**
  * AWS CDK Snapshot Test Suite
@@ -14,23 +14,34 @@ import { testEnvParamsMap, testSharedParams } from 'test/parameters/test-params'
 describe('Stack Snapshot Tests', () => {
   const app = new cdk.App();
 
-  const pipelineStack = new PipelineStack(app, 'SnapshotPipeline', {
+  const repositoryStack = new RepositoryStack(app, 'SnapshotRepository', {
     env: { account: '111111111111', region: 'ap-northeast-1' },
-    isAutoDeleteObject: true,
     project: 'testproject',
     sharedParams: testSharedParams,
     envParamsMap: testEnvParamsMap,
   });
 
-  const crossAccountRoleStack = new CrossAccountRoleStack(app, 'SnapshotCrossAccountRole', {
-    env: { account: '222222222222', region: 'ap-northeast-1' },
+  const devPipelineStack = new PipelineStack(app, 'SnapshotPipelineDev', {
+    env: { account: '111111111111', region: 'ap-northeast-1' },
+    isAutoDeleteObject: true,
     project: 'testproject',
-    targetEnv: Environment.STAGING,
-    devAccountId: '111111111111',
+    environment: Environment.DEVELOPMENT,
+    sharedParams: testSharedParams,
+    envParams: getTestEnvParams(Environment.DEVELOPMENT),
   });
 
-  const pipelineTemplate = Template.fromStack(pipelineStack);
-  const crossAccountRoleTemplate = Template.fromStack(crossAccountRoleStack);
+  const stgPipelineStack = new PipelineStack(app, 'SnapshotPipelineStg', {
+    env: { account: '222222222222', region: 'ap-northeast-1' },
+    isAutoDeleteObject: true,
+    project: 'testproject',
+    environment: Environment.STAGING,
+    sharedParams: testSharedParams,
+    envParams: getTestEnvParams(Environment.STAGING),
+  });
+
+  const repositoryTemplate = Template.fromStack(repositoryStack);
+  const devPipelineTemplate = Template.fromStack(devPipelineStack);
+  const stgPipelineTemplate = Template.fromStack(stgPipelineStack);
 
   afterAll(() => {
     app.node.children.forEach((child) => {
@@ -40,11 +51,15 @@ describe('Stack Snapshot Tests', () => {
     });
   });
 
-  test('PipelineStack CloudFormation template snapshot', () => {
-    expect(pipelineTemplate.toJSON()).toMatchSnapshot();
+  test('RepositoryStack CloudFormation template snapshot', () => {
+    expect(repositoryTemplate.toJSON()).toMatchSnapshot();
   });
 
-  test('CrossAccountRoleStack CloudFormation template snapshot', () => {
-    expect(crossAccountRoleTemplate.toJSON()).toMatchSnapshot();
+  test('PipelineStack (dev, same-account source) CloudFormation template snapshot', () => {
+    expect(devPipelineTemplate.toJSON()).toMatchSnapshot();
+  });
+
+  test('PipelineStack (stg, cross-account source) CloudFormation template snapshot', () => {
+    expect(stgPipelineTemplate.toJSON()).toMatchSnapshot();
   });
 });
