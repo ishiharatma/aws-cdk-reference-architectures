@@ -1,0 +1,18 @@
+version: 0.2
+
+# Build stage: stands in for compiling / packaging / `docker build`.
+# Produces BuildArtifact, consumed by the Deploy stage.
+
+phases:
+  build:
+    commands:
+      - echo "=== [Build] project=${PROJECT} env=${ENV} branch=${TARGET_BRANCH} ==="
+      - echo "Building application artifact..."
+      - echo "(sample pipeline: no real build — replace with e.g. 'npm run build' or 'docker build')"
+      - echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) build=${CODEBUILD_BUILD_ID} env=${ENV}" > build-info.txt
+      - cat build-info.txt
+      - echo "Build complete."
+
+artifacts:
+  files:
+    - build-info.txt

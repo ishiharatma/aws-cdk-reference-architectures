@@ -1,0 +1,33 @@
+version: 0.2
+
+# Deploy stage: the cross-account step.
+#
+# This CodeBuild project always runs in the dev account (alongside CodeCommit
+# and the pipeline), regardless of which environment's pipeline (dev/stg/prd)
+# is running it. To actually deploy into the target account, it assumes
+# CROSS_ACCOUNT_ROLE_ARN — a role created by CrossAccountDeployRoleStack in
+# that target account and trusted to this project's own IAM role
+# (see lib/stacks/pipeline-stack.ts / cross-account-role-stack.ts).
+#
+# `aws sts get-caller-identity` after the assume-role proves the deployment
+# is genuinely running under the target account's credentials. Replace the
+# final echo with real deployment commands (cdk deploy, aws s3 sync, ...).
+
+phases:
+  build:
+    commands:
+      - echo "=== [Deploy] project=${PROJECT} pipeline_env=${ENV} target_env=${TARGET_ENV} target_account=${TARGET_ACCOUNT_ID} ==="
+      - |
+        if [ "$TARGET_ACCOUNT_ID" = "$(aws sts get-caller-identity --query Account --output text)" ]; then
+          echo "Target account is the current (dev) account — deploying without assuming a role."
+        else
+          echo "Assuming cross-account role: ${CROSS_ACCOUNT_ROLE_ARN}"
+          CREDS=$(aws sts assume-role --role-arn "$CROSS_ACCOUNT_ROLE_ARN" --role-session-name "deploy-${TARGET_ENV}-${CODEBUILD_BUILD_ID//:/-}" --query 'Credentials' --output json)
+          export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | jq -r .AccessKeyId)
+          export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | jq -r .SecretAccessKey)
+          export AWS_SESSION_TOKEN=$(echo "$CREDS" | jq -r .SessionToken)
+        fi
+      - echo "Deploying as:"
+      - aws sts get-caller-identity
+      - echo "(sample pipeline: no real deployment — replace with e.g. 'cdk deploy' or 'aws s3 sync')"
+      - echo "Deployment to ${TARGET_ENV} complete."
