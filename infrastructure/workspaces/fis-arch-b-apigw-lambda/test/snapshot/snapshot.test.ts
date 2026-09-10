@@ -52,7 +52,7 @@ describe('FIS Chaos Scenario B Stack Snapshots', () => {
         env: defaultEnv,
         terminationProtection: false,
         apiFunction: appStack.apiFunction,
-        table: baseStack.table,
+        fisConfigBucket: appStack.fisConfigBucket,
         alarmEmail: envParams.alarmEmail,
     });
 

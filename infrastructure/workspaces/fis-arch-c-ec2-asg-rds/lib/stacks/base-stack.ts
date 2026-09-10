@@ -64,7 +64,7 @@ export class BaseStack extends cdk.Stack {
         // The reader is required for aws:rds:failover-db-cluster (C-3).
         this.auroraCluster = new rds.DatabaseCluster(this, 'Aurora', {
             engine: rds.DatabaseClusterEngine.auroraPostgres({
-                version: rds.AuroraPostgresEngineVersion.VER_16_4,
+                version: rds.AuroraPostgresEngineVersion.VER_16_13,
             }),
             writer: rds.ClusterInstance.serverlessV2('writer', {
                 scaleWithWriter: true,

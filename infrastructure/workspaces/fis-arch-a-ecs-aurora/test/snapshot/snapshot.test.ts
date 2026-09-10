@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Template, Match } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
 import { params } from 'parameters/environments';
 import '../parameters';
@@ -111,9 +111,24 @@ describe('FIS Chaos Scenario Stack Snapshots', () => {
             expect(resourceCounts).toMatchSnapshot();
         });
 
-        test('ECS service has execute-command enabled', () => {
+        test('ECS service has execute-command DISABLED (required for aws:ecs:task-* FIS actions)', () => {
             template.hasResourceProperties('AWS::ECS::Service', {
-                EnableExecuteCommand: true,
+                EnableExecuteCommand: false,
+            });
+        });
+
+        test('Task definition is wired for aws:ecs:task-* fault injection', () => {
+            template.hasResourceProperties('AWS::ECS::TaskDefinition', {
+                EnableFaultInjection: true,
+                PidMode: 'task',
+            });
+        });
+
+        test('Task definition includes the FIS SSM agent sidecar', () => {
+            template.hasResourceProperties('AWS::ECS::TaskDefinition', {
+                ContainerDefinitions: Match.arrayWith([
+                    Match.objectLike({ Name: 'amazon-ssm-agent', Essential: false }),
+                ]),
             });
         });
 

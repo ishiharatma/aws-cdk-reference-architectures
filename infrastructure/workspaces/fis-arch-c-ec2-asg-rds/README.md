@@ -127,7 +127,7 @@ Aurora PostgreSQL Serverless v2
 | Component | Design Points |
 | --------- | ------------- |
 | VPC | CIDR 10.20.0.0/16; 3 subnet tiers (public/private/isolated), 1 NAT Gateway |
-| Aurora PostgreSQL Serverless v2 | Engine v16.4; 1 writer + 1 reader; min 0.5 ACU, max 4 ACU; isolated subnets; encrypted storage; CloudWatch log export |
+| Aurora PostgreSQL Serverless v2 | Engine v16.13; 1 writer + 1 reader; min 0.5 ACU, max 4 ACU; isolated subnets; encrypted storage; CloudWatch log export |
 | EC2 Auto Scaling Group | t3.small; AL2023 (SSM agent pre-installed); requireImdsv2; EBS gp3 encrypted 20 GB; tag `fis-target: app-instance` |
 | Internal ALB | CloudFront VPC Origin ingress (managed prefix list); HTTP/80; 30 s target deregistration delay |
 | CloudFront Distribution | VPC Origin (primary) → S3 (fallback on 502/503/504); CACHING_DISABLED; REDIRECT_TO_HTTPS |
@@ -180,6 +180,12 @@ actions: {
 ```
 
 The SSM document ARNs use the format `arn:aws:ssm:REGION::document/AWSFIS-*` (no account ID) because these are AWS-owned managed documents. The FIS IAM role grants `ssm:SendCommand` on both the instance resource (scoped to the tag) and the document ARN separately.
+
+> **`ssm:ListCommands` is required.** `aws:ssm:send-command` polls command status with
+> `ssm:ListCommands`; without it the action starts the SSM command (CPU load is briefly
+> visible) then fails with *"Not enough privileges to perform the required action"* and
+> cancels. The FIS role grants `ssm:ListCommands`, `ssm:ListCommandInvocations`,
+> `ssm:GetCommandInvocation` and `ssm:CancelCommand` on `*`.
 
 ### 2. Tag-based EC2 targeting (C-1, C-2, C-4)
 
@@ -304,6 +310,12 @@ This deploys the three stacks in dependency order:
 2. `fis-chaos-c-dev-c-app` — EC2 ASG + Internal ALB + CloudFront
 3. `fis-chaos-c-dev-c-fis` — FIS templates + IAM + alarms
 
+> **Name collision with Architecture A**: this workspace and `fis-arch-a-ecs-aurora`
+> both create an Aurora secret named `<project>-<env>-aurora-secret` and a FIS role
+> `<project>-<env>-fis-role`. Deploy only one of A / C into the same account + region at a
+> time. If a prior A deploy left the secret behind, force-delete it first:
+> `aws secretsmanager delete-secret --secret-id <project>-<env>-aurora-secret --force-delete-without-recovery`.
+
 ### 5. Test the application
 
 After deployment, retrieve the CloudFront domain from the stack output:
@@ -321,11 +333,31 @@ curl https://<cloudfront-domain>/
 
 ### 6. Run a FIS experiment
 
-Navigate to the AWS FIS console, select one of the four experiment templates (`C-1` through `C-4`), click **Start experiment**, and observe:
-- ALB target health in the EC2/ALB console during C-1
-- CloudWatch CPU metric and ASG activity during C-2
-- Aurora Failover Events in the RDS console during C-3
-- ALB 5xx rate and SSM Command history during C-4
+**Console**: FIS → Experiment templates → pick `C-1`…`C-4` (`Scenario` tag) → **Start experiment**.
+
+**CLI**:
+
+```bash
+aws fis list-experiment-templates \
+  --query "experimentTemplates[?tags.Architecture=='CloudFront-ALB-EC2ASG-Aurora'].{id:id,scenario:tags.Scenario}" \
+  --output table
+EXP=$(aws fis start-experiment --experiment-template-id <EXT...> --query "experiment.id" --output text)
+watch -n5 "aws fis get-experiment --id $EXP --query 'experiment.state'"
+```
+
+Side channels: ALB target health / ASG scaling activities during C-1; `AWS/EC2 CPUUtilization`
+during C-2; `aws rds describe-events` during C-3; `aws ssm list-commands` during C-2 / C-4.
+
+### Observed results (ap-northeast-1)
+
+| Scenario | What happened | Notes |
+| -------- | ------------- | ----- |
+| **C-1** | FIS terminated 1 of 2 instances; the ASG raised *"an instance was taken out of service … EC2 health check indicating it has been terminated"* and launched a replacement ~2 s later. CloudFront served `404` from the S3 fallback origin for ~90 s, then 200 once the new instance passed ALB health checks | Confirms ASG self-healing + origin-group fallback |
+| **C-2** | `AWSFIS-Run-CPU-Stress` drove `CPUUtilization` from ~16% to **100%** and held it for the full 5 min. CloudFront stayed 200 (static nginx page is not CPU-bound). The ASG stayed at 2 — **no scale-out policy is defined** in this workspace, so "scale-out under CPU pressure" is not actually exercised; add a `scaleOnCpuUtilization` target-tracking policy to test it | |
+| **C-3** | `describe-events` shows *"Started cross AZ failover to … reader1"*; the experiment completed in ~45 s. CloudFront stayed 200 (the nginx demo holds no DB connection to reconnect) | |
+| **C-4** | `AWSFIS-Run-Network-Blackhole-Port` ran on **both** instances (2/2 success), blocking TCP 5432 egress for 5 min. No workload impact — nginx never opens a DB connection | Confirms the SSM egress-blackhole path end-to-end |
+
+The ALB-5xx stop condition did not fire in any run.
 
 ## Testing
 
@@ -355,17 +387,38 @@ npm run test:snapshot:update --workspace=fis-arch-c-ec2-asg-rds
 
 ## Cost Estimation
 
-Aurora Serverless v2 and EC2 instances incur hourly charges even at idle. Destroy the stack promptly after experiments.
+Pricing is **on-demand list price, September 2026** (retrieved via the AWS Price List API),
+excluding the AWS Free Tier. Regions: **US East (N. Virginia) `us-east-1`** and
+**Asia Pacific (Tokyo) `ap-northeast-1`**. Aurora Serverless v2, EC2 and the NAT Gateway all
+bill by the hour even at idle — destroy the stack promptly after experiments.
 
-| Service | Billing Model | Estimated cost (1-hour experiment window) |
-| ------- | ------------- | ----------------------------------------- |
-| EC2 (t3.small × 2) | Per hour | ~$0.04/hour |
-| Aurora Serverless v2 (min 0.5 ACU × 2 instances) | Per ACU-hour | ~$0.06/hour |
-| NAT Gateway | Per hour + data | ~$0.05/hour |
-| ALB | Per hour | ~$0.02/hour |
-| CloudFront | Per request + data | < $0.01 |
-| FIS | Free | No charge |
-| **Total (1-hour window)** | | **~$0.17/hour** |
+### Idle / steady-state (per month, ~730 h, no traffic)
+
+| Service | Basis | us-east-1 | ap-northeast-1 |
+| ------- | ----- | --------- | -------------- |
+| Aurora Serverless v2 | 2 instances × 0.5 ACU floor × 730 h × ($0.12 / $0.15 per ACU-h) | ~$87.60 | ~$109.50 |
+| NAT Gateway (×1) | 730 h × ($0.045 / $0.062 per h) + minimal data | ~$33 | ~$46 |
+| EC2 (t3.small × 2) | 730 h × ($0.0208 / $0.0272 per h) | ~$30 | ~$40 |
+| EBS gp3 root (2 × 20 GB) | $0.08 / $0.096 per GB-month | ~$3.20 | ~$3.84 |
+| ALB | 730 h × ($0.0225 / $0.0243 per h) + ~1 LCU × $0.008 | ~$22 | ~$24 |
+| Secrets Manager | 1 secret × $0.40 | $0.40 | $0.40 |
+| Aurora storage / CloudWatch alarm | a few GB + 1 alarm ($0.10) | ~$1 | ~$1 |
+| **Total (running 24×7)** | | **≈ $177 / month** | **≈ $265 / month** |
+
+### One test cycle (deploy → run all 4 experiments → destroy, ~1.5–2 h of runtime)
+
+| Service | Usage assumption | us-east-1 | ap-northeast-1 |
+| ------- | ---------------- | --------- | -------------- |
+| **FIS** | C-1 short, C-2 + C-3 + C-4 ≈ PT5M each → **≈ 15–16 action-minutes** @ $0.10 | **~$1.50–1.60** | **~$1.50–1.60** |
+| EC2 | ~2 h × 2 instances (+ brief C-2 scale-out) | ~$0.09 | ~$0.12 |
+| Aurora Serverless v2 | ~2 h × 2 × 0.5 ACU | ~$0.24 | ~$0.30 |
+| NAT + ALB + EBS | ~2 h of the idle rates above | ~$0.15 | ~$0.20 |
+| **Total per cycle** | | **≈ $2** | **≈ $2.3** |
+
+**Correction vs. earlier versions of this doc:** FIS is **not free** — it bills **$0.10 per
+action-minute** (same in both regions); a 5-minute single-action experiment is ~$0.50 and
+running C-1–C-4 once is ~$1.50–2.00. The steady-state cost (~$177 us-east-1 / ~$265 Tokyo per
+month) is dominated by the two always-on Aurora ACUs and the NAT Gateway, not by EC2.
 
 ## Security Considerations
 

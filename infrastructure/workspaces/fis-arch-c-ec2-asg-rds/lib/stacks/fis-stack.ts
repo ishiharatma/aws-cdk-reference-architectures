@@ -142,6 +142,10 @@ export class FisStack extends cdk.Stack {
                         }),
                         new iam.PolicyStatement({
                             actions: [
+                                // aws:ssm:send-command polls status with ssm:ListCommands —
+                                // without it the action fails mid-run with
+                                // "Not enough privileges to perform the required action".
+                                'ssm:ListCommands',
                                 'ssm:CancelCommand',
                                 'ssm:GetCommandInvocation',
                                 'ssm:ListCommandInvocations',
@@ -157,6 +161,11 @@ export class FisStack extends cdk.Stack {
                                 'rds:DescribeDBClusters',
                             ],
                             resources: [props.auroraCluster.clusterArn],
+                        }),
+                        // Tag-based target resolution (C-1 / C-2 / C-4 select instances by tag)
+                        new iam.PolicyStatement({
+                            actions: ['tag:GetResources'],
+                            resources: ['*'],
                         }),
                         // CloudWatch stop conditions
                         new iam.PolicyStatement({
