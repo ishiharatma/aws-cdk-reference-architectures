@@ -1,0 +1,19 @@
+version: 0.2
+
+# Deploy stage.
+#
+# Unlike the Source stage, this runs entirely within the account that owns
+# this pipeline (dev, stg, or prd) — the pipeline itself already lives next
+# to whatever it deploys, so no cross-account AssumeRole hop is needed here.
+# `aws sts get-caller-identity` below simply proves which account this
+# CodeBuild project is actually running in. Replace the final echo with real
+# deployment commands (cdk deploy, aws s3 sync, ...).
+
+phases:
+  build:
+    commands:
+      - echo "=== [Deploy] project=${PROJECT} env=${ENV} branch=${TARGET_BRANCH} ==="
+      - echo "Deploying as:"
+      - aws sts get-caller-identity
+      - echo "(sample pipeline: no real deployment — replace with e.g. 'cdk deploy' or 'aws s3 sync')"
+      - echo "Deployment to ${ENV} complete."
