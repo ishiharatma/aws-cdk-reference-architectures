@@ -414,6 +414,17 @@
     }
   },
   {
+    "id": "cicd-codecommit-cross-account",
+    "title": "Cross-Account CI/CD from a Single CodeCommit Repository",
+    "description": "One CodeCommit repository in the dev account feeding three CodePipelines, each deployed into its own account (dev/stg/prd); only the Source stage crosses accounts, assuming a fixed-name IAM role while EventBridge forwards push events across accounts to trigger each pipeline.",
+    "image": "cicd-codecommit-cross-account/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CodePipeline", "CodeBuild", "CodeCommit", "Cross-Account", "IAM"],
+    "link": "cicd-codecommit-cross-account",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-10"
+  },
+  {
     "id": "sns-basic",
     "title": "SNS Basic Fan-Out Patterns",
     "description": "A single SNS topic fanned out to Email, SQS, Lambda, HTTPS (API Gateway to S3/DynamoDB) and Firehose subscriptions, plus a CloudWatch Logs to Lambda to SNS to Lambda alerting chain.",

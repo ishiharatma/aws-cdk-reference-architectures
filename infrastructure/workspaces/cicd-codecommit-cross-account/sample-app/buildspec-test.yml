@@ -1,0 +1,15 @@
+version: 0.2
+
+# Test stage: stands in for `npm ci && npm test` / `pytest` / etc.
+# Runs once per pipeline execution, before any artifact is built.
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+  build:
+    commands:
+      - echo "=== [Test] project=${PROJECT} env=${ENV} branch=${TARGET_BRANCH} ==="
+      - echo "Running unit tests..."
+      - echo "(sample pipeline: no real test suite — replace with e.g. 'npm ci && npm test')"
+      - echo "Tests passed."
