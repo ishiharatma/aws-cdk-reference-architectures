@@ -1,0 +1,41 @@
+{
+  "name": "ecspresso-bedrock-review-app",
+  "version": "1.0.0",
+  "description": "Sample Node.js API server for ECS Fargate, deployed via ecspresso with a Bedrock-based agentic code review gate in CodePipeline",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "review": "node scripts/agentic-review.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "api",
+    "ecs",
+    "fargate",
+    "ecspresso",
+    "bedrock"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "winston": "^3.11.0",
+    "express-winston": "^4.2.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.700.0",
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "supertest": "^6.3.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

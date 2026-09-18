@@ -1,0 +1,68 @@
+version: 0.2
+
+# Deploy stage: ecspresso（+ jsonnet）で ECS Fargate サービスを更新する。
+#
+# 【重要】本サンプルには ECS クラスタ/サービスの実体が存在しないため、
+# AWS リソースへアクセスする `ecspresso verify` / `ecspresso deploy` は実行しない。
+# ローカル処理のみの `ecspresso render` で jsonnet 定義のレンダリング結果を確認するに留める。
+# 実クラスタが存在する環境では、下の "本来のデプロイ手順" のコメントを外して使用する。
+#
+# 必要な環境変数（CodeBuild プロジェクト側で注入）:
+#   PROJECT, ENV, ECR_REPO_URI, TASK_CPU, TASK_MEMORY, DESIRED_COUNT, ENABLE_ECS_EXEC
+# SSM Parameter Store から取得するパラメータ名（既定パス、CDK側で作成）:
+#   /${PROJECT}/${ENV}/ecs/cluster-name
+#   /${PROJECT}/${ENV}/ecs/service-name
+#   /${PROJECT}/${ENV}/ecs/execution-role-arn
+#   /${PROJECT}/${ENV}/ecs/task-role-arn
+#   /${PROJECT}/${ENV}/ecs/subnet-ids            (カンマ区切り)
+#   /${PROJECT}/${ENV}/ecs/security-group-ids    (カンマ区切り)
+#   /${PROJECT}/${ENV}/ecs/target-group-arn      (未使用なら空文字)
+
+phases:
+  install:
+    commands:
+      - echo "Installing ecspresso..."
+      - |
+        curl -sL "https://github.com/kayac/ecspresso/releases/latest/download/ecspresso_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" \
+          -o /tmp/ecspresso.tar.gz
+      - tar xzf /tmp/ecspresso.tar.gz -C /usr/local/bin ecspresso
+      - chmod +x /usr/local/bin/ecspresso
+      - ecspresso version
+
+  pre_build:
+    commands:
+      - echo "=== [Deploy] project=${PROJECT} env=${ENV} ==="
+      - echo "Resolving ECS cluster/service names and IAM roles via SSM Parameter Store..."
+      - export ECS_CLUSTER_NAME=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/cluster-name" --query 'Parameter.Value' --output text)
+      - export ECS_SERVICE_NAME=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/service-name" --query 'Parameter.Value' --output text)
+      - export EXECUTION_ROLE_ARN=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/execution-role-arn" --query 'Parameter.Value' --output text)
+      - export TASK_ROLE_ARN=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/task-role-arn" --query 'Parameter.Value' --output text)
+      - export SUBNET_IDS=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/subnet-ids" --query 'Parameter.Value' --output text)
+      - export SECURITY_GROUP_IDS=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/security-group-ids" --query 'Parameter.Value' --output text)
+      - export TARGET_GROUP_ARN=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/target-group-arn" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
+      # image-tag.txt / imagedefinitions.json は Build ステージの BuildArtifact（secondary source）側に置かれる
+      - export IMAGE_TAG=$(cat "${CODEBUILD_SRC_DIR_BuildArtifact}/image-tag.txt" 2>/dev/null || echo "latest")
+      - echo "cluster=${ECS_CLUSTER_NAME} service=${ECS_SERVICE_NAME} image_tag=${IMAGE_TAG}"
+      - cd backend/ecspresso-bedrock-review-app/ecspresso
+
+  build:
+    commands:
+      - echo "Rendering ecspresso jsonnet definitions (no AWS API calls)..."
+      - ecspresso render config --config ecspresso.jsonnet
+      - ecspresso render task-def --config ecspresso.jsonnet
+      - ecspresso render service-def --config ecspresso.jsonnet
+      - |
+        echo "=========================================================="
+        echo " ECS クラスタ/サービスの実体が存在しないため、"
+        echo " 'ecspresso verify' / 'ecspresso deploy' はスキップしました。"
+        echo " 本来のデプロイ手順（実クラスタがある環境向け）:"
+        echo "   ecspresso verify --config ecspresso.jsonnet"
+        echo "   ecspresso deploy --config ecspresso.jsonnet"
+        echo "=========================================================="
+      # --- 本来のデプロイ手順（実クラスタが存在する環境ではコメントを外す） ---
+      # - ecspresso verify --config ecspresso.jsonnet
+      # - ecspresso deploy --config ecspresso.jsonnet
+
+  post_build:
+    commands:
+      - echo "Deploy stage complete."

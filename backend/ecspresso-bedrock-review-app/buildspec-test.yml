@@ -1,0 +1,29 @@
+version: 0.2
+
+# Test stage: npm ci → jest ユニットテスト。
+# CodePipeline の Test ステージから呼び出される。
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "=== [Test] project=${PROJECT} env=${ENV} ==="
+      - cd backend/ecspresso-bedrock-review-app
+      - npm ci
+  build:
+    commands:
+      - echo "Running unit tests..."
+      - npm test -- --ci
+    finally:
+      - echo "Tests finished."
+
+reports:
+  unit-test-results:
+    files:
+      - 'backend/ecspresso-bedrock-review-app/junit.xml'
+    file-format: 'JUNITXML'
+
+cache:
+  paths:
+    - 'backend/ecspresso-bedrock-review-app/node_modules/**/*'

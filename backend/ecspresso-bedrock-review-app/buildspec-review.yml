@@ -1,0 +1,49 @@
+version: 0.2
+
+# Agentic Review stage: Amazon Bedrock による疑似マルチエージェント・コードレビュー。
+# CodePipeline の CodeCommitSourceAction は履歴を持たないスナップショットしか渡さないため、
+# git diff を取るには CodeCommit から改めて履歴付きで clone する。
+#
+# 必要な環境変数（CodeBuild プロジェクト側で注入）:
+#   PROJECT, ENV, REPOSITORY_NAME, BEDROCK_MODEL_ID, RISK_THRESHOLD
+# 任意:
+#   DIFF_PATH_PREFIX   diff の対象を特定ディレクトリに絞る場合のパス（既定: リポジトリ全体）
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "=== [AgenticReview] project=${PROJECT} env=${ENV} model=${BEDROCK_MODEL_ID} ==="
+      - pip install --quiet git-remote-codecommit
+      - cd backend/ecspresso-bedrock-review-app
+      - npm ci
+
+  pre_build:
+    commands:
+      - echo "Cloning full commit history from CodeCommit to compute diff..."
+      - git clone --quiet "codecommit::${AWS_DEFAULT_REGION}://${REPOSITORY_NAME}" /tmp/full-repo
+      - cd /tmp/full-repo
+      - git checkout --quiet "${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+      - |
+        EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+        if git rev-parse --quiet --verify HEAD~1 >/dev/null; then
+          BASE_REF=HEAD~1
+        else
+          echo "No parent commit found (initial commit) — diffing against the empty tree."
+          BASE_REF=${EMPTY_TREE}
+        fi
+        git diff ${BASE_REF} HEAD -- ${DIFF_PATH_PREFIX:-.} > "${CODEBUILD_SRC_DIR}/backend/ecspresso-bedrock-review-app/diff.patch"
+      - cd "${CODEBUILD_SRC_DIR}/backend/ecspresso-bedrock-review-app"
+      - echo "diff size: $(wc -l < diff.patch) lines"
+
+  build:
+    commands:
+      - echo "Running Bedrock agentic review..."
+      - npm run review
+
+artifacts:
+  base-directory: backend/ecspresso-bedrock-review-app
+  files:
+    - agentic-review-report.json
+  name: AgenticReviewReport
