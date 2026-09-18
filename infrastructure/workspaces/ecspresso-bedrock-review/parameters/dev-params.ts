@@ -20,8 +20,13 @@ const devParams: EnvParams = {
 
   ecsTaskCpu: 256,
   ecsTaskMemory: 512,
+  // サンプルなので固定値 1。対象サービスに Application Auto Scaling を
+  // 設定する場合は autoScalingEnabled: true にすること（この ecsDesiredCount
+  // は無視され、Auto Scaling がスケールした値を deploy が上書きしなくなる。
+  // 詳細は lib/types/index.ts の autoScalingEnabled のコメント参照）。
   ecsDesiredCount: 1,
   enableEcsExec: false,
+  autoScalingEnabled: false,
 
   // Trivy スキャン結果（ASFF変換済み）を Security Hub に実送信するかどうか。
   // false（既定）ではログ出力のみで、Security Hub へは送信しない。

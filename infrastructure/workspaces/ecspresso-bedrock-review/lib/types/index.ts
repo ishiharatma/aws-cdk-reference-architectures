@@ -47,6 +47,17 @@ export interface EnvParams extends EnvironmentConfig {
   readonly ecsDesiredCount?: number;
   /** Enable ECS Exec on the service. @default false */
   readonly enableEcsExec?: boolean;
+  /**
+   * Set this to true when the target ECS service has Application Auto
+   * Scaling configured. It makes ecs-service-def.jsonnet omit the
+   * `desiredCount` field entirely, so `ecspresso deploy` does not pass a
+   * DesiredCount to UpdateService — leaving whatever count Auto Scaling has
+   * set untouched. If left false, `ecsDesiredCount` is written into the
+   * service definition on every deploy and will stomp on Auto Scaling's
+   * current desired count.
+   * @default false
+   */
+  readonly autoScalingEnabled?: boolean;
 
   /**
    * Actually call Security Hub BatchImportFindings with the Trivy scan

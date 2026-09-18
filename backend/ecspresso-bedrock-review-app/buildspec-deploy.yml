@@ -8,7 +8,17 @@ version: 0.2
 # 実クラスタが存在する環境では、下の "本来のデプロイ手順" のコメントを外して使用する。
 #
 # 必要な環境変数（CodeBuild プロジェクト側で注入）:
-#   PROJECT, ENV, ECR_REPO_URI, TASK_CPU, TASK_MEMORY, DESIRED_COUNT, ENABLE_ECS_EXEC
+#   PROJECT, ENV, ECR_REPO_URI, TASK_CPU, TASK_MEMORY, DESIRED_COUNT, ENABLE_ECS_EXEC,
+#   AUTO_SCALING_ENABLED
+#
+# 【Application Auto Scaling を設定済みのサービスに deploy する場合】
+# AUTO_SCALING_ENABLED=true を渡すこと。ecs-service-def.jsonnet が
+# desiredCount フィールド自体を出力しなくなり、ecspresso deploy は
+# UpdateService の DesiredCount を変更しなくなる（Auto Scaling が
+# スケールした値をそのまま維持する）。false（既定）のままだと、
+# deploy のたびに desiredCount が DESIRED_COUNT の固定値
+# （このサンプルでは既定 1）へ強制的に戻ってしまうので注意。
+# 詳細は ecs-service-def.jsonnet 冒頭のコメントを参照。
 # SSM Parameter Store から取得するパラメータ名（既定パス、CDK側で作成）:
 #   /${PROJECT}/${ENV}/ecs/cluster-name
 #   /${PROJECT}/${ENV}/ecs/service-name
@@ -47,6 +57,7 @@ phases:
 
   build:
     commands:
+      - echo "AUTO_SCALING_ENABLED=${AUTO_SCALING_ENABLED:-false} (true の場合、desiredCount は service definition から省略される)"
       - echo "Rendering ecspresso jsonnet definitions (no AWS API calls)..."
       - ecspresso render config --config ecspresso.jsonnet
       - ecspresso render task-def --config ecspresso.jsonnet

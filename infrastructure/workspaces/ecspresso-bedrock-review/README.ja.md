@@ -74,6 +74,43 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 コメントアウトしている。実 ECS クラスタに接続する場合は
 `buildspec-deploy.yml` 内のコメントを外すこと。
 
+## desiredCount と Application Auto Scaling の関係
+
+`ecs-service-def.jsonnet` は `DESIRED_COUNT` 環境変数（このサンプルの既定は
+`1`。Auto Scaling を使わないサービスならこれで問題ない）から `desiredCount`
+を書き込む。**対象の ECS サービスに Application Auto Scaling を設定して
+いる場合、このままにしてはいけない。**
+
+ecspresso 本体のソース（`ecspresso.go` / `deploy.go` の
+`calcDesiredCount()`）を確認済み: `ecspresso deploy` は実行のたびに
+service definition から `desiredCount` を読み、そのまま `UpdateService` に
+渡す。固定値を書いていると、Auto Scaling が現在スケールさせている値を
+deploy のたびに上書きしてしまい、毎回サービスを `1`（または
+`DESIRED_COUNT` の値）へ強制的に戻す＝Auto Scaling と競合する。ecspresso
+の設定には `ignore: desiredCount` のような抜け道は無く（`ignore:` は
+tags のみが対象）、現在の稼働数に触れない唯一の方法は、service
+definition に **`desiredCount` キー自体を含めないこと**。キーが無ければ
+ecspresso は `UpdateService` に `DesiredCount` を渡さず、AWS 側は現在の値
+（＝ Auto Scaling がスケールした値）をそのまま維持する。
+
+このワークスペースでは `EnvParams.autoScalingEnabled: true`
+（→ CodeBuild 環境変数 `AUTO_SCALING_ENABLED=true`）で切り替え可能にして
+おり、`ecs-service-def.jsonnet` は computed field name 構文で
+`desiredCount` を丸ごと省略する:
+
+```jsonnet
+local autoScalingEnabled = env('AUTO_SCALING_ENABLED', 'false') == 'true';
+{
+  [if !autoScalingEnabled then 'desiredCount']: std.parseInt(env('DESIRED_COUNT', '1')),
+  ...
+}
+```
+
+```typescript
+// parameters/dev-params.ts
+autoScalingEnabled: true, // 対象サービスに Application Auto Scaling 設定済み — deploy は desiredCount に触れない
+```
+
 ## Trivy の検出結果 → Security Hub（ASFF変換、環境変数でゲート）
 
 `buildspec-build.yml` は Trivy を `--format json` で実行し、その結果を

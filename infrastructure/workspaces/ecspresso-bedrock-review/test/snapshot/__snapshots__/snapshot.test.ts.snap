@@ -1189,6 +1189,11 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
               "Value": "false",
             },
             {
+              "Name": "AUTO_SCALING_ENABLED",
+              "Type": "PLAINTEXT",
+              "Value": "false",
+            },
+            {
               "Name": "ECR_REPO_URI",
               "Type": "PLAINTEXT",
               "Value": {
@@ -2271,7 +2276,7 @@ exports[`Stack Snapshot Tests RepositoryStack CloudFormation template snapshot 1
           "BranchName": "develop",
           "S3": {
             "Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-            "Key": "a884bd8422eea8078d2eea15a2ff61f846981fbf4202135f95649f7b7bd72532.zip",
+            "Key": "ac2fe9aa5233782147efe7af34a2d9ef059f7c791e1f8a16a74b70b59983deea.zip",
           },
         },
         "RepositoryDescription": "testproject sample app for the ECS Fargate + ecspresso + Bedrock agentic review CI/CD demo",

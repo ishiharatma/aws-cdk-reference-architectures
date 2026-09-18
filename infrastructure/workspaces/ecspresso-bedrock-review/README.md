@@ -77,6 +77,43 @@ resources that don't exist in this sample and are therefore commented out.
 If you wire this pipeline to a real ECS cluster, uncomment the two lines
 marked in `buildspec-deploy.yml`.
 
+## desiredCount vs. Application Auto Scaling
+
+`ecs-service-def.jsonnet` writes `desiredCount` from the `DESIRED_COUNT` env
+var (default `1` in this sample — fine for a service with no Auto Scaling).
+**If the target ECS service has Application Auto Scaling configured, do not
+leave this as-is.**
+
+Verified against ecspresso's own source (`ecspresso.go` / `deploy.go`,
+`calcDesiredCount()`): `ecspresso deploy` reads `desiredCount` from the
+service definition on every run and passes it straight to `UpdateService`.
+If it's a fixed number, that number silently overwrites whatever count Auto
+Scaling had scaled to — every deploy resets your service back to `1` (or
+whatever `DESIRED_COUNT` is), fighting Auto Scaling. There is no
+`ignore: desiredCount`-style escape hatch in ecspresso's config (`ignore:`
+only covers tags) — the only way to leave the running count alone is for
+the service definition to **not include the `desiredCount` key at all**;
+`ecspresso` then omits `DesiredCount` from `UpdateService`, and AWS leaves
+the current (Auto-Scaled) count untouched.
+
+This workspace makes that switchable: set `EnvParams.autoScalingEnabled: true`
+(→ CodeBuild env var `AUTO_SCALING_ENABLED=true`) and
+`ecs-service-def.jsonnet` omits `desiredCount` entirely via a computed
+field name:
+
+```jsonnet
+local autoScalingEnabled = env('AUTO_SCALING_ENABLED', 'false') == 'true';
+{
+  [if !autoScalingEnabled then 'desiredCount']: std.parseInt(env('DESIRED_COUNT', '1')),
+  ...
+}
+```
+
+```typescript
+// parameters/dev-params.ts
+autoScalingEnabled: true, // target service has Application Auto Scaling — deploy must not touch desiredCount
+```
+
 ## Trivy findings → Security Hub (ASFF), gated by an env var
 
 `buildspec-build.yml` runs Trivy with `--format json` and converts the

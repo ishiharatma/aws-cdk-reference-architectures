@@ -16,9 +16,15 @@ export const testEnvParams: EnvParams = {
   ecsTaskMemory: 512,
   ecsDesiredCount: 1,
   enableEcsExec: false,
+  autoScalingEnabled: false,
 };
 
 export const testEnvParamsWithApproval: EnvParams = {
   ...testEnvParams,
   requireManualApproval: true,
+};
+
+export const testEnvParamsWithAutoScaling: EnvParams = {
+  ...testEnvParams,
+  autoScalingEnabled: true,
 };

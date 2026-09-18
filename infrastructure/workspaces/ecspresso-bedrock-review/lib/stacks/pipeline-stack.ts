@@ -249,6 +249,9 @@ export class PipelineStack extends cdk.Stack {
           TASK_MEMORY: { value: String(envParams.ecsTaskMemory ?? 512) },
           DESIRED_COUNT: { value: String(envParams.ecsDesiredCount ?? 1) },
           ENABLE_ECS_EXEC: { value: String(envParams.enableEcsExec ?? false) },
+          // true にすると ecs-service-def.jsonnet が desiredCount を省略し、
+          // Application Auto Scaling がスケールした値を deploy で上書きしなくなる。
+          AUTO_SCALING_ENABLED: { value: String(envParams.autoScalingEnabled ?? false) },
           ECR_REPO_URI: { value: ecrRepository.repositoryUri },
         },
       },

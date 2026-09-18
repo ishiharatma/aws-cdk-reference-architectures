@@ -59,6 +59,20 @@ HIGH/CRITICAL の脆弱性があった場合にビルドを失敗させる判定
 `--exit-code`）は、`SECURITYHUB_IMPORT_ENABLED` の値に関わらず常に行われる
 （ASFF 変換・送信の成否とは独立している）。
 
+## 注意: desiredCount と Application Auto Scaling
+
+`ecs-service-def.jsonnet` は既定で `DESIRED_COUNT`（既定 `1`）を
+`desiredCount` として書き込む。**対象の ECS サービスに Application Auto
+Scaling を設定している場合はこのままにしないこと。** `ecspresso deploy` は
+service definition の `desiredCount` を毎回 `UpdateService` にそのまま渡す
+ため、固定値を書いたままだと Auto Scaling がスケールさせた台数を deploy の
+たびに上書きしてしまう。`AUTO_SCALING_ENABLED=true` を渡すと
+`ecs-service-def.jsonnet` は `desiredCount` フィールド自体を省略し、
+ecspresso は `DesiredCount` を `UpdateService` に渡さなくなる（＝ Auto
+Scaling が設定した現在値がそのまま維持される）。詳細は CDK 側 README の
+「desiredCount vs. Application Auto Scaling」節、および
+`ecspresso/ecs-service-def.jsonnet` 冒頭のコメントを参照。
+
 ## 注意: ecspresso verify / deploy について
 
 本リポジトリには対応する ECS クラスタ・サービスの実体がないため、

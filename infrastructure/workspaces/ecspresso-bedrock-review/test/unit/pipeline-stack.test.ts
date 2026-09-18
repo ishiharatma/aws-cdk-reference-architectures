@@ -3,7 +3,12 @@ import { Match, Template } from 'aws-cdk-lib/assertions';
 import * as codecommit from 'aws-cdk-lib/aws-codecommit';
 import { Environment } from '@common/parameters/environments';
 import { PipelineStack } from 'lib/stacks/pipeline-stack';
-import { testEnvParams, testEnvParamsWithApproval, testSharedParams } from 'test/parameters/test-params';
+import {
+  testEnvParams,
+  testEnvParamsWithApproval,
+  testEnvParamsWithAutoScaling,
+  testSharedParams,
+} from 'test/parameters/test-params';
 
 /** A fixed-ARN CodeCommit repository stand-in, since PipelineStack takes the repository by reference. */
 function testRepository(scope: cdk.App): codecommit.IRepository {
@@ -100,6 +105,41 @@ describe('PipelineStack', () => {
     });
     template.hasResourceProperties('AWS::SSM::Parameter', {
       Name: '/testproject/dev/ecs/service-name',
+    });
+  });
+
+  test('Deploy CodeBuild project defaults AUTO_SCALING_ENABLED to false', () => {
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-deploy',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'AUTO_SCALING_ENABLED', Value: 'false' }),
+        ]),
+      }),
+    });
+  });
+});
+
+describe('PipelineStack — autoScalingEnabled', () => {
+  test('passes AUTO_SCALING_ENABLED=true to the Deploy CodeBuild project', () => {
+    const app = new cdk.App();
+    const stack = new PipelineStack(app, 'TestPipelineAutoScaling', {
+      env: { account: '111111111111', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      project: 'testproject',
+      environment: Environment.DEVELOPMENT,
+      sharedParams: testSharedParams,
+      envParams: testEnvParamsWithAutoScaling,
+      repository: testRepository(app),
+    });
+    const template = Template.fromStack(stack);
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-deploy',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'AUTO_SCALING_ENABLED', Value: 'true' }),
+        ]),
+      }),
     });
   });
 });
