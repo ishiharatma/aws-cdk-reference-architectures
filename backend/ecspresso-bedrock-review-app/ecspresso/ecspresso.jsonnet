@@ -1,14 +1,15 @@
-// ecspresso 設定ファイル（jsonnet 版）。
-// ecspresso v2.4+ の jsonnet native function（std.native('env') / std.native('must_env')）で、
-// CodeBuild が渡す環境変数を参照する。
+// ecspresso config file (jsonnet version).
+// Uses ecspresso v2.4+'s jsonnet native functions (std.native('env') /
+// std.native('must_env')) to read the environment variables CodeBuild passes in.
 //
-// cluster / service は SSM Parameter Store 由来の値を CodeBuild 側で
-// `aws ssm get-parameter` により ECS_CLUSTER_NAME / ECS_SERVICE_NAME 環境変数へ
-// 解決してから ecspresso を実行する想定（buildspec-deploy.yml 参照）。
+// cluster / service are values originating from SSM Parameter Store, which
+// the CodeBuild side resolves into the ECS_CLUSTER_NAME / ECS_SERVICE_NAME
+// environment variables via `aws ssm get-parameter` before running ecspresso
+// (see buildspec-deploy.yml).
 //
-// 本サンプルには ECS クラスタ/サービスの実体が存在しないため、
-// このファイルは `ecspresso render` によるローカルレンダリング確認にのみ使用し、
-// `ecspresso verify` / `ecspresso deploy`（AWSリソースへアクセスするコマンド）は実行しない。
+// This sample has no real ECS cluster/service, so this file is only used to
+// confirm local rendering via `ecspresso render`; `ecspresso verify` /
+// `ecspresso deploy` (commands that call AWS APIs) are never run.
 
 local env = std.native('env');
 local must_env = std.native('must_env');

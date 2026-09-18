@@ -13,23 +13,24 @@ const devParams: EnvParams = {
   branchName: 'develop',
   requireManualApproval: false,
 
-  // Bedrock モデルはここを書き換えるだけで切り替わる（コード変更不要）。
-  // CodeBuild の BEDROCK_MODEL_ID 環境変数として渡される。
+  // Just edit this to switch Bedrock models (no code change needed).
+  // Passed through as the CodeBuild BEDROCK_MODEL_ID environment variable.
   bedrockModelId: process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
   riskThreshold: 'high',
 
   ecsTaskCpu: 256,
   ecsTaskMemory: 512,
-  // サンプルなので固定値 1。対象サービスに Application Auto Scaling を
-  // 設定する場合は autoScalingEnabled: true にすること（この ecsDesiredCount
-  // は無視され、Auto Scaling がスケールした値を deploy が上書きしなくなる。
-  // 詳細は lib/types/index.ts の autoScalingEnabled のコメント参照）。
+  // Fixed at 1 for this sample. If the target service has Application Auto
+  // Scaling configured, set autoScalingEnabled: true instead (this
+  // ecsDesiredCount is then ignored, and deploy stops overwriting whatever
+  // value Auto Scaling has set -- see the autoScalingEnabled comment in
+  // lib/types/index.ts for details).
   ecsDesiredCount: 1,
   enableEcsExec: false,
   autoScalingEnabled: false,
 
-  // Trivy スキャン結果（ASFF変換済み）を Security Hub に実送信するかどうか。
-  // false（既定）ではログ出力のみで、Security Hub へは送信しない。
+  // Whether to actually send Trivy scan results (converted to ASFF) to
+  // Security Hub. false (default) only logs them; nothing is sent.
   securityHubImportEnabled: process.env.SECURITYHUB_IMPORT_ENABLED === 'true',
 };
 

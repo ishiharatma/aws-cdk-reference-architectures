@@ -1,7 +1,7 @@
 version: 0.2
 
-# Test stage: npm ci → jest ユニットテスト。
-# CodePipeline の Test ステージから呼び出される。
+# Test stage: npm ci -> jest unit tests.
+# Invoked from the Test stage of CodePipeline.
 
 phases:
   install:

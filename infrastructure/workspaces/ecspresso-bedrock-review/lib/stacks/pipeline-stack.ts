@@ -28,15 +28,17 @@ export interface PipelineStackProps extends cdk.StackProps {
 /**
  * Pipeline Stack
  *
- * Source(CodeCommit) → Test → Build → AgenticReview(Bedrock) → [Approve] → Deploy(ecspresso)
+ * Source(CodeCommit) -> Test -> Build -> AgenticReview(Bedrock) -> [Approve] -> Deploy(ecspresso)
  *
- * AgenticReview は Amazon Bedrock で git diff を複数観点（security/infra/quality/cost）
- * ごとに疑似並列レビューし、総合リスクレベルが RISK_THRESHOLD 以上なら CodeBuild を
- * 失敗させてパイプラインを止める（ブロッキング）。
+ * AgenticReview reviews the git diff with Amazon Bedrock in pseudo-parallel
+ * across multiple perspectives (security/infra/quality/cost), and fails the
+ * CodeBuild project (blocking the pipeline) when the overall risk level is
+ * at or above RISK_THRESHOLD.
  *
- * Deploy（ecspresso + jsonnet）は、この構成には対応する ECS クラスタ/サービスの実体が
- * ないため、AWS リソースへアクセスする `ecspresso verify` / `ecspresso deploy` は実行せず、
- * ローカル処理のみの `ecspresso render` に留める（buildspec-deploy.yml 参照）。
+ * Deploy (ecspresso + jsonnet) never runs `ecspresso verify` / `ecspresso
+ * deploy` (both call AWS APIs), since this setup has no real ECS
+ * cluster/service behind it -- it only runs the purely local `ecspresso
+ * render` (see buildspec-deploy.yml).
  */
 export class PipelineStack extends cdk.Stack {
   public readonly pipeline: codepipeline.IPipeline;
@@ -51,7 +53,7 @@ export class PipelineStack extends cdk.Stack {
     const buildspecBasePath = 'backend/ecspresso-bedrock-review-app';
     const riskThreshold = envParams.riskThreshold ?? 'high';
 
-    /* ─── ECR リポジトリ ────────────────────────────────────────────*/
+    /* ─── ECR repository ────────────────────────────────────────────*/
     const ecrRepository = new ecr.Repository(this, 'EcrRepository', {
       repositoryName: `${project}-${environment}-api`,
       imageScanOnPush: true,
@@ -60,9 +62,10 @@ export class PipelineStack extends cdk.Stack {
       lifecycleRules: [{ maxImageCount: 20 }],
     });
 
-    /* ─── SSM Parameter Store: ECS クラスタ/サービス情報 ──────────────
-     * 本サンプルには ECS の実体がないためプレースホルダー値を格納する。
-     * 実クラスタを使う場合は、対応する ECS/VPC スタックの出力でこれらの値を上書きすること。
+    /* ─── SSM Parameter Store: ECS cluster/service info ──────────────
+     * This sample has no real ECS behind it, so these are placeholder values.
+     * If you point this at a real cluster, overwrite them with the outputs
+     * of the corresponding ECS/VPC stack.
      */
     const ssmPrefix = `/${project}/${environment}/ecs`;
     const ssmPlaceholders: Record<string, string> = {
@@ -82,13 +85,13 @@ export class PipelineStack extends cdk.Stack {
       });
     }
 
-    /* ─── パイプライン失敗通知 ────────────────────────────────────────*/
+    /* ─── Pipeline failure notifications ─────────────────────────────*/
     const notificationTopic = new sns.Topic(this, 'NotificationTopic', {
       topicName: `${project}-${environment}-pipeline-notifications`,
       enforceSSL: true,
     });
 
-    /* ─── アーティファクト ────────────────────────────────────────────*/
+    /* ─── Artifacts ────────────────────────────────────────────────*/
     const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
       bucketName: `${project}-${environment}-cicd-artifact-${accountId}`.toLowerCase(),
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -106,7 +109,7 @@ export class PipelineStack extends cdk.Stack {
       ENV: { value: environment },
     };
 
-    /* ─── CodeBuild: Test ─────────────────────────────────────────*/
+    /* ─── CodeBuild: Test ────────────────────────────────────────*/
     const testProject = new codebuild.PipelineProject(this, 'TestProject', {
       projectName: `${project}-${environment}-test`,
       buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-test.yml`),
@@ -126,7 +129,7 @@ export class PipelineStack extends cdk.Stack {
       },
     });
 
-    /* ─── CodeBuild: Build（docker build + ECR push） ───────────────*/
+    /* ─── CodeBuild: Build (docker build + ECR push) ────────────────*/
     const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
       projectName: `${project}-${environment}-build`,
       buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-build.yml`),
@@ -158,10 +161,11 @@ export class PipelineStack extends cdk.Stack {
       })
     );
     ecrRepository.grantPullPush(buildProject);
-    /* Trivy → ASFF 変換（sechub_parser.py）に必要な権限。
-     * BatchImportFindings は Security Hub 側にリソースレベル ARN がなく '*' 必須。
-     * SECURITYHUB_IMPORT_ENABLED=false の既定では呼び出されないが、環境変数だけで
-     * トグルできるよう権限は常に付与しておく。 */
+    /* Permissions needed for the Trivy -> ASFF conversion (sechub_parser.py).
+     * BatchImportFindings has no resource-level ARN on the Security Hub side,
+     * so '*' is required. It isn't called when SECURITYHUB_IMPORT_ENABLED=false
+     * (the default), but the permission is granted unconditionally so this
+     * can be toggled purely via the environment variable. */
     buildProject.addToRolePolicy(
       new iam.PolicyStatement({
         sid: 'AllowStsGetCallerIdentity',
@@ -188,9 +192,10 @@ export class PipelineStack extends cdk.Stack {
       true
     );
 
-    /* ─── CodeBuild: AgenticReview（Bedrock 疑似マルチエージェント・レビュー） ──
-     * CodeCommitSourceAction はスナップショットしか渡さないため、このプロジェクトは
-     * CodeCommit から履歴付きで clone し直して git diff を取得する（buildspec-review.yml）。
+    /* ─── CodeBuild: AgenticReview (pseudo multi-agent review on Bedrock) ──
+     * CodeCommitSourceAction only hands over a snapshot, so this project
+     * re-clones CodeCommit with full history to compute the git diff
+     * (see buildspec-review.yml).
      */
     const reviewProject = new codebuild.PipelineProject(this, 'AgenticReviewProject', {
       projectName: `${project}-${environment}-agentic-review`,
@@ -233,9 +238,10 @@ export class PipelineStack extends cdk.Stack {
       })
     );
 
-    /* ─── CodeBuild: Deploy（ecspresso + jsonnet） ───────────────────
-     * ECS クラスタ/サービスの実体が存在しないため、verify/deploy は実行しない
-     * （buildspec-deploy.yml 参照）。SSM から cluster/service 等を解決する権限のみ付与する。
+    /* ─── CodeBuild: Deploy (ecspresso + jsonnet) ────────────────────
+     * No real ECS cluster/service exists, so verify/deploy are never run
+     * (see buildspec-deploy.yml). Only grants the permission needed to
+     * resolve cluster/service etc. from SSM.
      */
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       projectName: `${project}-${environment}-deploy`,
@@ -249,8 +255,8 @@ export class PipelineStack extends cdk.Stack {
           TASK_MEMORY: { value: String(envParams.ecsTaskMemory ?? 512) },
           DESIRED_COUNT: { value: String(envParams.ecsDesiredCount ?? 1) },
           ENABLE_ECS_EXEC: { value: String(envParams.enableEcsExec ?? false) },
-          // true にすると ecs-service-def.jsonnet が desiredCount を省略し、
-          // Application Auto Scaling がスケールした値を deploy で上書きしなくなる。
+          // When true, ecs-service-def.jsonnet omits desiredCount, so deploy
+          // no longer overwrites whatever value Application Auto Scaling has set.
           AUTO_SCALING_ENABLED: { value: String(envParams.autoScalingEnabled ?? false) },
           ECR_REPO_URI: { value: ecrRepository.repositoryUri },
         },
@@ -273,7 +279,7 @@ export class PipelineStack extends cdk.Stack {
       })
     );
 
-    /* ─── パイプラインステージ組み立て ───────────────────────────────*/
+    /* ─── Assemble pipeline stages ───────────────────────────────────*/
     const stages: codepipeline.StageProps[] = [
       {
         stageName: 'Source',
@@ -358,7 +364,7 @@ export class PipelineStack extends cdk.Stack {
       notificationRuleName: `${project}-${environment}-pipeline-failure`,
     });
 
-    /* ─── パイプライントリガー（push イベント） ──────────────────────*/
+    /* ─── Pipeline trigger (push events) ─────────────────────────────*/
     const triggerRule = new events.Rule(this, 'PipelineTriggerRule', {
       ruleName: `${project}-${environment}-pipeline-trigger`,
       eventPattern: {

@@ -1,13 +1,14 @@
 version: 0.2
 
-# Agentic Review stage: Amazon Bedrock による疑似マルチエージェント・コードレビュー。
-# CodePipeline の CodeCommitSourceAction は履歴を持たないスナップショットしか渡さないため、
-# git diff を取るには CodeCommit から改めて履歴付きで clone する。
+# Agentic Review stage: pseudo multi-agent code review powered by Amazon Bedrock.
+# CodePipeline's CodeCommitSourceAction only hands over a history-less snapshot,
+# so this stage re-clones the repository from CodeCommit with full history to
+# compute the git diff.
 #
-# 必要な環境変数（CodeBuild プロジェクト側で注入）:
+# Expected environment variables (injected by the CodeBuild project):
 #   PROJECT, ENV, REPOSITORY_NAME, BEDROCK_MODEL_ID, RISK_THRESHOLD
-# 任意:
-#   DIFF_PATH_PREFIX   diff の対象を特定ディレクトリに絞る場合のパス（既定: リポジトリ全体）
+# Optional:
+#   DIFF_PATH_PREFIX   restrict the diff to a specific directory (default: the whole repo)
 
 phases:
   install:

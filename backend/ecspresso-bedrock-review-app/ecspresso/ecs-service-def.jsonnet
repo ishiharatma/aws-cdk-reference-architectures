@@ -1,22 +1,23 @@
-// ECS サービス定義（jsonnet 版）。サブネット/SGはSSM経由でDeployステージに渡す想定。
+// ECS service definition (jsonnet version). Subnets/security groups are
+// expected to be passed into the Deploy stage via SSM.
 //
-// 【Application Auto Scaling を使う場合の desiredCount の扱いについて】
-// ecspresso は service definition に desiredCount キーが存在する場合、
-// deploy のたびに UpdateService へその値をそのまま渡す。そのため
-// desiredCount を固定値で書いてしまうと、Auto Scaling が現在3や5に
-// スケールしていても、deploy 実行のたびにその固定値へ強制的に戻ってしまう
-// （ecspresso 本体のソース ecspresso.go / deploy.go の calcDesiredCount()
-//  を確認済み: service definition に desiredCount キー自体が無い場合のみ
-//  UpdateService の DesiredCount パラメータを省略し、AWS 側の現在値
-//  ＝ Auto Scaling が設定した値を変更しない）。
-// `ignore:` 設定（ecspresso.jsonnet）は tags のみが対象で、desiredCount を
-// 無視する機能は無いため、この省略が唯一の回避策になる。
+// [About desiredCount when Application Auto Scaling is in use]
+// Whenever the service definition contains a desiredCount key, ecspresso
+// passes that value straight through to UpdateService on every deploy. So
+// if desiredCount is a fixed number, it silently overwrites whatever count
+// Auto Scaling has scaled to (e.g. 3 or 5) on every deploy run (verified
+// against ecspresso's own source, ecspresso.go / deploy.go's
+// calcDesiredCount(): only when the service definition has no desiredCount
+// key at all does ecspresso omit the UpdateService DesiredCount parameter,
+// leaving the current AWS-side value -- i.e. whatever Auto Scaling set --
+// unchanged). The `ignore:` setting (ecspresso.jsonnet) only covers tags,
+// not desiredCount, so omitting the key is the only workaround.
 //
-// このサンプルの既定（AUTO_SCALING_ENABLED 未設定 = false）では
-// DESIRED_COUNT（既定 1）を毎回書き込む単純な構成のままにしている。
-// Application Auto Scaling を設定したサービスに向ける場合は
-// AUTO_SCALING_ENABLED=true を渡すこと。desiredCount フィールド自体が
-// 出力されなくなり、ecspresso deploy は desiredCount を変更しなくなる。
+// This sample's default (AUTO_SCALING_ENABLED unset = false) keeps the
+// simple behavior of writing DESIRED_COUNT (default 1) on every deploy.
+// When pointing this at a service that has Application Auto Scaling
+// configured, pass AUTO_SCALING_ENABLED=true: the desiredCount field is
+// then omitted entirely, and ecspresso deploy stops touching desiredCount.
 
 local env = std.native('env');
 local must_env = std.native('must_env');

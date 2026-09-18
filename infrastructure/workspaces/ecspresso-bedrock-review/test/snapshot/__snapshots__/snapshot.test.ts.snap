@@ -2276,7 +2276,7 @@ exports[`Stack Snapshot Tests RepositoryStack CloudFormation template snapshot 1
           "BranchName": "develop",
           "S3": {
             "Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-            "Key": "ac2fe9aa5233782147efe7af34a2d9ef059f7c791e1f8a16a74b70b59983deea.zip",
+            "Key": "e3d156e9622c01fc2aac90a112723bec628011fc4116f4fd845487e82e74344c.zip",
           },
         },
         "RepositoryDescription": "testproject sample app for the ECS Fargate + ecspresso + Bedrock agentic review CI/CD demo",

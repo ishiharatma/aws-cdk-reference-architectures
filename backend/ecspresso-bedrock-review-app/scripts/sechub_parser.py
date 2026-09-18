@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Trivy の JSON スキャン結果を AWS Security Finding Format (ASFF) に変換する。
+"""Converts Trivy JSON scan results into AWS Security Finding Format (ASFF).
 
-参考実装:
-  https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
+Reference implementation:
+  https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
   https://github.com/aws-samples/aws-security-hub-scan-with-trivy/blob/master/sechub_parser.py
 
-元記事のスクリプトが前提にしていた Trivy 出力（`data[0]['Vulnerabilities']`)は
-古い形式のため、本スクリプトは現行の Trivy JSON 出力（`Results[].Vulnerabilities[]`）
-に合わせて読み替えている。
+The original blog post's script assumed the old Trivy output shape
+(`data[0]['Vulnerabilities']`); this script has been adapted for the
+current Trivy JSON output shape (`Results[].Vulnerabilities[]`).
 
-SECURITYHUB_IMPORT_ENABLED=true の場合のみ BatchImportFindings で Security Hub へ
-実送信する。既定（未設定 / true 以外）では ASFF への変換結果を標準出力に
-ログ出力するだけで、Security Hub への送信は行わない。
+Only sends findings to Security Hub via BatchImportFindings when
+SECURITYHUB_IMPORT_ENABLED=true. By default (unset, or any value other than
+"true"), it only logs the converted ASFF findings to stdout and never sends
+anything to Security Hub.
 """
 import datetime
 import json
@@ -19,19 +20,19 @@ import os
 
 import boto3
 
-# Trivy severity → ASFF Severity（元記事の重み付けを踏襲）
+# Trivy severity -> ASFF Severity (weights carried over from the original blog post)
 TRIVY_SEVERITY_TO_ASFF = {
     'LOW': 1,
     'MEDIUM': 4,
     'HIGH': 7,
     'CRITICAL': 9,
 }
-# BatchImportFindings は1リクエストあたり最大100件までしか受け付けない
+# BatchImportFindings accepts at most 100 findings per request
 BATCH_SIZE = 100
 
 
 def iter_vulnerabilities(trivy_report):
-    """Trivy v0.18+ の `Results[].Vulnerabilities[]` から脆弱性を1件ずつ返す。"""
+    """Yield vulnerabilities one at a time from Trivy v0.18+'s `Results[].Vulnerabilities[]`."""
     for result in trivy_report.get('Results') or []:
         target = result.get('Target', '')
         for vuln in result.get('Vulnerabilities') or []:
@@ -43,7 +44,7 @@ def to_asff_finding(target, vuln, *, aws_region, aws_account_id, container_name,
     cve_id = str(vuln.get('VulnerabilityID', 'UNKNOWN'))
     title = str(vuln.get('Title') or cve_id)
     description = str(vuln.get('Description') or '')
-    # ASFF の Description は 1024 文字まで
+    # ASFF's Description field is limited to 1024 characters
     description = (description[:1021] + '..') if len(description) > 1021 else description
     package_name = str(vuln.get('PkgName', 'unknown'))
     installed_version = str(vuln.get('InstalledVersion', 'unknown'))

@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /**
- * Amazon Bedrock を使った Agentic Code Review。
+ * Agentic code review powered by Amazon Bedrock.
  *
- * 対象の git diff を複数の専門観点（security / infra / quality / cost）ごとに
- * 疑似並列で Bedrock モデルへ投げ、各観点の指摘とリスクレベルを集約する。
- * 集約結果が RISK_THRESHOLD 以上であれば非ゼロ終了し、CodeBuild（≒パイプライン）を止める。
+ * Sends the target git diff to a Bedrock model in pseudo-parallel, once per
+ * review perspective (security / infra / quality / cost), then aggregates
+ * each perspective's findings and risk level. Exits non-zero when the
+ * aggregated risk level is at or above RISK_THRESHOLD, stopping CodeBuild
+ * (and therefore the pipeline).
  *
- * 環境変数:
- *   BEDROCK_MODEL_ID   レビューに使う Bedrock モデル ID（必須。呼び出し元で切り替える）
- *   AWS_REGION          Bedrock 呼び出しリージョン（既定: CodeBuild の AWS_DEFAULT_REGION）
- *   REVIEW_DIFF_FILE     レビュー対象の diff ファイルパス（既定: diff.patch）
- *   RISK_THRESHOLD       ブロックする最小リスクレベル low|medium|high|critical（既定: high）
- *   REVIEW_REPORT_FILE   結果レポートの出力先（既定: agentic-review-report.json）
+ * Environment variables:
+ *   BEDROCK_MODEL_ID     Bedrock model ID used for the review (required; swap it at the call site)
+ *   AWS_REGION            Region to call Bedrock in (default: CodeBuild's AWS_DEFAULT_REGION)
+ *   REVIEW_DIFF_FILE       Path to the diff file to review (default: diff.patch)
+ *   RISK_THRESHOLD         Minimum risk level that blocks the build: low|medium|high|critical (default: high)
+ *   REVIEW_REPORT_FILE     Where to write the report (default: agentic-review-report.json)
  */
 'use strict';
 
@@ -24,27 +26,27 @@ const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 const PERSPECTIVES = [
   {
     id: 'security',
-    label: 'セキュリティ',
+    label: 'Security',
     focus:
-      '認証・認可の欠落、シークレット/認証情報のハードコード、インジェクション、' +
-      '安全でない依存関係の追加、入力バリデーションの欠如',
+      'missing authentication/authorization, hardcoded secrets/credentials, injection, ' +
+      'unsafe new dependencies, missing input validation',
   },
   {
     id: 'infra',
-    label: 'インフラ/運用',
+    label: 'Infra/Ops',
     focus:
-      'IAM権限の過剰付与、ECS/コンテナ設定の不備、可観測性（ログ・ヘルスチェック）の欠落、' +
-      'スケーラビリティやグレースフルシャットダウンの問題',
+      'overly broad IAM permissions, misconfigured ECS/container settings, missing observability ' +
+      '(logging, health checks), scalability or graceful-shutdown issues',
   },
   {
     id: 'quality',
-    label: 'コード品質',
-    focus: '可読性、エラーハンドリングの欠如、テスト不足、明らかなバグやロジック誤り',
+    label: 'Code quality',
+    focus: 'readability, missing error handling, insufficient tests, obvious bugs or logic errors',
   },
   {
     id: 'cost',
-    label: 'コスト',
-    focus: '過剰なリソース確保、不要な外部API呼び出しの増加、非効率なループ/クエリによるコスト増',
+    label: 'Cost',
+    focus: 'over-provisioned resources, unnecessary external API calls, cost from inefficient loops/queries',
   },
 ];
 
@@ -57,31 +59,31 @@ function readDiff() {
   if (!diff.trim()) {
     return null;
   }
-  // 巨大な diff でトークン数が膨らみ過ぎないよう上限を設ける
+  // Cap the size so a huge diff doesn't blow up the token count
   const MAX_CHARS = 60000;
   return diff.length > MAX_CHARS ? `${diff.slice(0, MAX_CHARS)}\n... (truncated)` : diff;
 }
 
 function buildPrompt(perspective, diff) {
-  return `あなたは${perspective.label}の観点に特化したコードレビュアーです。
-着目すべき点: ${perspective.focus}
+  return `You are a code reviewer specialized in the ${perspective.label} perspective.
+What to focus on: ${perspective.focus}
 
-以下は Pull Request の git diff です。この差分のみを根拠にレビューしてください。
-差分に含まれない一般論や推測でのリスク評価はしないでください。
+Below is the git diff of a pull request. Base your review only on this diff.
+Do not raise risks that are generic or speculative and not evidenced by the diff itself.
 
 --- diff start ---
 ${diff}
 --- diff end ---
 
-出力は次の JSON 形式のみとし、それ以外のテキストは一切出力しないでください。
+Respond with the following JSON only, and nothing else:
 {
   "riskLevel": "low" | "medium" | "high" | "critical",
-  "summary": "一文でのレビュー総評（日本語）",
+  "summary": "one-sentence overall review summary, in English",
   "findings": [
-    { "severity": "low" | "medium" | "high" | "critical", "detail": "指摘内容（日本語）" }
+    { "severity": "low" | "medium" | "high" | "critical", "detail": "finding detail, in English" }
   ]
 }
-指摘がない場合は findings を空配列にし、riskLevel は "low" としてください。`;
+If there is nothing to flag, return an empty findings array and riskLevel "low".`;
 }
 
 function extractJson(text) {
@@ -117,13 +119,14 @@ async function reviewPerspective(client, modelId, perspective, diff) {
       findings: Array.isArray(parsed.findings) ? parsed.findings : [],
     };
   } catch (err) {
-    // モデル呼び出し・パースに失敗した観点は "medium" 扱いで可視化し、
-    // 1観点の失敗でパイプライン全体を無条件停止させない一方、黙って握り潰さない。
+    // Surface a perspective whose model call or parse failed as "medium" risk:
+    // one failed perspective shouldn't unconditionally halt the whole pipeline,
+    // but it also shouldn't be swallowed silently.
     return {
       perspective: perspective.id,
       label: perspective.label,
       riskLevel: 'medium',
-      summary: `レビュー呼び出しに失敗したため要人手確認: ${err.message}`,
+      summary: `Review call failed and needs manual follow-up: ${err.message}`,
       findings: [],
       error: true,
     };

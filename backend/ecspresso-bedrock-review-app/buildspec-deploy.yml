@@ -1,32 +1,33 @@
 version: 0.2
 
-# Deploy stage: ecspresso（+ jsonnet）で ECS Fargate サービスを更新する。
+# Deploy stage: updates the ECS Fargate service with ecspresso (+ jsonnet).
 #
-# 【重要】本サンプルには ECS クラスタ/サービスの実体が存在しないため、
-# AWS リソースへアクセスする `ecspresso verify` / `ecspresso deploy` は実行しない。
-# ローカル処理のみの `ecspresso render` で jsonnet 定義のレンダリング結果を確認するに留める。
-# 実クラスタが存在する環境では、下の "本来のデプロイ手順" のコメントを外して使用する。
+# IMPORTANT: This sample has no real ECS cluster/service, so it never runs
+# `ecspresso verify` / `ecspresso deploy` (both call AWS APIs). It only runs
+# `ecspresso render`, a purely local command, to confirm the jsonnet
+# definitions render correctly. In an environment with a real cluster,
+# uncomment the "actual deploy steps" lines below.
 #
-# 必要な環境変数（CodeBuild プロジェクト側で注入）:
+# Expected environment variables (injected by the CodeBuild project):
 #   PROJECT, ENV, ECR_REPO_URI, TASK_CPU, TASK_MEMORY, DESIRED_COUNT, ENABLE_ECS_EXEC,
 #   AUTO_SCALING_ENABLED
 #
-# 【Application Auto Scaling を設定済みのサービスに deploy する場合】
-# AUTO_SCALING_ENABLED=true を渡すこと。ecs-service-def.jsonnet が
-# desiredCount フィールド自体を出力しなくなり、ecspresso deploy は
-# UpdateService の DesiredCount を変更しなくなる（Auto Scaling が
-# スケールした値をそのまま維持する）。false（既定）のままだと、
-# deploy のたびに desiredCount が DESIRED_COUNT の固定値
-# （このサンプルでは既定 1）へ強制的に戻ってしまうので注意。
-# 詳細は ecs-service-def.jsonnet 冒頭のコメントを参照。
-# SSM Parameter Store から取得するパラメータ名（既定パス、CDK側で作成）:
+# [When deploying to a service that already has Application Auto Scaling configured]
+# Pass AUTO_SCALING_ENABLED=true. ecs-service-def.jsonnet then omits the
+# desiredCount field entirely, so ecspresso deploy no longer changes
+# UpdateService's DesiredCount (whatever count Auto Scaling has set is left
+# untouched). Leaving this false (the default) means desiredCount is reset
+# to the fixed DESIRED_COUNT value (default 1 in this sample) on every
+# deploy -- see the comment at the top of ecs-service-def.jsonnet for details.
+#
+# SSM Parameter Store parameter names read here (default paths, created on the CDK side):
 #   /${PROJECT}/${ENV}/ecs/cluster-name
 #   /${PROJECT}/${ENV}/ecs/service-name
 #   /${PROJECT}/${ENV}/ecs/execution-role-arn
 #   /${PROJECT}/${ENV}/ecs/task-role-arn
-#   /${PROJECT}/${ENV}/ecs/subnet-ids            (カンマ区切り)
-#   /${PROJECT}/${ENV}/ecs/security-group-ids    (カンマ区切り)
-#   /${PROJECT}/${ENV}/ecs/target-group-arn      (未使用なら空文字)
+#   /${PROJECT}/${ENV}/ecs/subnet-ids            (comma-separated)
+#   /${PROJECT}/${ENV}/ecs/security-group-ids    (comma-separated)
+#   /${PROJECT}/${ENV}/ecs/target-group-arn      (empty string if unused)
 
 phases:
   install:
@@ -50,27 +51,27 @@ phases:
       - export SUBNET_IDS=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/subnet-ids" --query 'Parameter.Value' --output text)
       - export SECURITY_GROUP_IDS=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/security-group-ids" --query 'Parameter.Value' --output text)
       - export TARGET_GROUP_ARN=$(aws ssm get-parameter --name "/${PROJECT}/${ENV}/ecs/target-group-arn" --query 'Parameter.Value' --output text 2>/dev/null || echo "")
-      # image-tag.txt / imagedefinitions.json は Build ステージの BuildArtifact（secondary source）側に置かれる
+      # image-tag.txt / imagedefinitions.json live in the Build stage's BuildArtifact (secondary source)
       - export IMAGE_TAG=$(cat "${CODEBUILD_SRC_DIR_BuildArtifact}/image-tag.txt" 2>/dev/null || echo "latest")
       - echo "cluster=${ECS_CLUSTER_NAME} service=${ECS_SERVICE_NAME} image_tag=${IMAGE_TAG}"
       - cd backend/ecspresso-bedrock-review-app/ecspresso
 
   build:
     commands:
-      - echo "AUTO_SCALING_ENABLED=${AUTO_SCALING_ENABLED:-false} (true の場合、desiredCount は service definition から省略される)"
+      - echo "AUTO_SCALING_ENABLED=${AUTO_SCALING_ENABLED:-false} (when true, desiredCount is omitted from the service definition)"
       - echo "Rendering ecspresso jsonnet definitions (no AWS API calls)..."
       - ecspresso render config --config ecspresso.jsonnet
       - ecspresso render task-def --config ecspresso.jsonnet
       - ecspresso render service-def --config ecspresso.jsonnet
       - |
         echo "=========================================================="
-        echo " ECS クラスタ/サービスの実体が存在しないため、"
-        echo " 'ecspresso verify' / 'ecspresso deploy' はスキップしました。"
-        echo " 本来のデプロイ手順（実クラスタがある環境向け）:"
+        echo " This sample has no real ECS cluster/service, so"
+        echo " 'ecspresso verify' / 'ecspresso deploy' were skipped."
+        echo " Actual deploy steps (for an environment with a real cluster):"
         echo "   ecspresso verify --config ecspresso.jsonnet"
         echo "   ecspresso deploy --config ecspresso.jsonnet"
         echo "=========================================================="
-      # --- 本来のデプロイ手順（実クラスタが存在する環境ではコメントを外す） ---
+      # --- Actual deploy steps (uncomment in an environment with a real cluster) ---
       # - ecspresso verify --config ecspresso.jsonnet
       # - ecspresso deploy --config ecspresso.jsonnet
 

@@ -15,9 +15,10 @@ export interface RepositoryStackProps extends cdk.StackProps {
 /**
  * Repository Stack
  *
- * CodeCommit リポジトリを作成し、backend/ecspresso-bedrock-review-app の内容を
- * envParams.branchName（既定: develop）ブランチへシードする。単一アカウント構成の
- * サンプルのため、クロスアカウント読み取りの配線は持たない。
+ * Creates a CodeCommit repository and seeds the envParams.branchName
+ * branch (default: develop) with the contents of
+ * backend/ecspresso-bedrock-review-app. This is a single-account sample,
+ * so it carries no cross-account read wiring.
  */
 export class RepositoryStack extends cdk.Stack {
   public readonly repository: codecommit.IRepository;

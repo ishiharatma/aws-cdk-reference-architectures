@@ -1,12 +1,13 @@
 version: 0.2
 
-# Build stage: docker build → Trivy スキャン → ASFF変換(sechub_parser.py) → ECR push。
-# HIGH/CRITICAL の脆弱性が見つかった場合はビルドを失敗させ、ECR への push を止める。
-# Security Hub への実インポートは SECURITYHUB_IMPORT_ENABLED=true のときのみ行う
-# （既定は false — 変換した ASFF findings をログに出力するだけで送信はしない）。
-# 参考: https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
+# Build stage: docker build -> Trivy scan -> convert to ASFF (sechub_parser.py) -> ECR push.
+# Fails the build (blocking the push to ECR) when HIGH/CRITICAL vulnerabilities are found.
+# Actually importing findings into Security Hub only happens when
+# SECURITYHUB_IMPORT_ENABLED=true (default: false -- the converted ASFF
+# findings are only logged, never sent).
+# Reference: https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
 #
-# CodeBuild プロジェクト側で以下の環境変数が注入される想定:
+# Expected environment variables (injected by the CodeBuild project):
 #   PROJECT, ENV, ECR_REPO_URI, SECURITYHUB_IMPORT_ENABLED
 
 phases:

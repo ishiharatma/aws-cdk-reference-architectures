@@ -1,5 +1,5 @@
-// ECS タスク定義（jsonnet 版）。CPU/メモリ・ECR イメージ URI・IAM ロール ARN は
-// CodeBuild（Deploy ステージ）の環境変数から注入する。
+// ECS task definition (jsonnet version). CPU/memory, the ECR image URI, and
+// the IAM role ARNs are injected from the CodeBuild (Deploy stage) environment.
 
 local env = std.native('env');
 local must_env = std.native('must_env');
