@@ -34,3 +34,15 @@ export const testEnvParamsWithJapaneseReview: EnvParams = {
   ...testEnvParams,
   reviewLanguage: 'ja',
 };
+
+export const testEnvParamsWithReviewNotification: EnvParams = {
+  ...testEnvParams,
+  reviewNotificationEnabled: true,
+};
+
+export const testEnvParamsWithApprovalTopicAndNotification: EnvParams = {
+  ...testEnvParams,
+  requireManualApproval: true,
+  approvalTopicArn: 'arn:aws:sns:ap-northeast-1:111111111111:custom-approval-topic',
+  reviewNotificationEnabled: true,
+};

@@ -34,6 +34,21 @@ The `AgenticReview` stage fails the CodeBuild project (blocking the
 pipeline) when the overall risk level computed by `scripts/agentic-review.js`
 is at or above `RISK_THRESHOLD` (default `high`).
 
+## Where to find the review result
+
+- CodeBuild logs (`AgenticReview` project) always have the full report.
+- The `AgenticReviewOutput` pipeline artifact carries
+  `agentic-review-report.json` past the end of the CodeBuild run.
+- Optionally (`REVIEW_NOTIFICATION_ENABLED=true`), `agentic-review.js`
+  publishes the summary to an SNS topic (`REVIEW_NOTIFICATION_TOPIC_ARN`)
+  right after the review completes -- this is the only way to surface the
+  result to a human *before* a manual-approval stage decides whether to
+  deploy, since CodePipeline's `ManualApprovalAction.additionalInformation`
+  is a static string that can't carry a per-run value. A publish failure is
+  logged but never fails the build. Default: `false`. See the CDK-side
+  README's "Where to find the review result" section for the full picture
+  (including topic selection and how the artifact gets there).
+
 ## Switching the Bedrock model
 
 The model used by Agentic Review is switched via the CodeBuild environment

@@ -34,6 +34,12 @@ const devParams: EnvParams = {
   // Whether to actually send Trivy scan results (converted to ASFF) to
   // Security Hub. false (default) only logs them; nothing is sent.
   securityHubImportEnabled: process.env.SECURITYHUB_IMPORT_ENABLED === 'true',
+
+  // Publish the agentic review's summary to SNS when the AgenticReview stage
+  // completes, so it reaches a human before the Approve stage. false
+  // (default): the summary is only in the CodeBuild logs and the
+  // AgenticReviewOutput artifact.
+  reviewNotificationEnabled: process.env.REVIEW_NOTIFICATION_ENABLED === 'true',
 };
 
 params[Environment.DEVELOPMENT] = devParams;

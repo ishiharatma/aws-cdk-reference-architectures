@@ -59,9 +59,49 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 | --------- | ------------- |
 | CodeCommit リポジトリ（`RepositoryStack`） | `backend/ecspresso-bedrock-review-app/` の内容を `develop` ブランチへシード |
 | Test / Build CodeBuild | `npm test`；`docker build` → Trivy スキャン（JSON出力、HIGH/CRITICAL で `--exit-code 1`、ブロッキング）→ ASFF変換（`scripts/sechub_parser.py`）→ ECR push（`imagedefinitions.json`, `image-tag.txt`） |
-| AgenticReview CodeBuild | `CodeCommitSourceAction` はスナップショットしか渡さないため、CodeCommit を履歴付きで再 clone して `git diff` を計算し、`scripts/agentic-review.js` で Bedrock をレビューする |
+| AgenticReview CodeBuild | `CodeCommitSourceAction` はスナップショットしか渡さないため、CodeCommit を履歴付きで再 clone して `git diff` を計算し、`scripts/agentic-review.js` で Bedrock をレビューする。`AgenticReviewOutput` パイプラインアーティファクトを出力し、任意で SNS 通知も送る（下記「レビュー結果はどこで確認できるか」参照） |
 | Deploy CodeBuild | SSM から ECS クラスタ/サービス/ロール/ネットワーク設定を解決した上で `ecspresso render` のみ実行（`verify`/`deploy` は未実施。理由は下記） |
 | SSM パラメータ（`/<project>/<env>/ecs/*`） | `PipelineStack` がプレースホルダー（`REPLACE_ME`）として作成。実クラスタに接続する場合は実値で上書きする |
+
+## レビュー結果はどこで確認できるか
+
+- **CodeBuild ログ（常に確認可能）**: AgenticReview CodeBuild プロジェクトの
+  ロググループ（`/<project>/<env>/codebuild/agentic-review`、保持期間1ヶ月）
+  に `=== Agentic Code Review Report ===` 以下の全文（観点ごとのリスク
+  レベル・summary・findings）が出力される。
+- **パイプラインアーティファクト `AgenticReviewOutput`**: `AgenticReview`
+  アクションが `agentic-review-report.json` を CodePipeline のアーティ
+  ファクトとして出力するようにした（`outputs: [reviewOutput]`）。これに
+  より CodeBuild 実行後もパイプラインの S3 アーティファクトバケットから
+  過去の実行分を取得できる。従来は `buildspec-review.yml` に
+  `artifacts:` ブロックがあるにもかかわらず、対応する `CodeBuildAction`
+  に `outputs` が渡されていなかったため、CodePipeline がこの JSON を
+  アップロードすることはなく、CodeBuild のビルドが終わると同時に消えて
+  いた。
+- **SNS 通知（オプトイン、下記参照）**: Approve ステージの**前に**人間の
+  目にレビュー結果を届けられる唯一の手段。`ManualApprovalAction.additionalInformation`
+  は CloudFormation テンプレートに焼き込まれる静的文字列であり、実行
+  ごとに変わる値は持てないため。
+
+### レビュー結果を人に通知する（`reviewNotificationEnabled`）
+
+`EnvParams.reviewNotificationEnabled: true`（→ CodeBuild 環境変数
+`REVIEW_NOTIFICATION_ENABLED=true`）を設定すると、AgenticReview ステージ
+完了直後にレビューサマリーを SNS へ publish する:
+
+```typescript
+// parameters/dev-params.ts
+reviewNotificationEnabled: true, // Approve の前にレビューサマリーを SNS へ publish する
+```
+
+- **送信先トピック**: `approvalTopicArn` が設定されていればそちら
+  （Approve ステージで判断する人に最も届きやすい）、無ければパイプライン
+  既定の失敗通知トピック（`NotificationTopic`）。
+- **既定は `false`** — レビューサマリーは CodeBuild ログと
+  `AgenticReviewOutput` アーティファクトにのみ存在し、何も送信されない。
+- publish に失敗しても（トピック設定ミス等）ログに残すだけでビルドは
+  失敗させない — あくまで利便性のためのレイヤーであり、リスク判定の
+  正とはしない（正は引き続き `RISK_THRESHOLD` による exit code 判定）。
 
 ## `ecspresso verify` / `ecspresso deploy` を実行しない理由
 
@@ -237,6 +277,8 @@ npm test
   （`/${project}/${env}/ecs/*`）に対する `ssm:GetParameter` のみ許可
 - ✅ アーティファクトバケットはパブリックアクセスを全ブロックし SSL を強制。
   SNS 通知トピックも SSL を強制（`enforceSSL: true`）
+- ✅ `AgenticReview` の `sns:Publish` 権限は、実際に publish する通知/承認
+  トピックの ARN に限定しており、`*` ではない
 - ✅ `test/compliance/` で `AwsSolutionsChecks`（CDK Nag）を実行し、残る
   ワイルドカード/マネージドポリシーの指摘はすべて理由を明記して抑制
   （`lib/stacks/pipeline-stack.ts` 参照）
@@ -267,6 +309,7 @@ npm test
 // parameters/dev-params.ts
 requireManualApproval: true,
 approvalTopicArn: 'arn:aws:sns:ap-northeast-1:111111111111:ecspresso-bedrock-review-dev-approvals',
+reviewNotificationEnabled: true, // requireManualApproval と併用推奨。承認者が判断前にレビュー結果を見られる
 ```
 
 ### Security Hub へのインポートを有効にする

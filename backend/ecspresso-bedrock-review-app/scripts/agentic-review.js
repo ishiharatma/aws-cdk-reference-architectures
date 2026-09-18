@@ -15,12 +15,16 @@
  *   RISK_THRESHOLD         Minimum risk level that blocks the build: low|medium|high|critical (default: high)
  *   REVIEW_REPORT_FILE     Where to write the report (default: agentic-review-report.json)
  *   REVIEW_LANGUAGE        Language the model writes its summary/findings in: en|ja (default: en)
+ *   REVIEW_NOTIFICATION_ENABLED   Publish the summary to SNS: true|false (default: false)
+ *   REVIEW_NOTIFICATION_TOPIC_ARN  SNS topic ARN to publish to (required when the above is true)
+ *   PROJECT / ENV                  Included in the notification subject, if set
  */
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 const SUPPORTED_LANGUAGES = ['en', 'ja'];
@@ -197,6 +201,38 @@ function aggregate(results) {
   return { overallRiskLevel, results };
 }
 
+function formatNotificationMessage(report, { project, env, threshold }) {
+  const lines = [
+    `Project: ${project ?? 'unknown'}`,
+    `Environment: ${env ?? 'unknown'}`,
+    `Overall risk level: ${report.overallRiskLevel.toUpperCase()} (threshold: ${threshold.toUpperCase()})`,
+    '',
+  ];
+  for (const r of report.results) {
+    lines.push(`[${r.riskLevel.toUpperCase()}] ${r.label}: ${r.summary}`);
+    for (const f of r.findings) {
+      lines.push(`  - (${f.severity}) ${f.detail}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+// This is the only way a human sees the review result before the Approve
+// stage: ManualApprovalAction's additionalInformation is a static string
+// baked into the CloudFormation template and can't carry a per-run value.
+// A notification failure here must never fail the build -- it's a
+// convenience layer on top of the CodeBuild logs and report artifact, not
+// the source of truth for the risk decision.
+async function publishReviewNotification(report, { region, topicArn, project, env, threshold }) {
+  const client = new SNSClient({ region });
+  const subject = `[${project ?? 'project'}][${env ?? 'env'}] Agentic Review: ${report.overallRiskLevel.toUpperCase()} risk`.slice(
+    0,
+    100
+  );
+  const message = formatNotificationMessage(report, { project, env, threshold });
+  await client.send(new PublishCommand({ TopicArn: topicArn, Subject: subject, Message: message }));
+}
+
 async function main() {
   const modelId = process.env.BEDROCK_MODEL_ID;
   if (!modelId) {
@@ -245,6 +281,27 @@ async function main() {
     }
   }
   console.log(`Overall risk level: ${report.overallRiskLevel.toUpperCase()} (threshold: ${threshold.toUpperCase()})`);
+
+  const notificationEnabled = process.env.REVIEW_NOTIFICATION_ENABLED === 'true';
+  if (notificationEnabled) {
+    const topicArn = process.env.REVIEW_NOTIFICATION_TOPIC_ARN;
+    if (!topicArn) {
+      console.error('REVIEW_NOTIFICATION_ENABLED is true but REVIEW_NOTIFICATION_TOPIC_ARN is not set; skipping notification.');
+    } else {
+      try {
+        await publishReviewNotification(report, {
+          region,
+          topicArn,
+          project: process.env.PROJECT,
+          env: process.env.ENV,
+          threshold,
+        });
+        console.log(`Published review summary to ${topicArn}`);
+      } catch (err) {
+        console.error('Failed to publish review summary notification (continuing):', err);
+      }
+    }
+  }
 
   if (RISK_LEVELS.indexOf(report.overallRiskLevel) >= RISK_LEVELS.indexOf(threshold)) {
     console.error(

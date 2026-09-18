@@ -61,9 +61,48 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 | --------- | ------------- |
 | CodeCommit repository (`RepositoryStack`) | Seeded from `backend/ecspresso-bedrock-review-app/` on `develop` |
 | Test / Build CodeBuild projects | `npm test`; `docker build` → Trivy scan (JSON output, `--exit-code 1` on HIGH/CRITICAL, blocking) → ASFF conversion (`scripts/sechub_parser.py`) → ECR push (`imagedefinitions.json`, `image-tag.txt`) |
-| AgenticReview CodeBuild project | Re-clones CodeCommit with full history (`CodeCommitSourceAction` only hands over a snapshot) to compute `git diff`, then runs `scripts/agentic-review.js` against Bedrock |
+| AgenticReview CodeBuild project | Re-clones CodeCommit with full history (`CodeCommitSourceAction` only hands over a snapshot) to compute `git diff`, then runs `scripts/agentic-review.js` against Bedrock. Publishes an `AgenticReviewOutput` pipeline artifact and, optionally, an SNS notification — see "Where to find the review result" below |
 | Deploy CodeBuild project | Resolves ECS cluster/service/role/network settings from SSM, then `ecspresso render` only (no `verify`/`deploy` — see below) |
 | SSM parameters (`/<project>/<env>/ecs/*`) | Created by `PipelineStack` as placeholders (`REPLACE_ME`); overwrite with real values if you point this at an actual ECS cluster |
+
+## Where to find the review result
+
+- **CodeBuild logs** (always available): the AgenticReview CodeBuild
+  project's log group (`/<project>/<env>/codebuild/agentic-review`, 1-month
+  retention) has the full `=== Agentic Code Review Report ===` output —
+  per-perspective risk level, summary, and findings.
+- **Pipeline artifact** `AgenticReviewOutput`: the `AgenticReview` action
+  now publishes `agentic-review-report.json` as a CodePipeline artifact (via
+  `outputs: [reviewOutput]`), so it survives past the CodeBuild run and can
+  be pulled from the pipeline's S3 artifact bucket for any past execution —
+  previously this JSON was written to CodeBuild's throwaway workspace and
+  lost the moment the build finished, even though `buildspec-review.yml`
+  had an `artifacts:` block for it (the `CodeBuildAction` had no matching
+  `outputs`, so CodePipeline never uploaded it).
+- **SNS notification** (opt-in, see below): the only way to put the result
+  in front of a human *before* the Approve stage, since
+  `ManualApprovalAction.additionalInformation` is a static string baked
+  into the CloudFormation template and can't carry a per-run value.
+
+### Notifying a human of the review result (`reviewNotificationEnabled`)
+
+Set `EnvParams.reviewNotificationEnabled: true` (→ CodeBuild env var
+`REVIEW_NOTIFICATION_ENABLED=true`) to have the AgenticReview stage publish
+its summary to SNS right after the review completes:
+
+```typescript
+// parameters/dev-params.ts
+reviewNotificationEnabled: true, // publish the review summary to SNS before Approve
+```
+
+- **Topic**: `approvalTopicArn` if set (most likely to reach whoever acts on
+  the Approve stage), otherwise the pipeline's own failure-notification
+  topic (`NotificationTopic`).
+- **Default: `false`** — the summary is only in the CodeBuild logs and the
+  `AgenticReviewOutput` artifact; nothing is published.
+- A publish failure (e.g. misconfigured topic) is logged and never fails
+  the build — it's a convenience layer, not the source of truth for the
+  risk decision (that's still the `RISK_THRESHOLD` exit-code check).
 
 ## Why `ecspresso verify` / `ecspresso deploy` are not run
 
@@ -240,6 +279,8 @@ npm test
   project/environment's own SSM path (`/${project}/${env}/ecs/*`)
 - ✅ Artifact bucket blocks all public access and enforces SSL; the SNS
   notification topic enforces SSL (`enforceSSL: true`)
+- ✅ `AgenticReview`'s `sns:Publish` grant is scoped to the exact
+  notification/approval topic ARN it publishes to, not `*`
 - ✅ `AwsSolutionsChecks` (CDK Nag) runs in `test/compliance/`; every
   remaining wildcard/managed-policy finding is suppressed with a written
   reason (see `lib/stacks/pipeline-stack.ts`)
@@ -271,6 +312,7 @@ npm test
 // parameters/dev-params.ts
 requireManualApproval: true,
 approvalTopicArn: 'arn:aws:sns:ap-northeast-1:111111111111:ecspresso-bedrock-review-dev-approvals',
+reviewNotificationEnabled: true, // recommended alongside requireManualApproval, so approvers see the review before deciding
 ```
 
 ### Enabling Security Hub import

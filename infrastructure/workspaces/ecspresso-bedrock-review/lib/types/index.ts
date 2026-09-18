@@ -76,4 +76,17 @@ export interface EnvParams extends EnvironmentConfig {
    * @default false
    */
   readonly securityHubImportEnabled?: boolean;
+
+  /**
+   * Publish the agentic review's summary to the pipeline's SNS
+   * notification topic when the AgenticReview stage completes. This is the
+   * only way to put the review result in front of a human before the
+   * Approve stage, since ManualApprovalAction's `additionalInformation` is
+   * a static string baked into the CloudFormation template and can't carry
+   * a per-run value. When false (default), the summary is only available
+   * in the AgenticReview CodeBuild logs and the AgenticReviewOutput
+   * artifact.
+   * @default false
+   */
+  readonly reviewNotificationEnabled?: boolean;
 }

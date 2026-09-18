@@ -34,6 +34,22 @@ Source(CodeCommit) → Test → Build → AgenticReview(Bedrock) → [Approve*] 
 `RISK_THRESHOLD`（既定 `high`）以上の場合、CodeBuild を失敗させてパイプラインを止める
 （ブロッキング）。
 
+## レビュー結果はどこで確認できるか
+
+- CodeBuild ログ（`AgenticReview` プロジェクト）には常に全文のレポートがある。
+- `AgenticReviewOutput` パイプラインアーティファクトが
+  `agentic-review-report.json` を CodeBuild 実行後も保持する。
+- オプションで（`REVIEW_NOTIFICATION_ENABLED=true`）、`agentic-review.js`
+  がレビュー完了直後にサマリーを SNS トピック
+  （`REVIEW_NOTIFICATION_TOPIC_ARN`）へ publish する — これが手動承認
+  ステージがデプロイ可否を判断する**前に**人間へレビュー結果を届ける
+  唯一の手段。CodePipeline の
+  `ManualApprovalAction.additionalInformation` は実行ごとに変わる値を
+  持てない静的文字列であるため。publish に失敗してもログに残すだけで
+  ビルドは失敗させない。既定は `false`。トピックの選び方やアーティ
+  ファクトの仕組みの詳細は CDK 側 README の「レビュー結果はどこで確認
+  できるか」節を参照。
+
 ## Bedrock モデルの切り替え
 
 Agentic Review が使うモデルは CodeBuild 環境変数 `BEDROCK_MODEL_ID` で切り替える

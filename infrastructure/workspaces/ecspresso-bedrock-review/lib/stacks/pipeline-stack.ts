@@ -103,6 +103,13 @@ export class PipelineStack extends cdk.Stack {
 
     const sourceOutput = new codepipeline.Artifact('SourceArtifact');
     const buildOutput = new codepipeline.Artifact('BuildArtifact');
+    const reviewOutput = new codepipeline.Artifact('AgenticReviewOutput');
+
+    // Where to send the agentic review summary when reviewNotificationEnabled
+    // is on: the dedicated approval topic if one is configured (most likely
+    // to reach whoever will act on the Approve stage), otherwise the
+    // pipeline's own notification topic.
+    const reviewNotificationTopicArn = envParams.approvalTopicArn ?? notificationTopic.topicArn;
 
     const commonEnvVars: Record<string, codebuild.BuildEnvironmentVariable> = {
       PROJECT: { value: project },
@@ -209,6 +216,8 @@ export class PipelineStack extends cdk.Stack {
           BEDROCK_MODEL_ID: { value: envParams.bedrockModelId },
           RISK_THRESHOLD: { value: riskThreshold },
           REVIEW_LANGUAGE: { value: envParams.reviewLanguage ?? 'en' },
+          REVIEW_NOTIFICATION_ENABLED: { value: String(envParams.reviewNotificationEnabled ?? false) },
+          REVIEW_NOTIFICATION_TOPIC_ARN: { value: reviewNotificationTopicArn },
         },
       },
       logging: {
@@ -236,6 +245,17 @@ export class PipelineStack extends cdk.Stack {
           `arn:aws:bedrock:${region}::foundation-model/*`,
           `arn:aws:bedrock:${region}:${accountId}:inference-profile/*`,
         ],
+      })
+    );
+    /* Lets the review post its summary to reviewNotificationTopicArn so a human
+     * can see it before the Approve stage. Granted unconditionally (like the
+     * Security Hub permission above) so REVIEW_NOTIFICATION_ENABLED is a pure
+     * env var toggle; a no-op when it's false. */
+    reviewProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowSnsPublishReviewSummary',
+        actions: ['sns:Publish'],
+        resources: [reviewNotificationTopicArn],
       })
     );
 
@@ -321,6 +341,7 @@ export class PipelineStack extends cdk.Stack {
             actionName: 'BedrockAgenticReview',
             project: reviewProject,
             input: sourceOutput,
+            outputs: [reviewOutput],
           }),
         ],
       },

@@ -6,8 +6,10 @@ import { PipelineStack } from 'lib/stacks/pipeline-stack';
 import {
   testEnvParams,
   testEnvParamsWithApproval,
+  testEnvParamsWithApprovalTopicAndNotification,
   testEnvParamsWithAutoScaling,
   testEnvParamsWithJapaneseReview,
+  testEnvParamsWithReviewNotification,
   testSharedParams,
 } from 'test/parameters/test-params';
 
@@ -74,6 +76,44 @@ describe('PipelineStack', () => {
           Match.objectLike({
             Sid: 'AllowBedrockInvoke',
             Action: 'bedrock:InvokeModel',
+          }),
+        ]),
+      },
+    });
+  });
+
+  test('AgenticReview action publishes an output artifact (so the report survives the build)', () => {
+    template.hasResourceProperties('AWS::CodePipeline::Pipeline', {
+      Stages: Match.arrayWith([
+        Match.objectLike({
+          Name: 'AgenticReview',
+          Actions: [
+            Match.objectLike({
+              Name: 'BedrockAgenticReview',
+              OutputArtifacts: [Match.objectLike({ Name: Match.stringLikeRegexp('.+') })],
+            }),
+          ],
+        }),
+      ]),
+    });
+  });
+
+  test('AgenticReview defaults REVIEW_NOTIFICATION_ENABLED to false but still gets sns:Publish scoped to the notification topic', () => {
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-agentic-review',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'REVIEW_NOTIFICATION_ENABLED', Value: 'false' }),
+          Match.objectLike({ Name: 'REVIEW_NOTIFICATION_TOPIC_ARN' }),
+        ]),
+      }),
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowSnsPublishReviewSummary',
+            Action: 'sns:Publish',
           }),
         ]),
       },
@@ -164,6 +204,70 @@ describe('PipelineStack — reviewLanguage', () => {
       Environment: Match.objectLike({
         EnvironmentVariables: Match.arrayWith([Match.objectLike({ Name: 'REVIEW_LANGUAGE', Value: 'ja' })]),
       }),
+    });
+  });
+});
+
+describe('PipelineStack — reviewNotificationEnabled', () => {
+  test('passes REVIEW_NOTIFICATION_ENABLED=true and the default notification topic ARN', () => {
+    const app = new cdk.App();
+    const stack = new PipelineStack(app, 'TestPipelineReviewNotification', {
+      env: { account: '111111111111', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      project: 'testproject',
+      environment: Environment.DEVELOPMENT,
+      sharedParams: testSharedParams,
+      envParams: testEnvParamsWithReviewNotification,
+      repository: testRepository(app),
+    });
+    const template = Template.fromStack(stack);
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-agentic-review',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'REVIEW_NOTIFICATION_ENABLED', Value: 'true' }),
+          Match.objectLike({
+            Name: 'REVIEW_NOTIFICATION_TOPIC_ARN',
+            Value: Match.objectLike({ Ref: Match.stringLikeRegexp('NotificationTopic') }),
+          }),
+        ]),
+      }),
+    });
+  });
+
+  test('prefers approvalTopicArn over the default notification topic when both are set', () => {
+    const app = new cdk.App();
+    const stack = new PipelineStack(app, 'TestPipelineReviewNotificationApprovalTopic', {
+      env: { account: '111111111111', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      project: 'testproject',
+      environment: Environment.DEVELOPMENT,
+      sharedParams: testSharedParams,
+      envParams: testEnvParamsWithApprovalTopicAndNotification,
+      repository: testRepository(app),
+    });
+    const template = Template.fromStack(stack);
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-agentic-review',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({
+            Name: 'REVIEW_NOTIFICATION_TOPIC_ARN',
+            Value: 'arn:aws:sns:ap-northeast-1:111111111111:custom-approval-topic',
+          }),
+        ]),
+      }),
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowSnsPublishReviewSummary',
+            Action: 'sns:Publish',
+            Resource: 'arn:aws:sns:ap-northeast-1:111111111111:custom-approval-topic',
+          }),
+        ]),
+      },
     });
   });
 });
