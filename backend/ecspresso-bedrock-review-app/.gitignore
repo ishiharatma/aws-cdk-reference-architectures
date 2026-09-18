@@ -27,3 +27,8 @@ dist/
 build/
 coverage/
 junit.xml
+
+# Python (scripts/sechub_parser.py local runs)
+__pycache__/
+*.pyc
+results.json

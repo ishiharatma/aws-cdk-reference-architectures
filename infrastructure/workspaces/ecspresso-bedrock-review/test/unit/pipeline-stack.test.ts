@@ -73,6 +73,27 @@ describe('PipelineStack', () => {
     });
   });
 
+  test('Build CodeBuild project defaults SECURITYHUB_IMPORT_ENABLED to false and gets BatchImportFindings permission', () => {
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-build',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'SECURITYHUB_IMPORT_ENABLED', Value: 'false' }),
+        ]),
+      }),
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowSecurityHubBatchImportFindings',
+            Action: 'securityhub:BatchImportFindings',
+          }),
+        ]),
+      },
+    });
+  });
+
   test('SSM parameters for ECS cluster/service placeholders are created', () => {
     template.hasResourceProperties('AWS::SSM::Parameter', {
       Name: '/testproject/dev/ecs/cluster-name',

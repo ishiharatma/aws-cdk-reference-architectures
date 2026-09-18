@@ -58,7 +58,7 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 | コンポーネント | 設計ポイント |
 | --------- | ------------- |
 | CodeCommit リポジトリ（`RepositoryStack`） | `backend/ecspresso-bedrock-review-app/` の内容を `develop` ブランチへシード |
-| Test / Build CodeBuild | `npm test`；`docker build` → Trivy スキャン（HIGH/CRITICAL で `--exit-code 1`、ブロッキング）→ ECR push（`imagedefinitions.json`, `image-tag.txt`） |
+| Test / Build CodeBuild | `npm test`；`docker build` → Trivy スキャン（JSON出力、HIGH/CRITICAL で `--exit-code 1`、ブロッキング）→ ASFF変換（`scripts/sechub_parser.py`）→ ECR push（`imagedefinitions.json`, `image-tag.txt`） |
 | AgenticReview CodeBuild | `CodeCommitSourceAction` はスナップショットしか渡さないため、CodeCommit を履歴付きで再 clone して `git diff` を計算し、`scripts/agentic-review.js` で Bedrock をレビューする |
 | Deploy CodeBuild | SSM から ECS クラスタ/サービス/ロール/ネットワーク設定を解決した上で `ecspresso render` のみ実行（`verify`/`deploy` は未実施。理由は下記） |
 | SSM パラメータ（`/<project>/<env>/ecs/*`） | `PipelineStack` がプレースホルダー（`REPLACE_ME`）として作成。実クラスタに接続する場合は実値で上書きする |
@@ -73,6 +73,30 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 サービス更新）はどちらも実在しないリソースに対して AWS API を呼び出すため、
 コメントアウトしている。実 ECS クラスタに接続する場合は
 `buildspec-deploy.yml` 内のコメントを外すこと。
+
+## Trivy の検出結果 → Security Hub（ASFF変換、環境変数でゲート）
+
+`buildspec-build.yml` は Trivy を `--format json` で実行し、その結果を
+`scripts/sechub_parser.py` で
+[AWS Security Finding Format (ASFF)](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html)
+に変換する。実装は AWS Security Blog の
+[「Trivy と AWS Security Hub を使ったコンテナ脆弱性スキャン CI/CD パイプラインの構築方法」](https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
+とそのリファレンススクリプト
+[`aws-samples/aws-security-hub-scan-with-trivy`](https://github.com/aws-samples/aws-security-hub-scan-with-trivy)
+の `sechub_parser.py` を、現行の Trivy JSON 構造（`Results[].Vulnerabilities[]`）
+向けに書き直したもの。
+
+変換した findings を実際に Security Hub へ送信するかどうかは
+`EnvParams.securityHubImportEnabled`（`SECURITYHUB_IMPORT_ENABLED` 環境変数）
+で制御する:
+
+- `false`（既定）: ASFF に変換して標準出力にログ出力するだけで、Security Hub
+  へは送信しない
+- `true`: `securityhub:BatchImportFindings` で実送信する（100件ずつバッチ分割）
+
+このトグルは、上記の HIGH/CRITICAL によるビルドブロッキング判定とは独立して
+おり、`SECURITYHUB_IMPORT_ENABLED` の値に関わらず Trivy の `--exit-code` に
+よるビルド失敗は常に発生する。
 
 ## Bedrock レビューモデルの切り替え
 
@@ -150,6 +174,9 @@ npm test
 
 - ✅ `Build` の Trivy スキャンは HIGH/CRITICAL の脆弱性を検知すると
   （`--exit-code 1`）ECR への push をブロックする
+- ✅ Security Hub への送信は `securityHubImportEnabled` が明示的に `true`
+  の場合のみ発生する。既定ではパイプラインが `BatchImportFindings` を呼ぶ
+  ことはなく、変換した ASFF をログ出力するだけ
 - ✅ `AgenticReview` の CodeBuild ロールは、対象リポジトリ ARN に対する
   `codecommit:GitPull` と、このリージョンの foundation-model /
   inference-profile ARN に対する `bedrock:InvokeModel` のみに絞っている
@@ -189,6 +216,21 @@ requireManualApproval: true,
 approvalTopicArn: 'arn:aws:sns:ap-northeast-1:111111111111:ecspresso-bedrock-review-dev-approvals',
 ```
 
+### Security Hub へのインポートを有効にする
+
+```typescript
+// parameters/dev-params.ts
+securityHubImportEnabled: true, // または process.env.SECURITYHUB_IMPORT_ENABLED === 'true'
+```
+
+実際に Security Hub に findings を表示させるには、事前に（アカウント/
+リージョンごとに1回）以下も実行しておく:
+
+```bash
+aws securityhub enable-import-findings-for-product \
+  --product-arn arn:aws:securityhub:ap-northeast-1::product/aquasecurity/aquasecurity
+```
+
 ### レビュー観点の調整
 
 `backend/ecspresso-bedrock-review-app/scripts/agentic-review.js` の
@@ -201,10 +243,13 @@ cost）の追加・削除・文言変更を行う。
 - [AWS CodePipeline User Guide](https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html)
 - [AWS CodeBuild User Guide](https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html)
 - [Amazon Bedrock Runtime — Converse API](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html)
+- [Trivy と AWS Security Hub を使ったコンテナ脆弱性スキャン CI/CD パイプラインの構築方法](https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
+- [AWS Security Finding Format (ASFF) syntax](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html)
 
 ### 関連ツール
 - [ecspresso](https://github.com/kayac/ecspresso) — ECS デプロイツール
 - [go-jsonnet](https://github.com/google/go-jsonnet) — ecspresso が使う jsonnet 実装
+- [aws-samples/aws-security-hub-scan-with-trivy](https://github.com/aws-samples/aws-security-hub-scan-with-trivy) — 本ワークスペースの `sechub_parser.py` の元にしたリファレンス実装
 
 ### 関連アーキテクチャ
 - [`cicd-codecommit-cross-account`](../cicd-codecommit-cross-account/) — 本ワークスペースの土台にした CodeCommit → CodePipeline の雛形

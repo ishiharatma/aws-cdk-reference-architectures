@@ -60,7 +60,7 @@ Source(CodeCommit) ─▶ Test ─▶ Build ─▶ AgenticReview(Bedrock) ─▶
 | Component | Design Points |
 | --------- | ------------- |
 | CodeCommit repository (`RepositoryStack`) | Seeded from `backend/ecspresso-bedrock-review-app/` on `develop` |
-| Test / Build CodeBuild projects | `npm test`; `docker build` → Trivy scan (`--exit-code 1` on HIGH/CRITICAL, blocking) → ECR push (`imagedefinitions.json`, `image-tag.txt`) |
+| Test / Build CodeBuild projects | `npm test`; `docker build` → Trivy scan (JSON output, `--exit-code 1` on HIGH/CRITICAL, blocking) → ASFF conversion (`scripts/sechub_parser.py`) → ECR push (`imagedefinitions.json`, `image-tag.txt`) |
 | AgenticReview CodeBuild project | Re-clones CodeCommit with full history (`CodeCommitSourceAction` only hands over a snapshot) to compute `git diff`, then runs `scripts/agentic-review.js` against Bedrock |
 | Deploy CodeBuild project | Resolves ECS cluster/service/role/network settings from SSM, then `ecspresso render` only (no `verify`/`deploy` — see below) |
 | SSM parameters (`/<project>/<env>/ecs/*`) | Created by `PipelineStack` as placeholders (`REPLACE_ME`); overwrite with real values if you point this at an actual ECS cluster |
@@ -76,6 +76,29 @@ task definition and updates the service) both call AWS APIs against
 resources that don't exist in this sample and are therefore commented out.
 If you wire this pipeline to a real ECS cluster, uncomment the two lines
 marked in `buildspec-deploy.yml`.
+
+## Trivy findings → Security Hub (ASFF), gated by an env var
+
+`buildspec-build.yml` runs Trivy with `--format json` and converts the
+result to [AWS Security Finding Format (ASFF)](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html)
+via `scripts/sechub_parser.py` — modeled on the AWS Security Blog's
+[*How to build a CI/CD pipeline for container vulnerability scanning with
+Trivy and AWS Security Hub*](https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
+and its reference script,
+[`aws-samples/aws-security-hub-scan-with-trivy`](https://github.com/aws-samples/aws-security-hub-scan-with-trivy),
+adapted for the current Trivy JSON shape (`Results[].Vulnerabilities[]`).
+
+Whether the converted findings are actually sent to Security Hub is
+controlled by `EnvParams.securityHubImportEnabled` (`SECURITYHUB_IMPORT_ENABLED`
+env var):
+
+- `false` (default): findings are converted to ASFF and logged to stdout
+  only — nothing is sent to Security Hub
+- `true`: findings are sent via `securityhub:BatchImportFindings` (chunked
+  at 100 per request)
+
+This toggle is independent of the HIGH/CRITICAL build-blocking check above
+— Trivy's `--exit-code` still fails the build either way.
 
 ## Switching the Bedrock review model
 
@@ -154,6 +177,9 @@ npm test
 
 - ✅ `Build`'s Trivy scan blocks the push to ECR when a HIGH/CRITICAL
   vulnerability is found in the image (`--exit-code 1`)
+- ✅ Security Hub findings are only sent when `securityHubImportEnabled` is
+  explicitly `true`; by default the pipeline never calls
+  `BatchImportFindings`, only logs the converted ASFF
 - ✅ `AgenticReview`'s CodeBuild role is scoped to `codecommit:GitPull` on
   this one repository ARN and `bedrock:InvokeModel` on foundation-model /
   inference-profile ARNs in this region only
@@ -194,6 +220,21 @@ requireManualApproval: true,
 approvalTopicArn: 'arn:aws:sns:ap-northeast-1:111111111111:ecspresso-bedrock-review-dev-approvals',
 ```
 
+### Enabling Security Hub import
+
+```typescript
+// parameters/dev-params.ts
+securityHubImportEnabled: true, // or: process.env.SECURITYHUB_IMPORT_ENABLED === 'true'
+```
+
+Before findings will actually appear in Security Hub, also run (once, per
+account/region):
+
+```bash
+aws securityhub enable-import-findings-for-product \
+  --product-arn arn:aws:securityhub:ap-northeast-1::product/aquasecurity/aquasecurity
+```
+
 ### Adjusting the review perspectives
 
 Edit the `PERSPECTIVES` array in
@@ -207,10 +248,13 @@ default).
 - [AWS CodePipeline User Guide](https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html)
 - [AWS CodeBuild User Guide](https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html)
 - [Amazon Bedrock Runtime — Converse API](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html)
+- [How to build a CI/CD pipeline for container vulnerability scanning with Trivy and AWS Security Hub](https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
+- [AWS Security Finding Format (ASFF) syntax](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html)
 
 ### Related Tools
 - [ecspresso](https://github.com/kayac/ecspresso) — ECS deployment tool
 - [go-jsonnet](https://github.com/google/go-jsonnet) — jsonnet implementation used by ecspresso
+- [aws-samples/aws-security-hub-scan-with-trivy](https://github.com/aws-samples/aws-security-hub-scan-with-trivy) — reference `sechub_parser.py` this workspace's version is adapted from
 
 ### Related Architectures
 - [`cicd-codecommit-cross-account`](../cicd-codecommit-cross-account/) — the CodeCommit → CodePipeline scaffolding this workspace is based on

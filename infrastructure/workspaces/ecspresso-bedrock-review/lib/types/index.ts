@@ -47,4 +47,13 @@ export interface EnvParams extends EnvironmentConfig {
   readonly ecsDesiredCount?: number;
   /** Enable ECS Exec on the service. @default false */
   readonly enableEcsExec?: boolean;
+
+  /**
+   * Actually call Security Hub BatchImportFindings with the Trivy scan
+   * results (converted to ASFF by scripts/sechub_parser.py). When false,
+   * the Build stage still runs the conversion but only logs the ASFF
+   * findings — nothing is sent to Security Hub.
+   * @default false
+   */
+  readonly securityHubImportEnabled?: boolean;
 }

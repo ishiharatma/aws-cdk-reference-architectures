@@ -137,6 +137,7 @@ export class PipelineStack extends cdk.Stack {
         environmentVariables: {
           ...commonEnvVars,
           ECR_REPO_URI: { value: ecrRepository.repositoryUri },
+          SECURITYHUB_IMPORT_ENABLED: { value: String(envParams.securityHubImportEnabled ?? false) },
         },
       },
       logging: {
@@ -157,9 +158,33 @@ export class PipelineStack extends cdk.Stack {
       })
     );
     ecrRepository.grantPullPush(buildProject);
+    /* Trivy → ASFF 変換（sechub_parser.py）に必要な権限。
+     * BatchImportFindings は Security Hub 側にリソースレベル ARN がなく '*' 必須。
+     * SECURITYHUB_IMPORT_ENABLED=false の既定では呼び出されないが、環境変数だけで
+     * トグルできるよう権限は常に付与しておく。 */
+    buildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowStsGetCallerIdentity',
+        actions: ['sts:GetCallerIdentity'],
+        resources: ['*'],
+      })
+    );
+    buildProject.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowSecurityHubBatchImportFindings',
+        actions: ['securityhub:BatchImportFindings'],
+        resources: ['*'],
+      })
+    );
     NagSuppressions.addResourceSuppressions(
       buildProject,
-      [{ id: 'AwsSolutions-IAM5', reason: 'ECR GetAuthorizationToken requires a wildcard resource.' }],
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'ECR GetAuthorizationToken, STS GetCallerIdentity, and Security Hub BatchImportFindings have no resource-level ARNs to scope to.',
+        },
+      ],
       true
     );
 

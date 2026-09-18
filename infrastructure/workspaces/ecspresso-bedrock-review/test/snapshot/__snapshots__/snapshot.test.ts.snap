@@ -517,7 +517,7 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
           "rules_to_suppress": [
             {
               "id": "AwsSolutions-IAM5",
-              "reason": "ECR GetAuthorizationToken requires a wildcard resource.",
+              "reason": "ECR GetAuthorizationToken, STS GetCallerIdentity, and Security Hub BatchImportFindings have no resource-level ARNs to scope to.",
             },
           ],
         },
@@ -595,6 +595,11 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
                 ],
               },
             },
+            {
+              "Name": "SECURITYHUB_IMPORT_ENABLED",
+              "Type": "PLAINTEXT",
+              "Value": "false",
+            },
           ],
           "Image": "aws/codebuild/standard:7.0",
           "ImagePullCredentialsType": "CODEBUILD",
@@ -629,7 +634,7 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
           "rules_to_suppress": [
             {
               "id": "AwsSolutions-IAM5",
-              "reason": "ECR GetAuthorizationToken requires a wildcard resource.",
+              "reason": "ECR GetAuthorizationToken, STS GetCallerIdentity, and Security Hub BatchImportFindings have no resource-level ARNs to scope to.",
             },
           ],
         },
@@ -656,7 +661,7 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
           "rules_to_suppress": [
             {
               "id": "AwsSolutions-IAM5",
-              "reason": "ECR GetAuthorizationToken requires a wildcard resource.",
+              "reason": "ECR GetAuthorizationToken, STS GetCallerIdentity, and Security Hub BatchImportFindings have no resource-level ARNs to scope to.",
             },
           ],
         },
@@ -772,6 +777,18 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
               "Action": "ecr:GetAuthorizationToken",
               "Effect": "Allow",
               "Resource": "*",
+            },
+            {
+              "Action": "sts:GetCallerIdentity",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "AllowStsGetCallerIdentity",
+            },
+            {
+              "Action": "securityhub:BatchImportFindings",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "AllowSecurityHubBatchImportFindings",
             },
             {
               "Action": [
@@ -2254,7 +2271,7 @@ exports[`Stack Snapshot Tests RepositoryStack CloudFormation template snapshot 1
           "BranchName": "develop",
           "S3": {
             "Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-            "Key": "68aa3662db583b85ba81e0cd3f8d0ef06e85de05bff856752191fc1c8893c036.zip",
+            "Key": "a884bd8422eea8078d2eea15a2ff61f846981fbf4202135f95649f7b7bd72532.zip",
           },
         },
         "RepositoryDescription": "testproject sample app for the ECS Fargate + ecspresso + Bedrock agentic review CI/CD demo",

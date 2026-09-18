@@ -1,10 +1,18 @@
 version: 0.2
 
-# Build stage: docker build → Trivy スキャン(HIGH/CRITICAL でビルド失敗、ECR への push を止める) → ECR push。
+# Build stage: docker build → Trivy スキャン → ASFF変換(sechub_parser.py) → ECR push。
+# HIGH/CRITICAL の脆弱性が見つかった場合はビルドを失敗させ、ECR への push を止める。
+# Security Hub への実インポートは SECURITYHUB_IMPORT_ENABLED=true のときのみ行う
+# （既定は false — 変換した ASFF findings をログに出力するだけで送信はしない）。
+# 参考: https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
+#
 # CodeBuild プロジェクト側で以下の環境変数が注入される想定:
-#   PROJECT, ENV, ECR_REPO_URI
+#   PROJECT, ENV, ECR_REPO_URI, SECURITYHUB_IMPORT_ENABLED
 
 phases:
+  install:
+    commands:
+      - pip install --quiet boto3
   pre_build:
     commands:
       - echo "=== [Build] project=${PROJECT} env=${ENV} ==="
@@ -17,12 +25,25 @@ phases:
     commands:
       - echo "Building the Docker image..."
       - docker build -t ${ECR_REPO_URI}:${IMAGE_TAG} -t ${ECR_REPO_URI}:latest .
-      - echo "Scanning image with Trivy (HIGH/CRITICAL findings fail the build, blocking the push to ECR)..."
+      - echo "Scanning image with Trivy..."
       - |
+        set +e
         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
           -v trivy-cache:/root/.cache/ \
-          aquasec/trivy image --exit-code 1 --severity HIGH,CRITICAL --no-progress \
+          -v "${PWD}:/output" \
+          aquasec/trivy image --format json --output /output/results.json \
+          --exit-code 1 --severity HIGH,CRITICAL --no-progress \
           ${ECR_REPO_URI}:${IMAGE_TAG}
+        TRIVY_EXIT=$?
+        set -e
+        echo "Trivy exit code: ${TRIVY_EXIT}"
+      - echo "Converting Trivy results to ASFF (Security Hub import controlled by SECURITYHUB_IMPORT_ENABLED=${SECURITYHUB_IMPORT_ENABLED:-false})..."
+      - CONTAINER_NAME=${ECR_REPO_URI} CONTAINER_TAG=${IMAGE_TAG} python3 scripts/sechub_parser.py
+      - |
+        if [ "${TRIVY_EXIT}" -ne 0 ]; then
+          echo "Trivy found HIGH/CRITICAL vulnerabilities. Failing the build (blocking the push to ECR)."
+          exit 1
+        fi
   post_build:
     commands:
       - echo "Pushing the Docker images..."

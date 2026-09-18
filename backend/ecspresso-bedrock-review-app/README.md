@@ -14,9 +14,10 @@ Review 用のスクリプト、ecspresso（jsonnet）のデプロイ定義を追
 .
 ├── src/                      アプリ本体（Express）
 ├── scripts/agentic-review.js Bedrock を使った疑似マルチエージェント・コードレビュー
+├── scripts/sechub_parser.py  Trivy の JSON 結果を ASFF に変換（Security Hub 送信は環境変数で制御）
 ├── ecspresso/                ecspresso 設定（jsonnet）。cluster/service は SSM 経由で解決
 ├── buildspec-test.yml        Test ステージ: npm ci && npm test
-├── buildspec-build.yml       Build ステージ: docker build → Trivy スキャン(HIGH/CRITICAL でブロッキング) → ECR push
+├── buildspec-build.yml       Build ステージ: docker build → Trivy スキャン → ASFF変換 → ECR push
 ├── buildspec-review.yml      Agentic Review ステージ: git diff を Bedrock でレビュー
 └── buildspec-deploy.yml      Deploy ステージ: ecspresso render（verify/deploy は未実施）
 ```
@@ -35,6 +36,28 @@ Source(CodeCommit) → Test → Build → AgenticReview(Bedrock) → [Approve*] 
 
 Agentic Review が使うモデルは CodeBuild 環境変数 `BEDROCK_MODEL_ID` で切り替える
 （CDK Construct のプロパティ経由でステージごとに指定）。コードの変更は不要。
+
+## Trivy スキャン結果の Security Hub 連携（ASFF変換）
+
+`buildspec-build.yml` の Build ステージは、Trivy を JSON 出力（`--format json`）で
+実行し、その結果を `scripts/sechub_parser.py` で
+[AWS Security Finding Format (ASFF)](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format.html)
+に変換する（参考:
+[Trivy と AWS Security Hub を使ったコンテナ脆弱性スキャン CI/CD パイプラインの構築方法](https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)、
+実装は [aws-samples/aws-security-hub-scan-with-trivy](https://github.com/aws-samples/aws-security-hub-scan-with-trivy) の
+`sechub_parser.py` を、現行の Trivy JSON 構造（`Results[].Vulnerabilities[]`）向けに
+書き直したもの）。
+
+Security Hub への実送信（`BatchImportFindings`）は `SECURITYHUB_IMPORT_ENABLED`
+環境変数で制御する:
+
+- `false`（既定）: ASFF に変換した findings を標準出力にログ出力するだけで、
+  Security Hub へは送信しない
+- `true`: `securityhub:BatchImportFindings` で実際に送信する（100件ずつバッチ分割）
+
+HIGH/CRITICAL の脆弱性があった場合にビルドを失敗させる判定（Trivy の
+`--exit-code`）は、`SECURITYHUB_IMPORT_ENABLED` の値に関わらず常に行われる
+（ASFF 変換・送信の成否とは独立している）。
 
 ## 注意: ecspresso verify / deploy について
 

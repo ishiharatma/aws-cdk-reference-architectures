@@ -22,6 +22,10 @@ const devParams: EnvParams = {
   ecsTaskMemory: 512,
   ecsDesiredCount: 1,
   enableEcsExec: false,
+
+  // Trivy スキャン結果（ASFF変換済み）を Security Hub に実送信するかどうか。
+  // false（既定）ではログ出力のみで、Security Hub へは送信しない。
+  securityHubImportEnabled: process.env.SECURITYHUB_IMPORT_ENABLED === 'true',
 };
 
 params[Environment.DEVELOPMENT] = devParams;
