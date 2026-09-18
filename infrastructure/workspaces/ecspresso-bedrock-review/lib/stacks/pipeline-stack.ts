@@ -208,6 +208,7 @@ export class PipelineStack extends cdk.Stack {
           REPOSITORY_NAME: { value: repository.repositoryName },
           BEDROCK_MODEL_ID: { value: envParams.bedrockModelId },
           RISK_THRESHOLD: { value: riskThreshold },
+          REVIEW_LANGUAGE: { value: envParams.reviewLanguage ?? 'en' },
         },
       },
       logging: {

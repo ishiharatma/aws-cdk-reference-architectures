@@ -6,7 +6,7 @@ version: 0.2
 # compute the git diff.
 #
 # Expected environment variables (injected by the CodeBuild project):
-#   PROJECT, ENV, REPOSITORY_NAME, BEDROCK_MODEL_ID, RISK_THRESHOLD
+#   PROJECT, ENV, REPOSITORY_NAME, BEDROCK_MODEL_ID, RISK_THRESHOLD, REVIEW_LANGUAGE
 # Optional:
 #   DIFF_PATH_PREFIX   restrict the diff to a specific directory (default: the whole repo)
 

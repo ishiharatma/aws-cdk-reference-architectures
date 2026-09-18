@@ -150,6 +150,22 @@ riskThreshold: 'high', // low | medium | high | critical — パイプライン�
 環境変数として渡される。別モデル（クロスリージョン推論プロファイル ID など）
 を試す際もコード変更は不要。
 
+### レビュー結果の出力言語の切り替え
+
+レビューの `summary`/`findings` の言語は `EnvParams.reviewLanguage`
+（`en` | `ja`、既定 `en`）で制御し、CodeBuild の `REVIEW_LANGUAGE` 環境変数
+として渡される:
+
+```typescript
+// parameters/dev-params.ts
+reviewLanguage: 'ja', // レビューの summary/findings を英語ではなく日本語で出力する
+```
+
+このパラメータはレビュー観点（security/infra/quality/cost）のラベルと、
+Bedrock に送るプロンプト本文の言語も切り替える。詳細は
+`scripts/agentic-review.js` の `PERSPECTIVES_BY_LANGUAGE` /
+`PROMPT_TEXT_BY_LANGUAGE` を参照。
+
 ## 前提条件
 
 - `bedrockModelId` に設定するモデルへの Amazon Bedrock アクセスが有効な AWS アカウント

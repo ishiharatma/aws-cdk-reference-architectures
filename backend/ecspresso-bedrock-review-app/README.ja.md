@@ -39,6 +39,11 @@ Source(CodeCommit) → Test → Build → AgenticReview(Bedrock) → [Approve*] 
 Agentic Review が使うモデルは CodeBuild 環境変数 `BEDROCK_MODEL_ID` で切り替える
 （CDK Construct のプロパティ経由でステージごとに指定）。コードの変更は不要。
 
+レビューの `summary`/`findings` の出力言語も同様に `REVIEW_LANGUAGE`
+（`en` | `ja`、既定 `en`）で切り替える（CDK 側は `EnvParams.reviewLanguage`、
+実装は `scripts/agentic-review.js` の `PERSPECTIVES_BY_LANGUAGE` /
+`PROMPT_TEXT_BY_LANGUAGE` を参照）。
+
 ## Trivy スキャン結果の Security Hub 連携（ASFF変換）
 
 `buildspec-build.yml` の Build ステージは、Trivy を JSON 出力（`--format json`）で

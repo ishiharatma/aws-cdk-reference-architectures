@@ -14,6 +14,7 @@
  *   REVIEW_DIFF_FILE       Path to the diff file to review (default: diff.patch)
  *   RISK_THRESHOLD         Minimum risk level that blocks the build: low|medium|high|critical (default: high)
  *   REVIEW_REPORT_FILE     Where to write the report (default: agentic-review-report.json)
+ *   REVIEW_LANGUAGE        Language the model writes its summary/findings in: en|ja (default: en)
  */
 'use strict';
 
@@ -22,33 +23,89 @@ const path = require('path');
 const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
 
 const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
+const SUPPORTED_LANGUAGES = ['en', 'ja'];
 
-const PERSPECTIVES = [
-  {
-    id: 'security',
-    label: 'Security',
-    focus:
-      'missing authentication/authorization, hardcoded secrets/credentials, injection, ' +
-      'unsafe new dependencies, missing input validation',
+const PERSPECTIVES_BY_LANGUAGE = {
+  en: [
+    {
+      id: 'security',
+      label: 'Security',
+      focus:
+        'missing authentication/authorization, hardcoded secrets/credentials, injection, ' +
+        'unsafe new dependencies, missing input validation',
+    },
+    {
+      id: 'infra',
+      label: 'Infra/Ops',
+      focus:
+        'overly broad IAM permissions, misconfigured ECS/container settings, missing observability ' +
+        '(logging, health checks), scalability or graceful-shutdown issues',
+    },
+    {
+      id: 'quality',
+      label: 'Code quality',
+      focus: 'readability, missing error handling, insufficient tests, obvious bugs or logic errors',
+    },
+    {
+      id: 'cost',
+      label: 'Cost',
+      focus: 'over-provisioned resources, unnecessary external API calls, cost from inefficient loops/queries',
+    },
+  ],
+  ja: [
+    {
+      id: 'security',
+      label: 'セキュリティ',
+      focus:
+        '認証・認可の欠落、シークレット/認証情報のハードコード、インジェクション、' +
+        '安全でない依存関係の追加、入力バリデーションの欠如',
+    },
+    {
+      id: 'infra',
+      label: 'インフラ/運用',
+      focus:
+        'IAM権限の過剰付与、ECS/コンテナ設定の不備、可観測性（ログ・ヘルスチェック）の欠落、' +
+        'スケーラビリティやグレースフルシャットダウンの問題',
+    },
+    {
+      id: 'quality',
+      label: 'コード品質',
+      focus: '可読性、エラーハンドリングの欠如、テスト不足、明らかなバグやロジック誤り',
+    },
+    {
+      id: 'cost',
+      label: 'コスト',
+      focus: '過剰なリソース確保、不要な外部API呼び出しの増加、非効率なループ/クエリによるコスト増',
+    },
+  ],
+};
+
+const PROMPT_TEXT_BY_LANGUAGE = {
+  en: {
+    role: (label) => `You are a code reviewer specialized in the ${label} perspective.`,
+    focusLabel: 'What to focus on:',
+    diffInstruction:
+      'Below is the git diff of a pull request. Base your review only on this diff.\n' +
+      'Do not raise risks that are generic or speculative and not evidenced by the diff itself.',
+    jsonInstruction: 'Respond with the following JSON only, and nothing else:',
+    summaryField: 'one-sentence overall review summary, in English',
+    detailField: 'finding detail, in English',
+    emptyInstruction: 'If there is nothing to flag, return an empty findings array and riskLevel "low".',
+    reviewFailedSummary: (message) => `Review call failed and needs manual follow-up: ${message}`,
   },
-  {
-    id: 'infra',
-    label: 'Infra/Ops',
-    focus:
-      'overly broad IAM permissions, misconfigured ECS/container settings, missing observability ' +
-      '(logging, health checks), scalability or graceful-shutdown issues',
+  ja: {
+    role: (label) => `あなたは${label}の観点に特化したコードレビュアーです。`,
+    focusLabel: '着目すべき点:',
+    diffInstruction:
+      '以下は Pull Request の git diff です。この差分のみを根拠にレビューしてください。\n' +
+      '差分に含まれない一般論や推測でのリスク評価はしないでください。',
+    jsonInstruction: '出力は次の JSON 形式のみとし、それ以外のテキストは一切出力しないでください。',
+    summaryField: '一文でのレビュー総評（日本語）',
+    detailField: '指摘内容（日本語）',
+    emptyInstruction: '指摘がない場合は findings を空配列にし、riskLevel は "low" としてください。',
+    reviewFailedSummary: (message) => `レビュー呼び出しに失敗したため要人手確認: ${message}`,
   },
-  {
-    id: 'quality',
-    label: 'Code quality',
-    focus: 'readability, missing error handling, insufficient tests, obvious bugs or logic errors',
-  },
-  {
-    id: 'cost',
-    label: 'Cost',
-    focus: 'over-provisioned resources, unnecessary external API calls, cost from inefficient loops/queries',
-  },
-];
+};
 
 function readDiff() {
   const diffFile = process.env.REVIEW_DIFF_FILE || 'diff.patch';
@@ -64,26 +121,26 @@ function readDiff() {
   return diff.length > MAX_CHARS ? `${diff.slice(0, MAX_CHARS)}\n... (truncated)` : diff;
 }
 
-function buildPrompt(perspective, diff) {
-  return `You are a code reviewer specialized in the ${perspective.label} perspective.
-What to focus on: ${perspective.focus}
+function buildPrompt(perspective, diff, lang) {
+  const t = PROMPT_TEXT_BY_LANGUAGE[lang];
+  return `${t.role(perspective.label)}
+${t.focusLabel} ${perspective.focus}
 
-Below is the git diff of a pull request. Base your review only on this diff.
-Do not raise risks that are generic or speculative and not evidenced by the diff itself.
+${t.diffInstruction}
 
 --- diff start ---
 ${diff}
 --- diff end ---
 
-Respond with the following JSON only, and nothing else:
+${t.jsonInstruction}
 {
   "riskLevel": "low" | "medium" | "high" | "critical",
-  "summary": "one-sentence overall review summary, in English",
+  "summary": "${t.summaryField}",
   "findings": [
-    { "severity": "low" | "medium" | "high" | "critical", "detail": "finding detail, in English" }
+    { "severity": "low" | "medium" | "high" | "critical", "detail": "${t.detailField}" }
   ]
 }
-If there is nothing to flag, return an empty findings array and riskLevel "low".`;
+${t.emptyInstruction}`;
 }
 
 function extractJson(text) {
@@ -97,10 +154,10 @@ function extractJson(text) {
   return JSON.parse(candidate.slice(start, end + 1));
 }
 
-async function reviewPerspective(client, modelId, perspective, diff) {
+async function reviewPerspective(client, modelId, perspective, diff, lang) {
   const command = new ConverseCommand({
     modelId,
-    messages: [{ role: 'user', content: [{ text: buildPrompt(perspective, diff) }] }],
+    messages: [{ role: 'user', content: [{ text: buildPrompt(perspective, diff, lang) }] }],
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   });
 
@@ -126,7 +183,7 @@ async function reviewPerspective(client, modelId, perspective, diff) {
       perspective: perspective.id,
       label: perspective.label,
       riskLevel: 'medium',
-      summary: `Review call failed and needs manual follow-up: ${err.message}`,
+      summary: PROMPT_TEXT_BY_LANGUAGE[lang].reviewFailedSummary(err.message),
       findings: [],
       error: true,
     };
@@ -150,6 +207,11 @@ async function main() {
   if (!RISK_LEVELS.includes(threshold)) {
     throw new Error(`invalid RISK_THRESHOLD: ${threshold}`);
   }
+  const lang = process.env.REVIEW_LANGUAGE || 'en';
+  if (!SUPPORTED_LANGUAGES.includes(lang)) {
+    throw new Error(`invalid REVIEW_LANGUAGE: ${lang} (supported: ${SUPPORTED_LANGUAGES.join(', ')})`);
+  }
+  const perspectives = PERSPECTIVES_BY_LANGUAGE[lang];
   const reportFile = process.env.REVIEW_REPORT_FILE || 'agentic-review-report.json';
 
   const diff = readDiff();
@@ -164,9 +226,11 @@ async function main() {
 
   const client = new BedrockRuntimeClient({ region });
 
-  console.log(`Reviewing diff with model=${modelId} region=${region} across ${PERSPECTIVES.length} perspectives...`);
+  console.log(
+    `Reviewing diff with model=${modelId} region=${region} language=${lang} across ${perspectives.length} perspectives...`
+  );
   const results = await Promise.all(
-    PERSPECTIVES.map((perspective) => reviewPerspective(client, modelId, perspective, diff))
+    perspectives.map((perspective) => reviewPerspective(client, modelId, perspective, diff, lang))
   );
 
   const report = aggregate(results);

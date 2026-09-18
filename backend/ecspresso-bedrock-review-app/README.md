@@ -40,6 +40,11 @@ The model used by Agentic Review is switched via the CodeBuild environment
 variable `BEDROCK_MODEL_ID` (specified per stage through a CDK Construct
 property) -- no code change required.
 
+The language the review's `summary`/`findings` are written in is switched
+the same way, via `REVIEW_LANGUAGE` (`en` | `ja`, default `en`; see
+`EnvParams.reviewLanguage` on the CDK side, or `PERSPECTIVES_BY_LANGUAGE` /
+`PROMPT_TEXT_BY_LANGUAGE` in `scripts/agentic-review.js`).
+
 ## Trivy scan results -> Security Hub (ASFF conversion)
 
 The Build stage in `buildspec-build.yml` runs Trivy with JSON output

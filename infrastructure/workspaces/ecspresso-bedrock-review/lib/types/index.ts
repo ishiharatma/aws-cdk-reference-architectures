@@ -11,6 +11,9 @@ export interface SharedParams {
 /** Bedrock agentic review overall risk levels, ordered from lowest to highest. */
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
+/** Language the agentic review's summary/findings are written in. */
+export type ReviewLanguage = 'en' | 'ja';
+
 /**
  * Per-environment parameters.
  */
@@ -38,6 +41,12 @@ export interface EnvParams extends EnvironmentConfig {
    * @default 'high'
    */
   readonly riskThreshold?: RiskLevel;
+  /**
+   * Language the model writes its review summary/findings in. Passed
+   * through unchanged as the CodeBuild `REVIEW_LANGUAGE` env var.
+   * @default 'en'
+   */
+  readonly reviewLanguage?: ReviewLanguage;
 
   /** Fargate task vCPU units (ecspresso task definition). @default 256 */
   readonly ecsTaskCpu?: number;

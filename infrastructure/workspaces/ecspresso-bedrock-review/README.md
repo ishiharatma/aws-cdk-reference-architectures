@@ -152,6 +152,22 @@ The value is passed straight through to the `AgenticReview` CodeBuild
 project as the `BEDROCK_MODEL_ID` environment variable — no code change is
 needed to try a different model (e.g. a cross-region inference profile ID).
 
+### Switching the review's output language
+
+The review's `summary`/`findings` language is controlled by
+`EnvParams.reviewLanguage` (`en` | `ja`, default `en`), passed through as
+the CodeBuild `REVIEW_LANGUAGE` environment variable:
+
+```typescript
+// parameters/dev-params.ts
+reviewLanguage: 'ja', // review summary/findings are written in Japanese instead of English
+```
+
+This also switches the language of the review-perspective labels
+(security/infra/quality/cost) and the prompt sent to Bedrock — see
+`PERSPECTIVES_BY_LANGUAGE` / `PROMPT_TEXT_BY_LANGUAGE` in
+`scripts/agentic-review.js`.
+
 ## Prerequisites
 
 - An AWS account with Amazon Bedrock model access enabled for the model you

@@ -1,6 +1,6 @@
 import { params } from 'parameters/environments';
 import { Environment } from '@common/parameters/environments';
-import { EnvParams } from 'lib/types';
+import { EnvParams, ReviewLanguage } from 'lib/types';
 
 /**
  * Development environment parameters.
@@ -17,6 +17,8 @@ const devParams: EnvParams = {
   // Passed through as the CodeBuild BEDROCK_MODEL_ID environment variable.
   bedrockModelId: process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
   riskThreshold: 'high',
+  // Language the review summary/findings are written in: 'en' | 'ja'. Default 'en'.
+  reviewLanguage: (process.env.REVIEW_LANGUAGE as ReviewLanguage) || 'en',
 
   ecsTaskCpu: 256,
   ecsTaskMemory: 512,

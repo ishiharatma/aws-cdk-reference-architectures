@@ -12,6 +12,7 @@ export const testEnvParams: EnvParams = {
   requireManualApproval: false,
   bedrockModelId: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
   riskThreshold: 'high',
+  reviewLanguage: 'en',
   ecsTaskCpu: 256,
   ecsTaskMemory: 512,
   ecsDesiredCount: 1,
@@ -27,4 +28,9 @@ export const testEnvParamsWithApproval: EnvParams = {
 export const testEnvParamsWithAutoScaling: EnvParams = {
   ...testEnvParams,
   autoScalingEnabled: true,
+};
+
+export const testEnvParamsWithJapaneseReview: EnvParams = {
+  ...testEnvParams,
+  reviewLanguage: 'ja',
 };

@@ -7,6 +7,7 @@ import {
   testEnvParams,
   testEnvParamsWithApproval,
   testEnvParamsWithAutoScaling,
+  testEnvParamsWithJapaneseReview,
   testSharedParams,
 } from 'test/parameters/test-params';
 
@@ -56,13 +57,14 @@ describe('PipelineStack', () => {
     expect(pipeline.map((s) => s.Name)).toEqual(['Source', 'Test', 'Build', 'AgenticReview', 'Deploy']);
   });
 
-  test('AgenticReview CodeBuild project gets BEDROCK_MODEL_ID / RISK_THRESHOLD env vars and bedrock:InvokeModel permission', () => {
+  test('AgenticReview CodeBuild project gets BEDROCK_MODEL_ID / RISK_THRESHOLD / REVIEW_LANGUAGE env vars and bedrock:InvokeModel permission', () => {
     template.hasResourceProperties('AWS::CodeBuild::Project', {
       Name: 'testproject-dev-agentic-review',
       Environment: Match.objectLike({
         EnvironmentVariables: Match.arrayWith([
           Match.objectLike({ Name: 'BEDROCK_MODEL_ID', Value: 'anthropic.claude-3-5-sonnet-20241022-v2:0' }),
           Match.objectLike({ Name: 'RISK_THRESHOLD', Value: 'high' }),
+          Match.objectLike({ Name: 'REVIEW_LANGUAGE', Value: 'en' }),
         ]),
       }),
     });
@@ -139,6 +141,28 @@ describe('PipelineStack — autoScalingEnabled', () => {
         EnvironmentVariables: Match.arrayWith([
           Match.objectLike({ Name: 'AUTO_SCALING_ENABLED', Value: 'true' }),
         ]),
+      }),
+    });
+  });
+});
+
+describe('PipelineStack — reviewLanguage', () => {
+  test('passes REVIEW_LANGUAGE=ja to the AgenticReview CodeBuild project', () => {
+    const app = new cdk.App();
+    const stack = new PipelineStack(app, 'TestPipelineJapaneseReview', {
+      env: { account: '111111111111', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      project: 'testproject',
+      environment: Environment.DEVELOPMENT,
+      sharedParams: testSharedParams,
+      envParams: testEnvParamsWithJapaneseReview,
+      repository: testRepository(app),
+    });
+    const template = Template.fromStack(stack);
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-agentic-review',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([Match.objectLike({ Name: 'REVIEW_LANGUAGE', Value: 'ja' })]),
       }),
     });
   });
