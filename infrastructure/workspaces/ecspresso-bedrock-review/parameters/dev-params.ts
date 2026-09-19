@@ -11,11 +11,11 @@ const devParams: EnvParams = {
   tags: {},
 
   branchName: 'develop',
-  requireManualApproval: false,
+  requireManualApproval: true,
 
   // Just edit this to switch Bedrock models (no code change needed).
   // Passed through as the CodeBuild BEDROCK_MODEL_ID environment variable.
-  bedrockModelId: process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+  bedrockModelId: process.env.BEDROCK_MODEL_ID || 'global.anthropic.claude-sonnet-5',
   riskThreshold: 'high',
   // Language the review summary/findings are written in: 'en' | 'ja'. Default 'en'.
   reviewLanguage: (process.env.REVIEW_LANGUAGE as ReviewLanguage) || 'en',
@@ -28,7 +28,7 @@ const devParams: EnvParams = {
   // value Auto Scaling has set -- see the autoScalingEnabled comment in
   // lib/types/index.ts for details).
   ecsDesiredCount: 1,
-  enableEcsExec: false,
+  enableEcsExec: true,
   autoScalingEnabled: false,
 
   // Whether to actually send Trivy scan results (converted to ASFF) to
