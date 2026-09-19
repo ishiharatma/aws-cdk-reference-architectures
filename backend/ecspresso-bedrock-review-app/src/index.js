@@ -132,6 +132,10 @@ app.get('/api/v1/info', (req, res) => {
   });
 });
 
+// demo/inject-risky-change.js inserts intentionally risky endpoints directly
+// above this marker, to exercise the Agentic Review gate end-to-end. See
+// demo/README.md. Do not remove this comment.
+// DEMO_INJECTION_POINT
 app.use((req, res) => {
   res.status(404).json({
     success: false,

@@ -59,6 +59,14 @@ it's pure observability. `PipelineStack` charts them on an
 "Measuring the review's effect over time" section for the full metric
 list and what was deliberately left out.
 
+## Trying it out: triggering the Agentic Review gate
+
+Want to see the `AgenticReview` stage actually flag something, end-to-end?
+`demo/` has a script that inserts (and later removes) a handful of
+intentionally risky endpoints into `src/index.js`, so you get a real `git
+diff` to push and review -- without leaving bad code in the app
+permanently. See [`demo/README.md`](./demo/README.md) for the steps.
+
 ## Switching the Bedrock model
 
 The model used by Agentic Review is switched via the CodeBuild environment

@@ -60,6 +60,14 @@ CloudWatch メトリクス（リスクレベル分布、ブロック率、Bedroc
 意図的に見送った機能については CDK 側 README の「レビューの効果を経時的
 に測定する」節を参照。
 
+## 動作確認: Agentic Review ゲートを実際に引っかけてみる
+
+`AgenticReview` ステージが実際に何かを検知する様子を end-to-end で見たい
+場合、`demo/` に `src/index.js` へ意図的に危険なエンドポイントを挿入
+（後で削除も可能）するスクリプトを用意している。アプリに危険なコードを
+恒久的に残すことなく、push してレビューさせるための実際の `git diff` を
+生成できる。手順は [`demo/README.ja.md`](./demo/README.ja.md) を参照。
+
 ## Bedrock モデルの切り替え
 
 Agentic Review が使うモデルは CodeBuild 環境変数 `BEDROCK_MODEL_ID` で切り替える
