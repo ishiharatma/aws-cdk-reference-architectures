@@ -22,6 +22,11 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
         ],
       },
     },
+    "EventsTableName": {
+      "Value": {
+        "Ref": "EventsTableD24865E5",
+      },
+    },
     "MicrovmImageArn": {
       "Value": {
         "Fn::GetAtt": [
@@ -75,14 +80,14 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
           ],
         },
         "CodeArtifact": {
-          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/d42126964747059dfa9df087f01583edc45d2848c8180c5e6886c3a70b21e546.zip",
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/adff2d8040bf03a0edb82b41ce1c50bc51889cd376eff38377e5ca5514f0eb6b.zip",
         },
         "CpuConfigurations": [
           {
             "Architecture": "ARM_64",
           },
         ],
-        "Description": "codex app-server (OpenAI Codex CLI, JSON-RPC over WebSocket) packaged as a Lambda MicroVM image",
+        "Description": "codex app-server (OpenAI Codex CLI) + an in-VM HTTP relay/event-handler, packaged as a Lambda MicroVM image",
         "EgressNetworkConnectors": [
           {
             "Fn::GetAtt": [
@@ -96,6 +101,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             "Key": "OPENAI_API_KEY_SECRET_ARN",
             "Value": {
               "Ref": "OpenAiApiKeySecret05681F66",
+            },
+          },
+          {
+            "Key": "EVENTS_TABLE_NAME",
+            "Value": {
+              "Ref": "EventsTableD24865E5",
             },
           },
         ],
@@ -145,7 +156,7 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "e4378225b05086605eaa5e293a68231f1f7427c1b2178042a73d9fb28e97fead.zip",
+          "S3Key": "38e1855eefe82e1be83bd0abacb651b048d8780731e98293d99d97ff74da412b.zip",
         },
         "Environment": {
           "Variables": {
@@ -157,6 +168,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "MicrovmEgressConnector",
                 "Arn",
               ],
+            },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
             },
             "IDLE_TIMEOUT_MINUTES": "5",
             "MAX_SESSION_DURATION_MINUTES": "60",
@@ -337,6 +351,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "Arn",
               ],
             },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
+            },
             "IDLE_TIMEOUT_MINUTES": "5",
             "MAX_SESSION_DURATION_MINUTES": "60",
             "MICROVM_EXECUTION_ROLE_ARN": {
@@ -482,6 +499,251 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
       },
       "Type": "AWS::IAM::Policy",
     },
+    "EventsTableD24865E5": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "sessionId",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "sequence",
+            "AttributeType": "N",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "sessionId",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "sequence",
+            "KeyType": "RANGE",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-codex-events",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiresAt",
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetEventsFunction162D25CF": {
+      "DependsOn": [
+        "GetEventsFunctionServiceRoleDefaultPolicy7BD0A05A",
+        "GetEventsFunctionServiceRole236A4043",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2b75c921518fc3ad16cb37a6948184f37e2488f066bcaf929148aeda265bcf93.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetEventsFunctionLogGroupCDF6BC66",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "GetEventsFunctionServiceRole236A4043",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "GetEventsFunctionLogGroupCDF6BC66": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetEventsFunctionServiceRole236A4043": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GetEventsFunctionServiceRoleDefaultPolicy7BD0A05A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "EventsTableD24865E5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "EventsTableD24865E5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetEventsFunctionServiceRoleDefaultPolicy7BD0A05A",
+        "Roles": [
+          {
+            "Ref": "GetEventsFunctionServiceRole236A4043",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "GetSessionFunctionC8945475": {
       "DependsOn": [
         "GetSessionFunctionServiceRoleDefaultPolicyCA010F4A",
@@ -505,6 +767,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "MicrovmEgressConnector",
                 "Arn",
               ],
+            },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
             },
             "IDLE_TIMEOUT_MINUTES": "5",
             "MAX_SESSION_DURATION_MINUTES": "60",
@@ -799,6 +1064,75 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "Ref": "HttpApiF5A9A8A7",
               },
               "/*/*/sessions/{sessionId}",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiGETsessionssessionIdeventsCA426C5D": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "GET /sessions/{sessionId}/events",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiGETsessionssessionIdeventsGetEventsIntegration93D2D177",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiGETsessionssessionIdeventsGetEventsIntegration93D2D177": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "GetEventsFunction162D25CF",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiGETsessionssessionIdeventsGetEventsIntegrationPermission30BAC115": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetEventsFunction162D25CF",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions/{sessionId}/events",
             ],
           ],
         },
@@ -1140,6 +1474,24 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "Ref": "OpenAiApiKeySecret05681F66",
               },
             },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "EventsTableD24865E5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -1262,6 +1614,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "MicrovmEgressConnector",
                 "Arn",
               ],
+            },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
             },
             "IDLE_TIMEOUT_MINUTES": "5",
             "MAX_SESSION_DURATION_MINUTES": "60",
@@ -1462,6 +1817,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                 "MicrovmEgressConnector",
                 "Arn",
               ],
+            },
+            "EVENTS_TABLE_NAME": {
+              "Ref": "EventsTableD24865E5",
             },
             "IDLE_TIMEOUT_MINUTES": "5",
             "MAX_SESSION_DURATION_MINUTES": "60",
@@ -2049,12 +2407,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`
 {
   "AWS::ApiGatewayV2::Api": 1,
   "AWS::ApiGatewayV2::Authorizer": 1,
-  "AWS::ApiGatewayV2::Integration": 5,
-  "AWS::ApiGatewayV2::Route": 5,
+  "AWS::ApiGatewayV2::Integration": 6,
+  "AWS::ApiGatewayV2::Route": 6,
   "AWS::ApiGatewayV2::Stage": 1,
   "AWS::Cognito::UserPool": 1,
   "AWS::Cognito::UserPoolClient": 1,
-  "AWS::DynamoDB::Table": 1,
+  "AWS::DynamoDB::Table": 2,
   "AWS::EC2::EIP": 1,
   "AWS::EC2::InternetGateway": 1,
   "AWS::EC2::NatGateway": 1,
@@ -2065,13 +2423,13 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`
   "AWS::EC2::SubnetRouteTableAssociation": 4,
   "AWS::EC2::VPC": 1,
   "AWS::EC2::VPCGatewayAttachment": 1,
-  "AWS::IAM::Policy": 7,
-  "AWS::IAM::Role": 7,
-  "AWS::Lambda::Function": 5,
+  "AWS::IAM::Policy": 8,
+  "AWS::IAM::Role": 8,
+  "AWS::Lambda::Function": 6,
   "AWS::Lambda::MicrovmImage": 1,
   "AWS::Lambda::NetworkConnector": 1,
-  "AWS::Lambda::Permission": 5,
-  "AWS::Logs::LogGroup": 7,
+  "AWS::Lambda::Permission": 6,
+  "AWS::Logs::LogGroup": 8,
   "AWS::SecretsManager::Secret": 1,
 }
 `;

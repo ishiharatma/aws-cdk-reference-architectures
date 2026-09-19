@@ -2,14 +2,15 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Provenance note.** This reference was built from the AWS Lambda MicroVMs public documentation surface (the
-> `@aws-sdk/client-lambda-microvms` API, the `AWS::Lambda::MicrovmImage` / `AWS::Lambda::NetworkConnector`
-> CloudFormation resources, and public AWS announcements), not from a specific blog post -- the source article
-> this workspace was requested from was unreachable from this environment's network egress policy at
-> implementation time. Two details in particular are **unverified** against a citable AWS source and are called
-> out again below: the IAM service principal Lambda MicroVMs assumes for build/execution roles, and the exact
-> filesystem path convention the platform uses to locate each lifecycle hook's executable inside the image.
-> Verify both against the current AWS Lambda MicroVMs Developer Guide before deploying to a real account.
+> **Source.** This reference implements the architecture described in
+> ["Lambda MicroVMsで実現するServerlessなCodex App Server"](https://note.com/japan_d2/n/n618cb3439486)
+> (Japan Digital Design, Inc. / Satoshi Toyama, 2026-09-15), adapted into an AWS CDK reference architecture.
+> Two implementation details the article doesn't spell out at the API level were filled in independently from
+> the AWS Lambda MicroVMs public API surface (`@aws-sdk/client-lambda-microvms`, the
+> `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector` CloudFormation schemas) and are called out where
+> relevant below: the IAM service principal Lambda MicroVMs assumes for build/execution roles, and
+> `codex app-server`'s exact stdio JSON-RPC framing/method names. Verify both against the current AWS Lambda
+> MicroVMs Developer Guide and the [Codex CLI source](https://github.com/openai/codex) before production use.
 
 ## 📑 Table of Contents
 
@@ -31,126 +32,177 @@
 
 ![Architecture Overview](overview.drawio.svg)
 
-A session **control plane** (API Gateway HTTP API + 5 Lambda functions) brokers the lifecycle of on-demand
+A session **control plane** (API Gateway HTTP API + 6 Lambda functions) brokers the lifecycle of on-demand
 **data plane** sessions: each session is a VM-isolated [AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/)
 running [`codex app-server`](https://github.com/openai/codex) (OpenAI Codex CLI's JSON-RPC agent protocol --
-Thread/Turn/Item over a WebSocket transport). The control plane never proxies app-server traffic: once a session
-starts, the client talks **directly** to the MicroVM's dedicated HTTPS endpoint, so every JSON-RPC round trip
-stays on the VM-isolated path and the control plane's own Lambdas stay small and stateless.
+Thread/Turn/Item). As of this reference's authoring, Lambda MicroVMs has no built-in way to log into a running
+MicroVM, execute a command, and stream the response back to a caller. So every MicroVM runs **its own HTTP
+server** (`src/microvm-image/server/`) that plays that role: it answers the platform's lifecycle hook calls, it
+relays JSON-RPC requests from clients to the `codex app-server` child process it manages, and an in-VM **Event
+Handler** persists every line `codex app-server` emits to a DynamoDB **EventsTable** -- so a session's Thread
+content stays readable even after its MicroVM is SUSPENDED or terminated. The control plane itself never
+proxies app-server traffic; it only brokers session lifecycle (start / status / suspend / resume / end /
+output polling).
 
 ```
-Client (IDE / CLI / web UI)
-   │  1. POST /sessions (Cognito JWT)
+Client (Web UI / IDE / CLI)
+   │  1. POST /sessions (Cognito JWT)                     ── control plane ──
    ▼
 API Gateway HTTP API ── JWT Authorizer (Cognito User Pool)
    │
    ▼
-Control-plane Lambdas (create / get / delete / suspend / resume)
+Control-plane Lambdas: create / get / delete / suspend / resume / get-events
    │  RunMicrovm / GetMicrovm / SuspendMicrovm / ResumeMicrovm /
-   │  TerminateMicrovm / CreateMicrovmAuthToken
+   │  TerminateMicrovm / CreateMicrovmAuthToken           ── data plane ──
    ▼
 Lambda MicroVMs data plane
-   │  launches a Firecracker microVM from the codex app-server image
+   │  launches a Firecracker microVM from the codex app-server image;
+   │  POST /run (RunMicrovmRequest.runHookPayload = {sessionId}) primes it
    ▼
 MicroVM (VM-isolated, dedicated HTTPS endpoint)
-   codex app-server (WebSocket, JSON-RPC Thread/Turn/Item)
+   in-VM HTTP server (server/index.mjs)
+     ├─ lifecycle hooks: GET /ready · POST /run,/suspend,/resume,/terminate
+     ├─ /rpc  ──stdio JSON-RPC──▶  codex app-server (child process)
+     └─ Event Handler  ──────────▶  DynamoDB EventsTable (every output line)
    ── egress via AWS::Lambda::NetworkConnector → NAT Gateway → OpenAI API
 
-   │  2. WebSocket + X-aws-proxy-auth token, direct to the MicroVM endpoint
+   │  2. POST {endpoint}/rpc + X-aws-proxy-auth, direct to the MicroVM endpoint
    ▼
-Client ◄───────────────────────────────────────────────────────────────
+Client
+   │  3. GET /sessions/{id}/events?after=N  (poll until the Turn ends)  ── control plane ──
+   ▼
+API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (read-only; MicroVM state-independent)
 ```
 
 ### Key Components
 
 | Component | Purpose |
 |---|---|
-| `AWS::Lambda::MicrovmImage` (`CfnMicrovmImage`) | Packages `src/microvm-image/Dockerfile` (Node.js + `@openai/codex` + lifecycle hook scripts) into a snapshotted MicroVM image. |
+| `AWS::Lambda::MicrovmImage` (`CfnMicrovmImage`) | Packages `src/microvm-image/` (Node.js + `@openai/codex` + the in-VM HTTP server) into a snapshotted MicroVM image. |
 | `AWS::Lambda::NetworkConnector` + VPC (1 NAT Gateway) | The only way a MicroVM's `egressNetworkConnectors` can reach the internet (the OpenAI API); without it, `codex app-server` has no outbound network access at all. |
-| Secrets Manager secret | Holds the OpenAI API key. Only its ARN is baked into the image (`OPENAI_API_KEY_SECRET_ARN`); the value is fetched inside the MicroVM at `run` time via the execution role. |
-| 5 control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token). |
+| **In-VM HTTP server** (`server/index.mjs`) | Answers the platform's lifecycle hooks over HTTP (`GET /ready`, `POST /run`/`/suspend`/`/resume`/`/terminate`) and relays `POST /rpc` requests to the `codex app-server` child process it spawns and manages (`server/codex-process.mjs`). |
+| **Event Handler** (`server/event-handler.mjs`) | Subscribes to every line `codex app-server` writes to stdout and persists it to `EventsTable`, sequenced per session. |
+| Secrets Manager secret | Holds the OpenAI API key. Only its ARN is baked into the image (`OPENAI_API_KEY_SECRET_ARN`); the in-VM server resolves the value at container-start time via the execution role (`server/secret.mjs`). |
+| 6 control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token), **`get-events`** (polls `EventsTable`). |
 | DynamoDB `SessionsTable` | One item per session (`sessionId`, `ownerId`, `microvmId`, `endpoint`, `state`), TTL-expired automatically. |
+| DynamoDB `EventsTable` | One item per `codex app-server` output line (`sessionId`, `sequence`, `event`), written by the in-VM Event Handler, read by `get-events`. Survives the MicroVM's own lifecycle. |
 | Cognito User Pool + HTTP API JWT Authorizer | Every control-plane route requires a valid Cognito JWT; `ownerId` scopes session reads/writes to their creator. |
+
+### Thread creation, Turn execution, and output polling
+
+Following the source article's sequence:
+
+1. **Start a session** -- `POST /sessions` (control plane) launches a MicroVM from the pre-baked image
+   (`RunMicrovm`), with `runHookPayload: {"sessionId": "..."}` delivered as the body of the image's `/run`
+   hook so the in-VM Event Handler knows which `EventsTable` partition to write to. The response carries the
+   MicroVM's own `endpoint` and a short-lived `X-aws-proxy-auth` token.
+2. **Drive a Turn** -- the client `POST`s a JSON-RPC 2.0 request straight to `{endpoint}/rpc` (with the auth
+   header). The in-VM server relays it to `codex app-server`'s stdin and, for requests carrying an `id`,
+   returns the matching stdout response synchronously; every line -- responses and server-initiated
+   notifications alike -- is also captured by the Event Handler.
+3. **Read the output** -- rather than reading the MicroVM directly, the client polls
+   `GET /sessions/{sessionId}/events?after={sequence}` (control plane) until the Turn completes. This Lambda
+   reads `EventsTable` only, so it keeps working whether the MicroVM is RUNNING, SUSPENDED, or already
+   terminated. (The source article notes SSE/WebSocket would give a better experience than polling; this
+   reference keeps polling for implementation simplicity, matching the source.)
 
 ### MicroVM lifecycle hooks
 
-The image's Dockerfile installs 6 hook scripts under `/opt/hooks/`, one per lifecycle event
-(`run`, `ready`, `suspend`, `resume`, `terminate`, `validate`). **Important:** `cdk synth`'s CloudFormation
-Validate plugin confirmed that `Hooks.MicrovmHooks.*` and `Hooks.MicrovmImageHooks.*` are `ENABLED`/`DISABLED`
-switches, not literal script paths -- the platform locates each hook's executable inside the image by a
-filesystem convention this reference could not verify against a citable AWS source at authoring time. The
-scripts are placed at the plausible `/opt/hooks/<hook>.sh` convention; confirm the real convention in the AWS
-Lambda MicroVMs Developer Guide and adjust `src/microvm-image/Dockerfile` if it differs.
+`cdk synth`'s CloudFormation Validate plugin confirms that `Hooks.MicrovmHooks.*` and
+`Hooks.MicrovmImageHooks.*` on `AWS::Lambda::MicrovmImage` are `ENABLED`/`DISABLED` switches, not literal
+script paths. Per the source article, enabling a hook makes the platform call it as an **HTTP request against
+the container's `Hooks.port`**:
 
-| Hook | When | What it does |
-|---|---|---|
-| `ready` / `validate` (image build) | After the Dockerfile's container starts / after the Firecracker snapshot is taken | Polls `nc -z 127.0.0.1 $CODEX_APP_SERVER_PORT` until `codex app-server` is listening. |
-| `run` | MicroVM PENDING → RUNNING | Resolves the OpenAI API key from Secrets Manager, starts `codex app-server --listen ws://0.0.0.0:$PORT`. |
-| `suspend` / `resume` | RUNNING ⇄ SUSPENDED | Log checkpoints only -- Firecracker's own memory+disk snapshot preserves the process (and any in-flight Thread/Turn/Item state) automatically. |
-| `terminate` | Before the MicroVM is torn down | Best-effort graceful shutdown of `codex app-server`. |
+| Hook | HTTP call | When | What the in-VM server does |
+|---|---|---|---|
+| `ready` (image build) | `GET /ready` | Polled after the Dockerfile's container starts, before the Firecracker snapshot is taken | Returns 200 once `codex app-server` has been spawned and the Event Handler is wired up. |
+| `validate` (image build) | `GET /validate` | Polled once after the snapshot is taken | Same check as `ready` -- confirms the snapshot itself resumes into a working state. |
+| `run` | `POST /run` | MicroVM PENDING → RUNNING | Reads `runHookPayload`'s `sessionId` and binds the Event Handler to it. `codex app-server` and the HTTP server are already running (resumed from the snapshot), so this step is lightweight. |
+| `suspend` / `resume` | `POST /suspend` / `POST /resume` | RUNNING ⇄ SUSPENDED | Log checkpoints only -- Firecracker's own memory+disk snapshot preserves the `codex app-server` process (and any in-flight Thread/Turn/Item state) automatically. |
+| `terminate` | `POST /terminate` | Before the MicroVM is torn down | Best-effort graceful shutdown of `codex app-server`. |
 
 ## 🎯 Design Decisions & Best Practices
 
-### 1. The control plane never proxies app-server traffic
+### 1. An in-VM HTTP server stands in for a missing "exec and stream" primitive
+
+Lambda MicroVMs has no API to log into a running MicroVM and stream a command's output back. This reference
+follows the source article's approach: the image itself runs an HTTP server that relays JSON-RPC to
+`codex app-server` and captures its output, so external callers only ever need plain HTTPS.
+
+### 2. Turn output is durable independently of the MicroVM's lifecycle
+
+The Event Handler writes every `codex app-server` line to DynamoDB as it happens. `get-events` reads that
+table, never the MicroVM -- so a client can keep reading a Turn's output after the session has been
+suspended (to save cost) or even terminated, exactly matching the source article's rationale for this design.
+
+### 3. The control plane never proxies app-server *input* traffic
 
 `create-session` and `resume-session` return the MicroVM's own `endpoint` and a short-lived
 `X-aws-proxy-auth` token (from `CreateMicrovmAuthToken`, scoped to a single port via `allowedPorts`). The
-client connects to that endpoint directly. This keeps every JSON-RPC message on the VM-isolated path and
-keeps the control-plane Lambdas' latency and cost independent of session traffic volume.
+client sends JSON-RPC requests to that endpoint directly. This keeps the control-plane Lambdas' latency and
+cost independent of Turn traffic volume; only the (much smaller) output-polling reads flow back through it.
 
-### 2. Suspend beats terminate for cost
+### 4. `/rpc` is a generic relay, not a typed Thread/Turn REST API
+
+The in-VM server's `/rpc` endpoint forwards a raw JSON-RPC 2.0 request body verbatim to `codex app-server`'s
+stdin, rather than exposing fixed `/threads`/`/turns` REST routes with hardcoded method names. This reference
+could not independently verify `codex app-server`'s exact method/parameter schema against the Codex CLI
+source, so it deliberately stays protocol-agnostic at the HTTP boundary -- see the
+[Codex CLI repository](https://github.com/openai/codex) for the actual `initialize`/thread/turn/item methods
+to send.
+
+### 5. Suspend beats terminate for cost
 
 `idlePolicy` auto-suspends an idle MicroVM (billed only for Firecracker snapshot storage) rather than
 terminating it. `POST /sessions/{id}/suspend` and `/resume` let a client that knows a session is temporarily
 unneeded (a closed tab) trigger that transition immediately instead of waiting out the idle timeout.
 
-### 3. The OpenAI API key never enters the image or Infrastructure-as-Code
+### 6. The OpenAI API key never enters the image or Infrastructure-as-Code
 
 `CfnMicrovmImage.environmentVariables` carries only `OPENAI_API_KEY_SECRET_ARN` (a fixed value for every
-session). `hooks/run.sh` resolves the actual secret value from Secrets Manager, using the credentials the
-platform injects for the MicroVM's `executionRoleArn` -- see `src/microvm-image/hooks/fetch-secret.mjs`.
+session). `server/secret.mjs` resolves the actual secret value from Secrets Manager at container-start time,
+using the credentials the platform injects for the MicroVM's `executionRoleArn`.
 
-### 4. Sessions are owner-scoped end to end
+### 7. Sessions are owner-scoped end to end
 
-The Cognito JWT's `sub` claim becomes `ownerId` on every `SessionsTable` item; `get/delete/suspend/resume`
-all 404 on a session that isn't the caller's own, rather than leaking another user's MicroVM endpoint.
-
-### 5. Environment-specific parameters, not hard-coded ARNs
-
-`lib/types/microvm-image-params.ts` and `lib/types/control-plane-params.ts` define the tunables (base image
-ARN/version, memory, idle/suspend timeouts, auth token TTL); `parameters/dev-params.ts` supplies the `dev`
-values. **`baseImageArn`/`baseImageVersion` ship as placeholders** -- see Prerequisites.
+The Cognito JWT's `sub` claim becomes `ownerId` on every `SessionsTable` item; `get/delete/suspend/resume/
+get-events` all 404 on a session that isn't the caller's own, rather than leaking another user's MicroVM
+endpoint or output.
 
 ## 🏛️ Well-Architected Alignment
 
 | Pillar | How this reference addresses it |
 |---|---|
 | Operational Excellence | CloudWatch access logs on the HTTP API stage and a dedicated CloudWatch log group per control-plane Lambda and per MicroVM image. |
-| Security | VM-level isolation per session (Firecracker, no shared kernel), Cognito JWT authorization on every route, owner-scoped session records, least-privilege DynamoDB/Secrets Manager grants. |
-| Reliability | DynamoDB PAY_PER_REQUEST + point-in-time recovery; a single NAT Gateway is a deliberate cost/AZ-resilience tradeoff -- add a NAT Gateway per AZ for production. |
-| Performance Efficiency | MicroVMs resume from a pre-initialized Firecracker snapshot instead of booting cold, so `codex app-server` is already listening when a session starts or resumes. |
+| Security | VM-level isolation per session (Firecracker, no shared kernel), Cognito JWT authorization on every route, owner-scoped session/event records, least-privilege DynamoDB/Secrets Manager grants. |
+| Reliability | Turn output in DynamoDB survives MicroVM SUSPEND/terminate independently; a single NAT Gateway is a deliberate cost/AZ-resilience tradeoff -- add a NAT Gateway per AZ for production. |
+| Performance Efficiency | MicroVMs resume from a pre-initialized Firecracker snapshot (with `codex app-server` and the in-VM HTTP server already running) instead of booting cold. |
 | Cost Optimization | `idlePolicy` auto-suspend, DynamoDB TTL for expired sessions, PAY_PER_REQUEST billing throughout. |
 
 ## 💰 Cost Optimization
 
-This reference introduces cost dimensions this repository's other patterns don't have (MicroVM run/suspend time,
-a NAT Gateway, Cognito). **Do not treat any number here as a quote** -- always check the AWS Pricing pages for
-Lambda MicroVMs, NAT Gateway, Cognito, and DynamoDB in your Region before estimating a real workload's cost.
+This reference introduces cost dimensions this repository's other patterns don't have (MicroVM run/suspend
+time, a NAT Gateway, Cognito). **Do not treat any number here as a quote** -- always check the AWS Pricing
+pages for Lambda MicroVMs, NAT Gateway, Cognito, and DynamoDB in your Region before estimating a real
+workload's cost.
 
 Rough cost *drivers*, in the order they matter for this architecture:
 
 1. **MicroVM RUNNING time** -- billed while a session's MicroVM is actively running (the main driver for a
    busy Codex session).
 2. **MicroVM SUSPENDED time** -- billed only for Firecracker snapshot storage; this is why `idlePolicy` and
-   the explicit `/suspend` route matter for cost, not just latency.
+   the explicit `/suspend` route matter for cost, not just latency. Because Turn output lives in
+   `EventsTable`, suspending aggressively costs nothing in output availability.
 3. **NAT Gateway** -- an hourly charge plus per-GB data processing for every byte `codex app-server` sends
    to/from the OpenAI API. A single NAT Gateway (this reference's default) is the cheapest viable setup;
    consider VPC endpoints for any AWS service traffic MicroVMs need beyond internet egress.
 4. **Cognito** -- free tier covers a meaningful number of MAUs before per-MAU billing starts; the Plus
    feature plan (`AwsSolutions-COG8`, suppressed here) adds further per-MAU cost if enabled.
 5. **API Gateway HTTP API + control-plane Lambdas** -- negligible relative to the above: the control plane
-   only brokers session lifecycle calls, not app-server traffic.
-6. **DynamoDB** -- PAY_PER_REQUEST with a short TTL keeps this near-zero for typical session volumes.
+   only brokers session lifecycle and event-polling calls, not Turn input traffic.
+6. **DynamoDB** -- PAY_PER_REQUEST with a short TTL keeps this near-zero for typical session volumes; a
+   chatty Turn writes one `EventsTable` item per `codex app-server` output line, so very high-frequency event
+   streams are the one place this table's write cost is worth watching.
 
 ### Cost notes specific to this pattern
 
@@ -165,10 +217,10 @@ Rough cost *drivers*, in the order they matter for this architecture:
 
 - VM-level isolation per session (Firecracker MicroVMs, no shared kernel between sessions).
 - Cognito JWT authorization (`HttpUserPoolAuthorizer`) on every control-plane route.
-- Owner-scoped session records (`ownerId` from the JWT `sub` claim).
+- Owner-scoped session and event records (`ownerId` from the JWT `sub` claim).
 - The OpenAI API key lives only in Secrets Manager; only its ARN is baked into the image.
-- Least-privilege DynamoDB (`grantReadWriteData`, scoped to `SessionsTable`) and Secrets Manager
-  (`grantRead`, scoped to the one secret) grants.
+- Least-privilege DynamoDB (`grantReadWriteData`/`grantWriteData`/`grantReadData`, each scoped to one table)
+  and Secrets Manager (`grantRead`, scoped to the one secret) grants.
 - Outbound-only security group for the MicroVM egress path (no inbound rules).
 
 ### Intentionally out of scope (add per environment)
@@ -179,13 +231,19 @@ Rough cost *drivers*, in the order they matter for this architecture:
 - VPC Flow Logs.
 - Secrets Manager automatic rotation (not applicable to a third-party API key with no rotation Lambda; rotate
   manually).
+- Authenticating the in-VM server's `/rpc` endpoint separately from the platform's own `X-aws-proxy-auth`
+  gate: any caller holding a valid MicroVM auth token can reach `/rpc`, `/run`, `/suspend`, `/resume`, and
+  `/terminate` alike, since they share one `Hooks.port`. Restrict this further per environment if the
+  platform's own hook-invocation channel is not otherwise isolated from client traffic.
 
 ### Two items to verify before production use
 
 1. **IAM trust policy.** `microvmServicePrincipal` in the stack uses `lambda.amazonaws.com` as a best guess
    for the principal Lambda MicroVMs assumes to build images and run MicroVMs. Confirm the actual required
    principal (and any `sts:ExternalId`/condition keys) in the AWS Lambda MicroVMs Developer Guide.
-2. **Hook executable path convention.** See "MicroVM lifecycle hooks" above.
+2. **`codex app-server`'s JSON-RPC framing and method names.** `server/codex-process.mjs` assumes
+   newline-delimited JSON over stdio; `/rpc` forwards requests verbatim rather than assuming specific method
+   names. Confirm both against the [Codex CLI source](https://github.com/openai/codex).
 
 ### CDK Nag
 
@@ -237,8 +295,14 @@ aws cognito-idp admin-set-user-password --user-pool-id <UserPoolId> --username y
 curl -X POST "$API_URL/sessions" -H "Authorization: Bearer $ID_TOKEN"
 # => { "sessionId": "...", "state": "PENDING", "endpoint": "https://...", "authToken": { "X-aws-proxy-auth": "..." } }
 
-# Connect directly to `endpoint` over WebSocket, sending the X-aws-proxy-auth header from `authToken`,
-# and speak codex app-server's JSON-RPC protocol (initialize -> thread/turn/item) from there.
+# Send a JSON-RPC request straight to the MicroVM's own endpoint (see the Codex CLI docs for the actual
+# initialize/thread/turn method names and parameters to use):
+curl -X POST "$ENDPOINT/rpc" -H "X-aws-proxy-auth: $AUTH_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
+
+# Poll for output until the Turn completes:
+curl "$API_URL/sessions/$SESSION_ID/events?after=0" -H "Authorization: Bearer $ID_TOKEN"
 
 # When done:
 curl -X DELETE "$API_URL/sessions/$SESSION_ID" -H "Authorization: Bearer $ID_TOKEN"
@@ -258,6 +322,13 @@ output for `W3030` warnings after changing `hooks` or `cpuConfigurations`.
 
 ## ⚙️ Customization
 
+### Move from polling to SSE/WebSocket for output
+
+The source article notes polling was chosen for implementation simplicity and that SSE/WebSocket would give a
+better experience. To do that, replace `get-events`'s request/response model with an API Gateway WebSocket
+API (or an SSE-capable Lambda response streaming setup) that still reads from `EventsTable` as its source of
+truth.
+
 ### Scope MicroVM data-plane IAM actions further
 
 If your account exposes a stable ARN pattern for MicroVM/image resources, replace the `resources: ['*']` in
@@ -269,11 +340,6 @@ the corresponding `AwsSolutions-IAM5` suppression.
 Change `natGateways: 1` to `natGateways: 2` in the `Vpc` construct for production-grade AZ resilience (at
 roughly double the NAT Gateway cost).
 
-### Front the control plane with a custom domain
-
-Add a `DomainMappingOptions` (`aws-apigatewayv2` `HttpApi`) and an ACM certificate, following the same pattern
-as `cloudfront-vpc-origin` elsewhere in this repository.
-
 ## 🔧 Troubleshooting
 
 ### `cdk deploy` fails validating `CfnMicrovmImage`
@@ -281,12 +347,17 @@ as `cloudfront-vpc-origin` elsewhere in this repository.
 Check `baseImageArn`/`baseImageVersion` in `parameters/dev-params.ts` -- the placeholders will fail at deploy
 time. Re-run `aws lambda-microvms list-managed-microvm-images` for current values.
 
-### `RunMicrovm` succeeds but the client can never connect to `codex app-server`
+### `RunMicrovm` succeeds but `POST {endpoint}/rpc` never responds
 
-Most likely the `run` hook never actually starts `codex app-server` because the platform could not locate its
-executable at the hook path this reference guessed (`/opt/hooks/run.sh`). Check the MicroVM's CloudWatch log
-group (`MicrovmImageLogGroup`) for the `[run]` log lines from `hooks/run.sh`; if they never appear, confirm
-the real hook executable path convention against the AWS Lambda MicroVMs Developer Guide.
+Check the MicroVM's CloudWatch log group (`MicrovmImageLogGroup`) for `[server]`/`[codex app-server]` log
+lines. If the in-VM server never logs "listening", the container's `ENTRYPOINT` may be failing before
+`server/index.mjs` binds its port -- check for an `npm install` failure baked into the image.
+
+### `GET /sessions/{id}/events` always returns an empty list
+
+Confirm `create-session` sent `runHookPayload` -- if the in-VM server's `/run` handler never received a
+`sessionId`, the Event Handler drops every line rather than writing it unattributed (see
+`server/event-handler.mjs`).
 
 ### `codex app-server` starts but immediately fails authentication
 
@@ -304,10 +375,18 @@ Terminate any still-RUNNING/SUSPENDED sessions (`DELETE /sessions/{id}`) before 
 
 ## 📚 References
 
+### Source article
+
+- [Lambda MicroVMsで実現するServerlessなCodex App Server](https://note.com/japan_d2/n/n618cb3439486) (Japan Digital Design, Inc.)
+
 ### AWS Documentation
 
 - [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)
 - [Announcing Lambda MicroVMs (AWS Compute Blog)](https://aws.amazon.com/blogs/compute/announcing-lambda-microvms-serverless-compute-environments-with-vm-level-isolation-and-near-instant-startup/)
+
+### Codex
+
+- [OpenAI Codex CLI (`codex app-server`)](https://github.com/openai/codex)
 
 ### Related Architectures
 

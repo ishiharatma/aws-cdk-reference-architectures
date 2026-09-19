@@ -22,13 +22,20 @@ const SESSION_RECORD_TTL_DAYS = Number(process.env.SESSION_RECORD_TTL_DAYS ?? '1
  *
  * Starts a new Codex App Server session: launches a MicroVM from the
  * pre-baked codex app-server image (RunMicrovm), issues a short-lived
- * auth token scoped to the app-server's WebSocket port
- * (CreateMicrovmAuthToken), and records the session in DynamoDB.
+ * auth token scoped to the in-VM server's port (CreateMicrovmAuthToken),
+ * and records the session in DynamoDB.
+ *
+ * `runHookPayload` carries the session id as the POST body the platform
+ * delivers to the image's /run hook, so the in-VM Event Handler
+ * (src/microvm-image/server/event-handler.mjs) knows which DynamoDB
+ * partition to persist codex app-server's output under.
  *
  * The client then connects *directly* to the returned MicroVM endpoint
- * (with the X-aws-proxy-auth header) rather than proxying traffic through
- * this control plane, so every JSON-RPC round trip of the Thread/Turn/Item
- * protocol stays on the VM-isolated path.
+ * (with the X-aws-proxy-auth header) to POST /rpc against the in-VM
+ * server's JSON-RPC relay, rather than proxying traffic through this
+ * control plane. To read a Turn's output, poll GET
+ * /sessions/{sessionId}/events instead of the MicroVM directly -- that
+ * keeps working after the MicroVM is SUSPENDED or terminated.
  */
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
   const ownerId = getOwnerId(event);
@@ -46,6 +53,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
       },
       maximumDurationInSeconds: MAX_SESSION_DURATION_MINUTES * 60,
       clientToken: sessionId,
+      runHookPayload: JSON.stringify({ sessionId }),
     }),
   );
 

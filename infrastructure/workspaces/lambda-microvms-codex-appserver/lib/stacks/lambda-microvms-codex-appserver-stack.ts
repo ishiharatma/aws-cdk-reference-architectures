@@ -28,13 +28,25 @@ interface StackProps extends cdk.StackProps {
 /**
  * Serverless Codex App Server on AWS Lambda MicroVMs.
  *
- * A session control plane (API Gateway HTTP API + 5 Lambda functions) calls
+ * Modeled on the "Lambda MicroVMsで実現するServerlessなCodex App Server"
+ * architecture (Japan Digital Design, Inc., 2026-09-15).
+ *
+ * A session control plane (API Gateway HTTP API + 6 Lambda functions) calls
  * the Lambda MicroVMs data-plane API to launch, on demand, a VM-isolated
  * MicroVM running `codex app-server` (OpenAI Codex CLI's JSON-RPC agent
- * protocol). Clients connect *directly* to the MicroVM's dedicated HTTPS
- * endpoint for the Thread/Turn/Item traffic -- the control plane only
- * brokers session lifecycle (start / status / suspend / resume / end), it
- * never proxies app-server messages itself.
+ * protocol). Lambda MicroVMs has no built-in way to log into a running
+ * MicroVM and stream a command's response back, so each MicroVM runs its
+ * own HTTP server (src/microvm-image/server/) that (a) answers the
+ * platform's lifecycle hook calls, (b) relays JSON-RPC requests from
+ * clients to the `codex app-server` child process it manages, and (c)
+ * captures every line codex app-server emits via an in-VM Event Handler
+ * that persists it to the EventsTable below. Clients connect *directly* to
+ * the MicroVM's dedicated HTTPS endpoint to drive a Turn, but *poll the
+ * control plane's get-events Lambda* (not the MicroVM) for output, so a
+ * Thread's content stays readable even after its MicroVM is SUSPENDED or
+ * terminated. The control plane itself only ever brokers session lifecycle
+ * (start / status / suspend / resume / end / events); it never proxies
+ * app-server traffic.
  */
 export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -83,12 +95,30 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     });
 
     // ------------------------------------------------------------------
+    // Events: every codex app-server JSON-RPC line, captured in-VM and
+    // persisted here by the Event Handler (src/microvm-image/server/
+    // event-handler.mjs) so a session's Thread/Turn content survives the
+    // MicroVM being SUSPENDED or terminated. get-session.ts polls this
+    // table independently of the MicroVM's own lifecycle.
+    // ------------------------------------------------------------------
+    const eventsTable = new dynamodb.Table(this, 'EventsTable', {
+      tableName: `${namePrefix}-events`,
+      partitionKey: { name: 'sessionId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'sequence', type: dynamodb.AttributeType.NUMBER },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      timeToLiveAttribute: 'expiresAt',
+      removalPolicy,
+    });
+
+    // ------------------------------------------------------------------
     // Secret: the OpenAI API key codex app-server authenticates with.
     // Baked into the image as a *reference* (environmentVariables carries
     // only the secret's ARN); the value itself is fetched inside the
-    // MicroVM at `run` time via the execution role (see
-    // src/microvm-image/hooks/run.sh). Update the placeholder value after
-    // the first deploy.
+    // MicroVM at container-start time via the execution role (see
+    // src/microvm-image/server/secret.mjs). Update the placeholder value
+    // after the first deploy.
     // ------------------------------------------------------------------
     const openAiApiKeySecret = new secretsmanager.Secret(this, 'OpenAiApiKeySecret', {
       secretName: `${namePrefix}-openai-api-key`,
@@ -123,6 +153,9 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       description: 'Assumed by running codex app-server MicroVMs to read the OpenAI API key secret',
     });
     openAiApiKeySecret.grantRead(executionRole);
+    // The in-VM Event Handler writes every codex app-server output line
+    // here directly using this role's injected credentials.
+    eventsTable.grantWriteData(executionRole);
 
     const microvmImageLogGroup = new logs.LogGroup(this, 'MicrovmImageLogGroup', {
       logGroupName: `/lambda-microvms/${namePrefix}-image`,
@@ -132,7 +165,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
 
     const microvmImage = new lambda.CfnMicrovmImage(this, 'CodexAppServerImage', {
       name: microvmImageParams.name ?? `${namePrefix}-image`,
-      description: 'codex app-server (OpenAI Codex CLI, JSON-RPC over WebSocket) packaged as a Lambda MicroVM image',
+      description: 'codex app-server (OpenAI Codex CLI) + an in-VM HTTP relay/event-handler, packaged as a Lambda MicroVM image',
       baseImageArn: microvmImageParams.baseImageArn,
       baseImageVersion: microvmImageParams.baseImageVersion,
       buildRoleArn: buildRole.roleArn,
@@ -141,18 +174,20 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       },
       cpuConfigurations: [{ architecture: microvmImageParams.architecture ?? defaultMicrovmImageConfig.architecture }],
       egressNetworkConnectors: [egressNetworkConnector.attrArn],
-      environmentVariables: [{ key: 'OPENAI_API_KEY_SECRET_ARN', value: openAiApiKeySecret.secretArn }],
+      environmentVariables: [
+        { key: 'OPENAI_API_KEY_SECRET_ARN', value: openAiApiKeySecret.secretArn },
+        { key: 'EVENTS_TABLE_NAME', value: eventsTable.tableName },
+      ],
       // Each hook field is an ENABLED/DISABLED switch, not a path: the
       // CloudFormation resource schema for AWS::Lambda::MicrovmImage rejects
       // a literal script path here (confirmed via `cdk synth`'s
-      // CloudFormation Validate plugin). Enabling a hook makes the platform
-      // invoke that hook's well-known executable inside the image; the
-      // exact conventional path per hook is not yet confirmed against a
-      // citable AWS source as of this reference's authoring, so the scripts
-      // are placed at the plausible convention `/opt/hooks/<hook>.sh` (see
-      // src/microvm-image/Dockerfile) -- verify against the current AWS
-      // Lambda MicroVMs Developer Guide before deploying, and adjust the
-      // Dockerfile's script location if it documents a different path.
+      // CloudFormation Validate plugin). This matches the source
+      // architecture: enabling a hook makes the platform call that
+      // lifecycle event as an HTTP request against the in-VM server on
+      // `Hooks.port` (GET /ready before the build snapshot is taken; POST
+      // /run with RunMicrovmRequest.runHookPayload as the body once a
+      // session's MicroVM launches; POST /suspend, /resume, /terminate at
+      // the corresponding transitions) -- see src/microvm-image/server/.
       hooks: {
         microvmHooks: {
           run: 'ENABLED',
@@ -222,6 +257,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     // ------------------------------------------------------------------
     const commonEnvironment: Record<string, string> = {
       SESSIONS_TABLE_NAME: sessionsTable.tableName,
+      EVENTS_TABLE_NAME: eventsTable.tableName,
       MICROVM_IMAGE_ARN: microvmImage.attrImageArn,
       MICROVM_EXECUTION_ROLE_ARN: executionRole.roleArn,
       EGRESS_NETWORK_CONNECTORS: egressNetworkConnector.attrArn,
@@ -290,6 +326,12 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     const suspendSessionFn = makeControlPlaneFunction('SuspendSessionFunction', 'suspend-session.ts');
     const resumeSessionFn = makeControlPlaneFunction('ResumeSessionFunction', 'resume-session.ts');
 
+    // get-events polls the Events table (written by the in-VM Event
+    // Handler) instead of calling the MicroVM data plane, so it keeps
+    // working after a session's MicroVM is SUSPENDED or terminated.
+    const getEventsFn = makeControlPlaneFunction('GetEventsFunction', 'get-events.ts');
+    eventsTable.grantReadData(getEventsFn);
+
     const authorizer = new apigwv2Authorizers.HttpUserPoolAuthorizer('SessionsAuthorizer', userPool, {
       userPoolClients: [userPoolClient],
     });
@@ -341,6 +383,11 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       methods: [apigwv2.HttpMethod.POST],
       integration: new apigwv2Integrations.HttpLambdaIntegration('ResumeSessionIntegration', resumeSessionFn),
     });
+    httpApi.addRoutes({
+      path: '/sessions/{sessionId}/events',
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new apigwv2Integrations.HttpLambdaIntegration('GetEventsIntegration', getEventsFn),
+    });
 
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: stage.url,
@@ -350,6 +397,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
     new cdk.CfnOutput(this, 'MicrovmImageArn', { value: microvmImage.attrImageArn });
     new cdk.CfnOutput(this, 'SessionsTableName', { value: sessionsTable.tableName });
+    new cdk.CfnOutput(this, 'EventsTableName', { value: eventsTable.tableName });
     new cdk.CfnOutput(this, 'OpenAiApiKeySecretArn', {
       value: openAiApiKeySecret.secretArn,
       description: 'Update this secret with a real OpenAI API key after the first deploy',

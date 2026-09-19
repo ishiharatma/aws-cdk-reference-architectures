@@ -79,8 +79,8 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
   });
 
   describe('Session store', () => {
-    test('single on-demand sessions table with TTL, SSE, and point-in-time recovery', () => {
-      template.resourceCountIs('AWS::DynamoDB::Table', 1);
+    test('sessions and events tables, both on-demand with TTL, SSE, and point-in-time recovery', () => {
+      template.resourceCountIs('AWS::DynamoDB::Table', 2);
       template.hasResourceProperties('AWS::DynamoDB::Table', {
         BillingMode: 'PAY_PER_REQUEST',
         SSESpecification: { SSEEnabled: true },
@@ -88,11 +88,20 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
         TimeToLiveSpecification: { AttributeName: 'expiresAt', Enabled: true },
       });
     });
+
+    test('events table is keyed by sessionId + sequence for ordered polling', () => {
+      template.hasResourceProperties('AWS::DynamoDB::Table', {
+        KeySchema: [
+          { AttributeName: 'sessionId', KeyType: 'HASH' },
+          { AttributeName: 'sequence', KeyType: 'RANGE' },
+        ],
+      });
+    });
   });
 
   describe('Control plane Lambdas', () => {
-    test('five session lifecycle functions on the ARM64 Node.js 22 runtime', () => {
-      template.resourceCountIs('AWS::Lambda::Function', 5);
+    test('six session lifecycle functions on the ARM64 Node.js 22 runtime', () => {
+      template.resourceCountIs('AWS::Lambda::Function', 6);
       template.hasResourceProperties('AWS::Lambda::Function', {
         Runtime: 'nodejs22.x',
         Architectures: ['arm64'],
@@ -135,9 +144,9 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
   });
 
   describe('API Gateway', () => {
-    test('one HTTP API with the five session routes', () => {
+    test('one HTTP API with the six session routes', () => {
       template.resourceCountIs('AWS::ApiGatewayV2::Api', 1);
-      template.resourceCountIs('AWS::ApiGatewayV2::Route', 5);
+      template.resourceCountIs('AWS::ApiGatewayV2::Route', 6);
     });
 
     test('stage has access logging enabled', () => {
@@ -151,7 +160,15 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
     test('exposes the API URL, MicroVM image ARN, and OpenAI secret ARN', () => {
       const outputs = template.findOutputs('*');
       expect(Object.keys(outputs)).toEqual(
-        expect.arrayContaining(['ApiUrl', 'UserPoolId', 'UserPoolClientId', 'MicrovmImageArn', 'SessionsTableName', 'OpenAiApiKeySecretArn']),
+        expect.arrayContaining([
+          'ApiUrl',
+          'UserPoolId',
+          'UserPoolClientId',
+          'MicrovmImageArn',
+          'SessionsTableName',
+          'EventsTableName',
+          'OpenAiApiKeySecretArn',
+        ]),
       );
     });
   });
