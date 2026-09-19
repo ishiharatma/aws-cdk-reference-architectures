@@ -511,9 +511,12 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
       ],
       "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "97e9ebf0b174a5c8f7faa505739022b7f509edddffcab9211dcd08b759944c4f.zip",
+          "S3Key": "35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0.zip",
         },
         "Environment": {
           "Variables": {
@@ -526,6 +529,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
             "Ref": "ErrorPageDeployAwsCliLayerA5880DC9",
           },
         ],
+        "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",

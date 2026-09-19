@@ -1,0 +1,63 @@
+version: 0.2
+
+# Build stage: docker build -> Trivy scan -> convert to ASFF (sechub_parser.py) -> ECR push.
+# Fails the build (blocking the push to ECR) when HIGH/CRITICAL vulnerabilities are found.
+# Actually importing findings into Security Hub only happens when
+# SECURITYHUB_IMPORT_ENABLED=true (default: false -- the converted ASFF
+# findings are only logged, never sent).
+# Reference: https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
+#
+# Expected environment variables (injected by the CodeBuild project):
+#   PROJECT, ENV, ECR_REPO_URI, SECURITYHUB_IMPORT_ENABLED
+
+phases:
+  install:
+    commands:
+      - pip install --quiet boto3
+  pre_build:
+    commands:
+      - echo "=== [Build] project=${PROJECT} env=${ENV} ==="
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}
+      - COMMIT_HASH=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
+      - cd backend/ecspresso-bedrock-review-app
+  build:
+    commands:
+      - echo "Building the Docker image..."
+      - docker build -t ${ECR_REPO_URI}:${IMAGE_TAG} -t ${ECR_REPO_URI}:latest .
+      - echo "Scanning image with Trivy..."
+      - |
+        set +e
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          -v trivy-cache:/root/.cache/ \
+          -v "${PWD}:/output" \
+          aquasec/trivy image --format json --output /output/results.json \
+          --exit-code 1 --severity HIGH,CRITICAL --no-progress \
+          ${ECR_REPO_URI}:${IMAGE_TAG}
+        TRIVY_EXIT=$?
+        set -e
+        echo "Trivy exit code: ${TRIVY_EXIT}"
+      - echo "Converting Trivy results to ASFF (Security Hub import controlled by SECURITYHUB_IMPORT_ENABLED=${SECURITYHUB_IMPORT_ENABLED:-false})..."
+      - CONTAINER_NAME=${ECR_REPO_URI} CONTAINER_TAG=${IMAGE_TAG} python3 scripts/sechub_parser.py
+      - |
+        if [ "${TRIVY_EXIT}" -ne 0 ]; then
+          echo "Trivy found HIGH/CRITICAL vulnerabilities. Failing the build (blocking the push to ECR)."
+          exit 1
+        fi
+  post_build:
+    commands:
+      - echo "Pushing the Docker images..."
+      - docker push ${ECR_REPO_URI}:${IMAGE_TAG}
+      - docker push ${ECR_REPO_URI}:latest
+      - echo "Writing image tag file for the Deploy stage..."
+      - echo -n "${IMAGE_TAG}" > image-tag.txt
+      - printf '[{"name":"%s","imageUri":"%s"}]' "${PROJECT}-${ENV}-api" "${ECR_REPO_URI}:${IMAGE_TAG}" > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  base-directory: backend/ecspresso-bedrock-review-app
+  files:
+    - image-tag.txt
+    - imagedefinitions.json
+  name: BuildArtifact
