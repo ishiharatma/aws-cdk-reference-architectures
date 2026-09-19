@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
+import { normalizeAssetHashes } from '@common/test-helpers/normalize-asset-hashes';
 import { RepositoryStack } from 'lib/stacks/repository-stack';
 import { PipelineStack } from 'lib/stacks/pipeline-stack';
 import { testEnvParams, testSharedParams } from 'test/parameters/test-params';
@@ -36,10 +37,10 @@ describe('Stack Snapshot Tests', () => {
   const pipelineTemplate = Template.fromStack(pipelineStack);
 
   test('RepositoryStack CloudFormation template snapshot', () => {
-    expect(repositoryTemplate.toJSON()).toMatchSnapshot();
+    expect(normalizeAssetHashes(repositoryTemplate.toJSON())).toMatchSnapshot();
   });
 
   test('PipelineStack CloudFormation template snapshot', () => {
-    expect(pipelineTemplate.toJSON()).toMatchSnapshot();
+    expect(normalizeAssetHashes(pipelineTemplate.toJSON())).toMatchSnapshot();
   });
 });

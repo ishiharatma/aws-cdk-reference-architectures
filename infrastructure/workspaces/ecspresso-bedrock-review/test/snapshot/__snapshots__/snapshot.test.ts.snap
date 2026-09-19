@@ -1127,7 +1127,7 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+          "S3Key": "0000000000000000000000000000000000000000000000000000000000000000.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -2367,7 +2367,7 @@ exports[`Stack Snapshot Tests RepositoryStack CloudFormation template snapshot 1
           "BranchName": "develop",
           "S3": {
             "Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-            "Key": "8683f18d40d2f7ab8810a825c207b1e32f8148b2932f6464729eb56caeea483d.zip",
+            "Key": "0000000000000000000000000000000000000000000000000000000000000000.zip",
           },
         },
         "RepositoryDescription": "testproject sample app for the ECS Fargate + ecspresso + Bedrock agentic review CI/CD demo",
