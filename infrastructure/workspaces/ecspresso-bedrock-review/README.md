@@ -140,7 +140,7 @@ decision, not one bolted onto a sample).
 ## Why `ecspresso verify` / `ecspresso deploy` are not run
 
 This workspace has no companion ECS cluster/service stack, so
-`buildspec-deploy.yml` only runs `ecspresso render <config|task-def|service-def>`
+`buildspec-deploy.yml` only runs `ecspresso render <config|taskdef|servicedef>`
 — a purely local operation that makes no AWS API calls, used here to
 validate the jsonnet definitions render correctly. `ecspresso verify` (checks
 cluster/role/image/log-group existence) and `ecspresso deploy` (registers a

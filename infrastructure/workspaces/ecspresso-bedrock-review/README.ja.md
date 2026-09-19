@@ -140,7 +140,7 @@ reviewNotificationEnabled: true, // Approve の前にレビューサマリーを
 ## `ecspresso verify` / `ecspresso deploy` を実行しない理由
 
 このワークスペースには対応する ECS クラスタ/サービスのスタックがないため、
-`buildspec-deploy.yml` では `ecspresso render <config|task-def|service-def>`
+`buildspec-deploy.yml` では `ecspresso render <config|taskdef|servicedef>`
 （AWS API を一切呼ばないローカル処理で、jsonnet 定義が正しくレンダリング
 されるかを確認するだけ）のみを実行する。`ecspresso verify`（クラスタ/ロール/
 イメージ/ロググループの存在確認）と `ecspresso deploy`（タスク定義登録 +
