@@ -49,6 +49,16 @@ is at or above `RISK_THRESHOLD` (default `high`).
   README's "Where to find the review result" section for the full picture
   (including topic selection and how the artifact gets there).
 
+## Measuring the review's effect over time
+
+`agentic-review.js` also publishes CloudWatch metrics (risk level
+breakdown, block rate, Bedrock call errors/latency/token usage) to
+`<project>/<env>/AgenticReview` after every run -- this is always on, since
+it's pure observability. `PipelineStack` charts them on an
+`AgenticReviewDashboard` CloudWatch dashboard. See the CDK-side README's
+"Measuring the review's effect over time" section for the full metric
+list and what was deliberately left out.
+
 ## Switching the Bedrock model
 
 The model used by Agentic Review is switched via the CodeBuild environment

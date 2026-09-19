@@ -17,7 +17,8 @@
  *   REVIEW_LANGUAGE        Language the model writes its summary/findings in: en|ja (default: en)
  *   REVIEW_NOTIFICATION_ENABLED   Publish the summary to SNS: true|false (default: false)
  *   REVIEW_NOTIFICATION_TOPIC_ARN  SNS topic ARN to publish to (required when the above is true)
- *   PROJECT / ENV                  Included in the notification subject, if set
+ *   METRICS_NAMESPACE              CloudWatch namespace to publish metrics to (default: AgenticReview)
+ *   PROJECT / ENV                  Included in the notification subject and metric dimensions, if set
  */
 'use strict';
 
@@ -25,6 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedrock-runtime');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+const { CloudWatchClient, PutMetricDataCommand } = require('@aws-sdk/client-cloudwatch');
 
 const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
 const SUPPORTED_LANGUAGES = ['en', 'ja'];
@@ -165,8 +167,10 @@ async function reviewPerspective(client, modelId, perspective, diff, lang) {
     inferenceConfig: { maxTokens: 1024, temperature: 0 },
   });
 
+  const startedAt = Date.now();
   try {
     const response = await client.send(command);
+    const latencyMs = Date.now() - startedAt;
     const text = response.output?.message?.content?.map((c) => c.text || '').join('') ?? '';
     const parsed = extractJson(text);
     if (!RISK_LEVELS.includes(parsed.riskLevel)) {
@@ -178,6 +182,9 @@ async function reviewPerspective(client, modelId, perspective, diff, lang) {
       riskLevel: parsed.riskLevel,
       summary: parsed.summary ?? '',
       findings: Array.isArray(parsed.findings) ? parsed.findings : [],
+      latencyMs,
+      inputTokens: response.usage?.inputTokens ?? 0,
+      outputTokens: response.usage?.outputTokens ?? 0,
     };
   } catch (err) {
     // Surface a perspective whose model call or parse failed as "medium" risk:
@@ -190,6 +197,9 @@ async function reviewPerspective(client, modelId, perspective, diff, lang) {
       summary: PROMPT_TEXT_BY_LANGUAGE[lang].reviewFailedSummary(err.message),
       findings: [],
       error: true,
+      latencyMs: Date.now() - startedAt,
+      inputTokens: 0,
+      outputTokens: 0,
     };
   }
 }
@@ -231,6 +241,87 @@ async function publishReviewNotification(report, { region, topicArn, project, en
   );
   const message = formatNotificationMessage(report, { project, env, threshold });
   await client.send(new PublishCommand({ TopicArn: topicArn, Subject: subject, Message: message }));
+}
+
+// Effect-measurement data: how often the review blocks, how it splits across
+// risk levels per perspective, how reliable the Bedrock calls are, and what
+// they cost (tokens) and how long they take (latency). This is what turns
+// "we added an AI review gate" into something you can actually evaluate over
+// time instead of just trusting anecdotally.
+function buildMetricData(report, { project, env, blocked }) {
+  const dimensions = [
+    { Name: 'Project', Value: project ?? 'unknown' },
+    { Name: 'Environment', Value: env ?? 'unknown' },
+  ];
+  const now = new Date();
+  const metricData = [
+    {
+      MetricName: 'OverallRiskLevel',
+      Dimensions: [...dimensions, { Name: 'RiskLevel', Value: report.overallRiskLevel }],
+      Timestamp: now,
+      Unit: 'Count',
+      Value: 1,
+    },
+    {
+      MetricName: 'Blocked',
+      Dimensions: dimensions,
+      Timestamp: now,
+      Unit: 'Count',
+      Value: blocked ? 1 : 0,
+    },
+  ];
+  for (const r of report.results) {
+    const perspectiveDimensions = [...dimensions, { Name: 'Perspective', Value: r.perspective }];
+    metricData.push(
+      {
+        MetricName: 'PerspectiveRiskLevel',
+        Dimensions: [...perspectiveDimensions, { Name: 'RiskLevel', Value: r.riskLevel }],
+        Timestamp: now,
+        Unit: 'Count',
+        Value: 1,
+      },
+      {
+        MetricName: 'PerspectiveError',
+        Dimensions: perspectiveDimensions,
+        Timestamp: now,
+        Unit: 'Count',
+        Value: r.error ? 1 : 0,
+      },
+      {
+        MetricName: 'BedrockLatency',
+        Dimensions: perspectiveDimensions,
+        Timestamp: now,
+        Unit: 'Milliseconds',
+        Value: r.latencyMs ?? 0,
+      },
+      {
+        MetricName: 'BedrockInputTokens',
+        Dimensions: perspectiveDimensions,
+        Timestamp: now,
+        Unit: 'Count',
+        Value: r.inputTokens ?? 0,
+      },
+      {
+        MetricName: 'BedrockOutputTokens',
+        Dimensions: perspectiveDimensions,
+        Timestamp: now,
+        Unit: 'Count',
+        Value: r.outputTokens ?? 0,
+      }
+    );
+  }
+  return metricData;
+}
+
+// A metrics-publish failure must never fail the build, same rationale as
+// publishReviewNotification -- this is an observability layer, not the
+// source of truth for the risk decision.
+async function publishMetrics(report, { region, namespace, project, env, blocked }) {
+  const client = new CloudWatchClient({ region });
+  const metricData = buildMetricData(report, { project, env, blocked });
+  // PutMetricData accepts up to 1000 data points per call; this review
+  // never produces more than a few dozen, so one call is always enough.
+  await client.send(new PutMetricDataCommand({ Namespace: namespace, MetricData: metricData }));
 }
 
 async function main() {
@@ -282,6 +373,8 @@ async function main() {
   }
   console.log(`Overall risk level: ${report.overallRiskLevel.toUpperCase()} (threshold: ${threshold.toUpperCase()})`);
 
+  const blocked = RISK_LEVELS.indexOf(report.overallRiskLevel) >= RISK_LEVELS.indexOf(threshold);
+
   const notificationEnabled = process.env.REVIEW_NOTIFICATION_ENABLED === 'true';
   if (notificationEnabled) {
     const topicArn = process.env.REVIEW_NOTIFICATION_TOPIC_ARN;
@@ -303,7 +396,20 @@ async function main() {
     }
   }
 
-  if (RISK_LEVELS.indexOf(report.overallRiskLevel) >= RISK_LEVELS.indexOf(threshold)) {
+  try {
+    await publishMetrics(report, {
+      region,
+      namespace: process.env.METRICS_NAMESPACE || 'AgenticReview',
+      project: process.env.PROJECT,
+      env: process.env.ENV,
+      blocked,
+    });
+    console.log('Published CloudWatch metrics.');
+  } catch (err) {
+    console.error('Failed to publish CloudWatch metrics (continuing):', err);
+  }
+
+  if (blocked) {
     console.error(
       `Agentic review blocked the pipeline: risk level "${report.overallRiskLevel}" >= threshold "${threshold}".`
     );

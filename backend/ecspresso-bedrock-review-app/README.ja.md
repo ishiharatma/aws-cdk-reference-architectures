@@ -50,6 +50,16 @@ Source(CodeCommit) → Test → Build → AgenticReview(Bedrock) → [Approve*] 
   ファクトの仕組みの詳細は CDK 側 README の「レビュー結果はどこで確認
   できるか」節を参照。
 
+## レビューの効果を経時的に測定する
+
+`agentic-review.js` は毎回の実行後、`<project>/<env>/AgenticReview` に
+CloudWatch メトリクス（リスクレベル分布、ブロック率、Bedrock 呼び出しの
+エラー/レイテンシ/トークン使用量）も発行する — これは常時有効（純粋な
+観測用のため）。`PipelineStack` がこれらを `AgenticReviewDashboard`
+という CloudWatch ダッシュボードで可視化する。メトリクスの全一覧と、
+意図的に見送った機能については CDK 側 README の「レビューの効果を経時的
+に測定する」節を参照。
+
 ## Bedrock モデルの切り替え
 
 Agentic Review が使うモデルは CodeBuild 環境変数 `BEDROCK_MODEL_ID` で切り替える

@@ -120,6 +120,35 @@ describe('PipelineStack', () => {
     });
   });
 
+  test('AgenticReview gets METRICS_NAMESPACE and a cloudwatch:PutMetricData permission scoped to that namespace', () => {
+    template.hasResourceProperties('AWS::CodeBuild::Project', {
+      Name: 'testproject-dev-agentic-review',
+      Environment: Match.objectLike({
+        EnvironmentVariables: Match.arrayWith([
+          Match.objectLike({ Name: 'METRICS_NAMESPACE', Value: 'testproject/dev/AgenticReview' }),
+        ]),
+      }),
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowCloudWatchPutMetricData',
+            Action: 'cloudwatch:PutMetricData',
+            Condition: { StringEquals: { 'cloudwatch:namespace': 'testproject/dev/AgenticReview' } },
+          }),
+        ]),
+      },
+    });
+  });
+
+  test('creates an AgenticReview CloudWatch dashboard', () => {
+    template.resourceCountIs('AWS::CloudWatch::Dashboard', 1);
+    template.hasResourceProperties('AWS::CloudWatch::Dashboard', {
+      DashboardName: 'testproject-dev-agentic-review',
+    });
+  });
+
   test('Build CodeBuild project defaults SECURITYHUB_IMPORT_ENABLED to false and gets BatchImportFindings permission', () => {
     template.hasResourceProperties('AWS::CodeBuild::Project', {
       Name: 'testproject-dev-build',

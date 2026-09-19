@@ -104,6 +104,39 @@ reviewNotificationEnabled: true, // publish the review summary to SNS before App
   the build — it's a convenience layer, not the source of truth for the
   risk decision (that's still the `RISK_THRESHOLD` exit-code check).
 
+## Measuring the review's effect over time
+
+"We added an AI review gate" is just an anecdote until you can see how
+often it fires, on what, and at what cost. `agentic-review.js` publishes
+CloudWatch metrics to the namespace `<project>/<env>/AgenticReview` after
+every run (this is always on — it's pure observability, nothing external
+is affected, unlike the SNS/Security Hub toggles above):
+
+| Metric | Dimensions | What it tells you |
+| --- | --- | --- |
+| `OverallRiskLevel` | `RiskLevel` | Distribution of overall risk levels over time |
+| `Blocked` | — | How often the gate actually blocks a deploy (`Sum` = block count) |
+| `PerspectiveRiskLevel` | `Perspective`, `RiskLevel` | Which perspective (security/infra/quality/cost) is driving risk |
+| `PerspectiveError` | `Perspective` | Bedrock call reliability per perspective (throttling, malformed output, etc.) |
+| `BedrockLatency` | `Perspective` | How long each perspective's Bedrock call takes — is this stage a pipeline bottleneck? |
+| `BedrockInputTokens` / `BedrockOutputTokens` | `Perspective` | Token usage per perspective — the basis for estimating Bedrock cost |
+
+All dimensioned also by `Project` and `Environment`. `PipelineStack`
+creates an `AgenticReviewDashboard` CloudWatch dashboard
+(`<project>-<env>-agentic-review`) charting all of the above. A metrics
+publish failure is logged and never fails the build, same as the SNS
+notification.
+
+**Deliberately not included** (see the discussion that led here for the
+full reasoning): a feedback loop that records when a human overrides a
+block as a false positive (would need a Lambda between Approve and a
+place to store the verdict — the piece that would most improve review
+precision over time, but too much machinery for this sample), and
+long-term storage of review results in DynamoDB/S3 for audit purposes
+(the artifact bucket here is `isAutoDeleteObject: true` and not meant to
+retain history — a real audit requirement should get its own storage
+decision, not one bolted onto a sample).
+
 ## Why `ecspresso verify` / `ecspresso deploy` are not run
 
 This workspace has no companion ECS cluster/service stack, so
@@ -281,6 +314,9 @@ npm test
   notification topic enforces SSL (`enforceSSL: true`)
 - ✅ `AgenticReview`'s `sns:Publish` grant is scoped to the exact
   notification/approval topic ARN it publishes to, not `*`
+- ✅ `AgenticReview`'s `cloudwatch:PutMetricData` grant has no resource-level
+  ARN to scope to (CloudWatch metrics don't have one), so it's restricted
+  with a `cloudwatch:namespace` condition to `metricsNamespace` instead
 - ✅ `AwsSolutionsChecks` (CDK Nag) runs in `test/compliance/`; every
   remaining wildcard/managed-policy finding is suppressed with a written
   reason (see `lib/stacks/pipeline-stack.ts`)
@@ -345,6 +381,7 @@ default).
 - [Amazon Bedrock Runtime — Converse API](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html)
 - [How to build a CI/CD pipeline for container vulnerability scanning with Trivy and AWS Security Hub](https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
 - [AWS Security Finding Format (ASFF) syntax](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html)
+- [Using condition keys to limit access to CloudWatch namespaces](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
 
 ### Related Tools
 - [ecspresso](https://github.com/kayac/ecspresso) — ECS deployment tool

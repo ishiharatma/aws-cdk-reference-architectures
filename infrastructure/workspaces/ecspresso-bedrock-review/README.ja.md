@@ -103,6 +103,40 @@ reviewNotificationEnabled: true, // Approve の前にレビューサマリーを
   失敗させない — あくまで利便性のためのレイヤーであり、リスク判定の
   正とはしない（正は引き続き `RISK_THRESHOLD` による exit code 判定）。
 
+## レビューの効果を経時的に測定する
+
+「AI レビューゲートを入れた」というだけでは、どれくらいの頻度で・何に対して・
+どれだけのコストで発動しているかが分からず、単なる逸話で終わってしまう。
+`agentic-review.js` は毎回の実行後、`<project>/<env>/AgenticReview`
+という名前空間に CloudWatch メトリクスを発行する（これは常時有効 —
+上記の SNS/Security Hub のトグルと違い、純粋な観測用で外部への副作用が
+ないため）:
+
+| メトリクス | ディメンション | 何が分かるか |
+| --- | --- | --- |
+| `OverallRiskLevel` | `RiskLevel` | 全体リスクレベルの時系列分布 |
+| `Blocked` | — | ゲートが実際にデプロイをブロックした頻度（`Sum` = ブロック回数） |
+| `PerspectiveRiskLevel` | `Perspective`, `RiskLevel` | どの観点（security/infra/quality/cost）がリスクを牽引しているか |
+| `PerspectiveError` | `Perspective` | 観点ごとの Bedrock 呼び出し信頼性（スロットリング、出力形式不正など） |
+| `BedrockLatency` | `Perspective` | 観点ごとの Bedrock 呼び出し時間 — このステージがパイプラインのボトルネックになっていないか |
+| `BedrockInputTokens` / `BedrockOutputTokens` | `Perspective` | 観点ごとのトークン使用量 — Bedrock 利用コスト試算の基礎データ |
+
+すべて `Project` と `Environment` でもディメンション付けされている。
+`PipelineStack` は上記全てを可視化する `AgenticReviewDashboard`
+という CloudWatch ダッシュボード（`<project>-<env>-agentic-review`）も
+作成する。メトリクス publish の失敗は SNS 通知と同様、ログに残すだけで
+ビルドは失敗させない。
+
+**意図的に含めなかったもの**（この機能を検討した際の議論を参照）:
+人間が「このブロックは誤検知だった」と判断してオーバーライドした場合を
+記録するフィードバックループ（Approve と記録先の間に Lambda が必要で、
+レビュー精度を経時的に最も改善しうる要素だが、サンプルの規模を超える
+仕組みが必要）、および DynamoDB/S3 へのレビュー結果の長期保存・監査
+（このワークスペースのアーティファクトバケットは
+`isAutoDeleteObject: true` で履歴保持を前提にしていない — 実際に監査
+要件があるなら、サンプルに付け足すのではなく独立した保存方式を検討
+すべき）。
+
 ## `ecspresso verify` / `ecspresso deploy` を実行しない理由
 
 このワークスペースには対応する ECS クラスタ/サービスのスタックがないため、
@@ -279,6 +313,9 @@ npm test
   SNS 通知トピックも SSL を強制（`enforceSSL: true`）
 - ✅ `AgenticReview` の `sns:Publish` 権限は、実際に publish する通知/承認
   トピックの ARN に限定しており、`*` ではない
+- ✅ `AgenticReview` の `cloudwatch:PutMetricData` 権限は、CloudWatch
+  メトリクスにリソースレベル ARN が存在しないため、代わりに
+  `cloudwatch:namespace` 条件で `metricsNamespace` に絞り込んでいる
 - ✅ `test/compliance/` で `AwsSolutionsChecks`（CDK Nag）を実行し、残る
   ワイルドカード/マネージドポリシーの指摘はすべて理由を明記して抑制
   （`lib/stacks/pipeline-stack.ts` 参照）
@@ -341,6 +378,7 @@ cost）の追加・削除・文言変更を行う。
 - [Amazon Bedrock Runtime — Converse API](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html)
 - [Trivy と AWS Security Hub を使ったコンテナ脆弱性スキャン CI/CD パイプラインの構築方法](https://aws.amazon.com/jp/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/)
 - [AWS Security Finding Format (ASFF) syntax](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html)
+- [Using condition keys to limit access to CloudWatch namespaces](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html)
 
 ### 関連ツール
 - [ecspresso](https://github.com/kayac/ecspresso) — ECS デプロイツール

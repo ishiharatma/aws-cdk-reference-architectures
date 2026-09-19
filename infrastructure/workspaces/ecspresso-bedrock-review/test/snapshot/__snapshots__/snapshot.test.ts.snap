@@ -15,7 +15,7 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
         },
         {
           "id": "AwsSolutions-IAM5",
-          "reason": "CDK auto-grants (S3 artifact object access, ECR pull/push, EventBridge PutEvents/StartPipelineExecution) are scoped as narrowly as each API allows. Bedrock foundation-model/inference-profile ARNs are wildcarded because the reviewable model set is intentionally parameterized (BEDROCK_MODEL_ID), not fixed at synth time.",
+          "reason": "CDK auto-grants (S3 artifact object access, ECR pull/push, EventBridge PutEvents/StartPipelineExecution) are scoped as narrowly as each API allows. Bedrock foundation-model/inference-profile ARNs are wildcarded because the reviewable model set is intentionally parameterized (BEDROCK_MODEL_ID), not fixed at synth time. CloudWatch PutMetricData has no resource-level ARN and is instead scoped to metricsNamespace via a cloudwatch:namespace condition.",
         },
       ],
     },
@@ -79,6 +79,44 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "AgenticReviewDashboard2746AFCB": {
+      "Properties": {
+        "DashboardBody": {
+          "Fn::Join": [
+            "",
+            [
+              "{"widgets":[{"type":"metric","width":12,"height":6,"x":0,"y":0,"properties":{"view":"timeSeries","title":"Overall risk level (daily count)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","OverallRiskLevel","Environment","dev","Project","testproject","RiskLevel","low",{"label":"low","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","OverallRiskLevel","Environment","dev","Project","testproject","RiskLevel","medium",{"label":"medium","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","OverallRiskLevel","Environment","dev","Project","testproject","RiskLevel","high",{"label":"high","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","OverallRiskLevel","Environment","dev","Project","testproject","RiskLevel","critical",{"label":"critical","period":86400,"stat":"Sum"}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":12,"y":0,"properties":{"view":"timeSeries","title":"Blocked pipeline runs (daily count)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","Blocked","Environment","dev","Project","testproject",{"label":"Blocked runs","period":86400,"stat":"Sum"}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":0,"y":6,"properties":{"view":"timeSeries","title":"Bedrock call errors per perspective (daily count)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","PerspectiveError","Environment","dev","Perspective","security","Project","testproject",{"label":"security","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","PerspectiveError","Environment","dev","Perspective","infra","Project","testproject",{"label":"infra","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","PerspectiveError","Environment","dev","Perspective","quality","Project","testproject",{"label":"quality","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","PerspectiveError","Environment","dev","Perspective","cost","Project","testproject",{"label":"cost","period":86400,"stat":"Sum"}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":12,"y":6,"properties":{"view":"timeSeries","title":"Bedrock call latency per perspective (daily avg ms)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","BedrockLatency","Environment","dev","Perspective","security","Project","testproject",{"label":"security","period":86400}],["testproject/dev/AgenticReview","BedrockLatency","Environment","dev","Perspective","infra","Project","testproject",{"label":"infra","period":86400}],["testproject/dev/AgenticReview","BedrockLatency","Environment","dev","Perspective","quality","Project","testproject",{"label":"quality","period":86400}],["testproject/dev/AgenticReview","BedrockLatency","Environment","dev","Perspective","cost","Project","testproject",{"label":"cost","period":86400}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":0,"y":12,"properties":{"view":"timeSeries","title":"Bedrock input tokens per perspective (daily sum)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","BedrockInputTokens","Environment","dev","Perspective","security","Project","testproject",{"label":"security","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockInputTokens","Environment","dev","Perspective","infra","Project","testproject",{"label":"infra","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockInputTokens","Environment","dev","Perspective","quality","Project","testproject",{"label":"quality","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockInputTokens","Environment","dev","Perspective","cost","Project","testproject",{"label":"cost","period":86400,"stat":"Sum"}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":12,"y":12,"properties":{"view":"timeSeries","title":"Bedrock output tokens per perspective (daily sum)","region":"",
+              {
+                "Ref": "AWS::Region",
+              },
+              "","metrics":[["testproject/dev/AgenticReview","BedrockOutputTokens","Environment","dev","Perspective","security","Project","testproject",{"label":"security","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockOutputTokens","Environment","dev","Perspective","infra","Project","testproject",{"label":"infra","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockOutputTokens","Environment","dev","Perspective","quality","Project","testproject",{"label":"quality","period":86400,"stat":"Sum"}],["testproject/dev/AgenticReview","BedrockOutputTokens","Environment","dev","Perspective","cost","Project","testproject",{"label":"cost","period":86400,"stat":"Sum"}]],"yAxis":{}}}]}",
+            ],
+          ],
+        },
+        "DashboardName": "testproject-dev-agentic-review",
+      },
+      "Type": "AWS::CloudWatch::Dashboard",
     },
     "AgenticReviewLogGroup4C241A66": {
       "DeletionPolicy": "Delete",
@@ -144,6 +182,11 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
               "Value": {
                 "Ref": "NotificationTopicEB7A0DF1",
               },
+            },
+            {
+              "Name": "METRICS_NAMESPACE",
+              "Type": "PLAINTEXT",
+              "Value": "testproject/dev/AgenticReview",
             },
           ],
           "Image": "aws/codebuild/standard:7.0",
@@ -298,6 +341,17 @@ exports[`Stack Snapshot Tests PipelineStack CloudFormation template snapshot 1`]
                 "Ref": "NotificationTopicEB7A0DF1",
               },
               "Sid": "AllowSnsPublishReviewSummary",
+            },
+            {
+              "Action": "cloudwatch:PutMetricData",
+              "Condition": {
+                "StringEquals": {
+                  "cloudwatch:namespace": "testproject/dev/AgenticReview",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "AllowCloudWatchPutMetricData",
             },
             {
               "Action": [
@@ -2313,7 +2367,7 @@ exports[`Stack Snapshot Tests RepositoryStack CloudFormation template snapshot 1
           "BranchName": "develop",
           "S3": {
             "Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
-            "Key": "2735e2af03e6aca983d6c9ecea4b830c277bcd21327a81b37ef5a43b691c0567.zip",
+            "Key": "d46319e123ba4a2b3f5d2b1a4aeaecfa8023e1cfd946d96d1aed9fda87007cf9.zip",
           },
         },
         "RepositoryDescription": "testproject sample app for the ECS Fargate + ecspresso + Bedrock agentic review CI/CD demo",
