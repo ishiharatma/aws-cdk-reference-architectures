@@ -1,5 +1,9 @@
 # ALB + Keycloak 認証 (ECS Fargate + Aurora Serverless V2)
 
+*他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
+
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+
 ## 概要
 
 このワークスペースは、AWS ALB のユーザー認証に **Keycloak** を使用した参照アーキテクチャです。
@@ -16,6 +20,8 @@
 ---
 
 ## アーキテクチャ
+
+![Architecture Overview](overview.drawio.svg)
 
 ### Pattern A — Keycloak 直接認証 (OIDC)
 
@@ -248,3 +254,11 @@ psql -h <aurora-endpoint> -U keycloak -d keycloakdb -c 'SELECT version();'
 - `appDomainName` を設定して HTTPS を有効化することを強く推奨します
 - Aurora の認証情報は Secrets Manager で管理され、コンテナに安全に注入されます
 - ECS Exec を有効化しているため、デプロイ後に IAM ポリシーで制限することを推奨します
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](../../../LICENSE) file for details.
+
+## 👥 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](../../../docs/contribution/CONTRIBUTING.md) for details.

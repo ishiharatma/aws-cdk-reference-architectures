@@ -9,6 +9,7 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-09",
+    "draft": true,
     "articles": {}
   },
   {
@@ -446,6 +447,19 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-08-20",
+    "articles": {}
+  },
+  {
+    "id": "ecspresso-bedrock-review",
+    "title": "Amazon Bedrock Agentic Code Review Gate for ECS Fargate CI/CD (ecspresso + CodePipeline)",
+    "description": "A CodeCommit/CodePipeline CI/CD reference for ECS Fargate that adds an Amazon Bedrock agentic code review gate between Build and Deploy: security/infra/quality/cost perspectives are reviewed in parallel against each push's git diff, and the pipeline blocks when the aggregated risk level reaches a configurable threshold. Deploys sample task/service definitions with ecspresso + jsonnet; this workspace has no real ECS cluster/service, so the Deploy stage only runs `ecspresso render` (no AWS API calls).",
+    "image": "ecspresso-bedrock-review/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CodePipeline", "CodeBuild", "CodeCommit", "Bedrock", "ECS", "Fargate", "ecspresso", "Trivy", "Security Hub"],
+    "link": "ecspresso-bedrock-review",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-18",
+    "draft": true,
     "articles": {}
   }
 ]
