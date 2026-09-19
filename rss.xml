@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>AWS CDK Reference Architectures</title>
+    <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
+    <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
+    <language>en</language>
+    <lastBuildDate>Sat, 19 Sep 2026 14:13:10 GMT</lastBuildDate>
+    <item>
+      <title>Cross-Account CI/CD from a Single CodeCommit Repository</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cicd-codecommit-cross-account</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cicd-codecommit-cross-account</guid>
+      <pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+      <description>One CodeCommit repository in the dev account feeding three CodePipelines, each deployed into its own account (dev/stg/prd); only the Source stage crosses accounts, assuming a fixed-name IAM role while EventBridge forwards push events across accounts to trigger each pipeline.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CodePipeline</category>
+      <category>CodeBuild</category>
+      <category>CodeCommit</category>
+      <category>Cross-Account</category>
+      <category>IAM</category>
+    </item>
+    <item>
+      <title>FIS Chaos: CloudFront + Internal ALB + ECS Fargate + Aurora PostgreSQL</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-a-ecs-aurora</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-a-ecs-aurora</guid>
+      <pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Four AWS FIS chaos experiment templates for a container-based three-tier web architecture: Aurora writer→reader failover, ECS all-tasks stop (with CloudFront S3 fallback), ECS→DB network blackhole on TCP 5432, and ALB→ECS network blackhole on TCP 80 — each with an ALB 5xx CloudWatch Alarm stop condition.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>ECS</category>
+      <category>Fargate</category>
+      <category>ALB</category>
+      <category>CloudFront</category>
+      <category>Aurora</category>
+      <category>PostgreSQL</category>
+      <category>VPC Origin</category>
+    </item>
+    <item>
+      <title>FIS Chaos: CloudFront + Internal ALB + EC2 Auto Scaling Group + Aurora PostgreSQL</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-c-ec2-asg-rds</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-c-ec2-asg-rds</guid>
+      <pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Four AWS FIS chaos experiment templates for an EC2-based three-tier web architecture: EC2 instance termination (50% PERCENT), CPU stress via SSM (all instances, 5 min), Aurora writer→reader failover, and EC2→DB network blackhole on TCP port 5432 — each with an ALB 5xx CloudWatch Alarm stop condition.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>EC2</category>
+      <category>Auto Scaling</category>
+      <category>ALB</category>
+      <category>CloudFront</category>
+      <category>Aurora</category>
+      <category>PostgreSQL</category>
+      <category>SSM</category>
+    </item>
+    <item>
+      <title>FIS Chaos: CloudFront + API Gateway + Lambda + DynamoDB</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-b-apigw-lambda</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-b-apigw-lambda</guid>
+      <pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Four AWS FIS chaos experiment templates for a serverless CRUD API: DynamoDB internal errors (all ops), write-only throttle, read-only throttle, and Lambda concurrency exhaustion — each with a CloudWatch Alarm stop condition. Uses aws:fis:inject-api-* targeting the Lambda execution role to intercept DynamoDB calls at the control plane without touching function code.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>Lambda</category>
+      <category>API Gateway</category>
+      <category>CloudFront</category>
+      <category>DynamoDB</category>
+    </item>
+    <item>
+      <title>API Gateway + Single-Purpose Lambda</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-single-purpose-lambda</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-single-purpose-lambda</guid>
+      <pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A Todos REST API where every API Gateway method is backed by its own narrowly-scoped Lambda function, each with an independent IAM role, log group, bundle, and least-privilege DynamoDB grant (read-only for GET, write-only for POST/DELETE). One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>API Gateway</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Serverless</category>
+    </item>
+    <item>
+      <title>API Gateway + Lambdalith (Hono)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-lambdalith</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-lambdalith</guid>
+      <pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+      <description>The same Todos REST API served by a single Lambda function, with routing done in-process by the Hono framework via its aws-lambda adapter and API Gateway reduced to a thin {proxy+} pass-through. One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>API Gateway</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Hono</category>
+      <category>Serverless</category>
+    </item>
+    <item>
+      <title>API Gateway + Lambda Web Adapter (Express.js)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-lambda-web-adapter</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-lambda-web-adapter</guid>
+      <pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+      <description>The same Todos REST API served by a single Lambda that runs a standard Express.js HTTP server, with the AWS Lambda Web Adapter layer translating the API Gateway proxy event into a real HTTP request so the identical image also runs on Fargate or a local node process. One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>API Gateway</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Lambda Web Adapter</category>
+      <category>Express</category>
+      <category>Serverless</category>
+    </item>
+    <item>
+      <title>Route 53 Private Hosted Zone Delegation</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-phz-delegation</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-phz-delegation</guid>
+      <pubDate>Mon, 31 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Parent private hosted zone system.example.com delegates dev.system.example.com and stg.system.example.com to two child VPCs using the June 2025 Route 53 Resolver DNS delegation feature (INBOUND_DELEGATION endpoints + DELEGATE resolver rules), with a fourth on-premises-role VPC and all four VPCs joined by one Transit Gateway.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Route 53</category>
+      <category>Route 53 Resolver</category>
+      <category>DNS Delegation</category>
+      <category>Transit Gateway</category>
+      <category>Networking</category>
+    </item>
+    <item>
+      <title>Route 53 Resolver Inbound/Outbound Endpoints</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-resolver-endpoints</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-resolver-endpoints</guid>
+      <pubDate>Mon, 31 Aug 2026 12:00:00 GMT</pubDate>
+      <description>A verification VPC with the system.example.com private hosted zone and both a Resolver inbound endpoint (switchable via parameter between the default and the June 2025 INBOUND_DELEGATION type) and outbound endpoint, peered with an on-premises-role VPC running a BIND9 DNS server.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Route 53</category>
+      <category>Route 53 Resolver</category>
+      <category>Hybrid DNS</category>
+      <category>VPC Peering</category>
+      <category>Networking</category>
+    </item>
+    <item>
+      <title>Multi-VPC Transit Gateway</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transit-gateway</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transit-gateway</guid>
+      <pubDate>Sat, 29 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Three VPCs (10.0/16, 10.1/16, 10.2/16) joined into a full mesh by one Transit Gateway with a single, explicitly managed TGW route table (association + propagation on every attachment), plus one SSM-managed test instance per VPC for connectivity verification.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Transit Gateway</category>
+      <category>VPC</category>
+      <category>Networking</category>
+      <category>EC2</category>
+    </item>
+    <item>
+      <title>AWS Backup Cross-Region (Tokyo to Osaka)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/aws-backup-cross-region</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/aws-backup-cross-region</guid>
+      <pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+      <description>A single tag-based AWS Backup Selection protecting a sample EC2 instance, RDS database, S3 bucket, and an entire CloudFormation stack in Tokyo, with every recovery point copied cross-region to a pre-created secondary vault in Osaka.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>AWS Backup</category>
+      <category>EC2</category>
+      <category>RDS</category>
+      <category>S3</category>
+      <category>CloudFormation</category>
+      <category>Multi-Region</category>
+      <category>DR</category>
+    </item>
+    <item>
+      <title>ECR Cross-Region Replication</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecr-cross-region-replication</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecr-cross-region-replication</guid>
+      <pubDate>Thu, 20 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Amazon ECR cross-region replication from Tokyo to Osaka, with both repositories pre-created and independently lifecycle-managed so the replica keeps its own retention policy instead of inheriting none.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>ECR</category>
+      <category>Replication</category>
+      <category>Multi-Region</category>
+    </item>
+    <item>
+      <title>WAF Log Reporting</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/waf-log-reporting</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/waf-log-reporting</guid>
+      <pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Daily WAF Count/Block activity reports built two ways from the same logs: CloudWatch Logs Insights + Lambda + SNS, and Athena + Lambda + SNS, either against a standalone sample Web ACL or an existing WAF.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>WAF</category>
+      <category>Athena</category>
+      <category>CloudWatch Logs</category>
+      <category>Lambda</category>
+      <category>SNS</category>
+      <category>Security</category>
+    </item>
+    <item>
+      <title>EC2 Dual ENI</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ec2-dual-eni</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ec2-dual-eni</guid>
+      <pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Single EC2 instance with two network interfaces: eth0 for internet-facing HTTP/HTTPS traffic (with Elastic IP), and eth1 for SSH management access restricted to specific CIDRs.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>EC2</category>
+      <category>Networking</category>
+      <category>Security</category>
+    </item>
+    <item>
+      <title>API Gateway + S3 Stub API</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-s3-stub</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-s3-stub</guid>
+      <pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+      <description>Build a Lambda-free mock/stub HTTP API by wiring API Gateway directly to S3 via an AWS Service integration, returning canned JSON files.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>API Gateway</category>
+      <category>S3</category>
+    </item>
+    <item>
+      <title>SNS Basic Fan-Out Patterns</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/sns-basic</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/sns-basic</guid>
+      <pubDate>Sat, 08 Aug 2026 12:00:00 GMT</pubDate>
+      <description>A single SNS topic fanned out to Email, SQS, Lambda, HTTPS (API Gateway to S3/DynamoDB) and Firehose subscriptions, plus a CloudWatch Logs to Lambda to SNS to Lambda alerting chain.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>SNS</category>
+      <category>SQS</category>
+      <category>Lambda</category>
+      <category>API Gateway</category>
+      <category>DynamoDB</category>
+      <category>Firehose</category>
+    </item>
+    <item>
+      <title>CloudFront S3 Static Website</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudfront-s3-static-website</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudfront-s3-static-website</guid>
+      <pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+      <description>A static site served over HTTPS by CloudFront from a fully private S3 bucket (Origin Access Control), with a Content-Security-Policy response-headers policy, SPA-friendly 403/404-to-index rewrites, and an optional cross-region (us-east-1) WAFv2 Web ACL with an IP allow-list and redacted log fields.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CloudFront</category>
+      <category>S3</category>
+      <category>WAF</category>
+      <category>Security</category>
+    </item>
+    <item>
+      <title>S3 Static Web Site</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-static-web-site</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-static-web-site</guid>
+      <pubDate>Wed, 05 Aug 2026 12:00:00 GMT</pubDate>
+      <description>The simplest static website on AWS: S3 static website hosting served straight from the bucket website endpoint, with Block Public Access left fully enabled and anonymous access limited to an allow-list of IPv4/IPv6 addresses via an aws:SourceIp bucket policy (auto-detecting the deploying operator&apos;s own global IP).</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>S3</category>
+      <category>Storage</category>
+    </item>
+    <item>
+      <title>CI/CD Pipeline for CloudFront &amp; S3</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cicd-cloudfront-s3</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cicd-cloudfront-s3</guid>
+      <pubDate>Sun, 02 Aug 2026 12:00:00 GMT</pubDate>
+      <description>A CodePipeline/CodeBuild pipeline that builds a static site from CodeCommit and deploys it to S3/CloudFront, with an S3 sync Lambda, an async CloudFront invalidation Lambda driven by the CodePipeline continuation-token pattern, and an opt-in manual approval gate.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CodePipeline</category>
+      <category>CodeBuild</category>
+      <category>Lambda</category>
+    </item>
+    <item>
+      <title>Budgets &amp; Cost Anomaly Detection</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/budgets-cost-anomaly-detection</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/budgets-cost-anomaly-detection</guid>
+      <pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+      <description>Five FinOps alerting patterns with AWS CDK: threshold-based Budget alerts, ML-based Cost Anomaly Detection, a unified SNS topic with optional Slack delivery, the classic CloudWatch billing alarm, and a scheduled Step Functions cost digest to Slack/Microsoft Teams via AWS Chatbot.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FinOps</category>
+      <category>Cost Management</category>
+      <category>Step Functions</category>
+    </item>
+    <item>
+      <title>CloudFront with VPC Origin</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudfront-vpc-origin</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudfront-vpc-origin</guid>
+      <pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+      <description>Configure CloudFront distribution with VPC origin using AWS CDK.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CloudFront</category>
+      <category>VPC</category>
+    </item>
+    <item>
+      <title>CloudWatch Logs to S3 Archive</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudwatch-logs-s3-archive</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cloudwatch-logs-s3-archive</guid>
+      <pubDate>Sat, 06 Jun 2026 12:00:00 GMT</pubDate>
+      <description>Archive CloudWatch Logs to S3 using AWS CDK.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CloudWatch</category>
+      <category>S3</category>
+    </item>
+    <item>
+      <title>EC2 Advanced Patterns</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ec2-advanced</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ec2-advanced</guid>
+      <pubDate>Sat, 16 May 2026 12:00:00 GMT</pubDate>
+      <description>Four EC2 deployment patterns using AWS CDK: Single Instance, Auto-Recovery, ASG Always-1, and ASG Multi-AZ with ALB. Covers IMDSv2, SSM Session Manager access, CloudWatch alarms, and operational notifications.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>EC2</category>
+      <category>ASG</category>
+      <category>ALB</category>
+    </item>
+    <item>
+      <title>ECS Fargate with ALB</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecs-fargate-alb</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecs-fargate-alb</guid>
+      <pubDate>Mon, 20 Apr 2026 12:00:00 GMT</pubDate>
+      <description>Build a production-ready container application platform combining ECS Fargate and Application Load Balancer (ALB) using AWS CDK.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>ECS</category>
+      <category>Fargate</category>
+      <category>ALB</category>
+    </item>
+    <item>
+      <title>SQS to Lambda to Kinesis Firehose</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/sqs-lambda-firehose</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/sqs-lambda-firehose</guid>
+      <pubDate>Mon, 26 Jan 2026 12:00:00 GMT</pubDate>
+      <description>Process messages from SQS queue using Lambda function and stream to Kinesis Firehose for data lake storage.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+    </item>
+    <item>
+      <title>VPC Peering Connection</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-peering</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-peering</guid>
+      <pubDate>Wed, 31 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Establish VPC peering connection between two VPCs for private network communication.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Networking</category>
+    </item>
+    <item>
+      <title>CDK Parameters Best Practices</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cdk-parameters</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cdk-parameters</guid>
+      <pubDate>Thu, 25 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Learn how to manage parameters and configurations in AWS CDK applications.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Best Practices</category>
+    </item>
+    <item>
+      <title>VPC with NAT Instance</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-natinstance-v2</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-natinstance-v2</guid>
+      <pubDate>Wed, 24 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Create VPC with NAT instance for cost-effective internet access from private subnets.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Networking</category>
+    </item>
+    <item>
+      <title>VPC Basics with CDK</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-basics</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/vpc-basics</guid>
+      <pubDate>Sun, 21 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Create a basic VPC infrastructure with public and private subnets using AWS CDK.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Networking</category>
+    </item>
+    <item>
+      <title>IAM Basics with CDK</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/iam-basics</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/iam-basics</guid>
+      <pubDate>Tue, 09 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Create IAM roles, policies, and users with AWS CDK following best practices.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Security</category>
+    </item>
+    <item>
+      <title>S3 Basics with CDK</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-basics</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-basics</guid>
+      <pubDate>Sun, 07 Dec 2025 12:00:00 GMT</pubDate>
+      <description>Create and configure S3 buckets with various settings using AWS CDK.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Storage</category>
+    </item>
+  </channel>
+</rss>
