@@ -1,0 +1,2077 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiUrl": {
+      "Description": "Codex session control-plane API URL",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "HttpApiF5A9A8A7",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/test",
+          ],
+        ],
+      },
+    },
+    "MicrovmImageArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CodexAppServerImage",
+          "ImageArn",
+        ],
+      },
+    },
+    "OpenAiApiKeySecretArn": {
+      "Description": "Update this secret with a real OpenAI API key after the first deploy",
+      "Value": {
+        "Ref": "OpenAiApiKeySecret05681F66",
+      },
+    },
+    "SessionsTableName": {
+      "Value": {
+        "Ref": "SessionsTable7C302024",
+      },
+    },
+    "UserPoolClientId": {
+      "Value": {
+        "Ref": "UserPoolUserPoolClient40176907",
+      },
+    },
+    "UserPoolId": {
+      "Value": {
+        "Ref": "UserPool6BA7E5F2",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CodexAppServerImage": {
+      "DependsOn": [
+        "MicrovmEgressConnector",
+      ],
+      "Properties": {
+        "AdditionalOsCapabilities": [],
+        "BaseImageArn": "arn:aws:lambda-microvms:ap-northeast-1:123456789012:image/test-base-image",
+        "BaseImageVersion": "1",
+        "BuildRoleArn": {
+          "Fn::GetAtt": [
+            "MicrovmImageBuildRole04A0F8FE",
+            "Arn",
+          ],
+        },
+        "CodeArtifact": {
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/d42126964747059dfa9df087f01583edc45d2848c8180c5e6886c3a70b21e546.zip",
+        },
+        "CpuConfigurations": [
+          {
+            "Architecture": "ARM_64",
+          },
+        ],
+        "Description": "codex app-server (OpenAI Codex CLI, JSON-RPC over WebSocket) packaged as a Lambda MicroVM image",
+        "EgressNetworkConnectors": [
+          {
+            "Fn::GetAtt": [
+              "MicrovmEgressConnector",
+              "Arn",
+            ],
+          },
+        ],
+        "EnvironmentVariables": [
+          {
+            "Key": "OPENAI_API_KEY_SECRET_ARN",
+            "Value": {
+              "Ref": "OpenAiApiKeySecret05681F66",
+            },
+          },
+        ],
+        "Hooks": {
+          "MicrovmHooks": {
+            "Resume": "ENABLED",
+            "ResumeTimeoutInSeconds": 15,
+            "Run": "ENABLED",
+            "RunTimeoutInSeconds": 30,
+            "Suspend": "ENABLED",
+            "SuspendTimeoutInSeconds": 15,
+            "Terminate": "ENABLED",
+            "TerminateTimeoutInSeconds": 15,
+          },
+          "MicrovmImageHooks": {
+            "Ready": "ENABLED",
+            "ReadyTimeoutInSeconds": 60,
+            "Validate": "ENABLED",
+            "ValidateTimeoutInSeconds": 60,
+          },
+          "Port": 8080,
+        },
+        "Logging": {
+          "CloudWatch": {
+            "LogGroup": {
+              "Ref": "MicrovmImageLogGroup9AB810C2",
+            },
+          },
+        },
+        "Name": "test-test-codex-image",
+        "Resources": [
+          {
+            "MinimumMemoryInMiB": 1024,
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::MicrovmImage",
+    },
+    "CreateSessionFunction9E798546": {
+      "DependsOn": [
+        "CreateSessionFunctionServiceRoleDefaultPolicyC8DC3F3B",
+        "CreateSessionFunctionServiceRoleC3832D74",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "e4378225b05086605eaa5e293a68231f1f7427c1b2178042a73d9fb28e97fead.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CreateSessionFunctionLogGroupE7F44B5B",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "CreateSessionFunctionServiceRoleC3832D74",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CreateSessionFunctionLogGroupE7F44B5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CreateSessionFunctionServiceRoleC3832D74": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CreateSessionFunctionServiceRoleDefaultPolicyC8DC3F3B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmExecutionRole1ADA6FF9",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CreateSessionFunctionServiceRoleDefaultPolicyC8DC3F3B",
+        "Roles": [
+          {
+            "Ref": "CreateSessionFunctionServiceRoleC3832D74",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DeleteSessionFunction00617D1E": {
+      "DependsOn": [
+        "DeleteSessionFunctionServiceRoleDefaultPolicy5884477C",
+        "DeleteSessionFunctionServiceRole598716E1",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "897cdb062cacfe8f6274f341caaafde98686ef1e78361d3d760aba54338cbe70.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "DeleteSessionFunctionLogGroup7BBACF6D",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "DeleteSessionFunctionServiceRole598716E1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "DeleteSessionFunctionLogGroup7BBACF6D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DeleteSessionFunctionServiceRole598716E1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DeleteSessionFunctionServiceRoleDefaultPolicy5884477C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DeleteSessionFunctionServiceRoleDefaultPolicy5884477C",
+        "Roles": [
+          {
+            "Ref": "DeleteSessionFunctionServiceRole598716E1",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "GetSessionFunctionC8945475": {
+      "DependsOn": [
+        "GetSessionFunctionServiceRoleDefaultPolicyCA010F4A",
+        "GetSessionFunctionServiceRoleA9731598",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "8da78c927c21523cb4c827943a7e1fff6a699822dca281df3b6af93555a3c98c.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetSessionFunctionLogGroupC460F057",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "GetSessionFunctionServiceRoleA9731598",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "GetSessionFunctionLogGroupC460F057": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetSessionFunctionServiceRoleA9731598": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GetSessionFunctionServiceRoleDefaultPolicyCA010F4A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetSessionFunctionServiceRoleDefaultPolicyCA010F4A",
+        "Roles": [
+          {
+            "Ref": "GetSessionFunctionServiceRoleA9731598",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "HttpApiAccessLogs4B419BF6": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "HttpApiDELETEsessionssessionId7934847A": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "DELETE /sessions/{sessionId}",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiDELETEsessionssessionIdDeleteSessionIntegrationA18ADF5A",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiDELETEsessionssessionIdDeleteSessionIntegrationA18ADF5A": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "DeleteSessionFunction00617D1E",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiDELETEsessionssessionIdDeleteSessionIntegrationPermission2F54F62F": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "DeleteSessionFunction00617D1E",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions/{sessionId}",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiF5A9A8A7": {
+      "Properties": {
+        "Description": "Codex App Server session control plane (start / status / suspend / resume / end)",
+        "Name": "test-test-codex-api",
+        "ProtocolType": "HTTP",
+      },
+      "Type": "AWS::ApiGatewayV2::Api",
+    },
+    "HttpApiGETsessionssessionIdED6A7F3E": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "GET /sessions/{sessionId}",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiGETsessionssessionIdGetSessionIntegration2DFADF4D",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiGETsessionssessionIdGetSessionIntegration2DFADF4D": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "GetSessionFunctionC8945475",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiGETsessionssessionIdGetSessionIntegrationPermission1C9D09DF": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetSessionFunctionC8945475",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions/{sessionId}",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiPOSTsessionsBDF29EB0": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "POST /sessions",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiPOSTsessionsCreateSessionIntegration7313ED3E",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiPOSTsessionsCreateSessionIntegration7313ED3E": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "CreateSessionFunction9E798546",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiPOSTsessionsCreateSessionIntegrationPermissionAE022320": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "CreateSessionFunction9E798546",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiPOSTsessionssessionIdresume0532E9DF": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "POST /sessions/{sessionId}/resume",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiPOSTsessionssessionIdresumeResumeSessionIntegration0B4D75CD",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiPOSTsessionssessionIdresumeResumeSessionIntegration0B4D75CD": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "ResumeSessionFunction44F90FA4",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiPOSTsessionssessionIdresumeResumeSessionIntegrationPermission19D14810": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ResumeSessionFunction44F90FA4",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions/{sessionId}/resume",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiPOSTsessionssessionIdsuspend2601F3B8": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiSessionsAuthorizer56CA43D1",
+        },
+        "RouteKey": "POST /sessions/{sessionId}/suspend",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "HttpApiPOSTsessionssessionIdsuspendSuspendSessionIntegrationAF7E207C",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "HttpApiPOSTsessionssessionIdsuspendSuspendSessionIntegrationAF7E207C": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "SuspendSessionFunctionC4036F55",
+            "Arn",
+          ],
+        },
+        "PayloadFormatVersion": "2.0",
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "HttpApiPOSTsessionssessionIdsuspendSuspendSessionIntegrationPermissionA5DA99B5": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SuspendSessionFunctionC4036F55",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "HttpApiF5A9A8A7",
+              },
+              "/*/*/sessions/{sessionId}/suspend",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "HttpApiSessionsAuthorizer56CA43D1": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AuthorizerType": "JWT",
+        "IdentitySource": [
+          "$request.header.Authorization",
+        ],
+        "JwtConfiguration": {
+          "Audience": [
+            {
+              "Ref": "UserPoolUserPoolClient40176907",
+            },
+          ],
+          "Issuer": {
+            "Fn::Join": [
+              "",
+              [
+                "https://cognito-idp.ap-northeast-1.amazonaws.com/",
+                {
+                  "Ref": "UserPool6BA7E5F2",
+                },
+              ],
+            ],
+          },
+        },
+        "Name": "SessionsAuthorizer",
+      },
+      "Type": "AWS::ApiGatewayV2::Authorizer",
+    },
+    "HttpApiStage21ACA647": {
+      "Properties": {
+        "AccessLogSettings": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "HttpApiAccessLogs4B419BF6",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7",
+        },
+        "AutoDeploy": true,
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGatewayV2::Stage",
+    },
+    "MicrovmEgressConnector": {
+      "Properties": {
+        "Configuration": {
+          "VpcEgressConfiguration": {
+            "AssociatedComputeResourceTypes": [
+              "MicroVm",
+            ],
+            "NetworkProtocol": "IPv4",
+            "SecurityGroupIds": [
+              {
+                "Fn::GetAtt": [
+                  "MicrovmEgressSecurityGroupAAE258E4",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetIds": [
+              {
+                "Ref": "VpcmicrovmegressSubnet1Subnet96A48563",
+              },
+              {
+                "Ref": "VpcmicrovmegressSubnet2Subnet9CA13B5D",
+              },
+            ],
+          },
+        },
+        "Name": "test-test-codex-egress",
+      },
+      "Type": "AWS::Lambda::NetworkConnector",
+    },
+    "MicrovmEgressSecurityGroupAAE258E4": {
+      "Properties": {
+        "GroupDescription": "Outbound-only security group for Codex App Server MicroVMs (HTTPS to the OpenAI API)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "MicrovmExecutionRole1ADA6FF9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by running codex app-server MicroVMs to read the OpenAI API key secret",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmExecutionRoleDefaultPolicy2F5F9AAC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "OpenAiApiKeySecret05681F66",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmExecutionRoleDefaultPolicy2F5F9AAC",
+        "Roles": [
+          {
+            "Ref": "MicrovmExecutionRole1ADA6FF9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageBuildRole04A0F8FE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda MicroVMs while building the codex app-server image (create-microvm-image)",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmImageBuildRoleDefaultPolicy1AFC78A1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "Roles": [
+          {
+            "Ref": "MicrovmImageBuildRole04A0F8FE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageLogGroup9AB810C2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/lambda-microvms/test-test-codex-image",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OpenAiApiKeySecret05681F66": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "OpenAI API key used by codex app-server inside the MicroVM. Replace the placeholder after deploying.",
+        "GenerateSecretString": {},
+        "Name": "test-test-codex-openai-api-key",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ResumeSessionFunction44F90FA4": {
+      "DependsOn": [
+        "ResumeSessionFunctionServiceRoleDefaultPolicy3E36498C",
+        "ResumeSessionFunctionServiceRole21BFDCC9",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "0f245f959d2eddc49651ec9821cc012f6e6dd3a33b94ba446dd2013ceb27dd30.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ResumeSessionFunctionLogGroupBB5649D4",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "ResumeSessionFunctionServiceRole21BFDCC9",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ResumeSessionFunctionLogGroupBB5649D4": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ResumeSessionFunctionServiceRole21BFDCC9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ResumeSessionFunctionServiceRoleDefaultPolicy3E36498C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ResumeSessionFunctionServiceRoleDefaultPolicy3E36498C",
+        "Roles": [
+          {
+            "Ref": "ResumeSessionFunctionServiceRole21BFDCC9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SessionsTable7C302024": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "sessionId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "sessionId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-codex-sessions",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiresAt",
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SuspendSessionFunctionC4036F55": {
+      "DependsOn": [
+        "SuspendSessionFunctionServiceRoleDefaultPolicy94EA688F",
+        "SuspendSessionFunctionServiceRole0C7B18EE",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "2501f9cb13a5145b448e489494734f470441963016603040dcff7f58f996ace0.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_EXPIRATION_MINUTES": "15",
+            "AUTO_RESUME_ENABLED": "true",
+            "CODEX_APP_SERVER_PORT": "8080",
+            "EGRESS_NETWORK_CONNECTORS": {
+              "Fn::GetAtt": [
+                "MicrovmEgressConnector",
+                "Arn",
+              ],
+            },
+            "IDLE_TIMEOUT_MINUTES": "5",
+            "MAX_SESSION_DURATION_MINUTES": "60",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "CodexAppServerImage",
+                "ImageArn",
+              ],
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "SUSPENDED_DURATION_MINUTES": "480",
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SuspendSessionFunctionLogGroupFB676853",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "SuspendSessionFunctionServiceRole0C7B18EE",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SuspendSessionFunctionLogGroupFB676853": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SuspendSessionFunctionServiceRole0C7B18EE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SuspendSessionFunctionServiceRoleDefaultPolicy94EA688F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "lambda-microvms:RunMicrovm",
+                "lambda-microvms:GetMicrovm",
+                "lambda-microvms:TerminateMicrovm",
+                "lambda-microvms:SuspendMicrovm",
+                "lambda-microvms:ResumeMicrovm",
+                "lambda-microvms:CreateMicrovmAuthToken",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "LambdaMicrovmsDataPlane",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SuspendSessionFunctionServiceRoleDefaultPolicy94EA688F",
+        "Roles": [
+          {
+            "Ref": "SuspendSessionFunctionServiceRole0C7B18EE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "UserPool6BA7E5F2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [
+            {
+              "Name": "verified_phone_number",
+              "Priority": 1,
+            },
+            {
+              "Name": "verified_email",
+              "Priority": 2,
+            },
+          ],
+        },
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true,
+        },
+        "AutoVerifiedAttributes": [
+          "email",
+        ],
+        "EmailVerificationMessage": "The verification code to your new account is {####}",
+        "EmailVerificationSubject": "Verify your new account",
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 12,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "RequireUppercase": true,
+          },
+        },
+        "SmsVerificationMessage": "The verification code to your new account is {####}",
+        "UserPoolName": "test-test-codex-users",
+        "UsernameAttributes": [
+          "email",
+        ],
+        "VerificationMessageTemplate": {
+          "DefaultEmailOption": "CONFIRM_WITH_CODE",
+          "EmailMessage": "The verification code to your new account is {####}",
+          "EmailSubject": "Verify your new account",
+          "SmsMessage": "The verification code to your new account is {####}",
+        },
+      },
+      "Type": "AWS::Cognito::UserPool",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UserPoolUserPoolClient40176907": {
+      "Properties": {
+        "AllowedOAuthFlows": [
+          "implicit",
+          "code",
+        ],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthScopes": [
+          "profile",
+          "phone",
+          "email",
+          "openid",
+          "aws.cognito.signin.user.admin",
+        ],
+        "CallbackURLs": [
+          "https://example.com",
+        ],
+        "ExplicitAuthFlows": [
+          "ALLOW_USER_PASSWORD_AUTH",
+          "ALLOW_USER_SRP_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH",
+        ],
+        "GenerateSecret": false,
+        "SupportedIdentityProviders": [
+          "COGNITO",
+        ],
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolClient",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcmicrovmegressSubnet1DefaultRoute08C0CDA9": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcpublicSubnet1NATGatewayA036E8A6",
+        },
+        "RouteTableId": {
+          "Ref": "VpcmicrovmegressSubnet1RouteTable25E90F85",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcmicrovmegressSubnet1RouteTable25E90F85": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/microvm-egressSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcmicrovmegressSubnet1RouteTableAssociationB11D6500": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcmicrovmegressSubnet1RouteTable25E90F85",
+        },
+        "SubnetId": {
+          "Ref": "VpcmicrovmegressSubnet1Subnet96A48563",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcmicrovmegressSubnet1Subnet96A48563": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "microvm-egress",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/microvm-egressSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcmicrovmegressSubnet2DefaultRoute0A5B9F26": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcpublicSubnet1NATGatewayA036E8A6",
+        },
+        "RouteTableId": {
+          "Ref": "VpcmicrovmegressSubnet2RouteTableFE4D43D7",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcmicrovmegressSubnet2RouteTableAssociation46557FBB": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcmicrovmegressSubnet2RouteTableFE4D43D7",
+        },
+        "SubnetId": {
+          "Ref": "VpcmicrovmegressSubnet2Subnet9CA13B5D",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcmicrovmegressSubnet2RouteTableFE4D43D7": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/microvm-egressSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcmicrovmegressSubnet2Subnet9CA13B5D": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "microvm-egress",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/microvm-egressSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1EIP411541E6": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcpublicSubnet1NATGatewayA036E8A6": {
+      "DependsOn": [
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcpublicSubnet1EIP411541E6",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "LambdaMicrovmsCodexAppserver/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ApiGatewayV2::Api": 1,
+  "AWS::ApiGatewayV2::Authorizer": 1,
+  "AWS::ApiGatewayV2::Integration": 5,
+  "AWS::ApiGatewayV2::Route": 5,
+  "AWS::ApiGatewayV2::Stage": 1,
+  "AWS::Cognito::UserPool": 1,
+  "AWS::Cognito::UserPoolClient": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 4,
+  "AWS::EC2::RouteTable": 4,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 4,
+  "AWS::EC2::SubnetRouteTableAssociation": 4,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::Policy": 7,
+  "AWS::IAM::Role": 7,
+  "AWS::Lambda::Function": 5,
+  "AWS::Lambda::MicrovmImage": 1,
+  "AWS::Lambda::NetworkConnector": 1,
+  "AWS::Lambda::Permission": 5,
+  "AWS::Logs::LogGroup": 7,
+  "AWS::SecretsManager::Secret": 1,
+}
+`;
