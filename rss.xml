@@ -5,7 +5,25 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 19 Sep 2026 14:13:10 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 19 Sep 2026 17:58:56 GMT</lastBuildDate>
+    <item>
+      <title>Amazon Bedrock Agentic Code Review Gate for ECS Fargate CI/CD (ecspresso + CodePipeline)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecspresso-bedrock-review</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecspresso-bedrock-review</guid>
+      <pubDate>Sat, 19 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A CodeCommit/CodePipeline CI/CD reference for ECS Fargate that adds an Amazon Bedrock agentic code review gate between Build and Deploy: security/infra/quality/cost perspectives are reviewed in parallel against each push&apos;s git diff, and the pipeline blocks when the aggregated risk level reaches a configurable threshold. Deploys sample task/service definitions with ecspresso + jsonnet; this workspace has no real ECS cluster/service, so the Deploy stage only runs `ecspresso render` (no AWS API calls).</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CodePipeline</category>
+      <category>CodeBuild</category>
+      <category>CodeCommit</category>
+      <category>Bedrock</category>
+      <category>ECS</category>
+      <category>Fargate</category>
+      <category>ecspresso</category>
+      <category>Trivy</category>
+      <category>Security Hub</category>
+    </item>
     <item>
       <title>Cross-Account CI/CD from a Single CodeCommit Repository</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cicd-codecommit-cross-account</link>

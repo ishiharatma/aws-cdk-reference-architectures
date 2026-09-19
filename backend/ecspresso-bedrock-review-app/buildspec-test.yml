@@ -9,7 +9,6 @@ phases:
       nodejs: 20
     commands:
       - echo "=== [Test] project=${PROJECT} env=${ENV} ==="
-      - cd backend/ecspresso-bedrock-review-app
       - npm ci
   build:
     commands:
@@ -21,9 +20,9 @@ phases:
 reports:
   unit-test-results:
     files:
-      - 'backend/ecspresso-bedrock-review-app/junit.xml'
+      - 'junit.xml'
     file-format: 'JUNITXML'
 
 cache:
   paths:
-    - 'backend/ecspresso-bedrock-review-app/node_modules/**/*'
+    - 'node_modules/**/*'

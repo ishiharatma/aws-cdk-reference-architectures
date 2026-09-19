@@ -26,6 +26,14 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 COPY src ./src
 
+# Remove npm/npx (and the base image's own bundled copies of glob/minimatch/
+# brace-expansion pulled in for npm's internal use) -- the running container
+# only ever executes `node src/index.js`, so shipping the package manager at
+# runtime is unnecessary attack surface. This also keeps CVEs in npm's own
+# vendored dependencies (irrelevant to this app's dependency tree, see
+# `npm ls brace-expansion --omit=dev`) out of the image Trivy scans.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \

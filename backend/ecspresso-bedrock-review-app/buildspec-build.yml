@@ -21,7 +21,6 @@ phases:
       - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}
       - COMMIT_HASH=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:-latest}
-      - cd backend/ecspresso-bedrock-review-app
   build:
     commands:
       - echo "Building the Docker image..."
@@ -56,7 +55,6 @@ phases:
       - cat imagedefinitions.json
 
 artifacts:
-  base-directory: backend/ecspresso-bedrock-review-app
   files:
     - image-tag.txt
     - imagedefinitions.json

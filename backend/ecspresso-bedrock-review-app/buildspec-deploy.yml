@@ -34,8 +34,35 @@ phases:
     commands:
       - echo "Installing ecspresso..."
       - |
-        curl -sL "https://github.com/kayac/ecspresso/releases/latest/download/ecspresso_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" \
+        set -e
+        # Release assets are named ecspresso_<version>_<os>_<arch>.tar.gz (version
+        # included, e.g. ecspresso_2.8.6_linux_amd64.tar.gz) -- GitHub's
+        # /releases/latest/download/<name> shortcut only works when <name> is an
+        # exact asset filename, so the version has to be resolved first.
+        ECSPRESSO_TAG=$(curl -fsSL https://api.github.com/repos/kayac/ecspresso/releases/latest | grep -m1 '"tag_name"' | cut -d '"' -f4)
+        if [ -z "${ECSPRESSO_TAG}" ]; then
+          echo "Failed to resolve the latest ecspresso release tag from the GitHub API." >&2
+          exit 1
+        fi
+        ECSPRESSO_VERSION=${ECSPRESSO_TAG#v}
+        ECSPRESSO_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ECSPRESSO_ASSET="ecspresso_${ECSPRESSO_VERSION}_${ECSPRESSO_OS}_amd64.tar.gz"
+        curl -fsSL "https://github.com/kayac/ecspresso/releases/download/${ECSPRESSO_TAG}/${ECSPRESSO_ASSET}" \
           -o /tmp/ecspresso.tar.gz
+        # Verify against the release's published checksums.txt (supply-chain
+        # integrity check flagged by the AgenticReview stage on the initial,
+        # unverified version of this download).
+        curl -fsSL "https://github.com/kayac/ecspresso/releases/download/${ECSPRESSO_TAG}/checksums.txt" -o /tmp/ecspresso-checksums.txt
+        EXPECTED_SHA=$(grep " ${ECSPRESSO_ASSET}\$" /tmp/ecspresso-checksums.txt | awk '{print $1}')
+        if [ -z "${EXPECTED_SHA}" ]; then
+          echo "Could not find a checksum for ${ECSPRESSO_ASSET} in checksums.txt." >&2
+          exit 1
+        fi
+        ACTUAL_SHA=$(sha256sum /tmp/ecspresso.tar.gz | awk '{print $1}')
+        if [ "${EXPECTED_SHA}" != "${ACTUAL_SHA}" ]; then
+          echo "Checksum mismatch for ${ECSPRESSO_ASSET}: expected ${EXPECTED_SHA}, got ${ACTUAL_SHA}." >&2
+          exit 1
+        fi
       - tar xzf /tmp/ecspresso.tar.gz -C /usr/local/bin ecspresso
       - chmod +x /usr/local/bin/ecspresso
       - ecspresso version
@@ -54,15 +81,15 @@ phases:
       # image-tag.txt / imagedefinitions.json live in the Build stage's BuildArtifact (secondary source)
       - export IMAGE_TAG=$(cat "${CODEBUILD_SRC_DIR_BuildArtifact}/image-tag.txt" 2>/dev/null || echo "latest")
       - echo "cluster=${ECS_CLUSTER_NAME} service=${ECS_SERVICE_NAME} image_tag=${IMAGE_TAG}"
-      - cd backend/ecspresso-bedrock-review-app/ecspresso
+      - cd ecspresso
 
   build:
     commands:
       - echo "AUTO_SCALING_ENABLED=${AUTO_SCALING_ENABLED:-false} (when true, desiredCount is omitted from the service definition)"
       - echo "Rendering ecspresso jsonnet definitions (no AWS API calls)..."
       - ecspresso render config --config ecspresso.jsonnet
-      - ecspresso render task-def --config ecspresso.jsonnet
-      - ecspresso render service-def --config ecspresso.jsonnet
+      - ecspresso render taskdef --config ecspresso.jsonnet
+      - ecspresso render servicedef --config ecspresso.jsonnet
       - |
         echo "=========================================================="
         echo " This sample has no real ECS cluster/service, so"

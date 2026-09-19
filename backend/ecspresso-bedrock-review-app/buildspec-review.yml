@@ -17,7 +17,6 @@ phases:
     commands:
       - echo "=== [AgenticReview] project=${PROJECT} env=${ENV} model=${BEDROCK_MODEL_ID} ==="
       - pip install --quiet git-remote-codecommit
-      - cd backend/ecspresso-bedrock-review-app
       - npm ci
 
   pre_build:
@@ -34,9 +33,9 @@ phases:
           echo "No parent commit found (initial commit) — diffing against the empty tree."
           BASE_REF=${EMPTY_TREE}
         fi
-        git diff ${BASE_REF} HEAD -- ${DIFF_PATH_PREFIX:-.} > "${CODEBUILD_SRC_DIR}/backend/ecspresso-bedrock-review-app/diff.patch"
-      - cd "${CODEBUILD_SRC_DIR}/backend/ecspresso-bedrock-review-app"
-      - echo "diff size: $(wc -l < diff.patch) lines"
+        git diff ${BASE_REF} HEAD -- ${DIFF_PATH_PREFIX:-.} > "${CODEBUILD_SRC_DIR}/diff.patch"
+        cd "${CODEBUILD_SRC_DIR}"
+        echo "diff size: $(wc -l < diff.patch) lines"
 
   build:
     commands:
@@ -44,7 +43,6 @@ phases:
       - npm run review
 
 artifacts:
-  base-directory: backend/ecspresso-bedrock-review-app
   files:
     - agentic-review-report.json
   name: AgenticReviewReport

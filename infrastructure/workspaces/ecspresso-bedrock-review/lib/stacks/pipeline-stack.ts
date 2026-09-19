@@ -58,7 +58,6 @@ export class PipelineStack extends cdk.Stack {
     const accountId = cdk.Stack.of(this).account;
     const region = cdk.Stack.of(this).region;
     const logRetentionDays = logs.RetentionDays.ONE_MONTH;
-    const buildspecBasePath = 'backend/ecspresso-bedrock-review-app';
     const riskThreshold = envParams.riskThreshold ?? 'high';
 
     /* ─── ECR repository ────────────────────────────────────────────*/
@@ -133,7 +132,7 @@ export class PipelineStack extends cdk.Stack {
     /* ─── CodeBuild: Test ────────────────────────────────────────*/
     const testProject = new codebuild.PipelineProject(this, 'TestProject', {
       projectName: `${project}-${environment}-test`,
-      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-test.yml`),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-test.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -153,7 +152,7 @@ export class PipelineStack extends cdk.Stack {
     /* ─── CodeBuild: Build (docker build + ECR push) ────────────────*/
     const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
       projectName: `${project}-${environment}-build`,
-      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-build.yml`),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-build.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -220,7 +219,7 @@ export class PipelineStack extends cdk.Stack {
      */
     const reviewProject = new codebuild.PipelineProject(this, 'AgenticReviewProject', {
       projectName: `${project}-${environment}-agentic-review`,
-      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-review.yml`),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-review.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -257,7 +256,17 @@ export class PipelineStack extends cdk.Stack {
         sid: 'AllowBedrockInvoke',
         actions: ['bedrock:InvokeModel'],
         resources: [
-          `arn:aws:bedrock:${region}::foundation-model/*`,
+          // Cross-region inference profiles ("global.*", "jp.*", "apac.*", ...)
+          // route InvokeModel to an underlying foundation-model resource whose
+          // region can be this stack's own region, empty (confirmed via
+          // `aws bedrock list-inference-profiles` for "global.*" profiles --
+          // `models[].modelArn` is literally `arn:aws:bedrock:::foundation-model/...`),
+          // or a *different* region entirely (e.g. a "jp.*" profile invoked from
+          // ap-northeast-1 authorized against `arn:aws:bedrock:ap-northeast-3::
+          // foundation-model/...`). A region-scoped resource pattern therefore
+          // under-grants unpredictably; wildcard the region instead (the model-id
+          // segment still scopes this to Bedrock foundation models specifically).
+          'arn:aws:bedrock:*::foundation-model/*',
           `arn:aws:bedrock:${region}:${accountId}:inference-profile/*`,
         ],
       })
@@ -292,7 +301,7 @@ export class PipelineStack extends cdk.Stack {
      */
     const deployProject = new codebuild.PipelineProject(this, 'DeployProject', {
       projectName: `${project}-${environment}-deploy`,
-      buildSpec: codebuild.BuildSpec.fromSourceFilename(`${buildspecBasePath}/buildspec-deploy.yml`),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec-deploy.yml'),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -336,6 +345,13 @@ export class PipelineStack extends cdk.Stack {
             repository,
             branch: envParams.branchName,
             output: sourceOutput,
+            // Left at its EVENTS default, this action creates its own
+            // CloudWatch Events rule to start the pipeline on push -- on
+            // top of the explicit PipelineTriggerRule below (same
+            // referenceCreated/referenceUpdated pattern), which fired the
+            // pipeline twice per push. NONE disables the action's own
+            // rule so PipelineTriggerRule is the single source of triggers.
+            trigger: codepipeline_actions.CodeCommitTrigger.NONE,
           }),
         ],
       },
