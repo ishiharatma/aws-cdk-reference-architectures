@@ -64,6 +64,7 @@ export class FisChaosStage extends cdk.Stage {
             processPaymentFn: appStack.processPaymentFn,
             confirmOrderFn: appStack.confirmOrderFn,
             stateMachine: appStack.stateMachine,
+            fisConfigBucket: appStack.fisConfigBucket,
             alarmEmail: props.params.alarmEmail,
         });
 

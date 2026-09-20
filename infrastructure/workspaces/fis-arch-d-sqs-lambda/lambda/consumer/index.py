@@ -6,9 +6,11 @@ message in the batch, writes a record to DynamoDB capturing the message id,
 body, and processing timestamp.
 
 This function is intentionally simple — it exists as the FIS fault-injection
-target (`aws:lambda:put-function-concurrent-executions`), not as a
-production-grade service. When FIS sets reserved concurrency to 0 or 1,
-messages accumulate in the SQS queue (ApproximateNumberOfMessagesVisible
+target (`aws:lambda:invocation-error` / `aws:lambda:invocation-add-delay`,
+injected via the AWS FIS Lambda extension attached as a layer in
+`app-stack.ts`), not as a production-grade service. When FIS injects a
+100%-invocation-error fault, every invocation fails before this handler ever
+runs; messages accumulate in the SQS queue (ApproximateNumberOfMessagesVisible
 rises) and, if the outage exceeds visibilityTimeout (60s) x maxReceiveCount
 (3) = 180s, the redrive policy moves messages to the DLQ.
 

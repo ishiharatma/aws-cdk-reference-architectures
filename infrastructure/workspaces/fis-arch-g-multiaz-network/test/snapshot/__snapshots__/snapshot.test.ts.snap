@@ -602,7 +602,7 @@ exports[`FIS Chaos Scenario G Stack Snapshots BaseStack Complete CloudFormation 
           "postgresql",
         ],
         "Engine": "aurora-postgresql",
-        "EngineVersion": "16.4",
+        "EngineVersion": "16.13",
         "MasterUserPassword": {
           "Fn::Join": [
             "",

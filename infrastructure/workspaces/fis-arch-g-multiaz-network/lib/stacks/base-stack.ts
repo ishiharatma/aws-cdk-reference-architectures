@@ -99,7 +99,11 @@ export class BaseStack extends cdk.Stack {
         // (aws:rds:failover-db-cluster) to have a promotion target.
         this.auroraCluster = new rds.DatabaseCluster(this, 'Aurora', {
             engine: rds.DatabaseClusterEngine.auroraPostgres({
-                version: rds.AuroraPostgresEngineVersion.VER_16_4,
+                // 16.4 has been withdrawn by AWS in this region; 16.13 is the
+                // lowest currently-offered 16.x version (confirmed via
+                // `aws rds describe-db-engine-versions`). See fis-arch-a and
+                // fis-arch-c, which hit the same CREATE_FAILED.
+                version: rds.AuroraPostgresEngineVersion.VER_16_13,
             }),
             writer: rds.ClusterInstance.serverlessV2('writer', {
                 scaleWithWriter: true,

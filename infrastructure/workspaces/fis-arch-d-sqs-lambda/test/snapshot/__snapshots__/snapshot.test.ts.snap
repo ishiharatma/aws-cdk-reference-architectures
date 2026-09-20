@@ -23,6 +23,20 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
     },
+    "ExportsOutputRefFisConfigBucket3BD8C2637C8D589B": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+      },
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
+      },
+    },
+    "FisConfigBucketName": {
+      "Description": "S3 bucket distributing AWS FIS Lambda fault configurations",
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
+      },
+    },
     "ProducerFunctionArn": {
       "Description": "Producer Lambda function ARN",
       "Value": {
@@ -48,6 +62,10 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
       "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
+    "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
   },
   "Resources": {
     "ConsumerFunction40CB859D": {
@@ -58,10 +76,24 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "55f46e5e235b12d31964a540db13f685de87fa7fded812586c2b5e4d54aa955e.zip",
+          "S3Key": "5e197d44f54edca4a97dc4d58ec4c1146567bc5de3e29bc0e46abe2afaede70b.zip",
         },
         "Environment": {
           "Variables": {
+            "AWS_FIS_CONFIGURATION_LOCATION": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:s3:::",
+                  {
+                    "Ref": "FisConfigBucket3BD8C263",
+                  },
+                  "/FisConfigs/",
+                ],
+              ],
+            },
+            "AWS_FIS_POLL_MAX_WAIT_MILLISECONDS": "2000",
+            "AWS_LAMBDA_EXEC_WRAPPER": "/opt/aws-fis/bootstrap",
             "TABLE_NAME": {
               "Fn::ImportValue": "TestBaseStack:ExportsOutputRefProcessedRecordsTableDE9E6787B2E8EC24",
             },
@@ -69,6 +101,11 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
         },
         "FunctionName": "fis-chaos-d-test-consumer",
         "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+        ],
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "ConsumerFunctionLogGroup4F4CA69F",
@@ -176,6 +213,43 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
               ],
             },
             {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "FisConfigs/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FisConfigBucket3BD8C263",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowListingFisConfigLocation",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FisConfigBucket3BD8C263",
+                        "Arn",
+                      ],
+                    },
+                    "/FisConfigs/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowReadingFisConfig",
+            },
+            {
               "Action": [
                 "sqs:ReceiveMessage",
                 "sqs:ChangeMessageVisibility",
@@ -224,6 +298,212 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
       "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FisConfigBucket3BD8C263",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FisConfigBucket3BD8C263": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "fis-chaos-d-test-d-fis-config-123456789012",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 1,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-d",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketAutoDeleteObjectsCustomResourceC5F5F35A": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FisConfigBucketPolicyBDCFF443",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketPolicyBDCFF443": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
     },
     "ProducerFunction96264A1C": {
       "DependsOn": [
@@ -413,11 +693,14 @@ exports[`FIS Chaos Scenario D Stack Snapshots AppStack Complete CloudFormation t
 exports[`FIS Chaos Scenario D Stack Snapshots AppStack Resource types and counts 1`] = `
 {
   "AWS::IAM::Policy": 2,
-  "AWS::IAM::Role": 2,
+  "AWS::IAM::Role": 3,
   "AWS::Lambda::EventSourceMapping": 1,
-  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::Function": 3,
   "AWS::Lambda::Url": 1,
   "AWS::Logs::LogGroup": 2,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "Custom::S3AutoDeleteObjects": 1,
 }
 `;
 
@@ -778,13 +1061,35 @@ exports[`FIS Chaos Scenario D Stack Snapshots FisStack Complete CloudFormation t
               "Statement": [
                 {
                   "Action": [
-                    "lambda:PutFunctionConcurrency",
-                    "lambda:DeleteFunctionConcurrency",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
                   ],
                   "Effect": "Allow",
                   "Resource": {
-                    "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConsumerFunction40CB859DArnBFA8EA45",
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Fn::ImportValue": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+                        },
+                        "/FisConfigs/*",
+                      ],
+                    ],
                   },
+                  "Sid": "WriteLambdaFaultConfig",
+                },
+                {
+                  "Action": "lambda:GetFunction",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "InspectTargetFunction",
+                },
+                {
+                  "Action": "tag:GetResources",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "ResolveTargetsByTag",
                 },
                 {
                   "Action": "cloudwatch:DescribeAlarms",
@@ -872,18 +1177,19 @@ exports[`FIS Chaos Scenario D Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioD1ConsumerOutageShort": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectConsumerOutage": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
-              "ConcurrentExecutions": "0",
               "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ConsumerFunction",
             },
           },
         },
-        "Description": "[D-1] Consumer Total Outage — short (5 min): Reserved concurrency set to 0 on the SQS consumer Lambda. Validates message redelivery within the visibility timeout and clean recovery once concurrency is restored.",
+        "Description": "[D-1] Consumer Total Outage — short (5 min): every invocation of the SQS consumer Lambda fails without the handler running. Validates message redelivery within the visibility timeout and clean recovery once the fault clears.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {
@@ -936,18 +1242,19 @@ exports[`FIS Chaos Scenario D Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioD2ConsumerOutageLong": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectConsumerOutage": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
-              "ConcurrentExecutions": "0",
               "duration": "PT20M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ConsumerFunction",
             },
           },
         },
-        "Description": "[D-2] Consumer Total Outage — long, DLQ-inducing (20 min): Reserved concurrency set to 0 on the SQS consumer Lambda for 20 minutes, well beyond visibilityTimeout(60s) x maxReceiveCount(3) = 180s. Deliberately drives messages to the DLQ to validate DLQ routing and replay procedures.",
+        "Description": "[D-2] Consumer Total Outage — long, DLQ-inducing (20 min): every invocation of the SQS consumer Lambda fails without the handler running, for 20 minutes, well beyond visibilityTimeout(60s) x maxReceiveCount(3) = 180s. Deliberately drives messages to the DLQ to validate DLQ routing and replay procedures.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {
@@ -1000,18 +1307,19 @@ exports[`FIS Chaos Scenario D Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioD3ConsumerThroughputCollapse": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyOne": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectConsumerDelay": {
+            "ActionId": "aws:lambda:invocation-add-delay",
             "Parameters": {
-              "ConcurrentExecutions": "1",
               "duration": "PT10M",
+              "invocationPercentage": "100",
+              "startupDelayMilliseconds": "20000",
             },
             "Targets": {
               "Functions": "ConsumerFunction",
             },
           },
         },
-        "Description": "[D-3] Consumer Throughput Collapse (10 min): Reserved concurrency limited to 1 on the SQS consumer Lambda. Validates queue backlog growth and latency under severe, non-zero throughput degradation.",
+        "Description": "[D-3] Consumer Throughput Collapse (10 min): a fixed 20 s startup delay is added to every invocation of the SQS consumer Lambda, leaving only 10 s of its 30 s timeout for actual processing. Validates queue backlog growth and latency under severe, non-zero throughput degradation.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {

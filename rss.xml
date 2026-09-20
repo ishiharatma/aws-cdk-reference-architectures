@@ -5,7 +5,7 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 20 Sep 2026 05:03:29 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 20 Sep 2026 13:45:50 GMT</lastBuildDate>
     <item>
       <title>ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/alb-keycloak-auth</link>
@@ -24,6 +24,55 @@
       <category>Security</category>
       <category>IAM</category>
       <category>SAML</category>
+    </item>
+    <item>
+      <title>FIS Chaos: SQS + Lambda Event-Driven Consumer + DynamoDB</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-d-sqs-lambda</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-d-sqs-lambda</guid>
+      <pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Three AWS FIS chaos experiment templates for a serverless event-driven consumer, using the aws:lambda:function action family via the FIS Lambda extension: a 5-min invocation-error outage (short recovery), a 20-min invocation-error outage (forces DLQ routing past the visibility-timeout × maxReceiveCount threshold), and a 10-min invocation-add-delay throughput collapse — each with a CloudWatch Alarm stop condition on queue backlog depth.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>SQS</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Serverless</category>
+      <category>DLQ</category>
+    </item>
+    <item>
+      <title>FIS Chaos: Step Functions Saga + Lambda + DynamoDB</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-f-stepfunctions-saga</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-f-stepfunctions-saga</guid>
+      <pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Three AWS FIS chaos experiment templates for a Saga-pattern order workflow (Reserve Inventory → Process Payment → Confirm Order, each with Retry/Catch and compensating transactions): payment-step outage triggering inventory-release compensation, first-step outage with no compensation needed, and final-step outage triggering the two-stage refund-then-release compensation chain — each with a CloudWatch Alarm stop condition on Step Functions ExecutionsFailed. Uses the aws:lambda:function action family (invocation-error) via the FIS Lambda extension to drive Saga error handling indirectly, since FIS has no native Step Functions action.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>Step Functions</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Saga Pattern</category>
+      <category>Serverless</category>
+    </item>
+    <item>
+      <title>FIS Chaos: Multi-AZ Network Disruption — NLB + EC2 ASG + Aurora</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-g-multiaz-network</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-g-multiaz-network</guid>
+      <pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Four AWS FIS chaos experiment templates for a Multi-AZ resilient architecture: cross-AZ connectivity disruption (VPC-internal traffic only), full AZ isolation (all traffic blocked), Aurora writer→reader failover, and tagged EC2 instance termination — each with a CloudWatch Alarm stop condition on NLB UnHealthyHostCount. Centers on aws:network:disrupt-connectivity, the only FIS action for simulating AZ-level network partitions.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>Multi-AZ</category>
+      <category>NLB</category>
+      <category>EC2</category>
+      <category>Auto Scaling</category>
+      <category>Aurora</category>
+      <category>Networking</category>
     </item>
     <item>
       <title>Amazon Bedrock Agentic Code Review Gate for ECS Fargate CI/CD (ecspresso + CodePipeline)</title>

@@ -19,21 +19,22 @@ Three FIS experiment templates inject a complete outage of one forward-step Lamb
 
 | Scenario | Fault Injected | Duration | What It Validates |
 | -------- | --------------- | -------- | ------------------ |
-| **F-1** ProcessPayment outage | Reserved concurrency = 0 on `ProcessPayment` | 5 min | Retry exhaustion, then the `ReleaseInventory` compensating transaction |
-| **F-2** ReserveInventory outage | Reserved concurrency = 0 on `ReserveInventory` | 5 min | The fail-fast path — the Saga fails at its very first step, so no compensation runs |
-| **F-3** ConfirmOrder outage | Reserved concurrency = 0 on `ConfirmOrder` | 5 min | Two-stage compensation in the correct order — `RefundPayment`, then `ReleaseInventory` — after payment has already been taken |
+| **F-1** ProcessPayment outage | `invocation-error`, `preventExecution=true`, 100% on `ProcessPayment` | 5 min | Retry exhaustion, then the `ReleaseInventory` compensating transaction |
+| **F-2** ReserveInventory outage | Same action on `ReserveInventory` | 5 min | The fail-fast path — the Saga fails at its very first step, so no compensation runs |
+| **F-3** ConfirmOrder outage | Same action on `ConfirmOrder` | 5 min | Two-stage compensation in the correct order — `RefundPayment`, then `ReleaseInventory` — after payment has already been taken |
 
 All three experiments share a CloudWatch Alarm stop condition on the state machine's `ExecutionsFailed` metric, providing a safety net if failed Saga executions exceed the safety threshold.
 
-## Why Lambda concurrency instead of targeting Step Functions directly
+> ### ⚠️ `aws:lambda:put-function-concurrent-executions` does not exist
+> An earlier version of this workspace tried to zero out each forward Lambda's reserved concurrency via `aws:lambda:put-function-concurrent-executions`. **That action ID does not exist** — `aws fis list-actions` confirms Lambda-targeted FIS actions are limited to the `aws:lambda:function` family. CloudFormation failed FIS template creation outright with `Invalid actionId ... 404`. This was independently the same mistake made in [`fis-arch-d-sqs-lambda`](../fis-arch-d-sqs-lambda/)'s original design — the same intuitive-but-wrong action name, hit twice in unrelated architectures.
+
+## Why the Lambda extension instead of targeting Step Functions directly
 
 This is the central design decision of this workspace, so it is worth stating plainly:
 
-**AWS FIS has no action that targets AWS Step Functions.** As of this writing, the [FIS actions reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html) contains no `aws:states:*` namespace — there is no way to ask FIS to fail a specific state, inject a delay into an execution, or otherwise act on a state machine as a resource. This was confirmed by web search before this workspace was built, and it rules out the most literal interpretation of "chaos-test a Saga."
+**AWS FIS has no action that targets AWS Step Functions.** As of this writing, the [FIS actions reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html) contains no `aws:states:*` namespace — there is no way to ask FIS to fail a specific state, inject a delay into an execution, or otherwise act on a state machine as a resource. This rules out the most literal interpretation of "chaos-test a Saga."
 
-A second option — Lambda-extension-based fault injection (`aws:lambda:invocation-error` / `aws:lambda:invocation-add-delay`, which attach a Lambda layer that intercepts invocations) — was also considered and **rejected**. Its exact setup contract (the required S3 bucket layout for the extension binary, the specific environment variable names FIS expects) could not be confirmed from primary AWS documentation. Deploying an action whose wiring cannot be verified against an authoritative source is not an acceptable trade for a reference implementation that other engineers will copy.
-
-That leaves `aws:lambda:put-function-concurrent-executions` — the same action already proven working in [`fis-arch-b-apigw-lambda`](../fis-arch-b-apigw-lambda/) — as the only FIS mechanism used here. Setting a function's reserved concurrency to `0` makes **every** invocation of that function fail immediately with `Lambda.TooManyRequestsException`, before any code in the function runs. From inside a `tasks.LambdaInvoke` state, this is indistinguishable from the Lambda being completely down. Targeting the three *forward* Lambdas (`ReserveInventory`, `ProcessPayment`, `ConfirmOrder`) individually therefore gives an indirect, but faithful and fully-verified, way to drive the exact three failure points a Saga needs to prove itself against — **without modifying the state machine definition itself**. The experiment exercises the real, deployed ASL definition, not a stand-in for it.
+Instead, this workspace attaches the AWS FIS Lambda extension (the same mechanism proven in [`fis-arch-b-apigw-lambda`](../fis-arch-b-apigw-lambda/) and [`fis-arch-d-sqs-lambda`](../fis-arch-d-sqs-lambda/)) as a layer to the three **forward-path** Lambdas only (`ReserveInventory`, `ProcessPayment`, `ConfirmOrder` — never the two compensation Lambdas, which are never FIS targets). FIS then injects `aws:lambda:invocation-error` with `preventExecution=true` at 100%: every invocation of the targeted function fails immediately, before any handler code runs. From inside a `tasks.LambdaInvoke` state, this is indistinguishable from the Lambda being completely down. Targeting the three forward Lambdas individually therefore gives an indirect, but faithful and fully-verified, way to drive the exact three failure points a Saga needs to prove itself against — **without modifying the state machine definition itself**. The experiment exercises the real, deployed ASL definition, not a stand-in for it.
 
 ## Architecture Overview
 
@@ -57,16 +58,16 @@ All 5 Lambdas (Python 3.13) write to one DynamoDB table:
   DynamoDB "Orders" table  (PK: orderId, PAY_PER_REQUEST) — each Lambda updates the item's `status` field
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FIS Experiment Templates (FisStack) — target the forward Lambdas, not Step Functions
+FIS Experiment Templates (FisStack) — target the forward Lambdas via the FIS Lambda extension
 
-F-1  aws:lambda:put-function-concurrent-executions ─► ProcessPayment Lambda
-     ConcurrentExecutions=0, 5m
+F-1  aws:lambda:invocation-error ─► ProcessPayment Lambda
+     preventExecution=true, 100%, 5m
 
-F-2  aws:lambda:put-function-concurrent-executions ─► ReserveInventory Lambda
-     ConcurrentExecutions=0, 5m
+F-2  aws:lambda:invocation-error ─► ReserveInventory Lambda
+     preventExecution=true, 100%, 5m
 
-F-3  aws:lambda:put-function-concurrent-executions ─► ConfirmOrder Lambda
-     ConcurrentExecutions=0, 5m
+F-3  aws:lambda:invocation-error ─► ConfirmOrder Lambda
+     preventExecution=true, 100%, 5m
 
 Shared stop condition: CloudWatch Alarm — StateMachine ExecutionsFailed >= 5 / 1 min
 ```
@@ -180,7 +181,9 @@ fis-arch-f-stepfunctions-saga/
 | Step Functions state machine | `STANDARD` type (execution history + exactly-once semantics matter for a Saga); `logs: sfn.LogLevel.ALL` to a CloudWatch Logs group; `tracingEnabled: true` for X-Ray |
 | Retry policy | `IntervalSeconds=2, MaxAttempts=2, BackoffRate=2` on every forward task — a transient failure resolves itself in ≤ 6 s before Catch fires |
 | Catch / compensation chains | `ReserveInventory` → Fail (no compensation); `ProcessPayment` → `ReleaseInventory` → Fail; `ConfirmOrder` → `RefundPayment` → `ReleaseInventory` → Fail |
-| FIS IAM Role | Minimal: `lambda:PutFunctionConcurrency` + `lambda:DeleteFunctionConcurrency` scoped to exactly the 3 forward-step Lambda ARNs; `cloudwatch:DescribeAlarms` on the stop-condition alarm |
+| FIS extension layer | Attached only to the 3 forward-step Lambdas, resolved per-Region from the public SSM parameter `/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x` |
+| FIS config bucket | `<project>-<env>-f-fis-config-<account>` — S3-managed encryption, all public access blocked, 1-day lifecycle expiry |
+| FIS IAM Role | `s3:PutObject`/`s3:DeleteObject` on `<bucket>/FisConfigs/*`; `lambda:GetFunction` and `tag:GetResources` on `*`; `cloudwatch:DescribeAlarms` on the stop-condition alarm |
 | CloudWatch Stop Alarm | `StateMachine.metricFailed() >= 5` over 1 minute — shared by all 3 templates |
 | FIS Log Group | `/fis/{project}-{env}-f` — ONE_MONTH retention, auto-deleted on stack destroy |
 
@@ -211,7 +214,7 @@ processPayment.addCatch(releaseInventoryAfterPaymentFailure, {
 processPayment.next(confirmOrder);
 ```
 
-While `ProcessPayment`'s reserved concurrency is 0 (FIS scenario F-1), every attempt returns `Lambda.TooManyRequestsException` immediately. Two attempts and roughly 6 seconds later, Retry gives up and Catch routes execution into the compensation chain below.
+While the FIS Lambda extension is injecting `invocation-error` into `ProcessPayment` (scenario F-1), every attempt fails immediately without the handler running. Two attempts and roughly 6 seconds later, Retry gives up and Catch routes execution into the compensation chain below.
 
 ### 2. Two-stage compensation, wired in reverse order
 
@@ -250,9 +253,9 @@ new fis.CfnExperimentTemplate(this, 'ScenarioF1ProcessPaymentOutage', {
         },
     },
     actions: {
-        SetConcurrencyZero: {
-            actionId: 'aws:lambda:put-function-concurrent-executions',
-            parameters: { ConcurrentExecutions: '0', duration: 'PT5M' },
+        InjectPaymentOutage: {
+            actionId: 'aws:lambda:invocation-error',
+            parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: 'true' },
             targets: { Functions: 'ProcessPaymentFunction' },
         },
     },
@@ -260,7 +263,7 @@ new fis.CfnExperimentTemplate(this, 'ScenarioF1ProcessPaymentOutage', {
 });
 ```
 
-The state machine ARN never appears in any FIS template — there is nothing in the FIS action catalogue that could reference it. See [Why Lambda concurrency instead of targeting Step Functions directly](#why-lambda-concurrency-instead-of-targeting-step-functions-directly) above.
+The state machine ARN never appears in any FIS template — there is nothing in the FIS action catalogue that could reference it. See [Why the Lambda extension instead of targeting Step Functions directly](#why-the-lambda-extension-instead-of-targeting-step-functions-directly) above.
 
 ### 4. Shared stop condition on Saga-level failures, not Lambda-level errors
 
@@ -340,6 +343,16 @@ aws dynamodb get-item \
 
 Navigate to the AWS FIS console, select one of the three experiment templates (`F-1`, `F-2`, or `F-3`), click **Start experiment**, then start a Saga execution (step 5). Watch the execution in the Step Functions console's Graph view — the Catch branch and compensating transaction(s) light up as the targeted Lambda's invocations fail.
 
+### Observed results (ap-northeast-1)
+
+| Scenario | Result |
+| -------- | ------ |
+| **F-1** | Every Saga execution triggered during the fault window failed with `error: "ProcessPaymentFailed"`. `get-execution-history` confirmed the state sequence `ReserveInventory (succeeded) → ProcessPayment (failed) → ReleaseInventoryCompensation → ExecutionFailed` — the single-stage compensation ran as designed |
+| **F-2** | Every execution failed with `error: "ReserveInventoryFailed"`. Execution history showed `ReserveInventory (failed) → ExecutionFailed` — no compensation task appears at all, confirming the fail-fast, nothing-to-undo path |
+| **F-3** | Every execution failed with `error: "ConfirmOrderFailed"`. Execution history showed `ReserveInventory (succeeded) → ProcessPayment (succeeded) → ConfirmOrder (failed) → RefundPaymentCompensation1 → ReleaseInventoryCompensation2 → ExecutionFailed` — the two-stage compensation ran in the correct order |
+
+After each scenario, a fresh Saga execution against normal load returned to `SUCCEEDED` with all three forward steps completing — confirming clean recovery once the FIS Lambda extension's fault cleared.
+
 ## Testing
 
 ```bash
@@ -363,7 +376,7 @@ npm run test:snapshot:update --workspace=fis-arch-f-stepfunctions-saga
 
 | Test suite | File | Assertions |
 | ---------- | ---- | ---------- |
-| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; 5 Lambda functions on Python 3.13; exactly 1 Standard state machine with X-Ray enabled; all 5 Saga states present in the ASL definition; exactly 3 FIS templates, all using `aws:lambda:put-function-concurrent-executions`, all with stop conditions |
+| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; 5 Lambda functions on Python 3.13; exactly 1 Standard state machine with X-Ray enabled; all 5 Saga states present in the ASL definition; exactly 3 FIS templates, all using a real `aws:lambda:invocation-error` action, all with stop conditions |
 | CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions pack — no unsuppressed warnings or errors |
 
 ## Cost Estimation
@@ -377,13 +390,15 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 | Step Functions | Standard, per state transition | ~$0.000025 per transition; <$0.01 for dozens of test executions |
 | CloudWatch | Metrics + logs | ~$0.01/month for experiment + state machine logs |
 | X-Ray | Per trace recorded | <$0.01 for a 5-minute experiment |
-| FIS | Free | No charge for FIS itself |
-| **Total (experiments only)** | | **< $0.10 per experiment run** |
+| **FIS** | **$0.10 per action-minute** | A 5-minute single-action experiment is ~$0.50; running F-1–F-3 once is ~$1.50 |
+| **Total (one full 3-scenario cycle)** | | **≈ $1.50–2, dominated by FIS action-minutes** |
+
+**Correction vs. earlier versions of this doc:** FIS is **not free** — it bills $0.10 per action-minute, same as every other FIS-based workspace in this series.
 
 ## Security Considerations
 
 - **Lambda execution roles follow least privilege**: each of the 5 functions only has `dynamodb:GetItem` / `PutItem` / `UpdateItem` / `DeleteItem` on the specific orders table, granted via `table.grantReadWriteData()`.
-- **FIS role follows least privilege**: scoped to `lambda:PutFunctionConcurrency` / `lambda:DeleteFunctionConcurrency` on exactly the 3 forward-step Lambda ARNs (`ReleaseInventory` and `RefundPayment` — the compensating Lambdas — are never FIS targets, since they are not what a chaos scenario needs to make unreachable), plus `cloudwatch:DescribeAlarms` on the one stop-condition alarm.
+- **FIS role follows least privilege**: `s3:PutObject`/`s3:DeleteObject` scoped to the FIS config bucket's `FisConfigs/*` prefix, `lambda:GetFunction` and `tag:GetResources` for target resolution, plus `cloudwatch:DescribeAlarms` on the one stop-condition alarm. No DynamoDB access. `ReleaseInventory` and `RefundPayment` — the compensating Lambdas — never carry the FIS extension layer and are never FIS targets, since they are not what a chaos scenario needs to make unreachable.
 - **No VPC exposure**: there is no VPC, no public subnet, and no security group — the state machine and all 5 Lambdas are fully managed serverless resources reachable only via the AWS API/SDK.
 - **State machine is not internet-facing**: this reference pattern is invoked via `start-execution` (CLI/SDK/console), not a public HTTP endpoint. For production, front it with an authenticated API (API Gateway + Cognito/IAM auth, or an authenticated event source).
 - **Stop condition is mandatory**: all 3 FIS templates include the Saga `ExecutionsFailed` alarm stop condition, which limits maximum experiment blast radius across concurrent test executions.
@@ -393,6 +408,8 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 | Symptom | Likely cause | Resolution |
 | ------- | ------------- | ---------- |
 | `cdk deploy` fails with `No parameters found for environment` | Missing `dev-params.ts` export | Verify `parameters/index.ts` exports `devParams` under the `dev` key |
+| FIS template create fails: `Invalid actionId ... 404` | An action ID that does not exist in the Region | Check `aws fis list-actions` — Lambda-targeted actions are limited to the `aws:lambda:function` family |
+| Errors take ~1 minute to appear after starting an experiment | Expected — FIS Lambda extension slow-poll ramp-up | Wait ~60s; check CloudWatch Logs for `AWS FIS EXTENSION - found active faults` to confirm the fault is genuinely active |
 | Saga execution status stays `RUNNING` past 5 minutes | Unexpected — state machine has a 5-minute execution timeout | Check the Step Functions Graph view for a stuck state; the timeout should force a `TimedOut` status |
 | Execution fails at `ReserveInventory` with no compensation shown | Expected during F-2 — this is the fail-fast path by design | Verify the F-2 experiment is running and check CloudWatch Lambda metrics for `ReserveInventory` |
 | FIS experiment stops immediately | Stop condition alarm is already in `ALARM` state | Reset the alarm first (`aws cloudwatch set-alarm-state --alarm-name ... --state-value OK`) |
@@ -404,11 +421,11 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 PROJECT=fis-chaos-f ENV=dev npm run stage:destroy:all
 ```
 
-All resources have `removalPolicy: DESTROY`, so the destroy command removes the DynamoDB table, all 5 Lambda functions, the Step Functions state machine, FIS templates, and CloudWatch log groups completely.
+All resources have `removalPolicy: DESTROY` (and `autoDeleteObjects` on the S3 config bucket), so the destroy command removes the DynamoDB table, all 5 Lambda functions, the Step Functions state machine, the FIS config bucket, FIS templates, and CloudWatch log groups completely.
 
 ## Summary
 
-This workspace demonstrates FIS chaos engineering on a Step Functions Saga — the pattern that keeps a multi-step distributed transaction consistent through compensating actions instead of a two-phase commit. Because FIS has no action that can target Step Functions directly, the three experiments instead make each forward-path Lambda completely uninvokable via `aws:lambda:put-function-concurrent-executions`, driving the *real*, deployed Retry/Catch/compensation logic exactly as a genuine outage would:
+This workspace demonstrates FIS chaos engineering on a Step Functions Saga — the pattern that keeps a multi-step distributed transaction consistent through compensating actions instead of a two-phase commit. Because FIS has no action that can target Step Functions directly, the three experiments instead make each forward-path Lambda fail every invocation via `aws:lambda:invocation-error` (through the FIS Lambda extension), driving the *real*, deployed Retry/Catch/compensation logic exactly as a genuine outage would:
 
 - **F-2** verifies the Saga fails fast and cleanly when its very first step cannot run — no compensation, no partial state.
 - **F-1** verifies a single compensating transaction (`ReleaseInventory`) runs correctly when the middle step fails.
@@ -419,7 +436,7 @@ The serverless architecture keeps experiment costs minimal (< $0.10 per run) and
 ## References
 
 - [AWS FIS — Supported actions](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
-- [aws:lambda:put-function-concurrent-executions action reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html#fis-actions-reference-lambda)
+- [Use the AWS FIS `aws:lambda:function` actions](https://docs.aws.amazon.com/fis/latest/userguide/use-lambda-actions.html)
 - [AWS Step Functions — Error handling (Retry / Catch)](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html)
 - [Saga pattern (AWS Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga.html)
 - [CDK aws-fis module (L1 constructs)](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_fis-readme.html)

@@ -2,11 +2,28 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as path from 'path';
 import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
+
+/**
+ * S3 key prefix under which AWS FIS writes active Lambda fault configurations
+ * and the AWS FIS Lambda extension reads them. Shared by AppStack (extension
+ * env var + read grant) and FisStack (write grant).
+ */
+export const FIS_CONFIG_PREFIX = 'FisConfigs';
+
+/**
+ * Public SSM parameter that resolves to the AWS FIS Lambda extension layer ARN
+ * for the current Region (x86_64 build — matches the default Lambda architecture).
+ */
+export const FIS_EXTENSION_LAYER_SSM_PARAM =
+    '/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x';
 
 export interface AppStackProps extends cdk.StackProps {
     readonly project: string;
@@ -32,12 +49,20 @@ export interface AppStackProps extends cdk.StackProps {
  *   ConfirmOrder fails      -> RefundPayment -> ReleaseInventory -> Fail
  *
  * FIS cannot target Step Functions directly (no FIS action exists for the
- * service). Instead, `aws:lambda:put-function-concurrent-executions` sets a
- * target Lambda's reserved concurrency to 0 in FisStack, which makes that
- * Lambda completely uninvokable. Every Lambda invocation from within the
- * state machine then throws Lambda.TooManyRequestsException, which drives
- * the Retry/Catch/compensation logic below exactly as it would for a real
- * outage — without needing to touch the state machine itself.
+ * service). Instead, the three FORWARD-path Lambdas carry the AWS FIS Lambda
+ * extension layer, and FisStack injects `aws:lambda:invocation-error`
+ * (preventExecution=true, 100%) — every invocation of the targeted function
+ * fails immediately without the handler running, which drives the
+ * Retry/Catch/compensation logic below exactly as it would for a real
+ * outage, without needing to touch the state machine itself.
+ *
+ * An earlier version of this workspace used
+ * `aws:lambda:put-function-concurrent-executions` to reach the same effect
+ * by zeroing reserved concurrency. That action ID **does not exist** —
+ * `aws fis list-actions` confirms Lambda-targeted FIS actions are limited to
+ * the `aws:lambda:function` family (`invocation-error`,
+ * `invocation-add-delay`, `invocation-http-integration-response`), the same
+ * family Architecture B uses. See `lib/stacks/fis-stack.ts`.
  */
 export class AppStack extends cdk.Stack {
     public readonly reserveInventoryFn: lambda.Function;
@@ -46,6 +71,8 @@ export class AppStack extends cdk.Stack {
     public readonly releaseInventoryFn: lambda.Function;
     public readonly refundPaymentFn: lambda.Function;
     public readonly stateMachine: sfn.StateMachine;
+    /** S3 bucket used to distribute AWS FIS Lambda fault configurations. */
+    public readonly fisConfigBucket: s3.IBucket;
 
     constructor(scope: Construct, id: string, props: AppStackProps) {
         super(scope, id, props);
@@ -54,16 +81,40 @@ export class AppStack extends cdk.Stack {
             ? cdk.RemovalPolicy.DESTROY
             : cdk.RemovalPolicy.RETAIN;
 
+        // --- FIS Lambda extension: config-distribution bucket ---
+        // AWS FIS writes the active fault config here; the extension polls it.
+        this.fisConfigBucket = new s3.Bucket(this, 'FisConfigBucket', {
+            bucketName: `${props.project}-${props.environment}-f-fis-config-${this.account}`,
+            blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+            enforceSSL: true,
+            encryption: s3.BucketEncryption.S3_MANAGED,
+            removalPolicy,
+            autoDeleteObjects: props.isAutoDeleteObject,
+            lifecycleRules: [{ expiration: cdk.Duration.days(1) }],
+        });
+
+        const fisExtensionLayerArn = ssm.StringParameter.valueForStringParameter(
+            this,
+            FIS_EXTENSION_LAYER_SSM_PARAM,
+        );
+        const fisConfigLocation = `arn:aws:s3:::${this.fisConfigBucket.bucketName}/${FIS_CONFIG_PREFIX}/`;
+        const fisExtensionLayer = lambda.LayerVersion.fromLayerVersionArn(
+            this,
+            'FisExtensionLayer',
+            fisExtensionLayerArn,
+        );
+
         // --- Lambda functions ---
         // All 5 are simple mock implementations: each writes a single status
         // field to the order's DynamoDB record and returns. They exist as
-        // Step Functions task targets and as FIS blast-radius targets — not
-        // as production-grade business logic.
+        // Step Functions task targets; the 3 forward-path functions are also
+        // FIS blast-radius targets and carry the FIS Lambda extension layer.
 
         const makeFn = (
             name: string,
             asset: string,
             description: string,
+            isFisTarget: boolean,
         ): lambda.Function => {
             const logGroup = new logs.LogGroup(this, `${name}LogGroup`, {
                 logGroupName: `/aws/lambda/${props.project}-${props.environment}-${asset}`,
@@ -77,8 +128,17 @@ export class AppStack extends cdk.Stack {
                 runtime: lambda.Runtime.PYTHON_3_13,
                 handler: 'index.handler',
                 code: lambda.Code.fromAsset(path.join(__dirname, `../../lambda/${asset}`)),
+                layers: isFisTarget ? [fisExtensionLayer] : undefined,
                 environment: {
                     TABLE_NAME: props.table.tableName,
+                    ...(isFisTarget
+                        ? {
+                              // AWS FIS Lambda extension wiring (see aws:lambda:invocation-* actions).
+                              AWS_LAMBDA_EXEC_WRAPPER: '/opt/aws-fis/bootstrap',
+                              AWS_FIS_CONFIGURATION_LOCATION: fisConfigLocation,
+                              AWS_FIS_POLL_MAX_WAIT_MILLISECONDS: '2000',
+                          }
+                        : {}),
                 },
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
@@ -86,6 +146,27 @@ export class AppStack extends cdk.Stack {
             });
 
             props.table.grantReadWriteData(fn);
+
+            if (isFisTarget) {
+                // The extension (running in the function's execution role) reads fault
+                // configs from the shared bucket.
+                fn.addToRolePolicy(
+                    new iam.PolicyStatement({
+                        sid: 'AllowListingFisConfigLocation',
+                        actions: ['s3:ListBucket'],
+                        resources: [this.fisConfigBucket.bucketArn],
+                        conditions: { StringLike: { 's3:prefix': [`${FIS_CONFIG_PREFIX}/*`] } },
+                    }),
+                );
+                fn.addToRolePolicy(
+                    new iam.PolicyStatement({
+                        sid: 'AllowReadingFisConfig',
+                        actions: ['s3:GetObject'],
+                        resources: [`${this.fisConfigBucket.bucketArn}/${FIS_CONFIG_PREFIX}/*`],
+                    }),
+                );
+            }
+
             return fn;
         };
 
@@ -93,26 +174,31 @@ export class AppStack extends cdk.Stack {
             'ReserveInventoryFunction',
             'reserve-inventory',
             'Saga step 1 (forward): reserve inventory for the order',
+            true,
         );
         this.processPaymentFn = makeFn(
             'ProcessPaymentFunction',
             'process-payment',
             'Saga step 2 (forward): process customer payment',
+            true,
         );
         this.confirmOrderFn = makeFn(
             'ConfirmOrderFunction',
             'confirm-order',
             'Saga step 3 (forward, final): confirm the order',
+            true,
         );
         this.releaseInventoryFn = makeFn(
             'ReleaseInventoryFunction',
             'release-inventory',
             'Saga compensation: release previously reserved inventory',
+            false,
         );
         this.refundPaymentFn = makeFn(
             'RefundPaymentFunction',
             'refund-payment',
             'Saga compensation: refund a previously processed payment',
+            false,
         );
 
         // --- Step Functions state machine ---
@@ -266,6 +352,10 @@ export class AppStack extends cdk.Stack {
         new cdk.CfnOutput(this, 'ConfirmOrderFunctionArn', {
             value: this.confirmOrderFn.functionArn,
             description: 'ConfirmOrder Lambda function ARN',
+        });
+        new cdk.CfnOutput(this, 'FisConfigBucketName', {
+            value: this.fisConfigBucket.bucketName,
+            description: 'S3 bucket distributing AWS FIS Lambda fault configurations',
         });
     }
 }

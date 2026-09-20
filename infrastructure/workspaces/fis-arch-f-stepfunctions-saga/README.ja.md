@@ -19,21 +19,22 @@
 
 | シナリオ | 注入する障害 | 実行時間 | 検証内容 |
 | -------- | ------------ | -------- | -------- |
-| **F-1** ProcessPayment 停止 | `ProcessPayment` の予約同時実行数を 0 に設定 | 5 分 | リトライが尽きた後、`ReleaseInventory` 補償トランザクションが実行されること |
-| **F-2** ReserveInventory 停止 | `ReserveInventory` の予約同時実行数を 0 に設定 | 5 分 | フェイルファストパス — Saga の最初のステップで失敗するため補償は実行されない |
-| **F-3** ConfirmOrder 停止 | `ConfirmOrder` の予約同時実行数を 0 に設定 | 5 分 | 決済済み後の2段階補償（`RefundPayment` → `ReleaseInventory`）が正しい順序で実行されること |
+| **F-1** ProcessPayment 停止 | `ProcessPayment`に`invocation-error`、`preventExecution=true`、100% | 5 分 | リトライが尽きた後、`ReleaseInventory` 補償トランザクションが実行されること |
+| **F-2** ReserveInventory 停止 | `ReserveInventory`に同アクション | 5 分 | フェイルファストパス — Saga の最初のステップで失敗するため補償は実行されない |
+| **F-3** ConfirmOrder 停止 | `ConfirmOrder`に同アクション | 5 分 | 決済済み後の2段階補償（`RefundPayment` → `ReleaseInventory`）が正しい順序で実行されること |
 
 3つの実験テンプレートはすべて、ステートマシンの `ExecutionsFailed` メトリクスに対する CloudWatch Alarm の停止条件を共有し、失敗した Saga 実行数が安全閾値を超えた場合の安全網として機能します。
 
-## Step Functions を直接ターゲットにせず Lambda 同時実行数を使う理由
+> ### ⚠️ `aws:lambda:put-function-concurrent-executions`は存在しない
+> 本ワークスペースの以前のバージョンは、各正方向Lambdaの予約同時実行数を`aws:lambda:put-function-concurrent-executions`でゼロにしようとしていました。**このアクションIDは実在しません**——`aws fis list-actions`により、Lambdaを対象とするFISアクションは`aws:lambda:function`ファミリーに限られることが確認できます。CloudFormationはFISテンプレート作成時に`Invalid actionId ... 404`で即座に失敗しました。これは[`fis-arch-d-sqs-lambda`](../fis-arch-d-sqs-lambda/)の当初設計と独立に発生した同じ間違いです——同じ直感的だが誤ったアクション名に、無関係な2つのアーキテクチャで引っかかりました。
+
+## Step Functions を直接ターゲットにせず Lambda 拡張を使う理由
 
 これは本ワークスペースの中心的な設計判断であるため、明記しておきます。
 
-**AWS FIS には AWS Step Functions をターゲットにするアクションが存在しません。** 本稿執筆時点で [FIS アクションリファレンス](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html) には `aws:states:*` という名前空間は存在せず、FIS に対して特定のステートを失敗させたり、実行に遅延を注入したり、ステートマシンをリソースとして操作させたりする方法はありません。これは本ワークスペースの実装前に Web 検索で確認済みの事実であり、「Saga をカオステストする」という最も素直な発想を最初から封じます。
+**AWS FIS には AWS Step Functions をターゲットにするアクションが存在しません。** 本稿執筆時点で [FIS アクションリファレンス](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html) には `aws:states:*` という名前空間は存在せず、FIS に対して特定のステートを失敗させたり、実行に遅延を注入したり、ステートマシンをリソースとして操作させたりする方法はありません。「Saga をカオステストする」という最も素直な発想を最初から封じます。
 
-もう一つの選択肢として、Lambda 拡張機能ベースの障害注入（`aws:lambda:invocation-error` / `aws:lambda:invocation-add-delay`。拡張機能バイナリをインターセプトする Lambda レイヤーをアタッチする方式）も検討しましたが、**採用を見送りました**。この方式の正確なセットアップ仕様（拡張機能バイナリに必要な S3 バケット構造、FIS が期待する具体的な環境変数名）は、AWS の一次情報から確認できませんでした。配線を権威ある情報源に照らして検証できないアクションを、他のエンジニアがコピーするリファレンス実装に採用することは許容できないトレードオフです。
-
-残った選択肢は `aws:lambda:put-function-concurrent-executions` のみ — [`fis-arch-b-apigw-lambda`](../fis-arch-b-apigw-lambda/) ですでに実績のある、本ワークスペースで唯一使用する FIS メカニズムです。関数の予約同時実行数を `0` に設定すると、その関数への**すべての**呼び出しが、関数内のコードが実行される前に即座に `Lambda.TooManyRequestsException` で失敗します。`tasks.LambdaInvoke` ステートの内側から見れば、これは Lambda が完全にダウンしている状態と区別がつきません。したがって、3つの正方向 Lambda（`ReserveInventory`、`ProcessPayment`、`ConfirmOrder`）を個別にターゲットにすることで、**ステートマシンの定義そのものには一切手を加えず**に、Saga が証明すべき3つの障害ポイントを間接的に、しかし忠実かつ検証可能な形で駆動できます。実験が検証するのは、実際にデプロイされた ASL 定義そのものであり、その代替物ではありません。
+代わりに、本ワークスペースは（[`fis-arch-b-apigw-lambda`](../fis-arch-b-apigw-lambda/)と[`fis-arch-d-sqs-lambda`](../fis-arch-d-sqs-lambda/)で実績のある同じメカニズムである）AWS FIS Lambda拡張を、**正方向**の3つのLambda（`ReserveInventory`、`ProcessPayment`、`ConfirmOrder`）のみにレイヤーとしてアタッチします（補償用の2つのLambdaは一切FISの対象になりません）。そしてFISは`aws:lambda:invocation-error`を`preventExecution=true`、100%で注入します——対象関数へのすべての呼び出しが、ハンドラーコードの実行前に即座に失敗します。`tasks.LambdaInvoke` ステートの内側から見れば、これは Lambda が完全にダウンしている状態と区別がつきません。したがって、3つの正方向 Lambda を個別にターゲットにすることで、**ステートマシンの定義そのものには一切手を加えず**に、Saga が証明すべき3つの障害ポイントを間接的に、しかし忠実かつ検証可能な形で駆動できます。実験が検証するのは、実際にデプロイされた ASL 定義そのものであり、その代替物ではありません。
 
 ## アーキテクチャ概要
 
@@ -59,14 +60,14 @@ Step Functions Standard ステートマシン — "order-saga"  (Logs: ALL · X-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FIS 実験テンプレート (FisStack) — Step Functions ではなく正方向 Lambda をターゲット
 
-F-1  aws:lambda:put-function-concurrent-executions ─► ProcessPayment Lambda
-     ConcurrentExecutions=0、5分
+F-1  aws:lambda:invocation-error ─► ProcessPayment Lambda
+     preventExecution=true、100%、5分
 
-F-2  aws:lambda:put-function-concurrent-executions ─► ReserveInventory Lambda
-     ConcurrentExecutions=0、5分
+F-2  aws:lambda:invocation-error ─► ReserveInventory Lambda
+     preventExecution=true、100%、5分
 
-F-3  aws:lambda:put-function-concurrent-executions ─► ConfirmOrder Lambda
-     ConcurrentExecutions=0、5分
+F-3  aws:lambda:invocation-error ─► ConfirmOrder Lambda
+     preventExecution=true、100%、5分
 
 共有の停止条件: CloudWatch Alarm — StateMachine ExecutionsFailed >= 5 / 1分
 ```
@@ -178,7 +179,9 @@ fis-arch-f-stepfunctions-saga/
 | Step Functions ステートマシン | `STANDARD` タイプ（Saga には実行履歴と厳密な一意性が重要）、`logs: sfn.LogLevel.ALL` で CloudWatch Logs へ記録、`tracingEnabled: true` で X-Ray 有効化 |
 | リトライポリシー | 全正方向タスクに `IntervalSeconds=2, MaxAttempts=2, BackoffRate=2` — 一過性障害は Catch が発火する前の 6 秒以内に自己解決する |
 | Catch / 補償チェーン | `ReserveInventory` → Fail（補償なし）、`ProcessPayment` → `ReleaseInventory` → Fail、`ConfirmOrder` → `RefundPayment` → `ReleaseInventory` → Fail |
-| FIS IAM ロール | 最小権限: 3つの正方向 Lambda ARN のみに `lambda:PutFunctionConcurrency` / `lambda:DeleteFunctionConcurrency`、停止条件アラームに `cloudwatch:DescribeAlarms` |
+| FIS拡張レイヤー | 正方向3つのLambdaのみにアタッチ。パブリックSSMパラメータ`/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x`からリージョンごとに解決 |
+| FIS設定バケット | `<project>-<env>-f-fis-config-<account>` — S3マネージド暗号化、パブリックアクセス完全ブロック、1日でライフサイクル失効 |
+| FIS IAM ロール | `<bucket>/FisConfigs/*`への`s3:PutObject`/`s3:DeleteObject`、`*`への`lambda:GetFunction`と`tag:GetResources`、停止条件アラームに `cloudwatch:DescribeAlarms` |
 | CloudWatch 停止アラーム | `StateMachine.metricFailed() >= 5` / 1 分 — 3 テンプレートで共有 |
 | FIS ログ グループ | `/fis/{project}-{env}-f` — 30 日保持、スタック削除時に自動削除 |
 
@@ -209,7 +212,7 @@ processPayment.addCatch(releaseInventoryAfterPaymentFailure, {
 processPayment.next(confirmOrder);
 ```
 
-`ProcessPayment` の予約同時実行数が 0 の間（FIS シナリオ F-1）、すべての試行は即座に `Lambda.TooManyRequestsException` を返します。2 回の試行と約 6 秒後、リトライが尽きて Catch が下の補償チェーンへ実行を遷移させます。
+FIS Lambda拡張が`ProcessPayment`に`invocation-error`を注入している間（FISシナリオF-1）、すべての試行はハンドラーを実行せずに即座に失敗します。2 回の試行と約 6 秒後、リトライが尽きて Catch が下の補償チェーンへ実行を遷移させます。
 
 ### 2. 逆順に配線された 2 段階補償
 
@@ -248,9 +251,9 @@ new fis.CfnExperimentTemplate(this, 'ScenarioF1ProcessPaymentOutage', {
         },
     },
     actions: {
-        SetConcurrencyZero: {
-            actionId: 'aws:lambda:put-function-concurrent-executions',
-            parameters: { ConcurrentExecutions: '0', duration: 'PT5M' },
+        InjectPaymentOutage: {
+            actionId: 'aws:lambda:invocation-error',
+            parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: 'true' },
             targets: { Functions: 'ProcessPaymentFunction' },
         },
     },
@@ -258,7 +261,7 @@ new fis.CfnExperimentTemplate(this, 'ScenarioF1ProcessPaymentOutage', {
 });
 ```
 
-どの FIS テンプレートにもステートマシンの ARN は一切登場しません — FIS のアクションカタログには参照できるものが存在しないためです。詳細は上記「[Step Functions を直接ターゲットにせず Lambda 同時実行数を使う理由](#step-functions-を直接ターゲットにせず-lambda-同時実行数を使う理由)」を参照してください。
+どの FIS テンプレートにもステートマシンの ARN は一切登場しません — FIS のアクションカタログには参照できるものが存在しないためです。詳細は上記「[Step Functions を直接ターゲットにせず Lambda 拡張を使う理由](#step-functions-を直接ターゲットにせず-lambda-拡張を使う理由)」を参照してください。
 
 ### 4. Lambda レベルのエラーではなく Saga レベルの失敗を停止条件にする
 
@@ -338,6 +341,16 @@ aws dynamodb get-item \
 
 AWS FIS コンソールで `F-1`、`F-2`、`F-3` のいずれかの実験テンプレートを選択し、**実験の開始** をクリックしてから、Saga 実行を開始します（手順 5）。Step Functions コンソールの Graph View で実行を確認すると、対象 Lambda の呼び出し失敗に伴って Catch 分岐と補償トランザクションが点灯する様子が観測できます。
 
+### 観測結果（ap-northeast-1）
+
+| シナリオ | 結果 |
+| -------- | ---- |
+| **F-1** | 障害ウィンドウ中に投入したすべてのSaga実行が`error: "ProcessPaymentFailed"`で失敗。`get-execution-history`で状態遷移`ReserveInventory (成功) → ProcessPayment (失敗) → ReleaseInventoryCompensation → ExecutionFailed`を確認——設計通り単一段階の補償が実行された |
+| **F-2** | すべての実行が`error: "ReserveInventoryFailed"`で失敗。実行履歴は`ReserveInventory (失敗) → ExecutionFailed`——補償タスクは一切現れず、フェイルファストで取り消すものが何もないパスであることを確認 |
+| **F-3** | すべての実行が`error: "ConfirmOrderFailed"`で失敗。実行履歴は`ReserveInventory (成功) → ProcessPayment (成功) → ConfirmOrder (失敗) → RefundPaymentCompensation1 → ReleaseInventoryCompensation2 → ExecutionFailed`——2段階の補償が正しい順序で実行された |
+
+各シナリオの後、通常負荷での新規Saga実行は3つの正方向ステップすべてが完了して`SUCCEEDED`に戻り、FIS Lambda拡張の障害解除後のクリーンな回復を確認した。
+
 ## テスト
 
 ```bash
@@ -361,7 +374,7 @@ npm run test:snapshot:update --workspace=fis-arch-f-stepfunctions-saga
 
 | テストスイート | ファイル | 検証内容 |
 | -------------- | -------- | -------- |
-| スナップショット | `test/snapshot/snapshot.test.ts` | 全 3 スタックの CFn テンプレートスナップショット、DynamoDB PAY_PER_REQUEST、Python 3.13 の Lambda 5 つ、X-Ray 有効な Standard ステートマシン 1 つ、ASL 定義内に Saga の全 5 ステートが存在すること、FIS テンプレート 3 つすべてが `aws:lambda:put-function-concurrent-executions` を使用し停止条件を持つこと |
+| スナップショット | `test/snapshot/snapshot.test.ts` | 全 3 スタックの CFn テンプレートスナップショット、DynamoDB PAY_PER_REQUEST、Python 3.13 の Lambda 5 つ、X-Ray 有効な Standard ステートマシン 1 つ、ASL 定義内に Saga の全 5 ステートが存在すること、FIS テンプレート 3 つすべてが実在する`aws:lambda:invocation-error`アクションを使用し停止条件を持つこと |
 | CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 非抑制の警告・エラーがないこと |
 
 ## コスト見積もり
@@ -375,13 +388,15 @@ npm run test:snapshot:update --workspace=fis-arch-f-stepfunctions-saga
 | Step Functions | Standard、ステート遷移課金 | 1 遷移あたり約 $0.000025。数十回のテスト実行で < $0.01 |
 | CloudWatch | メトリクス + ログ | 実験ログ + ステートマシンログで月額 ~$0.01 |
 | X-Ray | トレース記録課金 | 5 分間の実験で < $0.01 |
-| FIS | 無料 | FIS 自体は無料 |
-| **合計（実験あたり）** | | **< $0.10** |
+| **FIS** | **アクション分単価 $0.10** | 5分間の単一アクション実験は約$0.50、F-1〜F-3を1回実行すると約$1.50 |
+| **合計（3シナリオのフルサイクル1回）** | | **約$1.50〜2、主にFISのアクション分単価による** |
+
+**以前のドキュメントからの修正:** FISは**無料ではありません**——本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
 
 ## セキュリティ上の考慮事項
 
 - **Lambda 実行ロールは最小権限**: 5 つの関数はいずれも `table.grantReadWriteData()` により、特定の注文テーブルに対する `dynamodb:GetItem` / `PutItem` / `UpdateItem` / `DeleteItem` のみを保持します。
-- **FIS ロールは最小権限**: 3 つの正方向 Lambda ARN のみに `lambda:PutFunctionConcurrency` / `lambda:DeleteFunctionConcurrency` を限定（補償用の `ReleaseInventory` / `RefundPayment` はカオスシナリオで不可到達にする必要がないため、FIS のターゲットには含まれません）、停止条件アラーム 1 つのみに `cloudwatch:DescribeAlarms` を付与しています。
+- **FIS ロールは最小権限**: FIS設定バケットの`FisConfigs/*`プレフィックスへの`s3:PutObject`/`s3:DeleteObject`、ターゲット解決用の`lambda:GetFunction`と`tag:GetResources`、停止条件アラーム 1 つのみへの`cloudwatch:DescribeAlarms`。DynamoDBへのアクセスなし。補償用の `ReleaseInventory` / `RefundPayment` はFIS拡張レイヤーを一切持たず、FIS のターゲットには含まれません（カオスシナリオで不可到達にする必要がないため）。
 - **VPC なし**: VPC・パブリックサブネット・セキュリティグループが存在せず、ステートマシンと 5 つの Lambda はすべて AWS API/SDK 経由でのみ到達可能な完全マネージドサーバーレスリソースです。
 - **ステートマシンはインターネットに公開されない**: 本リファレンスパターンは（パブリック HTTP エンドポイントではなく）`start-execution`（CLI/SDK/コンソール）経由で呼び出されます。本番環境では認証付き API（API Gateway + Cognito/IAM 認証や認証済みイベントソース）でフロントすることを推奨します。
 - **停止条件は必須**: 全 3 つの FIS テンプレートに Saga の `ExecutionsFailed` アラームの停止条件が含まれており、並行するテスト実行にまたがる実験の最大影響範囲を制限しています。
@@ -391,6 +406,8 @@ npm run test:snapshot:update --workspace=fis-arch-f-stepfunctions-saga
 | 症状 | 考えられる原因 | 対処法 |
 | ---- | -------------- | ------ |
 | `cdk deploy` が `No parameters found for environment` で失敗 | `dev-params.ts` のエクスポートが欠けている | `parameters/index.ts` が `dev` キーで `devParams` をエクスポートしていることを確認 |
+| FISテンプレート作成が`Invalid actionId ... 404`で失敗 | リージョンに存在しないアクションID | `aws fis list-actions`を確認——Lambda対象アクションは`aws:lambda:function`ファミリーに限られる |
+| 実験開始後、エラーが現れるまで約1分かかる | 想定通り——FIS Lambda拡張のスローポーリングによるランプアップ | 約60秒待つ。CloudWatch Logsで`AWS FIS EXTENSION - found active faults`を確認し障害が実際に有効か確認する |
 | Saga 実行のステータスが 5 分を超えても `RUNNING` のまま | 想定外 — ステートマシンには 5 分の実行タイムアウトが設定されている | Step Functions の Graph View でスタックしたステートを確認。タイムアウトにより `TimedOut` ステータスへ強制遷移するはず |
 | `ReserveInventory` で失敗し、補償が表示されない | F-2 実行中は想定通り — これは設計上のフェイルファストパス | F-2 実験が実行中であることと、`ReserveInventory` の CloudWatch Lambda メトリクスを確認 |
 | FIS 実験が即座に停止する | 停止条件アラームがすでに `ALARM` 状態 | `aws cloudwatch set-alarm-state --alarm-name ... --state-value OK` でアラームをリセット |
@@ -402,22 +419,22 @@ npm run test:snapshot:update --workspace=fis-arch-f-stepfunctions-saga
 PROJECT=fis-chaos-f ENV=dev npm run stage:destroy:all
 ```
 
-全リソースは `removalPolicy: DESTROY` に設定されているため、DynamoDB テーブル、5 つの Lambda 関数、Step Functions ステートマシン、FIS テンプレート、CloudWatch ログ グループが完全に削除されます。
+全リソースは `removalPolicy: DESTROY`（S3設定バケットは`autoDeleteObjects`も）に設定されているため、DynamoDB テーブル、5 つの Lambda 関数、Step Functions ステートマシン、FIS設定バケット、FIS テンプレート、CloudWatch ログ グループが完全に削除されます。
 
 ## まとめ
 
-本ワークスペースは、2フェーズコミットの代わりに補償アクションで多段の分散トランザクションの整合性を保つ Step Functions Saga パターンに対する FIS カオスエンジニアリングを実演します。FIS には Step Functions を直接ターゲットにするアクションが存在しないため、3 つの実験はそれぞれ正方向 Lambda を `aws:lambda:put-function-concurrent-executions` で完全に呼び出し不可能にすることで、実際にデプロイされた Retry/Catch/補償ロジックを、実際の障害と同じ形で駆動します:
+本ワークスペースは、2フェーズコミットの代わりに補償アクションで多段の分散トランザクションの整合性を保つ Step Functions Saga パターンに対する FIS カオスエンジニアリングを実演します。FIS には Step Functions を直接ターゲットにするアクションが存在しないため、3 つの実験はそれぞれ正方向 Lambda を`aws:lambda:invocation-error`（FIS Lambda拡張経由）で全呼び出し失敗させることで、実際にデプロイされた Retry/Catch/補償ロジックを、実際の障害と同じ形で駆動します:
 
 - **F-2** は Saga の最初のステップが実行できない場合に、補償なし・部分状態なしで即座かつクリーンに失敗することを検証します。
 - **F-1** は中間ステップが失敗した際に、単一の補償トランザクション（`ReleaseInventory`）が正しく実行されることを検証します。
 - **F-3** は最終ステップが決済完了後に失敗した際に、2 段階の補償（`RefundPayment` の後に `ReleaseInventory`）が正しい順序で実行されることを検証します。
 
-サーバーレスアーキテクチャにより実験コストは最小限（1 回あたり $0.10 未満）に抑えられ、VPC 管理も不要なため、Saga の耐障害性シナリオを容易に反復検証できます。
+サーバーレスアーキテクチャにより実験コストは低く抑えられ（フルサイクルあたり数ドル、主にFISのアクション分単価による）、VPC 管理も不要なため、Saga の耐障害性シナリオを容易に反復検証できます。
 
 ## 参考資料
 
 - [AWS FIS — サポートされているアクション](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
-- [aws:lambda:put-function-concurrent-executions アクションリファレンス](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html#fis-actions-reference-lambda)
+- [AWS FISの`aws:lambda:function`アクションを使用する](https://docs.aws.amazon.com/fis/latest/userguide/use-lambda-actions.html)
 - [AWS Step Functions — エラー処理（Retry / Catch）](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html)
 - [Saga パターン (AWS Prescriptive Guidance)](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga.html)
 - [CDK aws-fis モジュール (L1 コンストラクト)](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_fis-readme.html)

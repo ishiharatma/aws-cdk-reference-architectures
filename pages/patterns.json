@@ -50,27 +50,25 @@
   {
     "id": "fis-arch-d-sqs-lambda",
     "title": "FIS Chaos: SQS + Lambda Event-Driven Consumer + DynamoDB",
-    "description": "Three AWS FIS chaos experiment templates for a serverless event-driven consumer: Lambda concurrency=0 for 5 min (short outage/recovery), concurrency=0 for 20 min (forces DLQ routing past the visibility-timeout × maxReceiveCount threshold), and concurrency=1 for 10 min (severe throughput degradation) — each with a CloudWatch Alarm stop condition on queue backlog depth. Uses only aws:lambda:put-function-concurrent-executions since FIS has no native SQS-targeting action.",
+    "description": "Three AWS FIS chaos experiment templates for a serverless event-driven consumer, using the aws:lambda:function action family via the FIS Lambda extension: a 5-min invocation-error outage (short recovery), a 20-min invocation-error outage (forces DLQ routing past the visibility-timeout × maxReceiveCount threshold), and a 10-min invocation-add-delay throughput collapse — each with a CloudWatch Alarm stop condition on queue backlog depth.",
     "image": "fis-arch-d-sqs-lambda/overview.drawio.svg",
     "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "SQS", "Lambda", "DynamoDB", "Serverless", "DLQ"],
     "link": "fis-arch-d-sqs-lambda",
     "difficulty": "advanced",
     "level": 300,
-    "date": "2026-09-09",
-    "draft": true,
+    "date": "2026-09-20",
     "articles": {}
   },
   {
     "id": "fis-arch-f-stepfunctions-saga",
     "title": "FIS Chaos: Step Functions Saga + Lambda + DynamoDB",
-    "description": "Three AWS FIS chaos experiment templates for a Saga-pattern order workflow (Reserve Inventory → Process Payment → Confirm Order, each with Retry/Catch and compensating transactions): payment-step outage triggering inventory-release compensation, first-step outage with no compensation needed, and final-step outage triggering the two-stage refund-then-release compensation chain — each with a CloudWatch Alarm stop condition on Step Functions ExecutionsFailed. Uses aws:lambda:put-function-concurrent-executions to drive Saga error handling indirectly, since FIS has no native Step Functions action.",
+    "description": "Three AWS FIS chaos experiment templates for a Saga-pattern order workflow (Reserve Inventory → Process Payment → Confirm Order, each with Retry/Catch and compensating transactions): payment-step outage triggering inventory-release compensation, first-step outage with no compensation needed, and final-step outage triggering the two-stage refund-then-release compensation chain — each with a CloudWatch Alarm stop condition on Step Functions ExecutionsFailed. Uses the aws:lambda:function action family (invocation-error) via the FIS Lambda extension to drive Saga error handling indirectly, since FIS has no native Step Functions action.",
     "image": "fis-arch-f-stepfunctions-saga/overview.drawio.svg",
     "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "Step Functions", "Lambda", "DynamoDB", "Saga Pattern", "Serverless"],
     "link": "fis-arch-f-stepfunctions-saga",
     "difficulty": "advanced",
     "level": 300,
-    "date": "2026-09-09",
-    "draft": true,
+    "date": "2026-09-20",
     "articles": {}
   },
   {
@@ -82,8 +80,7 @@
     "link": "fis-arch-g-multiaz-network",
     "difficulty": "advanced",
     "level": 300,
-    "date": "2026-09-09",
-    "draft": true,
+    "date": "2026-09-20",
     "articles": {}
   },
   {

@@ -55,6 +55,7 @@ describe('FIS Chaos Scenario F Stack Snapshots', () => {
         processPaymentFn: appStack.processPaymentFn,
         confirmOrderFn: appStack.confirmOrderFn,
         stateMachine: appStack.stateMachine,
+        fisConfigBucket: appStack.fisConfigBucket,
         alarmEmail: envParams.alarmEmail,
     });
 
@@ -108,11 +109,15 @@ describe('FIS Chaos Scenario F Stack Snapshots', () => {
             expect(resourceCounts).toMatchSnapshot();
         });
 
-        test('Exactly 5 Lambda functions with Python 3.13 runtime', () => {
-            template.resourceCountIs('AWS::Lambda::Function', 5);
-            template.hasResourceProperties('AWS::Lambda::Function', {
-                Runtime: 'python3.13',
+        test('Exactly 5 Lambda functions use Python 3.13 runtime', () => {
+            // resourceCountIs on the unfiltered type would also catch the S3
+            // auto-delete-objects provider Lambda (Node.js runtime) that
+            // fisConfigBucket's autoDeleteObjects:true wires up — filter by
+            // runtime instead, matching Architecture B's pattern.
+            const fns = template.findResources('AWS::Lambda::Function', {
+                Properties: { Runtime: 'python3.13' },
             });
+            expect(Object.keys(fns)).toHaveLength(5);
         });
 
         test('Exactly 1 Standard Step Functions state machine', () => {
@@ -158,12 +163,12 @@ describe('FIS Chaos Scenario F Stack Snapshots', () => {
             template.resourceCountIs('AWS::FIS::ExperimentTemplate', 3);
         });
 
-        test('All FIS templates use the Lambda concurrency action only', () => {
+        test('All FIS templates use the Lambda invocation-error action only', () => {
             const templates = template.findResources('AWS::FIS::ExperimentTemplate');
             Object.values(templates).forEach((t: any) => {
                 const actions = t.Properties.Actions;
                 Object.values(actions).forEach((action: any) => {
-                    expect(action.ActionId).toBe('aws:lambda:put-function-concurrent-executions');
+                    expect(action.ActionId).toBe('aws:lambda:invocation-error');
                 });
             });
         });

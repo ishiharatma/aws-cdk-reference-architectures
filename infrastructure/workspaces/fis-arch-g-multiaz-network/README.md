@@ -150,7 +150,7 @@ Aurora PostgreSQL Serverless v2
 | Component | Design Points |
 | --------- | -------------- |
 | VPC | CIDR 10.70.0.0/16; 2 AZs; 3 subnet tiers (public/private/isolated) per AZ; 1 NAT Gateway (shared cross-AZ) |
-| Aurora PostgreSQL Serverless v2 | Engine v16.4; 1 writer + 1 reader across 2 AZs; min 0.5 ACU, max 4 ACU; isolated subnets; encrypted storage; CloudWatch log export |
+| Aurora PostgreSQL Serverless v2 | Engine v16.13 (v16.4 was withdrawn from this Region — see [A](../fis-arch-a-ecs-aurora) and [C](../fis-arch-c-ec2-asg-rds) for the same fix); 1 writer + 1 reader across 2 AZs; min 0.5 ACU, max 4 ACU; isolated subnets; encrypted storage; CloudWatch log export |
 | EC2 Auto Scaling Group | t3.small; AL2023; requireImdsv2; EBS gp3 encrypted 20 GB; split across 2 AZs; tag `fis-target: app-instance` |
 | Network Load Balancer | Internet-facing, TCP/80, 2 AZs, cross-zone load balancing enabled, `disableSecurityGroups: true` |
 | Target Group | TCP/80, INSTANCE type, `preserveClientIp: false`, HTTP health check on `/`, 30 s deregistration delay |
@@ -342,6 +342,15 @@ Navigate to the AWS FIS console, select one of the four experiment templates (`G
 - Aurora Failover Events in the RDS console during G-3
 - ASG activity and NLB target churn during G-4
 
+### Observed results (ap-northeast-1)
+
+| Scenario | Result |
+| -------- | ------ |
+| **G-1** | The AZ-1 instance's NLB target health stayed `healthy` throughout the 5-minute window — this simple nginx demo has no cross-AZ dependency for the disruption to expose, so "nothing happened" is itself the correct, validated result |
+| **G-2** | The AZ-1 instance flipped to `unhealthy` (`Target.FailedHealthChecks`) within seconds, and 100% of live traffic shifted to the AZ-2 instance. **Unexpected but instructive**: Auto Scaling treated the "unhealthy" (but actually fine) instance as failed and replaced it, without waiting for the network to heal — the replacement landed in the same AZ and only went healthy once the 5-minute action expired |
+| **G-3** | `aws rds describe-events` logged `Started cross AZ failover to DB instance: ...reader1...` within seconds of starting the experiment |
+| **G-4** | FIS terminated one instance; the NLB target group deregistered it almost immediately, while `describe-auto-scaling-groups`' own view of instance health lagged noticeably behind both EC2's actual state and the target group's — `describe-instances` and `describe-target-health` were the more current ground truth right after the out-of-band termination. The ASG detected the mismatch and launched a replacement within a few minutes |
+
 ## Testing
 
 ```bash
@@ -378,8 +387,10 @@ Aurora Serverless v2, EC2 instances, and the NAT Gateway incur hourly charges ev
 | Aurora Serverless v2 (min 0.5 ACU × 2 instances) | Per ACU-hour | ~$0.06/hour |
 | NAT Gateway | Per hour + data | ~$0.05/hour |
 | Network Load Balancer | Per hour + LCU | ~$0.02/hour |
-| FIS | Free | No charge |
-| **Total (1-hour window)** | | **~$0.17/hour** |
+| **FIS** | **$0.10 per action-minute** | A full 4-scenario cycle (mostly two 5-min network-disruption actions) is roughly $1–1.50 |
+| **Total (idle infra, 1-hour window)** | | **~$0.17/hour, plus ~$1–1.50 in FIS action-minutes for one full test cycle** |
+
+**Correction vs. earlier versions of this doc:** FIS is **not free** — it bills $0.10 per action-minute, same as every other FIS-based workspace in this series.
 
 ## Security Considerations
 
