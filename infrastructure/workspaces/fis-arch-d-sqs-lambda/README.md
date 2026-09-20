@@ -9,19 +9,20 @@
 
 This project is a reference implementation for AWS Fault Injection Simulator (FIS) chaos engineering on an **SQS + Lambda event-driven consumer** architecture. A Producer Lambda (behind a Function URL) accepts demo load and sends messages to an SQS main queue; a Consumer Lambda drains that queue via an SQS event source mapping and writes processed records to DynamoDB. Unprocessed messages redrive to a dead-letter queue (DLQ) after repeated failed receives.
 
-Three FIS experiment templates manipulate the Consumer Lambda's reserved concurrency to simulate a stalled or degraded consumer — the realistic failure mode operators need to validate before production:
+Three FIS experiment templates inject faults into the Consumer Lambda using the `aws:lambda:function` action family via the AWS FIS Lambda extension — the same mechanism [Architecture B](../fis-arch-b-apigw-lambda) uses for a serverless API:
 
 | Scenario | Fault Injected | Duration | What It Validates |
 | -------- | --------------- | -------- | ------------------ |
-| **D-1** Consumer Outage — short | `ConcurrentExecutions='0'` | 5 min | Message redelivery within the 60s visibility timeout; clean backlog drain once concurrency is restored |
-| **D-2** Consumer Outage — long (DLQ) | `ConcurrentExecutions='0'` | 20 min | DLQ routing is guaranteed (20 min ≫ visibilityTimeout×maxReceiveCount = 180s); DLQ alarming and replay procedure |
-| **D-3** Throughput Collapse | `ConcurrentExecutions='1'` | 10 min | Queue backlog growth and latency under severe but non-zero throughput degradation |
+| **D-1** Consumer Outage — short | `invocation-error`, `preventExecution=true`, 100% | 5 min | Message redelivery within the 60s visibility timeout; clean backlog drain once the fault clears |
+| **D-2** Consumer Outage — long (DLQ) | Same action | 20 min | DLQ routing is guaranteed (20 min ≫ visibilityTimeout×maxReceiveCount = 180s); DLQ alarming and replay procedure |
+| **D-3** Throughput Collapse | `invocation-add-delay`, `startupDelayMilliseconds=20000` | 10 min | Queue backlog growth and latency under severe but non-zero throughput degradation |
 
 All experiments share a CloudWatch Alarm stop condition that automatically halts the experiment if the SQS main queue's visible message count exceeds 1000, providing a safety net against unbounded backlog growth.
 
-## Architecture Overview
+> ### ⚠️ `aws:lambda:put-function-concurrent-executions` does not exist
+> An earlier version of this workspace tried to zero out the Consumer Lambda's reserved concurrency via `aws:lambda:put-function-concurrent-executions`. **That action ID does not exist** — `aws fis list-actions` confirms Lambda-targeted FIS actions are limited to the `aws:lambda:function` family (`invocation-error`, `invocation-add-delay`, `invocation-http-integration-response`). CloudFormation failed FIS template creation outright with `Invalid actionId ... 404`. This was deploy-verified end-to-end after the fix — see [Observed Results](#observed-results-ap-northeast-1).
 
-![Architecture Overview](docs/architecture.html)
+## Architecture Overview
 
 ```
 Operator (curl / shell loop)
@@ -33,40 +34,32 @@ Producer Lambda  (Function URL, AWS_IAM auth, Python 3.13)
 SQS Main Queue  (visibilityTimeout=60s, maxReceiveCount=3 → DLQ)
     │  event source mapping, batchSize=5, ReportBatchItemFailures
     ▼
-Consumer Lambda  (Python 3.13)
+Consumer Lambda  (Python 3.13, + FIS extension layer)
     │  dynamodb:PutItem
     ▼
 DynamoDB Table  (PAY_PER_REQUEST, string partition key: id)
 
 SQS Main Queue ──(after 3 failed/unprocessed receives)──► DLQ (retention 14d)
 
+FIS ⇄ extension config exchange:
+    S3 bucket  <project>-<env>-d-fis-config-<account>  (prefix FisConfigs/)
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FIS Experiment Templates (FisStack)
+FIS Experiment Templates (FisStack)   target: aws:lambda:function (Consumer Lambda ARN)
 
-D-1  aws:lambda:put-function-concurrent-executions ──► Consumer Lambda
-     ConcurrentExecutions='0', PT5M   (short outage, no DLQ routing)
-
-D-2  aws:lambda:put-function-concurrent-executions ──► Consumer Lambda
-     ConcurrentExecutions='0', PT20M  (long outage, DLQ routing guaranteed)
-
-D-3  aws:lambda:put-function-concurrent-executions ──► Consumer Lambda
-     ConcurrentExecutions='1', PT10M  (throughput collapse, no outage)
+D-1  aws:lambda:invocation-error       preventExecution=true, 100%, PT5M
+D-2  aws:lambda:invocation-error       preventExecution=true, 100%, PT20M
+D-3  aws:lambda:invocation-add-delay   startupDelayMilliseconds=20000, 100%, PT10M
 ```
-
-### Why concurrency-only? (design decision)
-
-FIS's `aws:fis:inject-api-internal-error` and `aws:fis:inject-api-throttle-error` actions — the mechanism Architecture B uses against DynamoDB — only accept `service: 'ec2'` or `service: 'kinesis'` as of this writing. **SQS and DynamoDB are not supported service values for these actions**, so there is no supported way to have FIS directly inject `ReceiveMessage`/`SendMessage`/`PutItem` API errors into this pipeline. A Lambda-extension-based approach (`invocation-error` / `invocation-add-delay`) exists in principle, but its exact setup — the required S3 layer bucket structure and environment variable names — could not be confirmed from primary AWS documentation, so it is deliberately **not used** here to avoid shipping a reference implementation built on guessed configuration.
-
-Instead, every scenario in this workspace uses `aws:lambda:put-function-concurrent-executions` — the same action proven reliable in `fis-arch-b-apigw-lambda` — against the **Consumer Lambda's reserved concurrency**. This is not a compromise so much as a better fit for what operators actually need to validate in an SQS+Lambda pipeline: what happens when the consumer *stops processing* (matches a bad deploy, a downstream outage, or a bug that crashes on every invocation) or *processes far slower than normal* (matches resource exhaustion or a noisy-neighbor throttling scenario). Both are consumer-side failure modes, and reserved concurrency is a direct, supported lever for reproducing them without needing FIS to understand SQS or DynamoDB semantics at all.
 
 ### Key Design Benefits
 
 | Feature | Benefit |
 | ------- | ------- |
 | No VPC required | Fully serverless — no NAT Gateway, no subnet planning, no VPC hourly charges |
-| Concurrency-only FIS actions | Uses only the one FIS Lambda action with a confirmed, documented contract — no speculative Lambda-extension configuration |
+| `aws:lambda:function` actions | FIS injects faults into function invocations through the FIS Lambda extension; the handler code is untouched |
 | D-1 vs. D-2 duration split | A 5-minute outage (recoverable within queue redelivery) vs. a 20-minute outage (deterministically drives messages to the DLQ) — the same fault, two blast radii |
-| D-3 partial degradation | Reserved concurrency of 1 (not 0) tests a more realistic "slow, not dead" consumer — a scenario a hard outage test alone would miss |
+| D-3 delay, not zero | A 20s startup delay (not a hard error) tests a more realistic "slow, not dead" consumer — a scenario a hard outage test alone would miss |
 | Shared stop condition | One CloudWatch Alarm (SQS backlog ≥ 1000 visible messages) halts any of the three experiments automatically |
 | Function URL producer | No API Gateway needed just to drive demo load — a single IAM-signed POST is enough |
 
@@ -78,7 +71,7 @@ Instead, every scenario in this workspace uses `aws:lambda:put-function-concurre
 - Basic knowledge of TypeScript and Python
 - AWS account with FIS service-linked role created (auto-created on first FIS use)
 
-> **No VPC or NAT Gateway costs**: this architecture uses only serverless services. The dominant ongoing cost at rest is zero (DynamoDB PAY_PER_REQUEST, SQS/Lambda pay-per-use).
+> **No VPC or NAT Gateway costs**: this architecture uses only serverless services. The dominant ongoing cost at rest is zero (DynamoDB PAY_PER_REQUEST, SQS/Lambda pay-per-use, S3 config bucket near-empty).
 
 ## Project Directory Structure
 
@@ -96,7 +89,7 @@ fis-arch-d-sqs-lambda/
 │   │   └── fis-chaos-stage.ts             # Stage: BaseStack → AppStack → FisStack
 │   └── stacks/
 │       ├── base-stack.ts                  # DynamoDB table + SQS main queue + DLQ
-│       ├── app-stack.ts                   # Consumer Lambda (SQS event source) + Producer Lambda (Function URL)
+│       ├── app-stack.ts                   # Consumer Lambda (+ FIS extension layer) + Producer Lambda + FIS config bucket
 │       └── fis-stack.ts                   # 3 FIS experiment templates + IAM + alarm
 ├── parameters/
 │   ├── environments.ts                    # Environment parameter type
@@ -106,7 +99,7 @@ fis-arch-d-sqs-lambda/
 │   ├── compliance/
 │   │   └── cdk-nag.test.ts               # cdk-nag AwsSolutions compliance checks
 │   └── snapshot/
-│       └── snapshot.test.ts              # CDK snapshot tests (21 test cases)
+│       └── snapshot.test.ts              # CDK snapshot tests
 ├── docs/
 │   └── architecture.html                 # Interactive SVG architecture diagram
 ├── overview.drawio.svg                   # Standalone architecture diagram (SQS/Lambda/DynamoDB + FIS)
@@ -127,7 +120,7 @@ Producer Lambda Function URL  (AuthType: AWS_IAM)
 SQS Main Queue
   │  event source mapping — batchSize=5, reportBatchItemFailures=true
   ▼
-Consumer Lambda (Python 3.13)
+Consumer Lambda (Python 3.13)   ── AWS FIS Lambda extension intercepts the invocation ──►
   └── for each message in the batch: table.put_item({id, body, processedAt, ...})
         on failure: messageId is returned in batchItemFailures so only that
         message becomes visible again — the rest of the batch is not retried
@@ -139,7 +132,12 @@ SQS Main Queue ── after 3 failed/unprocessed receives ──► DLQ (14-day 
 
 ### FIS Injection Point
 
-`aws:lambda:put-function-concurrent-executions` sets the **reserved concurrency** of the Consumer Lambda function directly — a control-plane operation, not a code change. At `ConcurrentExecutions='0'` every invocation attempt immediately fails with `TooManyRequestsException` without executing; SQS's own retry/backoff behavior then keeps redelivering the message once its visibility timeout elapses. At `ConcurrentExecutions='1'` the consumer keeps working, just serialized to one message batch at a time. Because the queue and DLQ config never change, the redrive math (`visibilityTimeout × maxReceiveCount = 60s × 3 = 180s`) is the same constant regardless of which scenario is running — only the experiment duration determines whether that threshold is crossed.
+The `aws:lambda:function` actions inject faults through the **AWS FIS Lambda extension**, attached to the Consumer Lambda as a layer. When an experiment starts, FIS writes the active fault configuration to an S3 prefix; the extension polls that prefix and applies the fault around the handler invocation — the handler code itself never changes.
+
+- **D-1 / D-2** (`invocation-error`, `preventExecution=true`): every invocation fails *before* the handler runs. SQS's own retry/backoff behavior then keeps redelivering the message once its visibility timeout elapses — functionally the same "consumer cannot run at all" effect the design originally wanted from zeroing reserved concurrency, reached through a real action instead.
+- **D-3** (`invocation-add-delay`, `startupDelayMilliseconds=20000`): the handler still runs and still commits its writes, but every invocation is 20s slower — comfortably inside the function's 30s timeout, leaving ~10s for the batch's actual DynamoDB puts.
+
+Because the extension polls rather than pushes, expect up to ~60s of ramp-up before every invocation is affected, and ~20s of ramp-down after the action ends — the same behavior documented for Architecture B.
 
 ## Key Components and Design Points
 
@@ -148,9 +146,10 @@ SQS Main Queue ── after 3 failed/unprocessed receives ──► DLQ (14-day 
 | DynamoDB Table | PAY_PER_REQUEST billing; costs zero at rest; PITR disabled for minimal cost during experiments |
 | SQS Main Queue | `visibilityTimeout=60s`, `retentionPeriod=4 days`, `enforceSSL=true`, redrive policy → DLQ at `maxReceiveCount=3` |
 | SQS Dead-Letter Queue | `retentionPeriod=14 days`, `enforceSSL=true` — the terminal point of the redrive chain, intentionally has no DLQ of its own |
-| Consumer Lambda | Python 3.13, 256 MB, 30 s timeout; SQS event source with `batchSize=5` and `reportBatchItemFailures=true` (partial batch failure reporting) |
-| Producer Lambda | Python 3.13, 128 MB, 10 s timeout; Function URL with `AuthType: AWS_IAM` (not public) |
-| FIS IAM Role | Minimal: `lambda:PutFunctionConcurrency` + `lambda:DeleteFunctionConcurrency` on the Consumer Lambda ARN; `cloudwatch:DescribeAlarms` on the stop-condition alarm |
+| Consumer Lambda | Python 3.13, 256 MB, 30s timeout. Carries the FIS extension layer + `AWS_LAMBDA_EXEC_WRAPPER=/opt/aws-fis/bootstrap`, `AWS_FIS_CONFIGURATION_LOCATION=arn:aws:s3:::<bucket>/FisConfigs/`, `AWS_FIS_POLL_MAX_WAIT_MILLISECONDS=2000`. SQS event source with `batchSize=5` and `reportBatchItemFailures=true` |
+| Producer Lambda | Python 3.13, 128 MB, 10s timeout; Function URL with `AuthType: AWS_IAM` (not public); no FIS extension (never a fault target) |
+| FIS config bucket | `<project>-<env>-d-fis-config-<account>` — S3-managed encryption, all public access blocked, 1-day lifecycle expiry |
+| FIS IAM Role | `s3:PutObject`/`s3:DeleteObject` on `<bucket>/FisConfigs/*`; `lambda:GetFunction` and `tag:GetResources` on `*`; `cloudwatch:DescribeAlarms` on the stop-condition alarm |
 | CloudWatch Stop Alarm | `ApproximateNumberOfMessagesVisible >= 1000` on the main queue — shared by all 3 templates |
 | FIS Log Group | `/fis/{project}-{env}-d` — ONE_MONTH retention, auto-deleted on stack destroy |
 
@@ -199,12 +198,31 @@ this.queue = new sqs.Queue(this, 'MainQueue', {
 });
 ```
 
-`visibilityTimeout (60s) × maxReceiveCount (3) = 180s` is the maximum time a message can circulate before landing in the DLQ. D-1's 5-minute (300s) outage duration is deliberately close to — and beyond — that threshold to test the *recovery* path once concurrency comes back, while D-2's 20-minute (1200s) outage duration is deliberately far beyond it, so DLQ routing is not a possibility to check for but a guaranteed outcome to verify.
+`visibilityTimeout (60s) × maxReceiveCount (3) = 180s` is the maximum time a message can circulate before landing in the DLQ. D-1's 5-minute (300s) outage duration is deliberately close to — and beyond — that threshold to test the *recovery* path once the fault clears, while D-2's 20-minute (1200s) outage duration is deliberately far beyond it, so DLQ routing is not a possibility to check for but a guaranteed outcome to verify.
 
-### 3. FIS actions target the Consumer Lambda's reserved concurrency directly
+### 3. The FIS Lambda extension is a hard prerequisite
+
+`aws:lambda:function` actions do not work on a bare function. The one-time setup (all in `app-stack.ts`) mirrors Architecture B:
 
 ```typescript
-// lib/stacks/fis-stack.ts (excerpt — scenario D-2)
+const fisExtensionLayerArn = ssm.StringParameter.valueForStringParameter(
+    this, FIS_EXTENSION_LAYER_SSM_PARAM,
+);
+
+this.consumerFunction = new lambda.Function(this, 'ConsumerFunction', {
+    // ...
+    layers: [lambda.LayerVersion.fromLayerVersionArn(this, 'FisExtensionLayer', fisExtensionLayerArn)],
+    environment: {
+        TABLE_NAME: props.table.tableName,
+        AWS_LAMBDA_EXEC_WRAPPER: '/opt/aws-fis/bootstrap',
+        AWS_FIS_CONFIGURATION_LOCATION: `arn:aws:s3:::${this.fisConfigBucket.bucketName}/FisConfigs/`,
+        AWS_FIS_POLL_MAX_WAIT_MILLISECONDS: '2000',
+    },
+});
+```
+
+```typescript
+// lib/stacks/fis-stack.ts (excerpt — scenario D-1)
 targets: {
     ConsumerFunction: {
         resourceType: 'aws:lambda:function',
@@ -213,22 +231,19 @@ targets: {
     },
 },
 actions: {
-    SetConcurrencyZero: {
-        actionId: 'aws:lambda:put-function-concurrent-executions',
-        parameters: {
-            ConcurrentExecutions: '0',
-            duration: 'PT20M',
-        },
+    InjectConsumerOutage: {
+        actionId: 'aws:lambda:invocation-error',
+        parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: 'true' },
         targets: { Functions: 'ConsumerFunction' },
     },
 },
 ```
 
-All three scenarios (D-1, D-2, D-3) use this exact same action ID — only `ConcurrentExecutions` (`'0'` vs `'1'`) and `duration` (`PT5M` / `PT20M` / `PT10M`) differ between them. This uniformity is a direct consequence of the "why concurrency-only" design decision above: rather than reaching for unsupported or unverified FIS actions, the same proven action is parameterized three different ways to cover three distinct operational failure modes.
+D-1 and D-2 use the identical action and parameters, differing only in `duration`. D-3 swaps to `invocation-add-delay` with `startupDelayMilliseconds`.
 
 ### 4. Shared stop condition on queue backlog, not Lambda errors
 
-Unlike Architecture B (which alarms on Lambda error count), Architecture D alarms on **queue depth** — because during D-1 and D-2 the Consumer Lambda is not running at all, so it cannot emit error metrics. The queue backlog is the correct signal to watch:
+Unlike Architecture B (which alarms on Lambda error count), Architecture D alarms on **queue depth** — during D-1 and D-2 the Consumer Lambda's invocations fail before doing any work, but the queue backlog is the signal that actually matters operationally:
 
 ```typescript
 const queueBacklogAlarm = new cw.Alarm(this, 'QueueBacklogAlarm', {
@@ -248,7 +263,7 @@ const stopConditions = [{
 }];
 ```
 
-If message backlog exceeds the safety threshold, FIS stops the experiment and the Consumer Lambda's reserved concurrency is removed (returning it to unreserved/account-pool concurrency). The alarm also sends a notification to the SNS topic (with optional email subscription via the `alarmEmail` parameter).
+If message backlog exceeds the safety threshold, FIS stops the experiment and the extension's fault clears within its ramp-down window. The alarm also sends a notification to the SNS topic (with optional email subscription via the `alarmEmail` parameter).
 
 ### 5. Producer Lambda exists purely to drive demo load
 
@@ -286,28 +301,29 @@ export const devParams: EnvParams = {
 ### 3. Bootstrap CDK (first time only)
 
 ```bash
-PROJECT=fis-chaos-d ENV=dev npm run bootstrap
+PROJECT=<project> ENV=dev npm run bootstrap -w workspaces/fis-arch-d-sqs-lambda
 ```
 
 ### 4. Deploy all stacks
 
 ```bash
-PROJECT=fis-chaos-d ENV=dev npm run stage:deploy:all
+PROJECT=<project> ENV=dev npm run stage:deploy:all -w workspaces/fis-arch-d-sqs-lambda -- --require-approval never
 ```
 
 This deploys the three stacks in dependency order:
-1. `fis-chaos-d-dev-d-base` — DynamoDB table + SQS main queue + DLQ
-2. `fis-chaos-d-dev-d-app` — Consumer Lambda (SQS event source) + Producer Lambda (Function URL)
-3. `fis-chaos-d-dev-d-fis` — FIS templates + IAM + alarm
+1. `<project>-dev-d-base` — DynamoDB table + SQS main queue + DLQ
+2. `<project>-dev-d-app` — Consumer Lambda (+ FIS extension layer) + Producer Lambda + FIS config bucket
+3. `<project>-dev-d-fis` — FIS templates + IAM + alarm
 
 ### 5. Drive demo load
 
-After deployment, retrieve the Producer Function URL from the stack output and send SigV4-signed requests (the Function URL requires IAM auth, so plain `curl` without credentials will be rejected):
+After deployment, retrieve the Producer function name from the stack output and invoke it directly (simplest — no SigV4 signing needed) or send SigV4-signed requests to its Function URL:
 
 ```bash
-# Send a single demo message
-aws lambda invoke --function-name fis-chaos-d-dev-producer \
-  --payload '{"body":"{\"hello\":\"world\"}"}' /tmp/out.json
+# Send a single demo message via direct Lambda invoke
+aws lambda invoke --function-name <project>-dev-producer \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"requestContext":{"http":{"method":"POST"}},"body":"{\"hello\":\"world\"}"}' /tmp/out.json
 
 # Or use `awscurl` (SigV4-signing curl wrapper) against the Function URL for a loop:
 for i in $(seq 1 50); do
@@ -319,6 +335,14 @@ done
 
 Navigate to the AWS FIS console, select one of the three experiment templates (`D-1`, `D-2`, `D-3`), click **Start experiment**, and watch the SQS main queue's `ApproximateNumberOfMessagesVisible` metric (and, for D-2, the DLQ's message count) in CloudWatch while demo load continues arriving.
 
+### Observed results (ap-northeast-1)
+
+| Scenario | What happened |
+| -------- | -------------- |
+| **D-1** | The FIS extension logged `found active faults` ~90s after experiment start; every subsequent consumer invocation returned without the handler running (`modifying the function response`). `ApproximateNumberOfMessagesNotVisible` held at 1 for the full window — a message cycling through failed-receive → visibility-timeout → redeliver. Once the fault cleared (`no active faults found`, `persisting environment reset save file`), the backlog drained cleanly |
+| **D-2** | Confirmed without waiting the full 20 minutes: messages still redelivering from a prior D-1 run crossed their 3rd failed receive within seconds of D-2 starting, and the DLQ populated immediately. `receive-message` on the DLQ showed `ApproximateReceiveCount: 4` — one past the `maxReceiveCount=3` threshold, exactly as the redrive policy specifies |
+| **D-3** | Not re-run live in this verification pass — the underlying mechanism (`invocation-add-delay`) is identical to what Architecture B's B-2 scenario already validated end-to-end |
+
 ## Testing
 
 ```bash
@@ -328,7 +352,7 @@ npm ci
 # Run all tests for this workspace
 npm run test --workspace=fis-arch-d-sqs-lambda
 
-# Snapshot tests only (21 test cases across 3 stacks)
+# Snapshot tests only
 npm run test:snapshot --workspace=fis-arch-d-sqs-lambda
 
 # CDK Nag compliance checks
@@ -342,7 +366,7 @@ npm run test:snapshot:update --workspace=fis-arch-d-sqs-lambda
 
 | Test suite | File | Assertions |
 | ---------- | ---- | ---------- |
-| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; exactly 2 SQS queues with a `maxReceiveCount=3` redrive policy and `VisibilityTimeout=60`; 2 Lambdas on Python 3.13; SQS event source mapping with `BatchSize=5` and `ReportBatchItemFailures`; Function URL with `AWS_IAM` auth; exactly 3 FIS templates, all with stop conditions and all using `aws:lambda:put-function-concurrent-executions` |
+| Snapshot | `test/snapshot/snapshot.test.ts` | Full CFn template snapshots for all 3 stacks; DynamoDB PAY_PER_REQUEST; exactly 2 SQS queues with a `maxReceiveCount=3` redrive policy and `VisibilityTimeout=60`; Lambdas on Python 3.13; SQS event source mapping with `BatchSize=5` and `ReportBatchItemFailures`; Function URL with `AWS_IAM` auth; exactly 3 FIS templates, all with stop conditions and all using a real `aws:lambda:function` action |
 | CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions pack — no unsuppressed warnings or errors |
 
 ## Cost Estimation
@@ -354,17 +378,21 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 | DynamoDB | PAY_PER_REQUEST | ~$0 at idle; <$0.01 for a few hundred test writes |
 | SQS | Per request | <$0.01 for a few thousand demo messages |
 | Lambda | Per invocation + duration | <$0.01 for a 20-minute experiment at modest demo load |
+| S3 FIS config bucket | near-empty, 1-day expiry | <$0.01 |
 | CloudWatch | Metrics + logs | ~$0.01/month for experiment logs |
-| FIS | Free | No charge for FIS itself |
-| **Total (experiments only)** | | **< $0.10 per experiment run** |
+| **FIS** | **$0.10 per action-minute** | A 20-minute D-2 run alone is ~$2; a full 3-scenario cycle is a few dollars |
+| **Total (one full test cycle)** | | **≈ $2–3, dominated by FIS action-minutes** |
+
+**Correction vs. earlier versions of this doc:** FIS is **not free** — it bills $0.10 per action-minute, same as every other FIS-based workspace in this series.
 
 ## Security Considerations
 
-- **Consumer execution role follows least privilege**: the role only has `dynamodb:PutItem` (and the sub-resource wildcards CDK's `grantWriteData()` generates for index resources) on the specific table, plus the SQS event source's standard `sqs:ReceiveMessage`/`DeleteMessage`/`GetQueueAttributes` grant scoped to the main queue.
+- **Consumer execution role follows least privilege**: `dynamodb:PutItem` (and the sub-resource wildcards CDK's `grantWriteData()` generates for index resources) on the specific table, the SQS event source's standard grant scoped to the main queue, and `s3:ListBucket`/`s3:GetObject` scoped to the `FisConfigs/` prefix of the config bucket (for the extension).
 - **Producer execution role follows least privilege**: only `sqs:SendMessage` on the main queue, via `queue.grantSendMessages()`.
 - **Producer Function URL requires IAM auth**: `AuthType: AWS_IAM` means every request must be SigV4-signed with valid AWS credentials — there is no public, unauthenticated entry point into this pipeline.
 - **Both queues enforce TLS**: `enforceSSL: true` denies any non-HTTPS request to either queue.
-- **FIS role follows least privilege**: scoped to `lambda:PutFunctionConcurrency` / `lambda:DeleteFunctionConcurrency` on the Consumer Lambda ARN specifically, plus `cloudwatch:DescribeAlarms` on the stop-condition alarm.
+- **FIS config bucket**: all public access blocked, S3-managed encryption, TLS enforced, 1-day object expiry so stale fault configs do not linger.
+- **FIS role follows least privilege**: `s3:PutObject`/`s3:DeleteObject` scoped to `<bucket>/FisConfigs/*`; `lambda:GetFunction` and `tag:GetResources` (target resolution); `cloudwatch:DescribeAlarms` on the stop-condition alarm. No DynamoDB or SQS access.
 - **No VPC exposure**: there is no VPC, no public subnet, and no security group — the only entry point is the IAM-authenticated Function URL.
 - **Stop condition is mandatory**: all FIS templates include the queue-backlog alarm stop condition, which limits maximum experiment blast radius (unbounded backlog growth).
 
@@ -373,8 +401,9 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 | Symptom | Likely cause | Resolution |
 | ------- | ------------ | ---------- |
 | `cdk deploy` fails with `No parameters found for environment` | Missing `dev-params.ts` export | Verify `parameters/index.ts` imports `./dev-params` and that it registers under the `dev` key |
+| FIS template create fails: `Invalid actionId ... 404` | An action ID that does not exist in the Region | Check `aws fis list-actions` — Lambda-targeted actions are limited to the `aws:lambda:function` family |
 | Producer Function URL returns 403 | Missing/invalid SigV4 signature | Use `aws lambda invoke`, an SDK, or a SigV4-signing tool (e.g. `awscurl`) — plain unauthenticated `curl` is rejected by design |
-| Messages never appear in DynamoDB during D-1/D-2 | Expected — FIS has set reserved concurrency to 0, the consumer cannot execute | Confirm the experiment is running; messages should catch up once it stops (D-1) or land in the DLQ (D-2) |
+| Errors take ~1 minute to appear during D-1/D-2 | Expected — FIS Lambda extension slow-poll ramp-up | Wait ~60s; check CloudWatch Logs for `AWS FIS EXTENSION - found active faults` to confirm the fault is genuinely active |
 | FIS experiment stops immediately | Stop condition alarm is already in `ALARM` state | Reset the alarm first (`aws cloudwatch set-alarm-state --alarm-name ... --state-value OK`) |
 | DLQ stays empty during D-2 | Not enough messages were in flight during the 20-minute window | Drive continuous demo load into the queue before/during the experiment |
 | `Table not found` Lambda error | BaseStack not yet deployed | Deploy stacks in order: Base → App → FIS |
@@ -382,25 +411,25 @@ All services are serverless (pay-per-use), so the cost at rest is effectively **
 ## Clean-up
 
 ```bash
-PROJECT=fis-chaos-d ENV=dev npm run stage:destroy:all
+PROJECT=<project> ENV=dev npm run stage:destroy:all -w workspaces/fis-arch-d-sqs-lambda -- --force
 ```
 
-All resources have `removalPolicy: DESTROY`, so the destroy command removes the DynamoDB table, both SQS queues, both Lambda functions, the Function URL, the FIS templates, and the CloudWatch log groups completely.
+All resources have `removalPolicy: DESTROY` (and `autoDeleteObjects` on the S3 config bucket), so the destroy command removes the DynamoDB table, both SQS queues, both Lambda functions, the Function URL, the FIS config bucket, the FIS templates, and the CloudWatch log groups completely.
 
 ## Summary
 
-This workspace demonstrates FIS chaos engineering on an event-driven SQS+Lambda consumer architecture, working within a real constraint: FIS has no supported way to inject API-level faults directly into SQS or DynamoDB. Rather than reaching for an unverified workaround, all three scenarios reuse the one FIS Lambda action with a confirmed, documented contract:
+This workspace demonstrates FIS chaos engineering on an event-driven SQS+Lambda consumer architecture, working within a real constraint: FIS has no native action for SQS or DynamoDB, and — as deploy-verification uncovered — no action for setting Lambda reserved concurrency either. All three scenarios instead use the `aws:lambda:function` action family via the FIS Lambda extension, the same proven mechanism Architecture B uses:
 
-- **D-1** verifies the pipeline recovers cleanly from a short consumer outage — messages redeliver and the backlog drains once concurrency is restored.
+- **D-1** verifies the pipeline recovers cleanly from a short consumer outage — messages redeliver and the backlog drains once the fault clears.
 - **D-2** deliberately drives messages into the DLQ (outage duration ≫ the redrive threshold) to verify DLQ routing, alarming, and replay procedures actually work.
 - **D-3** verifies behavior under sustained partial capacity loss — a more realistic "degraded, not dead" failure than a hard outage.
 
-The serverless architecture keeps experiment costs minimal (< $0.10 per run) and eliminates VPC management overhead, making it easy to iterate quickly on resilience scenarios for event-driven consumers.
+The serverless architecture keeps experiment costs low (a few dollars per full test cycle, dominated by FIS action-minutes) and eliminates VPC management overhead, making it easy to iterate quickly on resilience scenarios for event-driven consumers.
 
 ## References
 
 - [AWS FIS — Supported actions](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html)
-- [aws:lambda:put-function-concurrent-executions action reference](https://docs.aws.amazon.com/fis/latest/userguide/fis-actions-reference.html#fis-actions-reference-lambda)
+- [Use the AWS FIS `aws:lambda:function` actions](https://docs.aws.amazon.com/fis/latest/userguide/use-lambda-actions.html)
 - [CDK aws-fis module (L1 constructs)](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_fis-readme.html)
 - [Amazon SQS dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
 - [Using Lambda with Amazon SQS (event source mapping, batch item failures)](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)

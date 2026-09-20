@@ -150,7 +150,7 @@ Aurora PostgreSQL Serverless v2
 | コンポーネント | 設計のポイント |
 | -------------- | -------------- |
 | VPC | CIDR 10.70.0.0/16; 2 AZ; 各 AZ にパブリック/プライベート/Isolated の 3 サブネット層; NAT Gateway × 1（両 AZ で共有） |
-| Aurora PostgreSQL Serverless v2 | エンジン v16.4; ライター 1 台 + リーダー 1 台を 2 AZ に配置; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
+| Aurora PostgreSQL Serverless v2 | エンジン v16.13（v16.4はこのリージョンで提供終了——同じ修正は[A](../fis-arch-a-ecs-aurora)と[C](../fis-arch-c-ec2-asg-rds)も参照）; ライター 1 台 + リーダー 1 台を 2 AZ に配置; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
 | EC2 Auto Scaling Group | t3.small; AL2023; requireImdsv2; EBS gp3 20 GB 暗号化; 2 AZ に分散配置; タグ `fis-target: app-instance` |
 | Network Load Balancer | インターネット向け、TCP/80、2 AZ、クロスゾーン負荷分散有効、`disableSecurityGroups: true` |
 | ターゲットグループ | TCP/80、INSTANCE タイプ、`preserveClientIp: false`、`/` への HTTP ヘルスチェック、登録解除遅延 30 秒 |
@@ -342,6 +342,15 @@ AWS FIS コンソールから実験テンプレート（G-1 〜 G-4）を選択�
 - G-3: RDS コンソールの Aurora フェイルオーバーイベント
 - G-4: ASG のアクティビティと NLB ターゲットの入れ替わり
 
+### 観測結果（ap-northeast-1）
+
+| シナリオ | 結果 |
+| -------- | ---- |
+| **G-1** | AZ-1インスタンスのNLBターゲットヘルスは5分間の実験時間中ずっと`healthy`のまま——この単純なnginxデモには遮断が露見させるAZ間依存がそもそも存在しないため、「何も起きなかった」こと自体が正しく検証された結果 |
+| **G-2** | AZ-1インスタンスが数秒で`unhealthy`（`Target.FailedHealthChecks`）に転じ、生きたトラフィックの100%がAZ-2インスタンスに切り替わった。**予想外だが有益な発見**: Auto Scalingは「異常」（だが実際には正常な）インスタンスを障害と判断し、ネットワークの回復を待たずに置き換えた——代替インスタンスは同じAZに配置され、5分間のアクションが終了して初めてhealthyになった |
+| **G-3** | `aws rds describe-events`が実験開始から数秒で`Started cross AZ failover to DB instance: ...reader1...`をログに記録 |
+| **G-4** | FISが1インスタンスを終了。NLBターゲットグループはほぼ即座に登録解除した一方、`describe-auto-scaling-groups`自身が示すインスタンスの健全性はEC2の実際の状態にもターゲットグループの状態にも明らかに遅れていた——この外部からの終了直後は`describe-instances`と`describe-target-health`の方がより新しい事実だった。ASGは数分以内に不一致を検知し代替インスタンスを起動した |
+
 ## テスト
 
 ```bash
@@ -378,8 +387,10 @@ Aurora Serverless v2、EC2 インスタンス、NAT Gateway はアイドル時�
 | Aurora Serverless v2 (最小 0.5 ACU × 2 インスタンス) | ACU 時間課金 | 約 $0.06/時間 |
 | NAT Gateway | 時間課金 + データ転送 | 約 $0.05/時間 |
 | Network Load Balancer | 時間課金 + LCU | 約 $0.02/時間 |
-| FIS | 無料 | 課金なし |
-| **合計（1 時間）** | | **約 $0.17/時間** |
+| **FIS** | **アクション分単価 $0.10** | 4シナリオのフルサイクル（主に2つの5分間ネットワーク遮断アクション）で約$1〜1.5 |
+| **合計（アイドル時インフラ、1時間）** | | **約$0.17/時間 + 1回のフルテストサイクルで約$1〜1.5のFISアクション分課金** |
+
+**以前のドキュメントからの修正:** FISは**無料ではありません**——本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
 
 ## セキュリティ上の考慮事項
 

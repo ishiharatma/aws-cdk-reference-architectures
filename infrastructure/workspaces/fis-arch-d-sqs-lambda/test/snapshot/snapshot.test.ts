@@ -54,6 +54,7 @@ describe('FIS Chaos Scenario D Stack Snapshots', () => {
         terminationProtection: false,
         consumerFunction: appStack.consumerFunction,
         queue: baseStack.queue,
+        fisConfigBucket: appStack.fisConfigBucket,
         alarmEmail: envParams.alarmEmail,
     });
 
@@ -171,12 +172,16 @@ describe('FIS Chaos Scenario D Stack Snapshots', () => {
             });
         });
 
-        test('All FIS templates use aws:lambda:put-function-concurrent-executions only', () => {
+        test('All FIS templates use a real aws:lambda:function action', () => {
+            const validActionIds = [
+                'aws:lambda:invocation-error',
+                'aws:lambda:invocation-add-delay',
+            ];
             const templates = template.findResources('AWS::FIS::ExperimentTemplate');
             Object.values(templates).forEach((t: any) => {
                 const actions = t.Properties.Actions;
                 Object.values(actions).forEach((action: any) => {
-                    expect(action.ActionId).toBe('aws:lambda:put-function-concurrent-executions');
+                    expect(validActionIds).toContain(action.ActionId);
                 });
             });
         });

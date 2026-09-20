@@ -45,12 +45,26 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
     },
+    "ExportsOutputRefFisConfigBucket3BD8C2637C8D589B": {
+      "Export": {
+        "Name": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+      },
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
+      },
+    },
     "ExportsOutputRefSagaStateMachine1A568E4D6BB3F71B": {
       "Export": {
         "Name": "TestAppStack:ExportsOutputRefSagaStateMachine1A568E4D6BB3F71B",
       },
       "Value": {
         "Ref": "SagaStateMachine1A568E4D",
+      },
+    },
+    "FisConfigBucketName": {
+      "Description": "S3 bucket distributing AWS FIS Lambda fault configurations",
+      "Value": {
+        "Ref": "FisConfigBucket3BD8C263",
       },
     },
     "ProcessPaymentFunctionArn": {
@@ -84,6 +98,10 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
       "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
+    "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
   },
   "Resources": {
     "ConfirmOrderFunction5E3C06DA": {
@@ -99,6 +117,20 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         "Description": "Saga step 3 (forward, final): confirm the order",
         "Environment": {
           "Variables": {
+            "AWS_FIS_CONFIGURATION_LOCATION": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:s3:::",
+                  {
+                    "Ref": "FisConfigBucket3BD8C263",
+                  },
+                  "/FisConfigs/",
+                ],
+              ],
+            },
+            "AWS_FIS_POLL_MAX_WAIT_MILLISECONDS": "2000",
+            "AWS_LAMBDA_EXEC_WRAPPER": "/opt/aws-fis/bootstrap",
             "TABLE_NAME": {
               "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
             },
@@ -106,6 +138,11 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         },
         "FunctionName": "fis-chaos-f-test-confirm-order",
         "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+        ],
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "ConfirmOrderFunctionLogGroup5857BCE0",
@@ -229,6 +266,43 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
                 },
               ],
             },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "FisConfigs/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FisConfigBucket3BD8C263",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowListingFisConfigLocation",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FisConfigBucket3BD8C263",
+                        "Arn",
+                      ],
+                    },
+                    "/FisConfigs/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowReadingFisConfig",
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -240,6 +314,212 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FisConfigBucket3BD8C263",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FisConfigBucket3BD8C263": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "fis-chaos-f-test-f-fis-config-123456789012",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 1,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Environment",
+            "Value": "test",
+          },
+          {
+            "Key": "Project",
+            "Value": "fis-chaos-f",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketAutoDeleteObjectsCustomResourceC5F5F35A": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FisConfigBucketPolicyBDCFF443",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FisConfigBucketPolicyBDCFF443": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FisConfigBucket3BD8C263",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FisConfigBucket3BD8C263",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FisConfigBucket3BD8C263",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
     },
     "ProcessPaymentFunctionCEC77858": {
       "DependsOn": [
@@ -254,6 +534,20 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         "Description": "Saga step 2 (forward): process customer payment",
         "Environment": {
           "Variables": {
+            "AWS_FIS_CONFIGURATION_LOCATION": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:s3:::",
+                  {
+                    "Ref": "FisConfigBucket3BD8C263",
+                  },
+                  "/FisConfigs/",
+                ],
+              ],
+            },
+            "AWS_FIS_POLL_MAX_WAIT_MILLISECONDS": "2000",
+            "AWS_LAMBDA_EXEC_WRAPPER": "/opt/aws-fis/bootstrap",
             "TABLE_NAME": {
               "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
             },
@@ -261,6 +555,11 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         },
         "FunctionName": "fis-chaos-f-test-process-payment",
         "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+        ],
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "ProcessPaymentFunctionLogGroup4F2A4CD1",
@@ -383,6 +682,43 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
                   "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
                 },
               ],
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "FisConfigs/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FisConfigBucket3BD8C263",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowListingFisConfigLocation",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FisConfigBucket3BD8C263",
+                        "Arn",
+                      ],
+                    },
+                    "/FisConfigs/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowReadingFisConfig",
             },
           ],
           "Version": "2012-10-17",
@@ -719,6 +1055,20 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         "Description": "Saga step 1 (forward): reserve inventory for the order",
         "Environment": {
           "Variables": {
+            "AWS_FIS_CONFIGURATION_LOCATION": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:s3:::",
+                  {
+                    "Ref": "FisConfigBucket3BD8C263",
+                  },
+                  "/FisConfigs/",
+                ],
+              ],
+            },
+            "AWS_FIS_POLL_MAX_WAIT_MILLISECONDS": "2000",
+            "AWS_LAMBDA_EXEC_WRAPPER": "/opt/aws-fis/bootstrap",
             "TABLE_NAME": {
               "Fn::ImportValue": "TestBaseStack:ExportsOutputRefOrdersTable315BB997F7C1D27E",
             },
@@ -726,6 +1076,11 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
         },
         "FunctionName": "fis-chaos-f-test-reserve-inventory",
         "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "SsmParameterValueawsservicefislambdaextensionAWSFISextensionx86641xxC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+        ],
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "ReserveInventoryFunctionLogGroupCC690685",
@@ -848,6 +1203,43 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
                   "Fn::ImportValue": "TestBaseStack:ExportsOutputFnGetAttOrdersTable315BB997ArnB3A07C42",
                 },
               ],
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "FisConfigs/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FisConfigBucket3BD8C263",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowListingFisConfigLocation",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FisConfigBucket3BD8C263",
+                        "Arn",
+                      ],
+                    },
+                    "/FisConfigs/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowReadingFisConfig",
             },
           ],
           "Version": "2012-10-17",
@@ -1209,10 +1601,13 @@ exports[`FIS Chaos Scenario F Stack Snapshots AppStack Complete CloudFormation t
 exports[`FIS Chaos Scenario F Stack Snapshots AppStack Resource types and counts 1`] = `
 {
   "AWS::IAM::Policy": 6,
-  "AWS::IAM::Role": 6,
-  "AWS::Lambda::Function": 5,
+  "AWS::IAM::Role": 7,
+  "AWS::Lambda::Function": 6,
   "AWS::Logs::LogGroup": 6,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
   "AWS::StepFunctions::StateMachine": 1,
+  "Custom::S3AutoDeleteObjects": 1,
 }
 `;
 
@@ -1424,21 +1819,35 @@ exports[`FIS Chaos Scenario F Stack Snapshots FisStack Complete CloudFormation t
               "Statement": [
                 {
                   "Action": [
-                    "lambda:PutFunctionConcurrency",
-                    "lambda:DeleteFunctionConcurrency",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
                   ],
                   "Effect": "Allow",
-                  "Resource": [
-                    {
-                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttReserveInventoryFunction15B81C05Arn9BEDE410",
-                    },
-                    {
-                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttProcessPaymentFunctionCEC77858ArnEE52CDF2",
-                    },
-                    {
-                      "Fn::ImportValue": "TestAppStack:ExportsOutputFnGetAttConfirmOrderFunction5E3C06DAArn6C45243C",
-                    },
-                  ],
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Fn::ImportValue": "TestAppStack:ExportsOutputRefFisConfigBucket3BD8C2637C8D589B",
+                        },
+                        "/FisConfigs/*",
+                      ],
+                    ],
+                  },
+                  "Sid": "WriteLambdaFaultConfig",
+                },
+                {
+                  "Action": "lambda:GetFunction",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "InspectTargetFunction",
+                },
+                {
+                  "Action": "tag:GetResources",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "ResolveTargetsByTag",
                 },
                 {
                   "Action": "cloudwatch:DescribeAlarms",
@@ -1526,18 +1935,19 @@ exports[`FIS Chaos Scenario F Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioF1ProcessPaymentOutage": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectPaymentOutage": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
-              "ConcurrentExecutions": "0",
               "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ProcessPaymentFunction",
             },
           },
         },
-        "Description": "[F-1] ProcessPayment Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately. Validates Retry exhaustion and the ReleaseInventory compensating transaction.",
+        "Description": "[F-1] ProcessPayment Lambda outage (5 min): every invocation fails without the handler running. Validates Retry exhaustion and the ReleaseInventory compensating transaction.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {
@@ -1590,18 +2000,19 @@ exports[`FIS Chaos Scenario F Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioF2ReserveInventoryOutage": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectReserveOutage": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
-              "ConcurrentExecutions": "0",
               "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ReserveInventoryFunction",
             },
           },
         },
-        "Description": "[F-2] ReserveInventory Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately. Validates the fail-fast path (no compensation needed) when the Saga fails at its very first step.",
+        "Description": "[F-2] ReserveInventory Lambda outage (5 min): every invocation fails without the handler running. Validates the fail-fast path (no compensation needed) when the Saga fails at its very first step.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {
@@ -1654,18 +2065,19 @@ exports[`FIS Chaos Scenario F Stack Snapshots FisStack Complete CloudFormation t
     "ScenarioF3ConfirmOrderOutage": {
       "Properties": {
         "Actions": {
-          "SetConcurrencyZero": {
-            "ActionId": "aws:lambda:put-function-concurrent-executions",
+          "InjectConfirmOutage": {
+            "ActionId": "aws:lambda:invocation-error",
             "Parameters": {
-              "ConcurrentExecutions": "0",
               "duration": "PT5M",
+              "invocationPercentage": "100",
+              "preventExecution": "true",
             },
             "Targets": {
               "Functions": "ConfirmOrderFunction",
             },
           },
         },
-        "Description": "[F-3] ConfirmOrder Lambda outage (5 min): Reserved concurrency set to 0 — every invocation fails immediately, after payment has already been processed. Validates the two-stage compensation (RefundPayment, then ReleaseInventory) runs in the correct order.",
+        "Description": "[F-3] ConfirmOrder Lambda outage (5 min): every invocation fails without the handler running, after payment has already been processed. Validates the two-stage compensation (RefundPayment, then ReleaseInventory) runs in the correct order.",
         "LogConfiguration": {
           "CloudWatchLogsConfiguration": {
             "LogGroupArn": {

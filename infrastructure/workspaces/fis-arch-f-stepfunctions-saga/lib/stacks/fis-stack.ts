@@ -7,9 +7,11 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
+import { FIS_CONFIG_PREFIX } from 'lib/stacks/app-stack';
 
 export interface FisStackProps extends cdk.StackProps {
     readonly project: string;
@@ -18,6 +20,8 @@ export interface FisStackProps extends cdk.StackProps {
     readonly processPaymentFn: lambda.Function;
     readonly confirmOrderFn: lambda.Function;
     readonly stateMachine: sfn.StateMachine;
+    /** Shared bucket that distributes the active Lambda fault configuration. */
+    readonly fisConfigBucket: s3.IBucket;
     readonly alarmEmail?: string;
 }
 
@@ -28,15 +32,21 @@ export interface FisStackProps extends cdk.StackProps {
  * no `aws:states:*` action in the FIS action catalogue). To exercise the
  * Saga's Retry/Catch/compensation behavior under a real fault, this stack
  * instead targets the three FORWARD-path Lambda functions with
- * `aws:lambda:put-function-concurrent-executions`, the same action already
- * proven in fis-arch-b-apigw-lambda. Setting a function's reserved
- * concurrency to 0 makes every invocation of that function fail immediately
- * with Lambda.TooManyRequestsException — functionally identical, from the
- * state machine's point of view, to that Lambda being completely down.
- * This is a deliberate, documented design choice (see this workspace's
- * README) rather than a limitation worked around silently: the state
- * machine definition itself is never touched, so the experiment validates
- * the *actual* deployed Saga logic, not a chaos-only stand-in for it.
+ * `aws:lambda:invocation-error`, injected through the AWS FIS Lambda
+ * extension (attached as a layer to those 3 functions in AppStack).
+ * `preventExecution=true` at 100% makes every invocation of the targeted
+ * function fail immediately — functionally identical, from the state
+ * machine's point of view, to that Lambda being completely down, and the
+ * function code itself is never modified.
+ *
+ * An earlier version of this workspace used
+ * `aws:lambda:put-function-concurrent-executions` to reach the same effect
+ * by zeroing reserved concurrency for the fault duration. **That action ID
+ * does not exist** — `aws fis list-actions` confirms Lambda-targeted FIS
+ * actions are limited to the `aws:lambda:function` family. CloudFormation
+ * failed FIS template creation outright with `Invalid actionId ... 404`.
+ * The scenarios and their validation intent are unchanged by this fix; only
+ * the fault-injection mechanism is different.
  *
  *   F-1  ProcessPayment Lambda outage (5 min)
  *        Forward step 2 becomes fully uninvokable. Validates that Retry
@@ -54,6 +64,10 @@ export interface FisStackProps extends cdk.StackProps {
  *        compensation — RefundPayment then ReleaseInventory — runs in the
  *        correct order before the execution ends in a Fail state.
  *
+ * The extension polls rather than pushes, so faults take up to ~60 s to
+ * ramp fully into effect after `start-experiment` — the same behaviour
+ * documented for Architecture B.
+ *
  * All three templates share one CloudWatch Alarm stop condition based on
  * the state machine's ExecutionsFailed metric, which halts the experiment
  * automatically if failed Saga executions exceed the safety threshold.
@@ -61,6 +75,8 @@ export interface FisStackProps extends cdk.StackProps {
 export class FisStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: FisStackProps) {
         super(scope, id, props);
+
+        const configArnPrefix = `arn:aws:s3:::${props.fisConfigBucket.bucketName}/${FIS_CONFIG_PREFIX}`;
 
         // --- SNS topic for alarm notifications ---
 
@@ -99,7 +115,9 @@ export class FisStack extends cdk.Stack {
         sagaFailedAlarm.addAlarmAction(new cwActions.SnsAction(alarmTopic));
 
         // --- FIS IAM Role ---
-        // FIS assumes this role when running experiments.
+        // FIS assumes this role when running experiments. The aws:lambda:function
+        // actions need to (a) write the fault config into the shared S3 prefix,
+        // (b) inspect the target function, and (c) resolve targets by tag.
 
         const fisRole = new iam.Role(this, 'FisRole', {
             roleName: `${props.project}-${props.environment}-fis-f-role`,
@@ -107,17 +125,20 @@ export class FisStack extends cdk.Stack {
             inlinePolicies: {
                 FisChaosPolicyF: new iam.PolicyDocument({
                     statements: [
-                        // Lambda concurrency manipulation (F-1, F-2, F-3)
                         new iam.PolicyStatement({
-                            actions: [
-                                'lambda:PutFunctionConcurrency',
-                                'lambda:DeleteFunctionConcurrency',
-                            ],
-                            resources: [
-                                props.reserveInventoryFn.functionArn,
-                                props.processPaymentFn.functionArn,
-                                props.confirmOrderFn.functionArn,
-                            ],
+                            sid: 'WriteLambdaFaultConfig',
+                            actions: ['s3:PutObject', 's3:DeleteObject'],
+                            resources: [`${configArnPrefix}/*`],
+                        }),
+                        new iam.PolicyStatement({
+                            sid: 'InspectTargetFunction',
+                            actions: ['lambda:GetFunction'],
+                            resources: ['*'],
+                        }),
+                        new iam.PolicyStatement({
+                            sid: 'ResolveTargetsByTag',
+                            actions: ['tag:GetResources'],
+                            resources: ['*'],
                         }),
                         // CloudWatch stop conditions
                         new iam.PolicyStatement({
@@ -162,15 +183,15 @@ export class FisStack extends cdk.Stack {
             ];
 
         // --- Scenario F-1: ProcessPayment Lambda outage ---
-        // Reserved concurrency set to 0 for 5 minutes. Every invocation of
-        // ProcessPayment (Saga forward step 2) fails immediately. Once the
-        // task's Retry policy (2 attempts, 2s/4s backoff) is exhausted, Catch
-        // routes to the ReleaseInventory compensating transaction, then Fail.
+        // Every invocation of ProcessPayment (Saga forward step 2) fails
+        // immediately, without the handler running. Once the task's Retry
+        // policy (2 attempts, 2s/4s backoff) is exhausted, Catch routes to the
+        // ReleaseInventory compensating transaction, then Fail.
 
         new fis.CfnExperimentTemplate(this, 'ScenarioF1ProcessPaymentOutage', {
             description:
                 '[F-1] ProcessPayment Lambda outage (5 min): ' +
-                'Reserved concurrency set to 0 — every invocation fails immediately. ' +
+                'every invocation fails without the handler running. ' +
                 'Validates Retry exhaustion and the ReleaseInventory compensating transaction.',
             roleArn: fisRole.roleArn,
             stopConditions,
@@ -182,11 +203,12 @@ export class FisStack extends cdk.Stack {
                 },
             },
             actions: {
-                SetConcurrencyZero: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectPaymentOutage: {
+                    actionId: 'aws:lambda:invocation-error',
                     parameters: {
-                        ConcurrentExecutions: '0',
                         duration: 'PT5M',
+                        invocationPercentage: '100',
+                        preventExecution: 'true',
                     },
                     targets: {
                         Functions: 'ProcessPaymentFunction',
@@ -202,16 +224,15 @@ export class FisStack extends cdk.Stack {
         });
 
         // --- Scenario F-2: ReserveInventory Lambda outage ---
-        // Reserved concurrency set to 0 for 5 minutes. Every invocation of
-        // ReserveInventory (Saga forward step 1) fails immediately. Because
-        // this is the very first step, no resource has been reserved yet —
-        // once Retry is exhausted, Catch routes straight to Fail with no
-        // compensating transaction required.
+        // Every invocation of ReserveInventory (Saga forward step 1) fails
+        // immediately. Because this is the very first step, no resource has
+        // been reserved yet — once Retry is exhausted, Catch routes straight
+        // to Fail with no compensating transaction required.
 
         new fis.CfnExperimentTemplate(this, 'ScenarioF2ReserveInventoryOutage', {
             description:
                 '[F-2] ReserveInventory Lambda outage (5 min): ' +
-                'Reserved concurrency set to 0 — every invocation fails immediately. ' +
+                'every invocation fails without the handler running. ' +
                 'Validates the fail-fast path (no compensation needed) when the Saga fails ' +
                 'at its very first step.',
             roleArn: fisRole.roleArn,
@@ -224,11 +245,12 @@ export class FisStack extends cdk.Stack {
                 },
             },
             actions: {
-                SetConcurrencyZero: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectReserveOutage: {
+                    actionId: 'aws:lambda:invocation-error',
                     parameters: {
-                        ConcurrentExecutions: '0',
                         duration: 'PT5M',
+                        invocationPercentage: '100',
+                        preventExecution: 'true',
                     },
                     targets: {
                         Functions: 'ReserveInventoryFunction',
@@ -244,17 +266,17 @@ export class FisStack extends cdk.Stack {
         });
 
         // --- Scenario F-3: ConfirmOrder Lambda outage ---
-        // Reserved concurrency set to 0 for 5 minutes. Every invocation of
-        // ConfirmOrder (Saga forward step 3, final) fails immediately — this
-        // happens *after* payment has already been processed. Once Retry is
-        // exhausted, Catch must run the two-stage compensation in the correct
-        // order: RefundPayment first, then ReleaseInventory, before Fail.
+        // Every invocation of ConfirmOrder (Saga forward step 3, final) fails
+        // immediately — this happens *after* payment has already been
+        // processed. Once Retry is exhausted, Catch must run the two-stage
+        // compensation in the correct order: RefundPayment first, then
+        // ReleaseInventory, before Fail.
 
         new fis.CfnExperimentTemplate(this, 'ScenarioF3ConfirmOrderOutage', {
             description:
                 '[F-3] ConfirmOrder Lambda outage (5 min): ' +
-                'Reserved concurrency set to 0 — every invocation fails immediately, after ' +
-                'payment has already been processed. Validates the two-stage compensation ' +
+                'every invocation fails without the handler running, after payment has already ' +
+                'been processed. Validates the two-stage compensation ' +
                 '(RefundPayment, then ReleaseInventory) runs in the correct order.',
             roleArn: fisRole.roleArn,
             stopConditions,
@@ -266,11 +288,12 @@ export class FisStack extends cdk.Stack {
                 },
             },
             actions: {
-                SetConcurrencyZero: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectConfirmOutage: {
+                    actionId: 'aws:lambda:invocation-error',
                     parameters: {
-                        ConcurrentExecutions: '0',
                         duration: 'PT5M',
+                        invocationPercentage: '100',
+                        preventExecution: 'true',
                     },
                     targets: {
                         Functions: 'ConfirmOrderFunction',

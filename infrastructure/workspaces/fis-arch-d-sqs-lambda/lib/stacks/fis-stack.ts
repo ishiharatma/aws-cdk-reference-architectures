@@ -8,14 +8,18 @@ import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
+import { FIS_CONFIG_PREFIX } from 'lib/stacks/app-stack';
 
 export interface FisStackProps extends cdk.StackProps {
     readonly project: string;
     readonly environment: Environment;
     readonly consumerFunction: lambda.Function;
     readonly queue: sqs.IQueue;
+    /** Shared bucket that distributes the active Lambda fault configuration. */
+    readonly fisConfigBucket: s3.IBucket;
     readonly alarmEmail?: string;
 }
 
@@ -28,36 +32,55 @@ export interface FisStackProps extends cdk.StackProps {
  * Design constraint: as of this writing, `aws:fis:inject-api-internal-error`
  * and `aws:fis:inject-api-throttle-error` only support `service: 'ec2'` or
  * `service: 'kinesis'` — SQS and DynamoDB are NOT supported service values
- * for those actions. The Lambda-extension-based `invocation-error` /
- * `invocation-add-delay` actions require an exact S3 layer/env-var setup
- * that could not be confirmed from primary sources, so they are avoided
- * here too. Every scenario below therefore uses the one FIS action proven
- * to work reliably against a Lambda target:
- * `aws:lambda:put-function-concurrent-executions`. Manipulating the
- * consumer's reserved concurrency is still a faithful way to chaos-test an
- * SQS+Lambda pipeline — it reproduces exactly the failure modes operators
- * care about (a stalled/degraded consumer), just via a supported control
- * point instead of an unsupported SQS-level fault injection.
+ * for those actions.
  *
- *   D-1  Consumer Total Outage — short (reserved concurrency = 0, 5 min)
- *        The consumer cannot run at all for 5 minutes. Because 5 min (300s)
- *        exceeds one visibility-timeout cycle (60s) but the queue keeps
- *        redelivering, this validates recovery: does the backlog drain
- *        cleanly once concurrency is restored, and do messages redeliver
- *        correctly within their visibility timeout?
+ * An earlier version of this workspace used
+ * `aws:lambda:put-function-concurrent-executions` to model consumer outage
+ * by zeroing reserved concurrency. **That action ID does not exist** —
+ * `aws fis list-actions` confirms Lambda-targeted actions are limited to
+ * `aws:lambda:invocation-error`, `aws:lambda:invocation-add-delay`, and
+ * `aws:lambda:invocation-http-integration-response` (the same family
+ * Architecture B uses). CloudFormation failed the FIS template creation
+ * outright with `Invalid actionId ... 404`.
  *
- *   D-2  Consumer Total Outage — long, DLQ-inducing (reserved concurrency = 0, 20 min)
+ * The scenarios below are redesigned on the `aws:lambda:function` action
+ * family, injected through the AWS FIS Lambda extension (attached as a
+ * layer in AppStack). The extension polls a shared S3 prefix
+ * (`fisConfigBucket`) for the active fault config — the function code is
+ * never modified.
+ *
+ *   D-1  Consumer Total Outage — short (5 min)
+ *        `aws:lambda:invocation-error`, preventExecution=true, 100%, PT5M.
+ *        Every invocation fails WITHOUT the handler running — functionally
+ *        equivalent to "the consumer cannot process anything" from the
+ *        queue's point of view. Because 5 min (300s) exceeds one
+ *        visibility-timeout cycle (60s) but the queue keeps redelivering,
+ *        this validates recovery: does the backlog drain cleanly once the
+ *        fault clears, and do messages redeliver correctly within their
+ *        visibility timeout?
+ *
+ *   D-2  Consumer Total Outage — long, DLQ-inducing (20 min)
+ *        `aws:lambda:invocation-error`, preventExecution=true, 100%, PT20M.
  *        20 minutes (1200s) is far longer than visibilityTimeout (60s) x
  *        maxReceiveCount (3) = 180s, so every message stuck in the queue
  *        during the outage is guaranteed to exhaust its receive count and
  *        move to the DLQ. Validates DLQ routing, DLQ alarming/visibility,
  *        and the operational recovery process for replaying DLQ messages.
  *
- *   D-3  Consumer Throughput Collapse (reserved concurrency = 1, 10 min)
- *        The consumer is not stopped, but throttled to a single concurrent
- *        execution. Validates queue backlog growth and latency behavior
- *        under severe (but non-zero) throughput degradation — a more
- *        realistic "partial capacity loss" scenario than a hard outage.
+ *   D-3  Consumer Throughput Collapse (10 min)
+ *        `aws:lambda:invocation-add-delay`, startupDelayMilliseconds=20000,
+ *        100%, PT10M. The consumer is not stopped — every invocation still
+ *        runs and commits its writes — but a fixed 20 s startup delay is
+ *        added, leaving only 10 s of the function's 30 s timeout for actual
+ *        batch processing (comfortably enough for a handful of DynamoDB
+ *        PutItem calls). Validates queue backlog growth and end-to-end
+ *        latency under severe (but non-zero) throughput degradation — a
+ *        more realistic "partial capacity loss" scenario than a hard
+ *        outage.
+ *
+ * The extension polls rather than pushes, so faults take up to ~60 s to
+ * ramp fully into effect after `start-experiment` — the same behaviour
+ * documented for Architecture B.
  *
  * Each template shares one CloudWatch Alarm stop condition: it fires if the
  * SQS main queue's ApproximateNumberOfMessagesVisible exceeds 1000,
@@ -66,6 +89,8 @@ export interface FisStackProps extends cdk.StackProps {
 export class FisStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: FisStackProps) {
         super(scope, id, props);
+
+        const configArnPrefix = `arn:aws:s3:::${props.fisConfigBucket.bucketName}/${FIS_CONFIG_PREFIX}`;
 
         // --- SNS topic for alarm notifications ---
 
@@ -105,7 +130,9 @@ export class FisStack extends cdk.Stack {
         queueBacklogAlarm.addAlarmAction(new cwActions.SnsAction(alarmTopic));
 
         // --- FIS IAM Role ---
-        // FIS assumes this role when running experiments.
+        // FIS assumes this role when running experiments. The aws:lambda:function
+        // actions need to (a) write the fault config into the shared S3 prefix,
+        // (b) inspect the target function, and (c) resolve targets by tag.
 
         const fisRole = new iam.Role(this, 'FisRole', {
             roleName: `${props.project}-${props.environment}-fis-d-role`,
@@ -113,13 +140,20 @@ export class FisStack extends cdk.Stack {
             inlinePolicies: {
                 FisChaosPolicyD: new iam.PolicyDocument({
                     statements: [
-                        // Lambda concurrency manipulation (D-1, D-2, D-3)
                         new iam.PolicyStatement({
-                            actions: [
-                                'lambda:PutFunctionConcurrency',
-                                'lambda:DeleteFunctionConcurrency',
-                            ],
-                            resources: [props.consumerFunction.functionArn],
+                            sid: 'WriteLambdaFaultConfig',
+                            actions: ['s3:PutObject', 's3:DeleteObject'],
+                            resources: [`${configArnPrefix}/*`],
+                        }),
+                        new iam.PolicyStatement({
+                            sid: 'InspectTargetFunction',
+                            actions: ['lambda:GetFunction'],
+                            resources: ['*'],
+                        }),
+                        new iam.PolicyStatement({
+                            sid: 'ResolveTargetsByTag',
+                            actions: ['tag:GetResources'],
+                            resources: ['*'],
                         }),
                         // CloudWatch stop conditions
                         new iam.PolicyStatement({
@@ -175,26 +209,27 @@ export class FisStack extends cdk.Stack {
         };
 
         // --- Scenario D-1: Consumer Total Outage — short (5 min) ---
-        // Reserved concurrency set to 0 for 5 minutes. The consumer cannot execute at
-        // all. Messages already in flight redeliver once their visibility timeout
-        // (60s) elapses and simply queue up. Validates clean recovery and backlog
-        // drain once concurrency is restored, and confirms redelivery within the
-        // visibility timeout window rather than message loss.
+        // Every invocation fails without the handler running. Messages already in
+        // flight redeliver once their visibility timeout (60s) elapses and simply
+        // queue up. Validates clean recovery and backlog drain once the fault
+        // clears, and confirms redelivery within the visibility timeout window
+        // rather than message loss.
 
         new fis.CfnExperimentTemplate(this, 'ScenarioD1ConsumerOutageShort', {
             description:
-                '[D-1] Consumer Total Outage — short (5 min): ' +
-                'Reserved concurrency set to 0 on the SQS consumer Lambda. ' +
-                'Validates message redelivery within the visibility timeout and clean recovery once concurrency is restored.',
+                '[D-1] Consumer Total Outage — short (5 min): every invocation of the SQS ' +
+                'consumer Lambda fails without the handler running. Validates message ' +
+                'redelivery within the visibility timeout and clean recovery once the fault clears.',
             roleArn: fisRole.roleArn,
             stopConditions,
             targets: consumerTarget,
             actions: {
-                SetConcurrencyZero: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectConsumerOutage: {
+                    actionId: 'aws:lambda:invocation-error',
                     parameters: {
-                        ConcurrentExecutions: '0',
                         duration: 'PT5M',
+                        invocationPercentage: '100',
+                        preventExecution: 'true',
                     },
                     targets: {
                         Functions: 'ConsumerFunction',
@@ -210,7 +245,7 @@ export class FisStack extends cdk.Stack {
         });
 
         // --- Scenario D-2: Consumer Total Outage — long, DLQ-inducing (20 min) ---
-        // Reserved concurrency set to 0 for 20 minutes — far longer than
+        // Same fault as D-1, held for 20 minutes — far longer than
         // visibilityTimeout (60s) x maxReceiveCount (3) = 180s, so every message
         // that arrives during the outage is guaranteed to exhaust its receive count
         // and move to the DLQ. Validates DLQ routing, DLQ depth alarming, and the
@@ -218,19 +253,20 @@ export class FisStack extends cdk.Stack {
 
         new fis.CfnExperimentTemplate(this, 'ScenarioD2ConsumerOutageLong', {
             description:
-                '[D-2] Consumer Total Outage — long, DLQ-inducing (20 min): ' +
-                'Reserved concurrency set to 0 on the SQS consumer Lambda for 20 minutes, ' +
+                '[D-2] Consumer Total Outage — long, DLQ-inducing (20 min): every invocation ' +
+                'of the SQS consumer Lambda fails without the handler running, for 20 minutes, ' +
                 'well beyond visibilityTimeout(60s) x maxReceiveCount(3) = 180s. ' +
                 'Deliberately drives messages to the DLQ to validate DLQ routing and replay procedures.',
             roleArn: fisRole.roleArn,
             stopConditions,
             targets: consumerTarget,
             actions: {
-                SetConcurrencyZero: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectConsumerOutage: {
+                    actionId: 'aws:lambda:invocation-error',
                     parameters: {
-                        ConcurrentExecutions: '0',
                         duration: 'PT20M',
+                        invocationPercentage: '100',
+                        preventExecution: 'true',
                     },
                     targets: {
                         Functions: 'ConsumerFunction',
@@ -245,27 +281,30 @@ export class FisStack extends cdk.Stack {
             },
         });
 
-        // --- Scenario D-3: Consumer Throughput Collapse (reserved concurrency = 1, 10 min) ---
-        // The consumer is not stopped — only limited to a single concurrent execution
-        // for 10 minutes. Validates queue backlog growth and end-to-end latency under
-        // severe (but non-zero) throughput degradation, a more realistic "partial
-        // capacity loss" scenario (e.g. a bad deploy, downstream slowness) than a
-        // hard outage.
+        // --- Scenario D-3: Consumer Throughput Collapse (10 min) ---
+        // The consumer is not stopped — every invocation still runs and commits its
+        // writes — but a fixed 20 s startup delay is injected, leaving only 10 s of
+        // the function's 30 s timeout for actual batch processing. Validates queue
+        // backlog growth and end-to-end latency under severe (but non-zero)
+        // throughput degradation, a more realistic "partial capacity loss" scenario
+        // (e.g. a bad deploy, downstream slowness) than a hard outage.
 
         new fis.CfnExperimentTemplate(this, 'ScenarioD3ConsumerThroughputCollapse', {
             description:
-                '[D-3] Consumer Throughput Collapse (10 min): ' +
-                'Reserved concurrency limited to 1 on the SQS consumer Lambda. ' +
-                'Validates queue backlog growth and latency under severe, non-zero throughput degradation.',
+                '[D-3] Consumer Throughput Collapse (10 min): a fixed 20 s startup delay is ' +
+                'added to every invocation of the SQS consumer Lambda, leaving only 10 s of its ' +
+                '30 s timeout for actual processing. Validates queue backlog growth and latency ' +
+                'under severe, non-zero throughput degradation.',
             roleArn: fisRole.roleArn,
             stopConditions,
             targets: consumerTarget,
             actions: {
-                SetConcurrencyOne: {
-                    actionId: 'aws:lambda:put-function-concurrent-executions',
+                InjectConsumerDelay: {
+                    actionId: 'aws:lambda:invocation-add-delay',
                     parameters: {
-                        ConcurrentExecutions: '1',
                         duration: 'PT10M',
+                        invocationPercentage: '100',
+                        startupDelayMilliseconds: '20000',
                     },
                     targets: {
                         Functions: 'ConsumerFunction',

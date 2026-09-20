@@ -55,6 +55,7 @@ function makeStacks(appId: string) {
         processPaymentFn: appStack.processPaymentFn,
         confirmOrderFn: appStack.confirmOrderFn,
         stateMachine: appStack.stateMachine,
+        fisConfigBucket: appStack.fisConfigBucket,
         alarmEmail: envParams.alarmEmail,
     });
 
@@ -83,6 +84,20 @@ function suppressBaseStack(stack: BaseStack): void {
 }
 
 function suppressAppStack(stack: AppStack): void {
+    const p = `/${stack.stackName}`;
+
+    // The FIS Lambda-extension config bucket holds only transient FIS-written JSON
+    // (1-day lifecycle expiry) and is not a data store — server access logging adds
+    // a second bucket for no operational benefit in this reference pattern.
+    NagSuppressions.addResourceSuppressionsByPath(stack, `${p}/FisConfigBucket/Resource`, [
+        {
+            id: 'AwsSolutions-S1',
+            reason:
+                'Transient FIS fault-config distribution bucket (1-day object expiry, tiny JSON ' +
+                'only). Access logging would require a second bucket for no benefit here.',
+        },
+    ]);
+
     // Lambda functions: AWSLambdaBasicExecutionRole is an accepted baseline for sample functions.
     // AwsSolutions-L1 fires because cdk-nag may lag behind AWS runtime releases and not yet
     // recognise Python 3.13 as the latest runtime. Python 3.13 is the most recent Lambda Python
