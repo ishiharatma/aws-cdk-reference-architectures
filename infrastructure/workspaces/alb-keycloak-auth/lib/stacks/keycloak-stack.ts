@@ -20,6 +20,8 @@ export interface KeycloakStackProps extends cdk.StackProps {
   readonly keycloakEcsSg: ec2.ISecurityGroup;
   readonly auroraCluster: rds.DatabaseCluster;
   readonly auroraSecret: rds.DatabaseSecret;
+  /** Database name inside the Aurora cluster (the L2 construct doesn't expose this back as a property). */
+  readonly databaseName: string;
   readonly keycloakConfig: KeycloakEcsConfig;
   /** Whether to allow all IPv4 traffic to the ALB (when allowedIps is empty). */
   readonly isAlbOpen: boolean;
@@ -143,7 +145,7 @@ export class KeycloakStack extends cdk.Stack {
       command: ['start'],
       environment: {
         KC_DB: 'postgres',
-        KC_DB_URL: `jdbc:postgresql://${props.auroraCluster.clusterEndpoint.hostname}:5432/${props.auroraCluster.defaultDatabaseName ?? 'keycloakdb'}`,
+        KC_DB_URL: `jdbc:postgresql://${props.auroraCluster.clusterEndpoint.hostname}:5432/${props.databaseName}`,
         KC_HOSTNAME_STRICT: 'false',
         KC_PROXY_HEADERS: 'xforwarded',
         KC_HTTP_ENABLED: 'true',
@@ -157,11 +159,20 @@ export class KeycloakStack extends cdk.Stack {
         KEYCLOAK_ADMIN: ecs.Secret.fromSecretsManager(this.adminSecret, 'username'),
         KEYCLOAK_ADMIN_PASSWORD: ecs.Secret.fromSecretsManager(this.adminSecret, 'password'),
       },
-      portMappings: [{ containerPort: 8080 }],
+      portMappings: [{ containerPort: 8080 }, { containerPort: 9000 }],
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'keycloak', logGroup }),
       healthCheck: {
-        // Keycloak health endpoint (requires KC_HEALTH_ENABLED=true)
-        command: ['CMD-SHELL', 'curl -f http://localhost:8080/health/ready || exit 1'],
+        // Keycloak >= 26 serves /health/ready on the separate "management"
+        // interface (port 9000 by default), not the main HTTP port (8080) --
+        // verified via `aws ecs execute-command` (port 8080 404s, 9000
+        // returns {"status":"UP",...}). The quay.io/keycloak/keycloak image
+        // has no curl/wget either, so this uses bash's /dev/tcp instead.
+        command: [
+          'CMD-SHELL',
+          'exec 3<>/dev/tcp/localhost/9000 && ' +
+            'printf "GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n" >&3 && ' +
+            'timeout 5 cat <&3 | grep -q "200 OK"',
+        ],
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(10),
         retries: 5,
@@ -176,6 +187,10 @@ export class KeycloakStack extends cdk.Stack {
       protocol: elbv2.ApplicationProtocol.HTTP,
       targetType: elbv2.TargetType.IP,
       healthCheck: {
+        // Same management-port caveat as the container healthCheck above:
+        // /health/ready lives on port 9000, not the target group's traffic
+        // port (8080).
+        port: '9000',
         path: '/health/ready',
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(10),

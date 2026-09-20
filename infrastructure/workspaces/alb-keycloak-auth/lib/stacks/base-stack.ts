@@ -90,6 +90,14 @@ export class BaseStack extends cdk.Stack {
       ec2.Port.tcp(8080),
       'Keycloak HTTP from ALB',
     );
+    this.keycloakEcsSg.addIngressRule(
+      ec2.Peer.securityGroupId(this.keycloakAlbSg.securityGroupId),
+      ec2.Port.tcp(9000),
+      // Keycloak >= 26 serves /health/* and /metrics on a separate
+      // "management" interface (port 9000 by default), not the main HTTP
+      // port -- the ALB target group health check needs this port too.
+      'Keycloak management/health from ALB',
+    );
 
     // App ECS SG — receives traffic from App ALB only
     this.appEcsSg = new ec2.SecurityGroup(this, 'AppEcsSg', {

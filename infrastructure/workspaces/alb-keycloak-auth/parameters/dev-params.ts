@@ -25,6 +25,13 @@ const devParams: EnvParams = {
       maxAzs: 2,
       natCount: 1,
       natType: NatType.INSTANCE,
+      // The shared VpcConstruct's NAT Instance default (T4G.NANO, 0.5GiB RAM)
+      // gets OOM-killed running `yum install iptables-services` on the Amazon
+      // Linux 2023 AMI it uses -- the instance passes EC2 health checks but
+      // NAT silently never works (verified via `aws ec2 get-console-output`:
+      // "Out of memory: Killed process ... yum"). T4G.MICRO (1GiB) has enough
+      // headroom for that install to succeed.
+      natInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
       subnets: [
         { name: 'Public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
         { name: 'Private', subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, cidrMask: 24 },

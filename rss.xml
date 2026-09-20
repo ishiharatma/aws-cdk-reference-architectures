@@ -5,7 +5,26 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 19 Sep 2026 17:58:56 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 20 Sep 2026 05:03:29 GMT</lastBuildDate>
+    <item>
+      <title>ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/alb-keycloak-auth</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/alb-keycloak-auth</guid>
+      <pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+      <description>AWS ALB built-in OIDC authentication backed by Keycloak running on ECS Fargate with Aurora Serverless V2 (PostgreSQL) as the session store. Two patterns: Pattern A uses Keycloak as a direct OIDC provider; Pattern B adds SAML identity brokering so Keycloak acts as both an OIDC provider to ALB and a SAML service provider to a corporate IdP. Includes setup scripts for realm/client configuration and ECS Exec enabled for connection testing.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>ALB</category>
+      <category>OIDC</category>
+      <category>Keycloak</category>
+      <category>ECS</category>
+      <category>Fargate</category>
+      <category>Aurora</category>
+      <category>Serverless</category>
+      <category>Security</category>
+      <category>IAM</category>
+      <category>SAML</category>
+    </item>
     <item>
       <title>Amazon Bedrock Agentic Code Review Gate for ECS Fargate CI/CD (ecspresso + CodePipeline)</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecspresso-bedrock-review</link>

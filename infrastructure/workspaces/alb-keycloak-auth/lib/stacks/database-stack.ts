@@ -35,7 +35,10 @@ export class DatabaseStack extends cdk.Stack {
 
     this.cluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_16_4,
+        // 16.4 was withdrawn by AWS (RDS periodically retires old minor
+        // versions); 16.13 is the lowest currently-offered 16.x as of this
+        // writing (`aws rds describe-db-engine-versions --engine aurora-postgresql`).
+        version: rds.AuroraPostgresEngineVersion.VER_16_13,
       }),
       writer: rds.ClusterInstance.serverlessV2('writer'),
       serverlessV2MinCapacity: props.auroraConfig.serverlessV2MinCapacity,

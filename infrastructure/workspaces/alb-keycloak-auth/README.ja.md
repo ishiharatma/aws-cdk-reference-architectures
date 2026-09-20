@@ -109,7 +109,12 @@ PROJECT=myproject ENV=dev npm run deploy:all
 
 ### Step 2: Keycloak セットアップ (Pattern A)
 
-Keycloak が起動するまで約 2〜3 分かかります。
+Keycloak が起動するまで約 2〜3 分かかります。`keycloak-setup.sh` はパブリックな
+ALB DNSではなく、実行中のタスクへのSSMポートフォワード経由でKeycloakの管理API
+に接続します（理由はスクリプト冒頭のコメントを参照）。そのため、この手順には
+`aws`/`curl`/`jq` に加えて
+[AWS CLI用Session Managerプラグイン](https://docs.aws.amazon.com/ja_jp/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)
+がローカルにインストールされている必要があります。
 
 ```bash
 export PROJECT=myproject
@@ -173,15 +178,41 @@ http://<Keycloak-ALB-DNS>/realms/myrealm/protocol/saml/descriptor
 
 ### 1. Keycloak ヘルスチェック
 
+Keycloak 26以降は `/health/*` を通常のHTTPポートとは別の**management interface
+（ポート9000）**で提供します。ALBのターゲットグループのヘルスチェックは内部的に
+ポート9000を見ていますが（`keycloak-stack.ts` 参照）、このポートはパブリックな
+ALBリスナーには公開されていないため、VPC外からcurlすることはできません。
+代わりにECS Exec経由で確認してください（下記手順5参照）:
+
 ```bash
-curl http://<Keycloak-ALB-DNS>/health/ready
-# → {"status":"UP",...}
+aws ecs execute-command --cluster <project>-<env>-keycloak \
+  --task <task-id> --container keycloak --interactive \
+  --command "bash -c 'exec 3<>/dev/tcp/localhost/9000; printf \"GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n\" >&3; timeout 5 cat <&3'"
+# → HTTP/1.1 200 OK ... {"status":"UP","checks":[...]}
 ```
+
+あるいは、ECSタスクが `RUNNING` / `HEALTHY` になっていること、ALBのターゲット
+グループでターゲットが `healthy` と表示されていることを確認するだけでも、
+ALB自身が継続的に行っているのと同じチェックになります。
 
 ### 2. OIDC ディスカバリー確認
 
+Keycloakの `sslRequired` ポリシー（既定値 `external`、自分で作成したレルムも含め
+全レルムに適用される）は、この公開・認証不要のディスカバリードキュメントを含む
+**すべての**レルムスコープのエンドポイントについて、HTTPS（手順3）を設定する前
+のVPC外部からのプレーンHTTPアクセスを拒否します。パブリックなALB DNSに対して
+curlすると、ディスカバリードキュメントの代わりに
+`{"error":"invalid_request","error_description":"HTTPS required"}` が返ります。
+上記のヘルスチェックと同様に、`keycloak-setup.sh` が内部で使っているのと同じ
+SSMトンネル経由で確認してください:
+
 ```bash
 curl http://<Keycloak-ALB-DNS>/realms/myrealm/.well-known/openid-configuration
+# → {"error":"invalid_request","error_description":"HTTPS required"}（手順3の前は想定通り）
+
+# タスクへのSSMポートフォワード経由（完全なaws ssm start-session呼び出しは
+# keycloak-setup.sh参照）であれば実際のドキュメントが返る:
+curl http://localhost:<local-port>/realms/myrealm/.well-known/openid-configuration
 ```
 
 ### 3. App ALB アクセス (OIDC 無効時)
@@ -212,9 +243,17 @@ aws ecs execute-command \
 
 ### 6. Aurora 接続確認 (Keycloak コンテナ内から)
 
+`quay.io/keycloak/keycloak` イメージは最小構成で `psql` クライアントを同梱して
+いません（上記のヘルスチェックの説明にある通り `curl`/`wget` も同様）。そのため
+このコマンドは直接実行できません。Keycloak自身のヘルスエンドポイントが実際の
+DB接続状況を報告してくれるので、そちらの方が有用な確認方法です:
+
 ```bash
-# コンテナ内で実行
-psql -h <aurora-endpoint> -U keycloak -d keycloakdb -c 'SELECT version();'
+# コンテナ内で実行(curl/wgetが無いためbashの/dev/tcpを使う)
+exec 3<>/dev/tcp/localhost/9000
+printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3
+timeout 5 cat <&3
+# → {"status":"UP","checks":[{"name":"Keycloak database connections async health check","status":"UP"}]}
 ```
 
 ---
