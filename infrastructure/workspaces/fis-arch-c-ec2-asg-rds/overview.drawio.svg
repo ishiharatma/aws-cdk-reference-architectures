@@ -30,7 +30,6 @@
 <text x="465" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internal ALB</text>
 <rect x="640" y="235" width="240" height="110" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
 <text x="760" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">EC2 Auto Scaling Group</text>
-<text x="760" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Amazon Linux 2023 · SSM Agent</text>
 <rect x="650" y="295" width="60" height="40" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
 <text x="680" y="319" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">EC2</text>
 <rect x="722" y="295" width="60" height="40" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>

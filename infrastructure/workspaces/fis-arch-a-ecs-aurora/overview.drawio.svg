@@ -31,7 +31,6 @@
 <text x="465" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internal ALB</text>
 <rect x="640" y="245" width="200" height="90" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
 <text x="740" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">ECS Fargate Service</text>
-<text x="740" y="304" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">Amazon Linux 2023 tasks</text>
 <rect x="645" y="295" width="50" height="30" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
 <text x="670" y="315" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#444">Task</text>
 <rect x="707" y="295" width="50" height="30" rx="4" fill="#ffe0b2" stroke="#e65100" stroke-width="1"/>
@@ -62,10 +61,10 @@
 <text x="40" y="519" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:stop-task</text>
 <rect x="30" y="545" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
 <text x="40" y="563" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-3: ECS→DB Blackhole (egress TCP 5432 · 5 min)</text>
-<text x="40" y="579" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:network-blackhole-port</text>
+<text x="40" y="579" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:task-network-blackhole-port</text>
 <rect x="30" y="605" width="290" height="52" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
 <text x="40" y="623" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">A-4: ALB→ECS Blackhole (ingress TCP 80 · 5 min)</text>
-<text x="40" y="639" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:network-blackhole-port</text>
+<text x="40" y="639" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:ecs:task-network-blackhole-port</text>
 <rect x="30" y="670" width="290" height="22" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
 <text x="40" y="686" font-family="Arial,sans-serif" font-size="10" fill="#e65100">Stop: ALB 5xx Alarm → auto-stops experiment</text>
 <polyline points="175,390 175,460 395,460 395,475" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
