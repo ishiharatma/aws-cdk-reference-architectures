@@ -8,6 +8,7 @@ on:
       - "pages/**"
       - "infrastructure/workspaces/**/overview.drawio.svg"
       - "infrastructure/workspaces/**/overview.png"
+      - "rss.xml"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -43,6 +44,13 @@ jobs:
             mkdir -p "pages/${pattern_dir}"
             cp "$svg" "pages/${pattern_dir}/overview.drawio.svg"
           done
+
+      # リポジトリ直下の rss.xml（scripts/generate-rss.js が生成）を pages/ 配下にも
+      # コピーし、サイトと同一オリジンで配信する（単一の情報源はリポジトリ直下のまま）
+      - name: Copy rss.xml into pages/
+        run: |
+          set -eu
+          cp rss.xml pages/rss.xml
 
       # pages/ をそのまま Pages の公開物としてアップロード
       # https://github.com/actions/upload-pages-artifact
