@@ -6,6 +6,7 @@ import { Environment } from '@common/parameters/environments';
 import { validateDeployment } from '@common/helpers/validate-deployment';
 import { getMyGlobalIpCidr } from '@common/helpers/get-my-ip';
 import { params } from 'parameters/environments';
+import 'parameters'; // registers dev-params into `params` as a side effect
 
 const app = new cdk.App();
 

@@ -66,9 +66,9 @@ describe('DatabaseStack Unit Tests', () => {
       });
     });
 
-    test('uses PostgreSQL 16.4', () => {
+    test('uses PostgreSQL 16.13', () => {
       template.hasResourceProperties('AWS::RDS::DBCluster', {
-        EngineVersion: '16.4',
+        EngineVersion: '16.13',
       });
     });
 

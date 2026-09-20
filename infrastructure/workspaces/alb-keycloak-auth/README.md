@@ -109,7 +109,11 @@ After deployment, the following are printed as Outputs:
 
 ### Step 2: Keycloak Setup (Pattern A)
 
-Keycloak takes about 2–3 minutes to start.
+Keycloak takes about 2–3 minutes to start. `keycloak-setup.sh` reaches
+Keycloak's admin API through an SSM port-forward to the running task rather
+than the public ALB DNS (see the script's header comment for why), so this
+step requires the [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)
+installed locally, in addition to `aws`/`curl`/`jq`.
 
 ```bash
 export PROJECT=myproject
@@ -173,15 +177,41 @@ http://<Keycloak-ALB-DNS>/realms/myrealm/protocol/saml/descriptor
 
 ### 1. Keycloak Health Check
 
+Keycloak 26+ serves `/health/*` on a separate **management interface (port 9000)**,
+not the main HTTP port — the ALB's target group health check already points at
+port 9000 internally (see `keycloak-stack.ts`), but that port isn't exposed on
+the public ALB listener, so it can't be curled from outside the VPC. Check it
+via ECS Exec instead (see step 5 below):
+
 ```bash
-curl http://<Keycloak-ALB-DNS>/health/ready
-# → {"status":"UP",...}
+aws ecs execute-command --cluster <project>-<env>-keycloak \
+  --task <task-id> --container keycloak --interactive \
+  --command "bash -c 'exec 3<>/dev/tcp/localhost/9000; printf \"GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n\" >&3; timeout 5 cat <&3'"
+# → HTTP/1.1 200 OK ... {"status":"UP","checks":[...]}
 ```
+
+Or simply confirm the ECS task is `RUNNING` / `HEALTHY` and the ALB target
+group shows the target as `healthy` — that's the same check the ALB itself
+performs continuously.
 
 ### 2. OIDC Discovery Check
 
+Keycloak's `sslRequired` policy (`external` by default, for every realm
+including ones you create) rejects **every** realm-scoped endpoint —
+including this public, unauthenticated discovery document — over plain HTTP
+from a non-local address, i.e. from outside the VPC before HTTPS is
+configured (step 3). Curling the public ALB DNS returns
+`{"error":"invalid_request","error_description":"HTTPS required"}` instead of
+the discovery document. Check it the same way as the health check above,
+through the SSM tunnel `keycloak-setup.sh` already knows how to open:
+
 ```bash
 curl http://<Keycloak-ALB-DNS>/realms/myrealm/.well-known/openid-configuration
+# → {"error":"invalid_request","error_description":"HTTPS required"} (expected before step 3)
+
+# Through an SSM port-forward to the task (see keycloak-setup.sh for the
+# full aws ssm start-session invocation) it returns the real document:
+curl http://localhost:<local-port>/realms/myrealm/.well-known/openid-configuration
 ```
 
 ### 3. App ALB Access (OIDC disabled)
@@ -212,9 +242,17 @@ aws ecs execute-command \
 
 ### 6. Verify the Aurora Connection (from inside the Keycloak container)
 
+The `quay.io/keycloak/keycloak` image is minimal and doesn't bundle a
+`psql` client (or `curl`/`wget`, for that matter — see the health check
+notes above), so this can't be run directly. Keycloak's own health endpoint
+already reports live DB connectivity, which is the more useful check anyway:
+
 ```bash
-# run inside the container
-psql -h <aurora-endpoint> -U keycloak -d keycloakdb -c 'SELECT version();'
+# run inside the container (bash's /dev/tcp, since there's no curl/wget)
+exec 3<>/dev/tcp/localhost/9000
+printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3
+timeout 5 cat <&3
+# → {"status":"UP","checks":[{"name":"Keycloak database connections async health check","status":"UP"}]}
 ```
 
 ---

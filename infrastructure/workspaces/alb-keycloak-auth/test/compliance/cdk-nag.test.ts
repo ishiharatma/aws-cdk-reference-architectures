@@ -220,6 +220,7 @@ describe('CDK Nag Compliance Tests', () => {
         keycloakEcsSg: baseStack.keycloakEcsSg,
         auroraCluster: dbStack.cluster,
         auroraSecret: dbStack.secret,
+        databaseName: envParams.auroraConfig.databaseName,
         keycloakConfig: envParams.keycloakConfig,
         isAlbOpen: true,
       });

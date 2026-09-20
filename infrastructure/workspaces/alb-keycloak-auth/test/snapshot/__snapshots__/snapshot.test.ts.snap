@@ -712,6 +712,18 @@ exports[`Stack Snapshot Tests BaseStack matches snapshot 1`] = `
             },
             "ToPort": 8080,
           },
+          {
+            "Description": "Keycloak management/health from ALB",
+            "FromPort": 9000,
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "KeycloakAlbSg56697A01",
+                "GroupId",
+              ],
+            },
+            "ToPort": 9000,
+          },
         ],
         "VpcId": {
           "Ref": "Vpc49347EA9",
@@ -1347,7 +1359,7 @@ exports[`Stack Snapshot Tests DatabaseStack matches snapshot 1`] = `
           "postgresql",
         ],
         "Engine": "aurora-postgresql",
-        "EngineVersion": "16.4",
+        "EngineVersion": "16.13",
         "MasterUserPassword": {
           "Fn::Join": [
             "",
@@ -1945,7 +1957,7 @@ exports[`Stack Snapshot Tests KeycloakStack matches snapshot 1`] = `
             "HealthCheck": {
               "Command": [
                 "CMD-SHELL",
-                "curl -f http://localhost:8080/health/ready || exit 1",
+                "exec 3<>/dev/tcp/localhost/9000 && printf "GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n" >&3 && timeout 5 cat <&3 | grep -q "200 OK"",
               ],
               "Interval": 30,
               "Retries": 5,
@@ -1967,6 +1979,10 @@ exports[`Stack Snapshot Tests KeycloakStack matches snapshot 1`] = `
             "PortMappings": [
               {
                 "ContainerPort": 8080,
+                "Protocol": "tcp",
+              },
+              {
+                "ContainerPort": 9000,
                 "Protocol": "tcp",
               },
             ],
@@ -2113,6 +2129,7 @@ exports[`Stack Snapshot Tests KeycloakStack matches snapshot 1`] = `
       "Properties": {
         "HealthCheckIntervalSeconds": 30,
         "HealthCheckPath": "/health/ready",
+        "HealthCheckPort": "9000",
         "HealthCheckTimeoutSeconds": 10,
         "HealthyThresholdCount": 2,
         "Matcher": {

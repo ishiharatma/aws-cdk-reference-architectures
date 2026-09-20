@@ -84,6 +84,7 @@ export class AlbKeycloakAuthStage extends cdk.Stage {
       keycloakEcsSg: baseStack.keycloakEcsSg,
       auroraCluster: dbStack.cluster,
       auroraSecret: dbStack.secret,
+      databaseName: props.params.auroraConfig.databaseName,
       keycloakConfig: props.params.keycloakConfig,
       isAlbOpen,
       domainName: props.params.keycloakDomainName,
