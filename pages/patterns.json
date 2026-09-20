@@ -84,6 +84,18 @@
     "articles": {}
   },
   {
+    "id": "fis-arch-h-zonal-shift",
+    "title": "FIS Chaos: ARC Zonal Shift on Auto Scaling",
+    "description": "A direct follow-up to Architecture G's G-2 finding (Auto Scaling re-launches instances into the same network-partitioned AZ): the same NLB + EC2 ASG + Aurora Multi-AZ base, with the ASG registered for ARC zonal shift (AvailabilityZoneImpairmentPolicy). Deploy-verified, in the same live infrastructure, both with and without an active operator-triggered zonal shift: without it, the replacement lands back in the same broken AZ (reproducing G-2); with ReplaceUnhealthy active, it lands in the healthy AZ instead.",
+    "image": "fis-arch-h-zonal-shift/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "ARC", "Zonal Shift", "Multi-AZ", "NLB", "EC2", "Auto Scaling"],
+    "link": "fis-arch-h-zonal-shift",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-20",
+    "articles": {}
+  },
+  {
     "id": "apigw-single-purpose-lambda",
     "title": "API Gateway + Single-Purpose Lambda",
     "description": "A Todos REST API where every API Gateway method is backed by its own narrowly-scoped Lambda function, each with an independent IAM role, log group, bundle, and least-privilege DynamoDB grant (read-only for GET, write-only for POST/DELETE). One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.",

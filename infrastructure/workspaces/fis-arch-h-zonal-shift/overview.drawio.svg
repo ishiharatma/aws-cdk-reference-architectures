@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="1260" height="660" viewBox="0 0 1260 660">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555555"/>
+    </marker>
+    <marker id="arr_red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cc0000"/>
+    </marker>
+    <marker id="arr_blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1565c0"/>
+    </marker>
+  </defs>
+  <rect width="1260" height="660" fill="#fafafa"/>
+  <text x="630" y="24" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#1a1a1a">Architecture H: ARC Zonal Shift — NLB + EC2 Auto Scaling Group (Zonal-Shift-Enabled) + Aurora PostgreSQL</text>
+
+  <!-- Internet -->
+  <rect x="20" y="110" width="100" height="60" rx="8" fill="#e8eaf6" stroke="#283593" stroke-width="1.5"/>
+  <text x="70" y="145" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Internet</text>
+
+  <!-- NLB -->
+  <rect x="150" y="90" width="190" height="100" rx="8" fill="#e1f5fe" stroke="#0277bd" stroke-width="1.5"/>
+  <text x="245" y="133" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Network Load Balancer</text>
+  <text x="245" y="151" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">internet-facing · 2 AZs</text>
+  <text x="245" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">cross-zone load balancing</text>
+
+  <!-- Stop-condition alarm -->
+  <rect x="150" y="205" width="190" height="55" rx="8" fill="#fff9c4" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="245" y="227" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">CloudWatch Alarm</text>
+  <text x="245" y="246" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">NLB UnHealthyHostCount ≥ 2</text>
+
+  <!-- Internet -> NLB -->
+  <line x1="120" y1="140" x2="150" y2="140" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- VPC -->
+  <rect x="375" y="60" width="785" height="480" rx="12" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="385" y="78" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#9e9e9e">VPC  10.80.0.0/16 — 2 Availability Zones — ASG: AvailabilityZoneImpairmentPolicy (ZonalShiftEnabled)</text>
+
+  <!-- AZ-1 column (FIS target) -->
+  <rect x="390" y="90" width="370" height="430" rx="12" fill="none" stroke="#c62828" stroke-width="1.8" stroke-dasharray="6,3"/>
+  <text x="400" y="108" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">Availability Zone 1 (ap-northeast-1a) — FIS H-1 target</text>
+
+  <rect x="405" y="130" width="340" height="55" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="415" y="147" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#1565c0">Public Subnet /24</text>
+  <rect x="610" y="145" width="110" height="30" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="665" y="164" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#1a1a1a">NAT Gateway</text>
+
+  <rect x="405" y="200" width="340" height="140" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="415" y="217" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#2e7d32">Private Subnet /24 (FIS H-1 target)</text>
+  <rect x="430" y="235" width="280" height="90" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="570" y="264" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">EC2 (t3.small) × 1–2</text>
+  <text x="570" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">nginx · fis-target=app-instance</text>
+  <text x="570" y="298" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">AL2023 · IMDSv2</text>
+  <text x="570" y="314" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#1565c0">during active zonal shift: not replaced here</text>
+
+  <rect x="405" y="355" width="340" height="140" rx="8" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="415" y="372" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#c62828">Isolated Subnet /24</text>
+  <rect x="430" y="390" width="280" height="90" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="570" y="425" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Writer</text>
+  <text x="570" y="443" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16 · sv2 0.5–4 ACU</text>
+
+  <!-- AZ-2 column -->
+  <rect x="775" y="90" width="370" height="430" rx="12" fill="none" stroke="#2e7d32" stroke-width="1.8" stroke-dasharray="6,3"/>
+  <text x="785" y="108" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#2e7d32">Availability Zone 2 (ap-northeast-1c) — replacement lands here</text>
+
+  <rect x="790" y="130" width="340" height="55" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="800" y="147" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#1565c0">Public Subnet /24</text>
+  <text x="800" y="163" font-family="Arial,sans-serif" font-size="9" fill="#777777">no NAT here — egress routes via AZ-1</text>
+
+  <rect x="790" y="200" width="340" height="140" rx="8" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="800" y="217" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#2e7d32">Private Subnet /24</text>
+  <rect x="815" y="235" width="280" height="90" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="955" y="264" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">EC2 (t3.small) × 1–2</text>
+  <text x="955" y="282" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">nginx · fis-target=app-instance</text>
+  <text x="955" y="298" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">AL2023 · IMDSv2</text>
+  <text x="955" y="314" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#1565c0">ReplaceUnhealthy: replacement launches here</text>
+
+  <rect x="790" y="355" width="340" height="140" rx="8" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="800" y="372" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#c62828">Isolated Subnet /24</text>
+  <rect x="815" y="390" width="280" height="90" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="955" y="425" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Aurora Reader</text>
+  <text x="955" y="443" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555555">PostgreSQL 16 · sv2 0.5–4 ACU</text>
+
+  <!-- Aurora replication -->
+  <line x1="710" y1="435" x2="815" y2="435" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+  <text x="762" y="428" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#1565c0">sync replication</text>
+
+  <!-- NLB -> AZ-1 private subnet -->
+  <polyline points="200,190 200,270 405,270" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+  <!-- NLB -> AZ-2 private subnet (routed above the VPC to avoid crossing AZ-1) -->
+  <polyline points="340,110 340,45 960,45 960,200" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- ASG replacement capacity redirected to AZ-2 while zonal shift is active
+       (routed through the clear band between the subnet header and the EC2 box
+       to avoid crossing the "nginx / AL2023" labels inside either box; the
+       destination box already carries the "ReplaceUnhealthy: replacement
+       launches here" annotation, so no separate mid-path label is needed here) -->
+  <polyline points="745,225 955,225 955,235" fill="none" stroke="#1565c0" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arr_blue)"/>
+
+  <!-- FIS Experiment panel -->
+  <rect x="20" y="290" width="330" height="145" rx="12" fill="#ffebee" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="30" y="308" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiment (the fault)</text>
+
+  <rect x="30" y="325" width="310" height="90" rx="5" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
+  <text x="40" y="345" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">H-1: AZ-1 Total Isolation (5 min)</text>
+  <text x="40" y="362" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:network:disrupt-connectivity (scope=all)</text>
+  <text x="40" y="378" font-family="Arial,sans-serif" font-size="9" fill="#666">same fault as Architecture G's G-2 —</text>
+  <text x="40" y="392" font-family="Arial,sans-serif" font-size="9" fill="#666">run once with, once without an active shift</text>
+
+  <rect x="30" y="424" width="310" height="24" rx="4" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="40" y="440" font-family="Arial,sans-serif" font-size="10" fill="#e65100">Stop: NLB UnHealthyHostCount ≥ 2 → auto-stops</text>
+
+  <!-- ARC Zonal Shift panel (the operator response — NOT an FIS action) -->
+  <rect x="20" y="465" width="330" height="175" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="30" y="483" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#1565c0">ARC Zonal Shift (the response — manual)</text>
+
+  <rect x="30" y="500" width="310" height="85" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.2"/>
+  <text x="40" y="519" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#1565c0">aws arc-zonal-shift start-zonal-shift</text>
+  <text x="40" y="535" font-family="Arial,sans-serif" font-size="9" fill="#666">--resource-identifier &lt;ASG ARN&gt;</text>
+  <text x="40" y="549" font-family="Arial,sans-serif" font-size="9" fill="#666">--away-from apne1-az1 --expires-in 1h</text>
+  <text x="40" y="565" font-family="Arial,sans-serif" font-size="9" fill="#666">not an FIS action — operator/API-triggered</text>
+
+  <rect x="30" y="593" width="310" height="38" rx="4" fill="#fff9c4" stroke="#f9a825" stroke-width="1"/>
+  <text x="40" y="608" font-family="Arial,sans-serif" font-size="9" fill="#7a5b00">ImpairedZoneHealthCheckBehavior:</text>
+  <text x="40" y="621" font-family="Arial,sans-serif" font-size="9" fill="#7a5b00">ReplaceUnhealthy → new capacity moves to AZ-2</text>
+
+  <!-- FIS -> AZ-1 subnet (H-1) -->
+  <polyline points="175,290 175,270 405,270" fill="none" stroke="#cc0000" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
+  <!-- ARC Zonal Shift -> ASG (registers + starts shift) -->
+  <polyline points="350,545 570,545 570,325" fill="none" stroke="#1565c0" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_blue)"/>
+</svg>

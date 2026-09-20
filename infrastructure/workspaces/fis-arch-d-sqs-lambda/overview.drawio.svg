@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" width="1100" height="600" viewBox="0 0 1100 600" role="img"
-     aria-label="Architecture D: an Operator's Function URL request produces onto an SQS main queue; a Lambda consumer with a batch-size-5 event source drains it into DynamoDB; unprocessed messages redrive to a DLQ after 3 receives; three FIS experiments throttle the consumer's reserved concurrency to 0 or 1, guarded by a shared CloudWatch backlog alarm.">
+     aria-label="Architecture D: an Operator's Function URL request produces onto an SQS main queue; a Lambda consumer (with the FIS extension layer) with a batch-size-5 event source drains it into DynamoDB; unprocessed messages redrive to a DLQ after 3 receives; three FIS experiments use the aws:lambda:function action family (invocation-error / invocation-add-delay) against the consumer, guarded by a shared CloudWatch backlog alarm.">
   <defs>
     <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
       <polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/>
@@ -35,8 +35,8 @@
   <!-- Consumer Lambda -->
   <rect x="570" y="64" width="150" height="68" rx="8" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
   <text x="645" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="currentColor">Consumer Lambda</text>
-  <text x="645" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">SQS event source</text>
-  <text x="645" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">batchSize=5</text>
+  <text x="645" y="106" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">SQS event source · batchSize=5</text>
+  <text x="645" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">+ FIS extension layer</text>
 
   <!-- DynamoDB -->
   <rect x="760" y="64" width="160" height="68" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
@@ -69,13 +69,13 @@
   <!-- ================= FIS Experiments ================= -->
 
   <rect x="30" y="255" width="1040" height="195" rx="12" fill="#fff8f8" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="40" y="273" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments — aws:lambda:put-function-concurrent-executions only (see Key Design Decision below)</text>
+  <text x="40" y="273" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">AWS FIS Experiments — aws:lambda:function family, via the FIS Lambda extension layer (see Key Design Decision below)</text>
 
   <!-- D-1 -->
   <rect x="45" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="55" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-1: Consumer Outage — short (5 min)</text>
-  <text x="55" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='0', PT5M</text>
-  <text x="55" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="55" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">aws:lambda:invocation-error, 100%, PT5M</text>
+  <text x="55" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda (preventExecution=true)</text>
   <text x="55" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: redelivery within visibilityTimeout,</text>
   <text x="55" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">clean backlog drain on recovery</text>
   <text x="55" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Within 180s DLQ threshold — no DLQ routing</text>
@@ -83,8 +83,8 @@
   <!-- D-2 -->
   <rect x="385" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="395" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-2: Consumer Outage — long, DLQ (20 min)</text>
-  <text x="395" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='0', PT20M</text>
-  <text x="395" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="395" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">aws:lambda:invocation-error, 100%, PT20M</text>
+  <text x="395" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda (preventExecution=true)</text>
   <text x="395" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: DLQ routing, DLQ alarming,</text>
   <text x="395" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">replay procedure after recovery</text>
   <text x="395" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">1200s ≫ 180s DLQ threshold — DLQ guaranteed</text>
@@ -92,15 +92,15 @@
   <!-- D-3 -->
   <rect x="725" y="285" width="330" height="150" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="735" y="307" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c62828">D-3: Throughput Collapse (10 min)</text>
-  <text x="735" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">ConcurrentExecutions='1', PT10M</text>
-  <text x="735" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda reserved concurrency</text>
+  <text x="735" y="326" font-family="'Courier New',monospace" font-size="9.5" fill="#555555">aws:lambda:invocation-add-delay, 100%, PT10M</text>
+  <text x="735" y="342" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Target: Consumer Lambda (startupDelayMs=20000)</text>
   <text x="735" y="362" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Tests: backlog growth and latency under</text>
   <text x="735" y="377" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">severe non-zero throughput degradation</text>
   <text x="735" y="397" font-family="Arial,sans-serif" font-size="9.5" fill="#555555">Consumer stays up — partial capacity loss</text>
 
   <!-- FIS -> Consumer arrow -->
   <line x1="645" y1="255" x2="645" y2="132" stroke="#c62828" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arr_red)"/>
-  <text x="650" y="150" font-family="Arial,sans-serif" font-size="9" fill="#c62828">D-1 / D-2 / D-3 set reserved concurrency</text>
+  <text x="650" y="150" font-family="Arial,sans-serif" font-size="9" fill="#c62828">D-1 / D-2 / D-3 via FIS extension layer</text>
 
   <!-- ================= Stop condition ================= -->
 
@@ -111,7 +111,7 @@
 
   <rect x="30" y="504" width="1040" height="80" rx="4" fill="#fff9c4" stroke="#f9a825" stroke-width="1"/>
   <text x="50" y="524" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#5d4037">Key Design Decision:</text>
-  <text x="50" y="542" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">aws:fis:inject-api-internal-error / inject-api-throttle-error only support service=ec2 or service=kinesis — SQS and DynamoDB are NOT supported.</text>
-  <text x="50" y="559" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">Lambda-extension actions (invocation-error/invocation-add-delay) need an unverified S3/env-var setup, so they are avoided too.</text>
-  <text x="50" y="576" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">Every scenario instead throttles the consumer's reserved concurrency — a proven, supported control point that reproduces the same failure modes.</text>
+  <text x="50" y="542" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">aws:lambda:put-function-concurrent-executions does not exist — aws fis list-actions confirms Lambda-targeted actions are limited to the aws:lambda:function family.</text>
+  <text x="50" y="559" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">All three experiments use that family (invocation-error / invocation-add-delay) via the FIS Lambda extension layer added to Consumer Lambda.</text>
+  <text x="50" y="576" font-family="Arial,sans-serif" font-size="10.5" fill="#5d4037">Deploy-verified end-to-end — see the workspace README's Observed Results section.</text>
 </svg>

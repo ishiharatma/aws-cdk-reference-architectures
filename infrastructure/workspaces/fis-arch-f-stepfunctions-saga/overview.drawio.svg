@@ -99,23 +99,23 @@
 
   <rect x="70" y="678" width="220" height="70" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="180" y="698" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">F-2: ReserveInventory outage</text>
-  <text x="180" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:put-function-</text>
-  <text x="180" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">concurrent-executions · 0 · 5min</text>
+  <text x="180" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:invocation-error</text>
+  <text x="180" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">preventExecution=true · 100% · 5min</text>
 
   <rect x="340" y="678" width="220" height="70" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="450" y="698" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">F-1: ProcessPayment outage</text>
-  <text x="450" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:put-function-</text>
-  <text x="450" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">concurrent-executions · 0 · 5min</text>
+  <text x="450" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:invocation-error</text>
+  <text x="450" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">preventExecution=true · 100% · 5min</text>
 
   <rect x="610" y="678" width="220" height="70" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.2"/>
   <text x="720" y="698" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c62828">F-3: ConfirmOrder outage</text>
-  <text x="720" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:put-function-</text>
-  <text x="720" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">concurrent-executions · 0 · 5min</text>
+  <text x="720" y="715" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">aws:lambda:invocation-error</text>
+  <text x="720" y="729" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#666">preventExecution=true · 100% · 5min</text>
 
   <rect x="880" y="678" width="270" height="70" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.2"/>
   <text x="1015" y="696" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="#e65100">No aws:states:* FIS action exists</text>
-  <text x="1015" y="712" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#8a4b00">so Saga Retry/Catch is exercised</text>
-  <text x="1015" y="726" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#8a4b00">indirectly via its forward Lambdas</text>
+  <text x="1015" y="712" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#8a4b00">so Saga Retry/Catch is exercised via the</text>
+  <text x="1015" y="726" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#8a4b00">FIS Lambda extension on forward Lambdas</text>
 
   <rect x="70" y="810" width="1080" height="46" rx="6" fill="#fff9c4" stroke="#f9a825" stroke-width="1.2"/>
   <text x="610" y="838" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#5c4a00">Shared stop condition — CloudWatch Alarm: StateMachine ExecutionsFailed ≥ 5 / 1 min → auto-stops F-1, F-2, and F-3</text>

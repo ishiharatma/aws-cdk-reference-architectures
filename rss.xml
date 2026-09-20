@@ -5,7 +5,7 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 20 Sep 2026 13:45:50 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 20 Sep 2026 22:39:08 GMT</lastBuildDate>
     <item>
       <title>ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/alb-keycloak-auth</link>
@@ -73,6 +73,23 @@
       <category>Auto Scaling</category>
       <category>Aurora</category>
       <category>Networking</category>
+    </item>
+    <item>
+      <title>FIS Chaos: ARC Zonal Shift on Auto Scaling</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-h-zonal-shift</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-h-zonal-shift</guid>
+      <pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A direct follow-up to Architecture G&apos;s G-2 finding (Auto Scaling re-launches instances into the same network-partitioned AZ): the same NLB + EC2 ASG + Aurora Multi-AZ base, with the ASG registered for ARC zonal shift (AvailabilityZoneImpairmentPolicy). Deploy-verified, in the same live infrastructure, both with and without an active operator-triggered zonal shift: without it, the replacement lands back in the same broken AZ (reproducing G-2); with ReplaceUnhealthy active, it lands in the healthy AZ instead.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>ARC</category>
+      <category>Zonal Shift</category>
+      <category>Multi-AZ</category>
+      <category>NLB</category>
+      <category>EC2</category>
+      <category>Auto Scaling</category>
     </item>
     <item>
       <title>Amazon Bedrock Agentic Code Review Gate for ECS Fargate CI/CD (ecspresso + CodePipeline)</title>
