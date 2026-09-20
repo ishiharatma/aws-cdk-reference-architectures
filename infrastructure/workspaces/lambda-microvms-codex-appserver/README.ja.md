@@ -5,12 +5,15 @@
 > **出典。** このリファレンス実装は
 > [「Lambda MicroVMsで実現するServerlessなCodex App Server」](https://note.com/japan_d2/n/n618cb3439486)
 > (Japan Digital Design, Inc. / 外山智士氏、2026年9月15日)で紹介されたアーキテクチャを、AWS CDKのリファレンス
-> アーキテクチャとして実装したものです。記事本文がAPIレベルまで詳述していない箇所は、AWS Lambda MicroVMsの
-> 公開API仕様(`@aws-sdk/client-lambda-microvms`、`AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`の
-> CloudFormationスキーマ)から独自に補完しており、該当箇所には以下で個別に注記しています: Lambda MicroVMsが
-> ビルド/実行ロールをAssumeする際のIAMサービスプリンシパル、および`codex app-server`の正確なstdio JSON-RPC
-> フレーミング/メソッド名。本番利用前には、AWS Lambda MicroVMs Developer Guideと
-> [Codex CLIのソースコード](https://github.com/openai/codex)の両方で必ず確認してください。
+> アーキテクチャとして実装したものです。元記事は出力配信にポーリングを採用しており、実装をシンプルにするための
+> 選択でSSE/WebSocketの方が体験は良いと述べています。本実装では元記事から一歩進めて、ポーリングに加えて
+> WebSocketによるpush配信経路を追加しています(詳細は「設計判断」#2)。記事本文がAPIレベルまで詳述していない
+> その他2箇所は、AWS Lambda MicroVMsの公開API仕様(`@aws-sdk/client-lambda-microvms`、
+> `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`のCloudFormationスキーマ)から独自に補完しており、
+> 該当箇所には以下で個別に注記しています: Lambda MicroVMsがビルド/実行ロールをAssumeする際のIAMサービス
+> プリンシパル、および`codex app-server`の正確なstdio JSON-RPCフレーミング/メソッド名。本番利用前には、
+> AWS Lambda MicroVMs Developer Guideと[Codex CLIのソースコード](https://github.com/openai/codex)の両方で
+> 必ず確認してください。
 
 ## 📑 目次
 
@@ -32,29 +35,31 @@
 
 ![Architecture Overview](overview.drawio.svg)
 
-セッション**コントロールプレーン**(API Gateway HTTP API + 6つのLambda関数)が、オンデマンドで起動する**データプレーン**
-セッションのライフサイクルを仲介します。各セッションは、[`codex app-server`](https://github.com/openai/codex)
-(OpenAI Codex CLIのJSON-RPCエージェントプロトコル。Thread/Turn/Item)を実行するVM分離された
-[AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/)です。本実装作成時点で、Lambda MicroVMsには
-起動したMicroVMにログインしてコマンドを実行し、そのレスポンスを呼び出し元にストリームで返す機能がありません。
-そこで本実装では、記事のアプローチに従い、各MicroVM自身が**独自のHTTPサーバー**(`src/microvm-image/server/`)を
-実行してその役割を担います。このサーバーはプラットフォームからのライフサイクルフック呼び出しに応答し、
-クライアントからのJSON-RPCリクエストを自身が管理する`codex app-server`の子プロセスへ中継し、MicroVM内の
-**Event Handler**が`codex app-server`が出力する全行をDynamoDBの**EventsTable**へ永続化します。これにより、
-MicroVMがSuspendあるいは終了した後でも、セッションのThread内容を読み取り続けられます。コントロールプレーン
-自体はapp-serverのトラフィックを一切プロキシせず、セッションのライフサイクル(開始/状態取得/サスペンド/
-レジューム/終了/出力ポーリング)のみを仲介します。
+セッション**コントロールプレーン**(7つのLambda関数を持つHTTP API、さらに3つのLambda関数を持つWebSocket API)が、
+オンデマンドで起動する**データプレーン**セッションのライフサイクルを仲介します。各セッションは、
+[`codex app-server`](https://github.com/openai/codex)(OpenAI Codex CLIのJSON-RPCエージェントプロトコル。
+Thread/Turn/Item)を実行するVM分離された[AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/)
+です。本実装作成時点で、Lambda MicroVMsには起動したMicroVMにログインしてコマンドを実行し、そのレスポンスを
+呼び出し元にストリームで返す機能がありません。そこで本実装では、記事のアプローチに従い、各MicroVM自身が
+**独自のHTTPサーバー**(`src/microvm-image/server/`)を実行してその役割を担います。このサーバーはプラット
+フォームからのライフサイクルフック呼び出しに応答し、クライアントからのJSON-RPCリクエストを自身が管理する
+`codex app-server`の子プロセスへ中継し、MicroVM内の**Event Handler**が`codex app-server`が出力する全行を
+DynamoDBの**EventsTable**へ永続化します。これにより、MicroVMがSuspendあるいは終了した後でも、セッションの
+Thread内容を読み取り続けられます。`EventsTable`への書き込みは、**DynamoDB Streams**経由で**WebSocket API**に
+接続中のクライアントにもほぼリアルタイムでファンアウトされるため、出力を読むためにポーリングが必須ではなく
+なります。コントロールプレーン自体はapp-serverへの*入力*トラフィックを一切プロキシせず、セッションのライフ
+サイクルと出力配信のみを仲介します。
 
 ```
-クライアント (Web UI / IDE / CLI)
-   │  1. POST /sessions (Cognito JWT)                        ── コントロールプレーン ──
+クライアント (Web UI / IDE / CLI)                                    ── コントロールプレーン (HTTP) ──
+   │  1. POST /sessions (Cognito JWT)
    ▼
 API Gateway HTTP API ── JWT Authorizer (Cognito User Pool)
    │
    ▼
 コントロールプレーン Lambda: create / get / delete / suspend / resume / get-events
    │  RunMicrovm / GetMicrovm / SuspendMicrovm / ResumeMicrovm /
-   │  TerminateMicrovm / CreateMicrovmAuthToken              ── データプレーン ──
+   │  TerminateMicrovm / CreateMicrovmAuthToken                      ── データプレーン ──
    ▼
 Lambda MicroVMs データプレーン
    │  codex app-serverイメージからFirecracker MicroVMを起動
@@ -70,8 +75,15 @@ MicroVM (VM分離、専用HTTPSエンドポイント)
    │  2. POST {endpoint}/rpc + X-aws-proxy-auth、MicroVMエンドポイントに直接接続
    ▼
 クライアント
-   │  3. GET /sessions/{id}/events?after=N (Turn終了までポーリング)   ── コントロールプレーン ──
-   ▼
+   │  3a. WS接続 wss://.../{stage}?sessionId=...&token=...      ── コントロールプレーン (WebSocket) ──
+   ▼                                                ┌── DynamoDB Streams (NEW_IMAGE) ──┐
+API Gateway WebSocket API                           │                                   ▼
+   │ $connect (Lambda authorizerがCognito IDトークンを検証)   EventsTable ──────▶ forward-event Lambda
+   ▼                                                                                     │
+ws-connect Lambda ──▶ ConnectionsTable (sessionId → connectionId) ◀────────────────────┘
+                                                              PostToConnection (新規イベントをpush)
+   │  3b. GET /sessions/{id}/events?after=N (WS接続前後に書かれた分を取得)
+   ▼                                                                    ── コントロールプレーン (HTTP) ──
 API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (読み取り専用、MicroVM状態非依存)
 ```
 
@@ -84,14 +96,16 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (読み取り�
 | **MicroVM内HTTPサーバー** (`server/index.mjs`) | プラットフォームのライフサイクルフックにHTTPで応答(`GET /ready`, `POST /run`/`/suspend`/`/resume`/`/terminate`)し、`POST /rpc`リクエストを自身がspawn・管理する`codex app-server`子プロセス(`server/codex-process.mjs`)へ中継。 |
 | **Event Handler** (`server/event-handler.mjs`) | `codex app-server`がstdoutに書き込む全行を購読し、セッションごとに連番を振って`EventsTable`へ永続化。 |
 | Secrets Managerシークレット | OpenAI APIキーを保持。イメージに焼き込まれるのはそのARN(`OPENAI_API_KEY_SECRET_ARN`)のみで、値自体はコンテナ起動時に実行ロールを使ってMicroVM内サーバー(`server/secret.mjs`)が取得します。 |
-| 6つのコントロールプレーンLambda | `create-session`(RunMicrovm + CreateMicrovmAuthToken)、`get-session`(GetMicrovm)、`delete-session`(TerminateMicrovm)、`suspend-session`(SuspendMicrovm)、`resume-session`(ResumeMicrovm + 新しい認証トークン発行)、**`get-events`**(`EventsTable`をポーリング)。 |
+| 7つのHTTPコントロールプレーンLambda | `create-session`(RunMicrovm + CreateMicrovmAuthToken)、`get-session`(GetMicrovm)、`delete-session`(TerminateMicrovm)、`suspend-session`(SuspendMicrovm)、`resume-session`(ResumeMicrovm + 新しい認証トークン発行)、`get-events`(`EventsTable`をポーリング)。 |
+| 3つのWebSocket Lambda | `ws-authorizer`(`$connect`でCognito IDトークンを検証)、`ws-connect`(接続をセッションに登録)、`ws-disconnect`(登録解除)、`forward-event`(DynamoDB Streamsトリガー、新規`EventsTable`アイテムを接続中クライアントへpush)。 |
 | DynamoDB `SessionsTable` | セッション1件につき1アイテム(`sessionId`, `ownerId`, `microvmId`, `endpoint`, `state`)。TTLで自動失効。 |
-| DynamoDB `EventsTable` | `codex app-server`の出力1行につき1アイテム(`sessionId`, `sequence`, `event`)。MicroVM内Event Handlerが書き込み、`get-events`が読み取る。MicroVM自体のライフサイクルとは独立して残り続ける。 |
-| Cognito User Pool + HTTP API JWT Authorizer | すべてのコントロールプレーンルートが有効なCognito JWTを要求。`ownerId`によりセッションの読み書きを作成者本人にスコープします。 |
+| DynamoDB `EventsTable` | `codex app-server`の出力1行につき1アイテム(`sessionId`, `sequence`, `event`)。MicroVM内Event Handlerが書き込み。Streams(`NEW_IMAGE`)が`forward-event`をトリガーし、`get-events`が直接読み取る。MicroVM自体のライフサイクルとは独立して残り続ける。 |
+| DynamoDB `ConnectionsTable` | どのWebSocket接続がどのセッションを見ているか(`sessionId`, `connectionId`, `ownerId`)。`ws-disconnect`が接続からセッションを逆引きできるよう`ByConnectionId`のGSIを持つ。 |
+| Cognito User Pool | HTTP APIのJWT AuthorizerとWebSocket APIのLambda Authorizerの両方を支える。`ownerId`/`sub`がセッション・イベント・接続のすべてのレコードを作成者にスコープする。 |
 
-### Threadの作成、Turnの実行、出力の取得
+### Threadの作成、Turnの実行、出力の配信
 
-元記事のシーケンスに沿った流れです。
+元記事のシーケンスにpush経路を加えたものです。
 
 1. **セッションを開始する** -- `POST /sessions`(コントロールプレーン)が事前構築済みイメージからMicroVMを起動し
    (`RunMicrovm`)、`runHookPayload: {"sessionId": "..."}`をイメージの`/run`フックのリクエストボディとして渡します。
@@ -101,11 +115,16 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (読み取り�
    MicroVM内サーバーがそれを`codex app-server`のstdinへ中継し、`id`を含むリクエストについては対応するstdout
    レスポンスを同期的に返します。レスポンス・サーバー起点の通知を問わず、すべての行はEvent Handlerによっても
    捕捉されます。
-3. **出力を取得する** -- クライアントはMicroVMを直接読みに行くのではなく、Turnが完了するまで
-   `GET /sessions/{sessionId}/events?after={sequence}`(コントロールプレーン)をポーリングします。このLambdaは
-   `EventsTable`のみを読むため、MicroVMがRUNNING・SUSPENDED・終了済みのいずれの状態でも動作し続けます。
-   (元記事では、SSEやWebSocketの方がより良い体験になるがポーリングの方が実装がシンプルだと述べられており、
-   本実装もこれに倣ってポーリング方式を採用しています。)
+3. **出力を受け取る** -- MicroVMを直接読みに行くのではなく:
+   - **Push(ほぼリアルタイム)**: クライアントは`wss://.../{stage}?sessionId=...&token=<Cognito IDトークン>`
+     でWebSocket接続を開きます。`ws-authorizer`がトークンを検証し、`ws-connect`が接続を`ConnectionsTable`に
+     登録すると、以後そのセッションへの`EventsTable`書き込みは書き込まれた瞬間に`forward-event`(DynamoDB
+     Streams + `PostToConnection`経由)によってpushされます。
+   - **Pull(取りこぼし取得とフォールバック)**: `GET /sessions/{sessionId}/events?after={sequence}`
+     (コントロールプレーン)が`EventsTable`を直接読みます。クライアントはWebSocket接続直後に一度これを呼び
+     (接続登録の直前に書き込まれた分を拾うため)、WebSocket接続を維持したくない場合は完全にこちらのポーリング
+     だけにフォールバックできます。どちらの経路も`EventsTable`のみを読むため、MicroVMがRUNNING・SUSPENDED・
+     終了済みのいずれの状態でも動作します。
 
 ### MicroVMライフサイクルフック
 
@@ -130,21 +149,38 @@ Lambda MicroVMsには、実行中のMicroVMにログインしてコマンドの�
 本実装は元記事のアプローチに従い、イメージ自体がHTTPサーバーを実行して`codex app-server`へJSON-RPCを中継し、
 その出力を捕捉することで、外部の呼び出し元は通常のHTTPSだけで済むようにしています。
 
-### 2. Turnの出力はMicroVMのライフサイクルから独立して永続化される
+### 2. 出力配信はpush(WebSocket)方式で、pull(ポーリング)を真実の源泉として維持する
 
-Event Handlerは`codex app-server`の各行を発生の都度DynamoDBに書き込みます。`get-events`はこのテーブルのみを
-読み、MicroVMを直接読みには行きません。そのため、コストを抑えるためにセッションをサスペンドした後や、
-終了した後でも、クライアントはTurnの出力を読み続けられます。これは元記事がこの設計を採用した理由と一致します。
+元記事のデモは、実装をシンプルにするためポーリングのみを採用していました。本実装は`EventsTable`を唯一の
+真実の源泉として維持しつつ(クライアントは常に`get-events`をポーリングすれば正しい答えを得られる)、その上に
+push経路を追加しています: DynamoDB Streamsトリガー(`forward-event`)が、新規アイテムが書き込まれるたびに
+接続中のWebSocketクライアントへ配信します。これは置き換えではなく追加です -- WebSocket接続を一度も開かない
+クライアントは純粋なポーリングだけで引き続き動作しますし、開くクライアントも、セッション開始からWebSocket
+登録までの間隙をカバーするため接続後に一度はポーリングすべきです。
 
-### 3. コントロールプレーンはapp-serverへの*入力*トラフィックを一切プロキシしない
+### 3. WebSocketの接続状態はMicroVMのライフサイクルから分離されている
+
+`ConnectionsTable`はMicroVM自身のRUNNING/SUSPENDED状態とは完全に独立して*クライアント*の接続を追跡します。
+クライアントのWebSocketセッションは、MicroVMがサスペンド・レジュームされる間も開いたままにでき(次のイベントが
+書き込まれるまで単に出力が止まるだけ)、逆にWebSocketを閉じてもMicroVMには一切影響しません。
+
+### 4. Cognito IDトークンはWebSocketハンドシェイクのAuthorizationヘッダーに乗せられない
+
+ブラウザはアプリケーションコードがWebSocketハンドシェイクにカスタムヘッダーを設定することを許可しないため、
+IDトークンは代わりに`token`クエリパラメータとして送り、
+[`aws-jwt-verify`](https://github.com/awslabs/aws-jwt-verify)を使う`WebSocketLambdaAuthorizer`
+(`ws-authorizer.ts`)で検証します。これはHTTP APIのマネージド`HttpUserPoolAuthorizer`とは異なる点で、
+WebSocket APIはこのマネージドオーソライザーを利用できません。
+
+### 5. コントロールプレーンはapp-serverへの*入力*トラフィックを一切プロキシしない
 
 `create-session`と`resume-session`は、MicroVM自身の`endpoint`と、単一ポートにスコープされた短命の
 `X-aws-proxy-auth`トークン(`CreateMicrovmAuthToken`の`allowedPorts`で発行)を返します。クライアントはこの
 エンドポイントに直接JSON-RPCリクエストを送信します。これにより、コントロールプレーンLambdaのレイテンシと
-コストがTurnのトラフィック量から独立します。コントロールプレーンを経由するのは、(はるかに小さい)出力
-ポーリングの読み取りのみです。
+コストがTurnのトラフィック量から独立します。コントロールプレーンを経由するのは、(はるかに小さい)出力配信
+経路のみです。
 
-### 4. `/rpc`は型付きThread/Turn REST APIではなく汎用リレー
+### 6. `/rpc`は型付きThread/Turn REST APIではなく汎用リレー
 
 MicroVM内サーバーの`/rpc`エンドポイントは、固定の`/threads`/`/turns`REST ルートにメソッド名をハードコード
 するのではなく、生のJSON-RPC 2.0リクエストボディをそのまま`codex app-server`のstdinへ転送します。本実装では
@@ -152,41 +188,41 @@ MicroVM内サーバーの`/rpc`エンドポイントは、固定の`/threads`/`/
 いないため、HTTP境界では意図的にプロトコル非依存のままにしています。実際に送信すべき`initialize`/thread/
 turn/itemのメソッドについては、[Codex CLIのリポジトリ](https://github.com/openai/codex)を参照してください。
 
-### 5. コスト面ではterminateよりsuspendを優先
+### 7. コスト面ではterminateよりsuspendを優先
 
 `idlePolicy`はアイドル状態のMicroVMを終了させるのではなく自動サスペンドします(課金対象はFirecrackerスナップ
 ショットストレージのみ)。`POST /sessions/{id}/suspend`と`/resume`により、セッションが一時的に不要であると
 クライアントが分かっている場合(タブを閉じたなど)、アイドルタイムアウトを待たずに即座にその遷移をトリガー
 できます。
 
-### 6. OpenAI APIキーはイメージにもIaCにも一切含まれない
+### 8. OpenAI APIキーはイメージにもIaCにも一切含まれない
 
 `CfnMicrovmImage.environmentVariables`には`OPENAI_API_KEY_SECRET_ARN`(全セッション共通の固定値)のみが含まれ
 ます。`server/secret.mjs`が、コンテナ起動時に、MicroVMの`executionRoleArn`にプラットフォームが注入する認証
 情報を使ってSecrets Managerから実際のシークレット値を取得します。
 
-### 7. セッションはエンドツーエンドで所有者にスコープされる
+### 9. セッション・イベント・接続はエンドツーエンドで所有者にスコープされる
 
-Cognito JWTの`sub`クレームが`SessionsTable`の各アイテムの`ownerId`になります。`get/delete/suspend/resume/
-get-events`はいずれも、呼び出し者自身のセッションでない場合は404を返し、他ユーザーのMicroVMエンドポイントや
-出力を漏洩させません。
+CognitoのSubject(`sub`)が`SessionsTable`と`ConnectionsTable`の各アイテムの`ownerId`になります。HTTPルートは
+呼び出し者自身のものでないセッションに対して404を返し、WebSocketの`$connect`も同様に拒否します。他ユーザーの
+MicroVMエンドポイントや出力を漏洩させません。
 
 ## 🏛️ Well-Architectedとの整合性
 
 | 柱 | 本リファレンスでの対応 |
 |---|---|
 | 運用上の優秀性 | HTTP APIステージのCloudWatchアクセスログ、コントロールプレーンLambdaごと・MicroVMイメージごとの専用CloudWatchロググループ。 |
-| セキュリティ | セッションごとのVMレベル分離(Firecracker、カーネル非共有)、全ルートでのCognito JWT認可、所有者スコープのセッション/イベントレコード、最小権限のDynamoDB/Secrets Manager権限。 |
-| 信頼性 | Turnの出力はDynamoDBに保存されるためMicroVMのSuspend/終了から独立して残る。NAT Gatewayを1台のみとしているのは意図的なコスト/AZ耐性のトレードオフです -- 本番環境ではAZごとにNAT Gatewayを追加してください。 |
-| パフォーマンス効率 | MicroVMは事前初期化済みのFirecrackerスナップショット(`codex app-server`とMicroVM内HTTPサーバーが既に起動済み)から再開するためコールドブートしません。 |
-| コスト最適化 | `idlePolicy`による自動サスペンド、失効セッションのDynamoDB TTL、全体を通したPAY_PER_REQUEST課金。 |
+| セキュリティ | セッションごとのVMレベル分離(Firecracker、カーネル非共有)、全HTTPルートおよびWebSocketの`$connect`ルートでのCognitoベース認可、所有者スコープのセッション/イベント/接続レコード、最小権限のDynamoDB/Secrets Manager権限。 |
+| 信頼性 | Turnの出力はDynamoDBに保存されるためMicroVMのSuspend/終了から独立して残り、WebSocket配信は接続が切れてもポーリングへ緩やかにフォールバックする。NAT Gatewayを1台のみとしているのは意図的なコスト/AZ耐性のトレードオフです -- 本番環境ではAZごとにNAT Gatewayを追加してください。 |
+| パフォーマンス効率 | MicroVMは事前初期化済みのFirecrackerスナップショット(`codex app-server`とMicroVM内HTTPサーバーが既に起動済み)から再開するためコールドブートせず、出力は固定間隔のポーリングではなくpushでクライアントに届く。 |
+| コスト最適化 | `idlePolicy`による自動サスペンド、失効セッション/接続のDynamoDB TTL、全体を通したPAY_PER_REQUEST課金、WebSocket pushによりTurnがアイドルになった後の無駄なポーリングリクエストを回避。 |
 
 ## 💰 コスト最適化
 
 本リファレンスは、このリポジトリの他のパターンにはないコスト要素(MicroVMの実行/サスペンド時間、NAT Gateway、
-Cognito)を含みます。**ここに記載する内容を見積もりとして扱わないでください** -- 実際のワークロードのコストを
-見積もる前に、必ずご利用リージョンのAWS料金ページ(Lambda MicroVMs、NAT Gateway、Cognito、DynamoDB)を確認して
-ください。
+Cognito、WebSocket API)を含みます。**ここに記載する内容を見積もりとして扱わないでください** -- 実際の
+ワークロードのコストを見積もる前に、必ずご利用リージョンのAWS料金ページ(Lambda MicroVMs、NAT Gateway、
+Cognito、API Gateway WebSocket API、DynamoDB)を確認してください。
 
 このアーキテクチャで重要度が高い順に、おおまかなコスト*要因*を挙げます。
 
@@ -200,12 +236,16 @@ Cognito)を含みます。**ここに記載する内容を見積もりとして�
    インターネットegress以外にMicroVMが必要とするAWSサービス通信があれば、VPCエンドポイントの利用を検討してください。
 4. **Cognito** -- MAU課金が始まるまで無料利用枠が一定数のMAUをカバーします。Plus機能プラン(`AwsSolutions-COG8`、
    本実装ではサプレッション済み)を有効化すると、さらにMAU単位の追加コストが発生します。
-5. **API Gateway HTTP API + コントロールプレーンLambda** -- 上記に比べれば無視できる程度です。コントロール
-   プレーンはセッションライフサイクルとイベントポーリングの呼び出しのみを仲介し、Turnの入力トラフィックは
-   扱いません。
-6. **DynamoDB** -- PAY_PER_REQUESTと短いTTLにより、典型的なセッション量ではほぼゼロに近いコストに抑えられます。
+5. **WebSocket APIの接続分単位料金+メッセージ料金** -- 接続分単位に加えメッセージ単位でも課金されます。
+   おしゃべりなTurnにとっては、これは小さなポーリングリクエストの連続を1つの開いた接続+イベント1件あたり
+   1メッセージに置き換えるものであり、通常は積極的なポーリングより安価ですが、ポーリング単独には無い
+   コスト要素です。`forward-event`のDynamoDB Streams起動は通常のLambda呼び出しとして課金されます。
+6. **API Gateway HTTP API + コントロールプレーンLambda** -- 上記に比べれば無視できる程度です。コントロール
+   プレーンはセッションライフサイクルと出力配信の呼び出しのみを仲介し、Turnの入力トラフィックは扱いません。
+7. **DynamoDB** -- PAY_PER_REQUESTと短いTTLにより、典型的なセッション量ではほぼゼロに近いコストに抑えられます。
    おしゃべりなTurnは`codex app-server`の出力1行につき`EventsTable`へ1アイテム書き込むため、非常に高頻度な
-   イベントストリームの場合はこのテーブルの書き込みコストに注意する価値があります。
+   イベントストリームの場合はこのテーブルの書き込みコスト(および対応するStreamsトリガーの`forward-event`
+   呼び出し)に注意する価値があります。
 
 ### このパターン固有のコストに関する補足
 
@@ -213,22 +253,27 @@ Cognito)を含みます。**ここに記載する内容を見積もりとして�
   未使用のMicroVMがより早くサスペンドされますが、次のリクエスト時にレジュームのラウンドトリップが発生します。
 - `controlPlane.suspendedDurationInMinutes`は、放置されたセッションがプラットフォームによって完全に終了される
   までスナップショットストレージ料金を払い続ける期間の上限です。`sessionRecordTtlInDays`と整合させてください。
+- 生きたコーディングエージェントUIのように断続的な更新で十分なクライアントは、WebSocket接続を一切開かず
+  `get-events`のポーリングだけで済ませた方が安価な場合があります -- push経路は応答性のためのものであり、
+  正しさのために必須ではありません。
 
 ## 🔒 セキュリティ考慮事項
 
 ### 実装済み
 
 - セッションごとのVMレベル分離(Firecracker MicroVM、セッション間でカーネルを共有しない)。
-- 全コントロールプレーンルートでのCognito JWT認可(`HttpUserPoolAuthorizer`)。
-- 所有者スコープのセッション・イベントレコード(JWTの`sub`クレームに由来する`ownerId`)。
+- 全HTTPコントロールプレーンルートでのCognitoベース認可(`HttpUserPoolAuthorizer`)、およびWebSocket APIの
+  `$connect`ルートでの認可(同じユーザープールのIDトークンを検証する`WebSocketLambdaAuthorizer`)。
+- 所有者スコープのセッション・イベント・接続レコード(JWTの`ownerId`/`sub`)。
 - OpenAI APIキーはSecrets Managerにのみ存在し、イメージに焼き込まれるのはそのARNのみ。
 - 最小権限のDynamoDB(`grantReadWriteData`/`grantWriteData`/`grantReadData`をそれぞれ1つのテーブルにスコープ)
-  およびSecrets Manager(`grantRead`を対象シークレット1つにスコープ)の権限付与。
+  およびSecrets Manager(`grantRead`を対象シークレット1つにスコープ)の権限付与。`forward-event`の
+  `execute-api:ManageConnections`権限は1つのWebSocket APIステージにスコープされている。
 - MicroVM egress経路用のアウトバウンド専用セキュリティグループ(インバウンドルールなし)。
 
 ### 意図的にスコープ外(環境ごとに追加してください)
 
-- HTTP API向けのWAFv2 Web ACL。
+- HTTP API向けのWAFv2 Web ACL(WAFはWebSocket APIをサポートしません)。
 - Lambdaハンドラ自身が行う以上のリクエストボディ/スキーマバリデーション。
 - CognitoのMFAおよびPlus機能プラン(高度なセキュリティ機能)。
 - VPCフローログ。
@@ -298,13 +343,17 @@ aws cognito-idp admin-set-user-password --user-pool-id <UserPoolId> --username y
 curl -X POST "$API_URL/sessions" -H "Authorization: Bearer $ID_TOKEN"
 # => { "sessionId": "...", "state": "PENDING", "endpoint": "https://...", "authToken": { "X-aws-proxy-auth": "..." } }
 
+# 出力を書き込まれた順に受け取るためWebSocket接続を開く（WebSocketUrlはスタック出力から取得）:
+wscat -c "$WEBSOCKET_URL?sessionId=$SESSION_ID&token=$ID_TOKEN"
+
 # MicroVM自身のエンドポイントに直接JSON-RPCリクエストを送信する（実際のinitialize/thread/turnのメソッド名・
 # パラメータはCodex CLIのドキュメントを参照）:
 curl -X POST "$ENDPOINT/rpc" -H "X-aws-proxy-auth: $AUTH_TOKEN" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 
-# Turn完了まで出力をポーリングする:
+# 出力はWebSocket接続に書き込まれた順に届く。接続登録前に書き込まれた分を取得したい場合や、
+# そもそもWebSocket接続を維持したくない場合は、代わりにポーリングする:
 curl "$API_URL/sessions/$SESSION_ID/events?after=0" -H "Authorization: Bearer $ID_TOKEN"
 
 # 終了時:
@@ -325,11 +374,12 @@ npm run test:compliance -w workspaces/lambda-microvms-codex-appserver  # cdk-nag
 
 ## ⚙️ カスタマイズ
 
-### ポーリングからSSE/WebSocketへの移行
+### WebSocket経路を外してポーリングのみにする
 
-元記事では、実装をシンプルにするためポーリングを採用しつつ、SSEやWebSocketの方がより良い体験になると述べられて
-います。移行する場合は、`get-events`のリクエスト/レスポンスモデルを、`EventsTable`を真実の源泉として使い続ける
-API Gateway WebSocket API(またはSSE対応のLambdaレスポンスストリーミング構成)に置き換えてください。
+ほぼリアルタイムの更新が不要なクライアントは、`GET /sessions/{id}/events`だけを呼び、WebSocket接続を一切
+開かなくても構いません -- どちらの経路でも`EventsTable`が真実の源泉であるため、サーバー側の変更は不要です。
+WebSocketインフラを完全に削除する場合は、`WebSocketApi`/`WebSocketStage`、`ws-*`/`forward-event`の各Lambda、
+`ConnectionsTable`、`EventsTable`の`stream`プロパティを削除してください。
 
 ### MicroVMデータプレーンのIAMアクションをさらに絞り込む
 
@@ -362,6 +412,20 @@ MicroVMのCloudWatchロググループ(`MicrovmImageLogGroup`)で`[server]`/`[co
 `sessionId`を一度も受け取っていない場合、Event Handlerは各行を紐付け先不明のまま書き込まずに破棄します
 (`server/event-handler.mjs`参照)。
 
+### WebSocket接続がコード1008で即座に閉じる(あるいは`$connect`が401/404相当を返す)
+
+- 401相当の拒否: `ws-authorizer`が`token`クエリパラメータを検証できていません -- デプロイしたスタックと
+  同じユーザープール/クライアントのCognito**IDトークン**(アクセストークンではない)を渡しているか確認して
+  ください。
+- 404相当の拒否: `ws-connect`が、そのトークンの`sub`が所有する`sessionId`のセッションを見つけられていません
+  -- 同じCognitoユーザーで先に`POST /sessions`を呼んでいるか確認してください。
+
+### WebSocketは接続できるがイベントが一切届かない
+
+`ForwardEventFunctionLogGroup`で`GoneException`やその他の`PostToConnection`エラーを確認してください。何も
+ログが出ていない場合は、`EventsTable`のDynamoDB Streamsトリガー(`AWS::Lambda::EventSourceMapping`)が
+`Enabled`になっているか、実際にイベントが書き込まれているか(前項参照)を確認してください。
+
 ### `codex app-server`は起動するが即座に認証エラーになる
 
 `OPENAI_API_KEY_SECRET_ARN`環境変数が指すSecrets Managerシークレットの値が、初回デプロイ時に作成された
@@ -386,6 +450,7 @@ npm run destroy:all -w workspaces/lambda-microvms-codex-appserver --project=<pro
 
 - [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)
 - [Announcing Lambda MicroVMs (AWS Compute Blog)](https://aws.amazon.com/blogs/compute/announcing-lambda-microvms-serverless-compute-environments-with-vm-level-isolation-and-near-instant-startup/)
+- [API Gateway WebSocket APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html)
 
 ### Codex
 
@@ -393,7 +458,7 @@ npm run destroy:all -w workspaces/lambda-microvms-codex-appserver --project=<pro
 
 ### 関連アーキテクチャ
 
-- [`apigw-lambda-web-adapter`](../apigw-lambda-web-adapter/README.ja.md) -- このコントロールプレーンのルーティングが踏襲した、API Gateway + Lambdaパターン。
+- [`apigw-lambda-web-adapter`](../apigw-lambda-web-adapter/README.ja.md) -- このコントロールプレーンのHTTPルーティングが踏襲した、API Gateway + Lambdaパターン。
 
 ## 📄 ライセンス
 

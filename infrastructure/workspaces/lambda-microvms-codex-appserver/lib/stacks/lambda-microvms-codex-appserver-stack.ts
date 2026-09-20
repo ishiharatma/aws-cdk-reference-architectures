@@ -9,6 +9,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3assets from 'aws-cdk-lib/aws-s3-assets';
@@ -31,22 +32,26 @@ interface StackProps extends cdk.StackProps {
  * Modeled on the "Lambda MicroVMsで実現するServerlessなCodex App Server"
  * architecture (Japan Digital Design, Inc., 2026-09-15).
  *
- * A session control plane (API Gateway HTTP API + 6 Lambda functions) calls
- * the Lambda MicroVMs data-plane API to launch, on demand, a VM-isolated
- * MicroVM running `codex app-server` (OpenAI Codex CLI's JSON-RPC agent
- * protocol). Lambda MicroVMs has no built-in way to log into a running
- * MicroVM and stream a command's response back, so each MicroVM runs its
- * own HTTP server (src/microvm-image/server/) that (a) answers the
- * platform's lifecycle hook calls, (b) relays JSON-RPC requests from
- * clients to the `codex app-server` child process it manages, and (c)
- * captures every line codex app-server emits via an in-VM Event Handler
- * that persists it to the EventsTable below. Clients connect *directly* to
- * the MicroVM's dedicated HTTPS endpoint to drive a Turn, but *poll the
- * control plane's get-events Lambda* (not the MicroVM) for output, so a
- * Thread's content stays readable even after its MicroVM is SUSPENDED or
- * terminated. The control plane itself only ever brokers session lifecycle
- * (start / status / suspend / resume / end / events); it never proxies
- * app-server traffic.
+ * A session control plane (an HTTP API with 7 Lambda functions, plus a
+ * WebSocket API with 3 more) calls the Lambda MicroVMs data-plane API to
+ * launch, on demand, a VM-isolated MicroVM running `codex app-server`
+ * (OpenAI Codex CLI's JSON-RPC agent protocol). Lambda MicroVMs has no
+ * built-in way to log into a running MicroVM and stream a command's
+ * response back, so each MicroVM runs its own HTTP server
+ * (src/microvm-image/server/) that (a) answers the platform's lifecycle
+ * hook calls, (b) relays JSON-RPC requests from clients to the
+ * `codex app-server` child process it manages, and (c) captures every line
+ * codex app-server emits via an in-VM Event Handler that persists it to
+ * the EventsTable below. Clients connect *directly* to the MicroVM's
+ * dedicated HTTPS endpoint to drive a Turn, but read output through the
+ * control plane rather than the MicroVM: EventsTable is the durable source
+ * of truth (readable via GET .../events after the MicroVM is SUSPENDED or
+ * terminated), and a DynamoDB Streams-triggered forward-event Lambda also
+ * pushes each new event over the WebSocket API in near-real-time to
+ * whichever connections are watching that session, so a client is not
+ * limited to polling. The control plane itself only ever brokers session
+ * lifecycle and output delivery; it never proxies app-server *input*
+ * traffic.
  */
 export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -110,6 +115,31 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       timeToLiveAttribute: 'expiresAt',
       removalPolicy,
+      // Consumed by forward-event.ts to push new codex app-server output
+      // to connected WebSocket clients in near-real-time, in addition to
+      // (not instead of) get-events's pull-based polling read path.
+      stream: dynamodb.StreamViewType.NEW_IMAGE,
+    });
+
+    // ------------------------------------------------------------------
+    // WebSocket connections: which client connections are watching which
+    // session, so forward-event.ts knows where to push new events. The
+    // ByConnectionId GSI lets ws-disconnect.ts look up a connection's
+    // session using only the connectionId API Gateway hands it.
+    // ------------------------------------------------------------------
+    const connectionsTable = new dynamodb.Table(this, 'ConnectionsTable', {
+      tableName: `${namePrefix}-connections`,
+      partitionKey: { name: 'sessionId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'connectionId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      timeToLiveAttribute: 'expiresAt',
+      removalPolicy,
+    });
+    connectionsTable.addGlobalSecondaryIndex({
+      indexName: 'ByConnectionId',
+      partitionKey: { name: 'connectionId', type: dynamodb.AttributeType.STRING },
     });
 
     // ------------------------------------------------------------------
@@ -389,9 +419,119 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       integration: new apigwv2Integrations.HttpLambdaIntegration('GetEventsIntegration', getEventsFn),
     });
 
+    // ------------------------------------------------------------------
+    // WebSocket API: near-real-time push of EventsTable writes to clients,
+    // in addition to (not instead of) get-events's pull-based polling.
+    // ------------------------------------------------------------------
+    const wsAuthorizerFn = new lambdaNodejs.NodejsFunction(this, 'WsAuthorizerFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: 'src/control-plane/ws-authorizer.ts',
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
+      environment: {
+        USER_POOL_ID: userPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+      },
+      logGroup: new logs.LogGroup(this, 'WsAuthorizerFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy,
+      }),
+    });
+
+    const wsConnectFn = new lambdaNodejs.NodejsFunction(this, 'WsConnectFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: 'src/control-plane/ws-connect.ts',
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
+      environment: {
+        SESSIONS_TABLE_NAME: sessionsTable.tableName,
+        CONNECTIONS_TABLE_NAME: connectionsTable.tableName,
+      },
+      logGroup: new logs.LogGroup(this, 'WsConnectFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy,
+      }),
+    });
+    sessionsTable.grantReadData(wsConnectFn);
+    connectionsTable.grantWriteData(wsConnectFn);
+
+    const wsDisconnectFn = new lambdaNodejs.NodejsFunction(this, 'WsDisconnectFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: 'src/control-plane/ws-disconnect.ts',
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 256,
+      environment: {
+        CONNECTIONS_TABLE_NAME: connectionsTable.tableName,
+      },
+      logGroup: new logs.LogGroup(this, 'WsDisconnectFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy,
+      }),
+    });
+    connectionsTable.grantReadWriteData(wsDisconnectFn);
+
+    const webSocketApi = new apigwv2.WebSocketApi(this, 'WebSocketApi', {
+      apiName: `${namePrefix}-events-ws`,
+      description: 'Near-real-time push of codex app-server output (EventsTable writes) to connected clients',
+      connectRouteOptions: {
+        integration: new apigwv2Integrations.WebSocketLambdaIntegration('WsConnectIntegration', wsConnectFn),
+        // A Cognito ID token cannot ride a WebSocket handshake's
+        // Authorization header from a browser, so it travels as a `token`
+        // query string parameter instead (see ws-authorizer.ts).
+        authorizer: new apigwv2Authorizers.WebSocketLambdaAuthorizer('WsConnectAuthorizer', wsAuthorizerFn, {
+          identitySource: ['route.request.querystring.token'],
+        }),
+      },
+      disconnectRouteOptions: {
+        integration: new apigwv2Integrations.WebSocketLambdaIntegration('WsDisconnectIntegration', wsDisconnectFn),
+      },
+    });
+
+    const webSocketStage = new apigwv2.WebSocketStage(this, 'WebSocketApiStage', {
+      webSocketApi,
+      stageName: environment,
+      autoDeploy: true,
+    });
+
+    const forwardEventFn = new lambdaNodejs.NodejsFunction(this, 'ForwardEventFunction', {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: 'src/control-plane/forward-event.ts',
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      environment: {
+        CONNECTIONS_TABLE_NAME: connectionsTable.tableName,
+        WEBSOCKET_CALLBACK_URL: webSocketStage.callbackUrl,
+      },
+      logGroup: new logs.LogGroup(this, 'ForwardEventFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy,
+      }),
+    });
+    connectionsTable.grantReadWriteData(forwardEventFn);
+    webSocketStage.grantManagementApiAccess(forwardEventFn);
+    forwardEventFn.addEventSource(
+      new lambdaEventSources.DynamoEventSource(eventsTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 10,
+        retryAttempts: 3,
+      }),
+    );
+
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: stage.url,
       description: 'Codex session control-plane API URL',
+    });
+    new cdk.CfnOutput(this, 'WebSocketUrl', {
+      value: webSocketStage.url,
+      description: 'Connect with ?sessionId=...&token=<Cognito ID token> to receive near-real-time session events',
     });
     new cdk.CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
     new cdk.CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });

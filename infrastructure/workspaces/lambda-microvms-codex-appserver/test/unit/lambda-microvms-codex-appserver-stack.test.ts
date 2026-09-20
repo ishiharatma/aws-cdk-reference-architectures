@@ -79,8 +79,8 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
   });
 
   describe('Session store', () => {
-    test('sessions and events tables, both on-demand with TTL, SSE, and point-in-time recovery', () => {
-      template.resourceCountIs('AWS::DynamoDB::Table', 2);
+    test('sessions and events tables are on-demand with SSE and point-in-time recovery', () => {
+      template.resourceCountIs('AWS::DynamoDB::Table', 3);
       template.hasResourceProperties('AWS::DynamoDB::Table', {
         BillingMode: 'PAY_PER_REQUEST',
         SSESpecification: { SSEEnabled: true },
@@ -89,22 +89,44 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
       });
     });
 
-    test('events table is keyed by sessionId + sequence for ordered polling', () => {
+    test('events table is keyed by sessionId + sequence for ordered polling, and streams to forward-event', () => {
       template.hasResourceProperties('AWS::DynamoDB::Table', {
         KeySchema: [
           { AttributeName: 'sessionId', KeyType: 'HASH' },
           { AttributeName: 'sequence', KeyType: 'RANGE' },
         ],
+        StreamSpecification: { StreamViewType: 'NEW_IMAGE' },
+      });
+    });
+
+    test('connections table is keyed by sessionId + connectionId with a ByConnectionId GSI', () => {
+      template.hasResourceProperties('AWS::DynamoDB::Table', {
+        KeySchema: [
+          { AttributeName: 'sessionId', KeyType: 'HASH' },
+          { AttributeName: 'connectionId', KeyType: 'RANGE' },
+        ],
+        GlobalSecondaryIndexes: Match.arrayWith([
+          Match.objectLike({
+            IndexName: 'ByConnectionId',
+            KeySchema: [{ AttributeName: 'connectionId', KeyType: 'HASH' }],
+          }),
+        ]),
       });
     });
   });
 
   describe('Control plane Lambdas', () => {
-    test('six session lifecycle functions on the ARM64 Node.js 22 runtime', () => {
-      template.resourceCountIs('AWS::Lambda::Function', 6);
+    test('ten Lambda functions (session lifecycle + WebSocket) on the ARM64 Node.js 22 runtime', () => {
+      template.resourceCountIs('AWS::Lambda::Function', 10);
       template.hasResourceProperties('AWS::Lambda::Function', {
         Runtime: 'nodejs22.x',
         Architectures: ['arm64'],
+      });
+    });
+
+    test('forward-event is wired to the events table stream', () => {
+      template.hasResourceProperties('AWS::Lambda::EventSourceMapping', {
+        StartingPosition: 'LATEST',
       });
     });
 
@@ -134,22 +156,26 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
   });
 
   describe('Auth', () => {
-    test('one Cognito user pool backs the HTTP API JWT authorizer', () => {
+    test('one Cognito user pool backs both the HTTP JWT authorizer and the WebSocket Lambda authorizer', () => {
       template.resourceCountIs('AWS::Cognito::UserPool', 1);
-      template.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 1);
+      template.resourceCountIs('AWS::ApiGatewayV2::Authorizer', 2);
+      template.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', { AuthorizerType: 'JWT' });
       template.hasResourceProperties('AWS::ApiGatewayV2::Authorizer', {
-        AuthorizerType: 'JWT',
+        AuthorizerType: 'REQUEST',
+        IdentitySource: ['route.request.querystring.token'],
       });
     });
   });
 
   describe('API Gateway', () => {
     test('one HTTP API with the six session routes', () => {
-      template.resourceCountIs('AWS::ApiGatewayV2::Api', 1);
-      template.resourceCountIs('AWS::ApiGatewayV2::Route', 6);
+      template.resourceCountIs('AWS::ApiGatewayV2::Api', 2);
+      template.hasResourceProperties('AWS::ApiGatewayV2::Api', { ProtocolType: 'HTTP' });
+      template.hasResourceProperties('AWS::ApiGatewayV2::Api', { ProtocolType: 'WEBSOCKET' });
+      template.resourceCountIs('AWS::ApiGatewayV2::Route', 8);
     });
 
-    test('stage has access logging enabled', () => {
+    test('HTTP stage has access logging enabled', () => {
       template.hasResourceProperties('AWS::ApiGatewayV2::Stage', {
         AccessLogSettings: Match.objectLike({ DestinationArn: Match.anyValue() }),
       });
@@ -162,6 +188,7 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
       expect(Object.keys(outputs)).toEqual(
         expect.arrayContaining([
           'ApiUrl',
+          'WebSocketUrl',
           'UserPoolId',
           'UserPoolClientId',
           'MicrovmImageArn',

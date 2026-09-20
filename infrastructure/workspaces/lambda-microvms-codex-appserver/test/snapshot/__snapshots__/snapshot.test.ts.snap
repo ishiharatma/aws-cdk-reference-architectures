@@ -56,6 +56,25 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
         "Ref": "UserPool6BA7E5F2",
       },
     },
+    "WebSocketUrl": {
+      "Description": "Connect with ?sessionId=...&token=<Cognito ID token> to receive near-real-time session events",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "wss://",
+            {
+              "Ref": "WebSocketApi34BCF99B",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/test",
+          ],
+        ],
+      },
+    },
   },
   "Parameters": {
     "BootstrapVersion": {
@@ -144,6 +163,59 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
         ],
       },
       "Type": "AWS::Lambda::MicrovmImage",
+    },
+    "ConnectionsTable8000B8A1": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "sessionId",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "connectionId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "ByConnectionId",
+            "KeySchema": [
+              {
+                "AttributeName": "connectionId",
+                "KeyType": "HASH",
+              },
+            ],
+            "Projection": {
+              "ProjectionType": "ALL",
+            },
+          },
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "sessionId",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "connectionId",
+            "KeyType": "RANGE",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-codex-connections",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiresAt",
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
     },
     "CreateSessionFunction9E798546": {
       "DependsOn": [
@@ -529,6 +601,9 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
         "SSESpecification": {
           "SSEEnabled": true,
         },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_IMAGE",
+        },
         "TableName": "test-test-codex-events",
         "TimeToLiveSpecification": {
           "AttributeName": "expiresAt",
@@ -537,6 +612,237 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
       },
       "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Delete",
+    },
+    "ForwardEventFunction52A6933F": {
+      "DependsOn": [
+        "ForwardEventFunctionServiceRoleDefaultPolicy325A9E52",
+        "ForwardEventFunctionServiceRole864DF4E1",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "3db5b6fa78986057e3571bb1d1d2802779c05fc3e47572bc46d82cfd8f227f87.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "CONNECTIONS_TABLE_NAME": {
+              "Ref": "ConnectionsTable8000B8A1",
+            },
+            "WEBSOCKET_CALLBACK_URL": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "WebSocketApi34BCF99B",
+                  },
+                  ".execute-api.ap-northeast-1.",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/test",
+                ],
+              ],
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ForwardEventFunctionLogGroupB34152D8",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "ForwardEventFunctionServiceRole864DF4E1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ForwardEventFunctionDynamoDBEventSourceLambdaMicrovmsCodexAppserverEventsTable7EA48D43E4996F41": {
+      "Properties": {
+        "BatchSize": 10,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "EventsTableD24865E5",
+            "StreamArn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "ForwardEventFunction52A6933F",
+        },
+        "MaximumRetryAttempts": 3,
+        "StartingPosition": "LATEST",
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "ForwardEventFunctionLogGroupB34152D8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ForwardEventFunctionServiceRole864DF4E1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ForwardEventFunctionServiceRoleDefaultPolicy325A9E52": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConnectionsTable8000B8A1",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConnectionsTable8000B8A1",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConnectionsTable8000B8A1",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConnectionsTable8000B8A1",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "execute-api:ManageConnections",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":execute-api:ap-northeast-1:123456789012:",
+                    {
+                      "Ref": "WebSocketApi34BCF99B",
+                    },
+                    "/test/*/@connections/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "dynamodb:ListStreams",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "dynamodb:DescribeStream",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "EventsTableD24865E5",
+                  "StreamArn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ForwardEventFunctionServiceRoleDefaultPolicy325A9E52",
+        "Roles": [
+          {
+            "Ref": "ForwardEventFunctionServiceRole864DF4E1",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "GetEventsFunction162D25CF": {
       "DependsOn": [
@@ -2372,6 +2678,648 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
       },
       "Type": "AWS::EC2::Subnet",
     },
+    "WebSocketApi34BCF99B": {
+      "Properties": {
+        "Description": "Near-real-time push of codex app-server output (EventsTable writes) to connected clients",
+        "Name": "test-test-codex-events-ws",
+        "ProtocolType": "WEBSOCKET",
+        "RouteSelectionExpression": "$request.body.action",
+      },
+      "Type": "AWS::ApiGatewayV2::Api",
+    },
+    "WebSocketApiLambdaMicrovmsCodexAppserverWebSocketApiWsConnectAuthorizer4B583FA5PermissionC6FE0BFF": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WsAuthorizerFunction679538A5",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebSocketApi34BCF99B",
+              },
+              "/authorizers/",
+              {
+                "Ref": "WebSocketApiWsConnectAuthorizer4F37F687",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebSocketApiStage5BD414E3": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "AutoDeploy": true,
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGatewayV2::Stage",
+    },
+    "WebSocketApiWsConnectAuthorizer4F37F687": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "AuthorizerType": "REQUEST",
+        "AuthorizerUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WsAuthorizerFunction679538A5",
+                  "Arn",
+                ],
+              },
+              "/invocations",
+            ],
+          ],
+        },
+        "IdentitySource": [
+          "route.request.querystring.token",
+        ],
+        "Name": "WsConnectAuthorizer",
+      },
+      "Type": "AWS::ApiGatewayV2::Authorizer",
+    },
+    "WebSocketApiconnectRoute846149DD": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "AuthorizationType": "CUSTOM",
+        "AuthorizerId": {
+          "Ref": "WebSocketApiWsConnectAuthorizer4F37F687",
+        },
+        "RouteKey": "$connect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketApiconnectRouteWsConnectIntegrationFB6DEA67",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "WebSocketApiconnectRouteWsConnectIntegrationFB6DEA67": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WsConnectFunction1B8FD7A0",
+                  "Arn",
+                ],
+              },
+              "/invocations",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "WebSocketApiconnectRouteWsConnectIntegrationPermission2256A8D8": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WsConnectFunction1B8FD7A0",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebSocketApi34BCF99B",
+              },
+              "/*$connect",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebSocketApidisconnectRouteC181A19C": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$disconnect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketApidisconnectRouteWsDisconnectIntegration29C46878",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "WebSocketApidisconnectRouteWsDisconnectIntegration29C46878": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi34BCF99B",
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WsDisconnectFunction340F3D71",
+                  "Arn",
+                ],
+              },
+              "/invocations",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "WebSocketApidisconnectRouteWsDisconnectIntegrationPermission0D98673D": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WsDisconnectFunction340F3D71",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebSocketApi34BCF99B",
+              },
+              "/*$disconnect",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WsAuthorizerFunction679538A5": {
+      "DependsOn": [
+        "WsAuthorizerFunctionServiceRole25062175",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "c20c3344b3f36ac3669893626291b96c48d731f4dcb7eb0e0ef8ea55c36e6ff8.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "USER_POOL_CLIENT_ID": {
+              "Ref": "UserPoolUserPoolClient40176907",
+            },
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WsAuthorizerFunctionLogGroup062CBA0E",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WsAuthorizerFunctionServiceRole25062175",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WsAuthorizerFunctionLogGroup062CBA0E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WsAuthorizerFunctionServiceRole25062175": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WsConnectFunction1B8FD7A0": {
+      "DependsOn": [
+        "WsConnectFunctionServiceRoleDefaultPolicyC923FA46",
+        "WsConnectFunctionServiceRoleCE3E3163",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "8ee042b10aec2c1751e14684ca1ae01c4f5c1073e8d23d4e00ab5e929ed8e2df.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "CONNECTIONS_TABLE_NAME": {
+              "Ref": "ConnectionsTable8000B8A1",
+            },
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WsConnectFunctionLogGroup5F978577",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WsConnectFunctionServiceRoleCE3E3163",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WsConnectFunctionLogGroup5F978577": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WsConnectFunctionServiceRoleCE3E3163": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WsConnectFunctionServiceRoleDefaultPolicyC923FA46": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConnectionsTable8000B8A1",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConnectionsTable8000B8A1",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WsConnectFunctionServiceRoleDefaultPolicyC923FA46",
+        "Roles": [
+          {
+            "Ref": "WsConnectFunctionServiceRoleCE3E3163",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WsDisconnectFunction340F3D71": {
+      "DependsOn": [
+        "WsDisconnectFunctionServiceRoleDefaultPolicyC0F5D4B5",
+        "WsDisconnectFunctionServiceRoleEBDDAD2B",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "0726cb4b229b1952e4fc7536d444ebbc3f2ef281848ea7cb5477ffb3216822ce.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "CONNECTIONS_TABLE_NAME": {
+              "Ref": "ConnectionsTable8000B8A1",
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WsDisconnectFunctionLogGroup49FFD7A8",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WsDisconnectFunctionServiceRoleEBDDAD2B",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WsDisconnectFunctionLogGroup49FFD7A8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WsDisconnectFunctionServiceRoleDefaultPolicyC0F5D4B5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConnectionsTable8000B8A1",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConnectionsTable8000B8A1",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConnectionsTable8000B8A1",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ConnectionsTable8000B8A1",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WsDisconnectFunctionServiceRoleDefaultPolicyC0F5D4B5",
+        "Roles": [
+          {
+            "Ref": "WsDisconnectFunctionServiceRoleEBDDAD2B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WsDisconnectFunctionServiceRoleEBDDAD2B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
   },
   "Rules": {
     "CheckBootstrapVersion": {
@@ -2405,14 +3353,14 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
 
 exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`] = `
 {
-  "AWS::ApiGatewayV2::Api": 1,
-  "AWS::ApiGatewayV2::Authorizer": 1,
-  "AWS::ApiGatewayV2::Integration": 6,
-  "AWS::ApiGatewayV2::Route": 6,
-  "AWS::ApiGatewayV2::Stage": 1,
+  "AWS::ApiGatewayV2::Api": 2,
+  "AWS::ApiGatewayV2::Authorizer": 2,
+  "AWS::ApiGatewayV2::Integration": 8,
+  "AWS::ApiGatewayV2::Route": 8,
+  "AWS::ApiGatewayV2::Stage": 2,
   "AWS::Cognito::UserPool": 1,
   "AWS::Cognito::UserPoolClient": 1,
-  "AWS::DynamoDB::Table": 2,
+  "AWS::DynamoDB::Table": 3,
   "AWS::EC2::EIP": 1,
   "AWS::EC2::InternetGateway": 1,
   "AWS::EC2::NatGateway": 1,
@@ -2423,13 +3371,14 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`
   "AWS::EC2::SubnetRouteTableAssociation": 4,
   "AWS::EC2::VPC": 1,
   "AWS::EC2::VPCGatewayAttachment": 1,
-  "AWS::IAM::Policy": 8,
-  "AWS::IAM::Role": 8,
-  "AWS::Lambda::Function": 6,
+  "AWS::IAM::Policy": 11,
+  "AWS::IAM::Role": 12,
+  "AWS::Lambda::EventSourceMapping": 1,
+  "AWS::Lambda::Function": 10,
   "AWS::Lambda::MicrovmImage": 1,
   "AWS::Lambda::NetworkConnector": 1,
-  "AWS::Lambda::Permission": 6,
-  "AWS::Logs::LogGroup": 8,
+  "AWS::Lambda::Permission": 9,
+  "AWS::Logs::LogGroup": 12,
   "AWS::SecretsManager::Secret": 1,
 }
 `;

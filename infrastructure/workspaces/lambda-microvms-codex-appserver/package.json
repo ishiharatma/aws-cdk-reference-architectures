@@ -45,10 +45,13 @@
     "typescript": "~6.0.3"
   },
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.0.0",
     "@aws-sdk/client-dynamodb": "^3.0.0",
     "@aws-sdk/client-lambda-microvms": "^3.0.0",
     "@aws-sdk/lib-dynamodb": "^3.0.0",
+    "@aws-sdk/util-dynamodb": "^3.0.0",
     "aws-cdk-lib": "^2.232.1",
+    "aws-jwt-verify": "^5.0.0",
     "constructs": "^10.0.0"
   }
 }

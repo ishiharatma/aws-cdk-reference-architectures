@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 700" font-family="Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="Helvetica,Arial,sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
     </marker>
   </defs>
-  <rect x="0" y="0" width="1040" height="700" fill="#ffffff"/>
+  <rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>
   <text x="20" y="28" font-size="18" font-weight="bold" fill="#111">Serverless Codex App Server on AWS Lambda MicroVMs</text>
 
   <!-- Client -->
-  <rect x="20" y="90" width="150" height="70" rx="6" fill="#f2f2f2" stroke="#666"/>
-  <text x="95" y="120" font-size="13" text-anchor="middle" fill="#111">Client</text>
-  <text x="95" y="136" font-size="11" text-anchor="middle" fill="#555">(Web UI / IDE / CLI)</text>
+  <rect x="20" y="120" width="150" height="70" rx="6" fill="#f2f2f2" stroke="#666"/>
+  <text x="95" y="150" font-size="13" text-anchor="middle" fill="#111">Client</text>
+  <text x="95" y="166" font-size="11" text-anchor="middle" fill="#555">(Web UI / IDE / CLI)</text>
 
-  <!-- Control plane box -->
+  <!-- HTTP control plane box -->
   <rect x="230" y="55" width="420" height="300" rx="8" fill="#eef4fb" stroke="#2b6cb0"/>
-  <text x="245" y="75" font-size="13" font-weight="bold" fill="#2b6cb0">Control plane</text>
+  <text x="245" y="75" font-size="13" font-weight="bold" fill="#2b6cb0">Control plane: HTTP API</text>
 
   <rect x="250" y="90" width="180" height="40" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
   <text x="340" y="114" font-size="12" text-anchor="middle" fill="#111">API Gateway HTTP API</text>
@@ -25,72 +25,101 @@
   <text x="540" y="121" font-size="10" text-anchor="middle" fill="#555">JWT Authorizer</text>
 
   <rect x="250" y="145" width="380" height="80" rx="5" fill="#ffffff" stroke="#2b6cb0"/>
-  <text x="440" y="163" font-size="12" text-anchor="middle" fill="#111">5 session-lifecycle Lambda functions</text>
-  <text x="440" y="181" font-size="10" text-anchor="middle" fill="#555">create / get / delete / suspend / resume</text>
+  <text x="440" y="163" font-size="12" text-anchor="middle" fill="#111">6 session-lifecycle Lambda functions</text>
+  <text x="440" y="181" font-size="10" text-anchor="middle" fill="#555">create / get / delete / suspend / resume / get-events</text>
   <text x="440" y="197" font-size="10" text-anchor="middle" fill="#555">RunMicrovm・GetMicrovm・SuspendMicrovm・ResumeMicrovm・</text>
   <text x="440" y="212" font-size="10" text-anchor="middle" fill="#555">TerminateMicrovm・CreateMicrovmAuthToken</text>
 
-  <rect x="250" y="235" width="180" height="34" rx="5" fill="#e6fffa" stroke="#2c7a7b"/>
-  <text x="340" y="256" font-size="11" text-anchor="middle" fill="#234e52">get-events Lambda (polling)</text>
+  <rect x="250" y="235" width="180" height="34" rx="5" fill="#f7fafc" stroke="#a0aec0"/>
+  <text x="340" y="256" font-size="11" text-anchor="middle" fill="#333">SessionsTable</text>
 
-  <rect x="450" y="235" width="90" height="34" rx="4" fill="#f7fafc" stroke="#a0aec0"/>
-  <text x="495" y="256" font-size="10" text-anchor="middle" fill="#333">SessionsTable</text>
-
-  <rect x="550" y="235" width="80" height="34" rx="4" fill="#e6fffa" stroke="#2c7a7b"/>
-  <text x="590" y="256" font-size="10" text-anchor="middle" fill="#234e52">EventsTable</text>
+  <rect x="450" y="235" width="180" height="34" rx="4" fill="#e6fffa" stroke="#2c7a7b"/>
+  <text x="540" y="256" font-size="11" text-anchor="middle" fill="#234e52">EventsTable (pull read)</text>
 
   <rect x="250" y="285" width="380" height="26" rx="4" fill="#f7fafc" stroke="#a0aec0"/>
   <text x="440" y="302" font-size="10" text-anchor="middle" fill="#333">Secrets Manager (OpenAI API key)</text>
+
+  <!-- WebSocket control plane box -->
+  <rect x="230" y="375" width="420" height="290" rx="8" fill="#f5eefb" stroke="#6b46c1"/>
+  <text x="245" y="395" font-size="13" font-weight="bold" fill="#6b46c1">Control plane: WebSocket API</text>
+
+  <rect x="250" y="410" width="380" height="30" rx="5" fill="#ffffff" stroke="#6b46c1"/>
+  <text x="440" y="430" font-size="11" text-anchor="middle" fill="#111">API Gateway WebSocket API ($connect / $disconnect)</text>
+
+  <rect x="250" y="450" width="180" height="44" rx="5" fill="#ffffff" stroke="#6b46c1"/>
+  <text x="340" y="468" font-size="10" text-anchor="middle" fill="#111">ws-authorizer</text>
+  <text x="340" y="482" font-size="9" text-anchor="middle" fill="#555">verifies Cognito ID token</text>
+
+  <rect x="450" y="450" width="180" height="44" rx="5" fill="#ffffff" stroke="#6b46c1"/>
+  <text x="540" y="468" font-size="10" text-anchor="middle" fill="#111">ws-connect / ws-disconnect</text>
+  <text x="540" y="482" font-size="9" text-anchor="middle" fill="#555">register / deregister</text>
+
+  <rect x="250" y="505" width="180" height="30" rx="4" fill="#f7fafc" stroke="#a0aec0"/>
+  <text x="340" y="525" font-size="10" text-anchor="middle" fill="#333">ConnectionsTable</text>
+
+  <rect x="450" y="505" width="180" height="30" rx="4" fill="#e6fffa" stroke="#2c7a7b"/>
+  <text x="540" y="525" font-size="10" text-anchor="middle" fill="#234e52">forward-event Lambda</text>
+
+  <text x="440" y="555" font-size="9" text-anchor="middle" fill="#6b46c1">DynamoDB Streams (NEW_IMAGE) on EventsTable triggers forward-event,</text>
+  <text x="440" y="568" font-size="9" text-anchor="middle" fill="#6b46c1">which queries ConnectionsTable and calls PostToConnection (push)</text>
 
   <!-- Data plane box -->
   <rect x="700" y="55" width="320" height="480" rx="8" fill="#fdf3e7" stroke="#c05621"/>
   <text x="715" y="75" font-size="13" font-weight="bold" fill="#c05621">Data plane (per session)</text>
 
-  <rect x="715" y="95" width="290" height="55" rx="5" fill="#ffffff" stroke="#c05621"/>
-  <text x="860" y="117" font-size="12" text-anchor="middle" fill="#111">AWS::Lambda::MicrovmImage</text>
-  <text x="860" y="134" font-size="10" text-anchor="middle" fill="#555">Dockerfile + in-VM HTTP server (Node.js)</text>
+  <rect x="715" y="95" width="290" height="50" rx="5" fill="#ffffff" stroke="#c05621"/>
+  <text x="860" y="115" font-size="12" text-anchor="middle" fill="#111">AWS::Lambda::MicrovmImage</text>
+  <text x="860" y="131" font-size="10" text-anchor="middle" fill="#555">Dockerfile + in-VM HTTP server (Node.js)</text>
 
-  <rect x="715" y="165" width="290" height="230" rx="5" fill="#fff7ed" stroke="#c05621"/>
-  <text x="860" y="185" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">MicroVM (Firecracker)</text>
-  <text x="860" y="200" font-size="10" text-anchor="middle" fill="#555">VM-isolated, dedicated HTTPS endpoint</text>
+  <rect x="715" y="160" width="290" height="225" rx="5" fill="#fff7ed" stroke="#c05621"/>
+  <text x="860" y="180" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">MicroVM (Firecracker)</text>
+  <text x="860" y="195" font-size="10" text-anchor="middle" fill="#555">VM-isolated, dedicated HTTPS endpoint</text>
 
-  <rect x="730" y="210" width="260" height="60" rx="4" fill="#ffffff" stroke="#c05621"/>
-  <text x="860" y="228" font-size="10" text-anchor="middle" fill="#111">in-VM HTTP server (server/index.mjs)</text>
-  <text x="860" y="242" font-size="9" text-anchor="middle" fill="#555">GET /ready · POST /run,/suspend,/resume,/terminate</text>
-  <text x="860" y="255" font-size="9" text-anchor="middle" fill="#555">POST /rpc (JSON-RPC relay)</text>
+  <rect x="730" y="205" width="260" height="60" rx="4" fill="#ffffff" stroke="#c05621"/>
+  <text x="860" y="223" font-size="10" text-anchor="middle" fill="#111">in-VM HTTP server (server/index.mjs)</text>
+  <text x="860" y="237" font-size="9" text-anchor="middle" fill="#555">GET /ready · POST /run,/suspend,/resume,/terminate</text>
+  <text x="860" y="250" font-size="9" text-anchor="middle" fill="#555">POST /rpc (JSON-RPC relay)</text>
 
-  <rect x="730" y="278" width="260" height="34" rx="4" fill="#ffffff" stroke="#c05621"/>
-  <text x="860" y="299" font-size="10" text-anchor="middle" fill="#111">codex app-server (child process, stdio JSON-RPC)</text>
+  <rect x="730" y="273" width="260" height="32" rx="4" fill="#ffffff" stroke="#c05621"/>
+  <text x="860" y="293" font-size="10" text-anchor="middle" fill="#111">codex app-server (child process, stdio JSON-RPC)</text>
 
-  <rect x="730" y="320" width="260" height="34" rx="4" fill="#e6fffa" stroke="#2c7a7b"/>
-  <text x="860" y="341" font-size="10" text-anchor="middle" fill="#234e52">Event Handler → EventsTable (every output line)</text>
+  <rect x="730" y="313" width="260" height="32" rx="4" fill="#e6fffa" stroke="#2c7a7b"/>
+  <text x="860" y="333" font-size="10" text-anchor="middle" fill="#234e52">Event Handler → EventsTable (every output line)</text>
 
-  <text x="860" y="375" font-size="9" text-anchor="middle" fill="#777">RUNNING ⇄ SUSPENDED (idlePolicy)</text>
+  <text x="860" y="368" font-size="9" text-anchor="middle" fill="#777">RUNNING ⇄ SUSPENDED (idlePolicy)</text>
 
-  <rect x="715" y="410" width="290" height="45" rx="5" fill="#ffffff" stroke="#c05621"/>
-  <text x="860" y="430" font-size="11" text-anchor="middle" fill="#111">AWS::Lambda::NetworkConnector</text>
-  <text x="860" y="445" font-size="10" text-anchor="middle" fill="#555">VPC egress (1x NAT Gateway)</text>
+  <rect x="715" y="400" width="290" height="45" rx="5" fill="#ffffff" stroke="#c05621"/>
+  <text x="860" y="420" font-size="11" text-anchor="middle" fill="#111">AWS::Lambda::NetworkConnector</text>
+  <text x="860" y="435" font-size="10" text-anchor="middle" fill="#555">VPC egress (1x NAT Gateway)</text>
 
-  <rect x="715" y="470" width="290" height="45" rx="5" fill="#f2f2f2" stroke="#666"/>
-  <text x="860" y="497" font-size="11" text-anchor="middle" fill="#111">OpenAI API</text>
+  <rect x="715" y="460" width="290" height="45" rx="5" fill="#f2f2f2" stroke="#666"/>
+  <text x="860" y="487" font-size="11" text-anchor="middle" fill="#111">OpenAI API</text>
 
   <!-- Arrows -->
-  <path d="M170,120 L250,110" stroke="#444" fill="none" marker-end="url(#arrow)"/>
+  <path d="M170,140 L250,115" stroke="#444" fill="none" marker-end="url(#arrow)"/>
   <text x="180" y="105" font-size="10" fill="#444">1. POST /sessions (JWT)</text>
 
   <path d="M440,225 L440,300 L700,235" stroke="#444" fill="none" marker-end="url(#arrow)"/>
-  <text x="450" y="360" font-size="10" fill="#444">RunMicrovm(runHookPayload={sessionId}) / Get / Suspend / Resume / Terminate</text>
+  <text x="450" y="365" font-size="9" fill="#444">RunMicrovm(runHookPayload={sessionId}) / Get / Suspend / Resume / Terminate</text>
 
-  <path d="M860,395 L860,410" stroke="#444" fill="none" marker-end="url(#arrow)"/>
-  <path d="M860,455 L860,470" stroke="#444" fill="none" marker-end="url(#arrow)"/>
+  <path d="M860,385 L860,400" stroke="#444" fill="none" marker-end="url(#arrow)"/>
+  <path d="M860,445 L860,460" stroke="#444" fill="none" marker-end="url(#arrow)"/>
 
-  <path d="M700,240 Q460,560 95,165" stroke="#c05621" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="330" y="565" font-size="10" fill="#c05621">2. POST {endpoint}/rpc + X-aws-proxy-auth, direct to the MicroVM</text>
+  <path d="M700,240 Q460,660 95,190" stroke="#c05621" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="330" y="668" font-size="10" fill="#c05621">2. POST {endpoint}/rpc + X-aws-proxy-auth, direct to the MicroVM</text>
 
-  <path d="M590,269 L590,290 L170,150" stroke="#2c7a7b" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="200" y="580" font-size="10" fill="#2c7a7b">3. GET /sessions/{id}/events?after=N (poll until Turn ends)</text>
+  <path d="M170,175 L250,425" stroke="#6b46c1" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="150" y="290" font-size="9" fill="#6b46c1" transform="rotate(-84 150 290)">3a. WS connect ?sessionId=..&amp;token=..</text>
 
-  <text x="20" y="620" font-size="10" fill="#777">Control plane brokers session lifecycle and output polling only; it never proxies /rpc (Turn input) traffic.</text>
-  <text x="20" y="638" font-size="10" fill="#777">Output survives MicroVM SUSPEND/terminate because it lives in EventsTable, not in the MicroVM.</text>
-  <text x="20" y="656" font-size="10" fill="#777">See README.md / README.ja.md for the full component table and design rationale.</text>
+  <path d="M730,330 Q680,470 630,460" stroke="#2c7a7b" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <path d="M540,505 L170,180" stroke="#2c7a7b" fill="none" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="230" y="350" font-size="9" fill="#2c7a7b" transform="rotate(-56 230 350)">push: new events</text>
+
+  <path d="M540,235 L170,155" stroke="#2c7a7b" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="200" y="215" font-size="9" fill="#2c7a7b">3b. GET .../events?after=N (pull, catch-up/fallback)</text>
+
+  <text x="20" y="700" font-size="10" fill="#777">Control plane brokers session lifecycle and output delivery only; it never proxies /rpc (Turn input) traffic.</text>
+  <text x="20" y="718" font-size="10" fill="#777">Output survives MicroVM SUSPEND/terminate because it lives in EventsTable; WebSocket push is additive to polling, not a replacement.</text>
+  <text x="20" y="736" font-size="10" fill="#777">See README.md / README.ja.md for the full component table and design rationale.</text>
 </svg>

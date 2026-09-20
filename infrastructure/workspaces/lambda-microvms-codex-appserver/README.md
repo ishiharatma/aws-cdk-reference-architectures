@@ -5,12 +5,15 @@
 > **Source.** This reference implements the architecture described in
 > ["Lambda MicroVMsで実現するServerlessなCodex App Server"](https://note.com/japan_d2/n/n618cb3439486)
 > (Japan Digital Design, Inc. / Satoshi Toyama, 2026-09-15), adapted into an AWS CDK reference architecture.
-> Two implementation details the article doesn't spell out at the API level were filled in independently from
-> the AWS Lambda MicroVMs public API surface (`@aws-sdk/client-lambda-microvms`, the
-> `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector` CloudFormation schemas) and are called out where
-> relevant below: the IAM service principal Lambda MicroVMs assumes for build/execution roles, and
-> `codex app-server`'s exact stdio JSON-RPC framing/method names. Verify both against the current AWS Lambda
-> MicroVMs Developer Guide and the [Codex CLI source](https://github.com/openai/codex) before production use.
+> The source article uses polling for output delivery and notes it chose that for implementation simplicity
+> over an SSE/WebSocket experience; this reference goes one step further than the source and adds a WebSocket
+> push path alongside polling (see "Design Decisions" #2). Two other implementation details the article
+> doesn't spell out at the API level were filled in independently from the AWS Lambda MicroVMs public API
+> surface (`@aws-sdk/client-lambda-microvms`, the `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`
+> CloudFormation schemas) and are called out where relevant below: the IAM service principal Lambda MicroVMs
+> assumes for build/execution roles, and `codex app-server`'s exact stdio JSON-RPC framing/method names.
+> Verify both against the current AWS Lambda MicroVMs Developer Guide and the
+> [Codex CLI source](https://github.com/openai/codex) before production use.
 
 ## 📑 Table of Contents
 
@@ -32,28 +35,30 @@
 
 ![Architecture Overview](overview.drawio.svg)
 
-A session **control plane** (API Gateway HTTP API + 6 Lambda functions) brokers the lifecycle of on-demand
-**data plane** sessions: each session is a VM-isolated [AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/)
-running [`codex app-server`](https://github.com/openai/codex) (OpenAI Codex CLI's JSON-RPC agent protocol --
+A session **control plane** (an HTTP API with 7 Lambda functions, plus a WebSocket API with 3 more) brokers
+the lifecycle of on-demand **data plane** sessions: each session is a VM-isolated
+[AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/) running
+[`codex app-server`](https://github.com/openai/codex) (OpenAI Codex CLI's JSON-RPC agent protocol --
 Thread/Turn/Item). As of this reference's authoring, Lambda MicroVMs has no built-in way to log into a running
 MicroVM, execute a command, and stream the response back to a caller. So every MicroVM runs **its own HTTP
 server** (`src/microvm-image/server/`) that plays that role: it answers the platform's lifecycle hook calls, it
 relays JSON-RPC requests from clients to the `codex app-server` child process it manages, and an in-VM **Event
 Handler** persists every line `codex app-server` emits to a DynamoDB **EventsTable** -- so a session's Thread
-content stays readable even after its MicroVM is SUSPENDED or terminated. The control plane itself never
-proxies app-server traffic; it only brokers session lifecycle (start / status / suspend / resume / end /
-output polling).
+content stays readable even after its MicroVM is SUSPENDED or terminated. `EventsTable` writes also fan out to
+any client connected over the **WebSocket API** in near-real-time via **DynamoDB Streams**, so output does not
+have to be polled to be timely. The control plane itself never proxies app-server *input* traffic; it only
+brokers session lifecycle and output delivery.
 
 ```
-Client (Web UI / IDE / CLI)
-   │  1. POST /sessions (Cognito JWT)                     ── control plane ──
+Client (Web UI / IDE / CLI)                                            ── control plane (HTTP) ──
+   │  1. POST /sessions (Cognito JWT)
    ▼
 API Gateway HTTP API ── JWT Authorizer (Cognito User Pool)
    │
    ▼
 Control-plane Lambdas: create / get / delete / suspend / resume / get-events
    │  RunMicrovm / GetMicrovm / SuspendMicrovm / ResumeMicrovm /
-   │  TerminateMicrovm / CreateMicrovmAuthToken           ── data plane ──
+   │  TerminateMicrovm / CreateMicrovmAuthToken                        ── data plane ──
    ▼
 Lambda MicroVMs data plane
    │  launches a Firecracker microVM from the codex app-server image;
@@ -69,8 +74,15 @@ MicroVM (VM-isolated, dedicated HTTPS endpoint)
    │  2. POST {endpoint}/rpc + X-aws-proxy-auth, direct to the MicroVM endpoint
    ▼
 Client
-   │  3. GET /sessions/{id}/events?after=N  (poll until the Turn ends)  ── control plane ──
-   ▼
+   │  3a. WS connect wss://.../{stage}?sessionId=...&token=...          ── control plane (WebSocket) ──
+   ▼                                                    ┌── DynamoDB Streams (NEW_IMAGE) ──┐
+API Gateway WebSocket API                               │                                   ▼
+   │ $connect (Lambda authorizer verifies Cognito ID token)     EventsTable ──────▶ forward-event Lambda
+   ▼                                                                                        │
+ws-connect Lambda ──▶ ConnectionsTable (sessionId → connectionId)  ◀───────────────────────┘
+                                                                     PostToConnection (push new events)
+   │  3b. GET /sessions/{id}/events?after=N  (fetch anything written before/around the WS connect)
+   ▼                                                                    ── control plane (HTTP) ──
 API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (read-only; MicroVM state-independent)
 ```
 
@@ -83,14 +95,16 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (read-only; Mic
 | **In-VM HTTP server** (`server/index.mjs`) | Answers the platform's lifecycle hooks over HTTP (`GET /ready`, `POST /run`/`/suspend`/`/resume`/`/terminate`) and relays `POST /rpc` requests to the `codex app-server` child process it spawns and manages (`server/codex-process.mjs`). |
 | **Event Handler** (`server/event-handler.mjs`) | Subscribes to every line `codex app-server` writes to stdout and persists it to `EventsTable`, sequenced per session. |
 | Secrets Manager secret | Holds the OpenAI API key. Only its ARN is baked into the image (`OPENAI_API_KEY_SECRET_ARN`); the in-VM server resolves the value at container-start time via the execution role (`server/secret.mjs`). |
-| 6 control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token), **`get-events`** (polls `EventsTable`). |
+| 7 HTTP control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token), `get-events` (polls `EventsTable`). |
+| 3 WebSocket Lambdas | `ws-authorizer` (verifies the Cognito ID token on `$connect`), `ws-connect` (registers the connection against a session), `ws-disconnect` (deregisters it), `forward-event` (DynamoDB Streams-triggered; pushes new `EventsTable` items to connected clients). |
 | DynamoDB `SessionsTable` | One item per session (`sessionId`, `ownerId`, `microvmId`, `endpoint`, `state`), TTL-expired automatically. |
-| DynamoDB `EventsTable` | One item per `codex app-server` output line (`sessionId`, `sequence`, `event`), written by the in-VM Event Handler, read by `get-events`. Survives the MicroVM's own lifecycle. |
-| Cognito User Pool + HTTP API JWT Authorizer | Every control-plane route requires a valid Cognito JWT; `ownerId` scopes session reads/writes to their creator. |
+| DynamoDB `EventsTable` | One item per `codex app-server` output line (`sessionId`, `sequence`, `event`), written by the in-VM Event Handler. Streams (`NEW_IMAGE`) trigger `forward-event`; read directly by `get-events`. Survives the MicroVM's own lifecycle. |
+| DynamoDB `ConnectionsTable` | Which WebSocket connections are watching which session (`sessionId`, `connectionId`, `ownerId`), with a `ByConnectionId` GSI so `ws-disconnect` can look up a connection's session. |
+| Cognito User Pool | Backs both the HTTP API's JWT authorizer and the WebSocket API's Lambda authorizer; `ownerId`/`sub` scopes every session, event, and connection record to its creator. |
 
-### Thread creation, Turn execution, and output polling
+### Thread creation, Turn execution, and output delivery
 
-Following the source article's sequence:
+Extending the source article's sequence with a push path:
 
 1. **Start a session** -- `POST /sessions` (control plane) launches a MicroVM from the pre-baked image
    (`RunMicrovm`), with `runHookPayload: {"sessionId": "..."}` delivered as the body of the image's `/run`
@@ -100,11 +114,17 @@ Following the source article's sequence:
    header). The in-VM server relays it to `codex app-server`'s stdin and, for requests carrying an `id`,
    returns the matching stdout response synchronously; every line -- responses and server-initiated
    notifications alike -- is also captured by the Event Handler.
-3. **Read the output** -- rather than reading the MicroVM directly, the client polls
-   `GET /sessions/{sessionId}/events?after={sequence}` (control plane) until the Turn completes. This Lambda
-   reads `EventsTable` only, so it keeps working whether the MicroVM is RUNNING, SUSPENDED, or already
-   terminated. (The source article notes SSE/WebSocket would give a better experience than polling; this
-   reference keeps polling for implementation simplicity, matching the source.)
+3. **Receive output** -- rather than reading the MicroVM directly:
+   - **Push (near-real-time):** the client opens a WebSocket connection
+     (`wss://.../{stage}?sessionId=...&token=<Cognito ID token>`). `ws-authorizer` verifies the token,
+     `ws-connect` registers the connection in `ConnectionsTable`, and from then on every `EventsTable` write
+     for that session is pushed to it by `forward-event` (via DynamoDB Streams + `PostToConnection`) the
+     moment it's written.
+   - **Pull (catch-up and fallback):** `GET /sessions/{sessionId}/events?after={sequence}` (control plane)
+     reads `EventsTable` directly. A client should call this once right after connecting the WebSocket (to
+     pick up anything written just before the connection registered) and can fall back to polling it entirely
+     if it doesn't want to hold a WebSocket connection open. Either path works whether the MicroVM is
+     RUNNING, SUSPENDED, or already terminated, because both only ever read `EventsTable`.
 
 ### MicroVM lifecycle hooks
 
@@ -129,20 +149,36 @@ Lambda MicroVMs has no API to log into a running MicroVM and stream a command's 
 follows the source article's approach: the image itself runs an HTTP server that relays JSON-RPC to
 `codex app-server` and captures its output, so external callers only ever need plain HTTPS.
 
-### 2. Turn output is durable independently of the MicroVM's lifecycle
+### 2. Output delivery is push (WebSocket) with pull (polling) as the source of truth
 
-The Event Handler writes every `codex app-server` line to DynamoDB as it happens. `get-events` reads that
-table, never the MicroVM -- so a client can keep reading a Turn's output after the session has been
-suspended (to save cost) or even terminated, exactly matching the source article's rationale for this design.
+The source article's demo used polling alone, for implementation simplicity. This reference keeps `EventsTable`
+as the single source of truth (so a client can always poll `get-events` and get the right answer) but adds a
+push path on top: a DynamoDB Streams trigger (`forward-event`) delivers each new item to connected WebSocket
+clients as it's written. This is additive, not a replacement -- a client that never opens a WebSocket
+connection still works purely by polling, and a client that does should still poll once after connecting to
+cover the gap between session start and WebSocket registration.
 
-### 3. The control plane never proxies app-server *input* traffic
+### 3. WebSocket connection state is decoupled from the MicroVM's lifecycle
+
+`ConnectionsTable` tracks *client* connections, entirely separate from the MicroVM's own RUNNING/SUSPENDED
+state. A client's WebSocket session can stay open across a MicroVM being suspended and resumed (output simply
+pauses until the next event is written); conversely, closing the WebSocket never affects the MicroVM.
+
+### 4. A Cognito ID token cannot ride a WebSocket handshake's Authorization header
+
+Browsers do not let application code set custom headers on a WebSocket handshake, so the ID token travels as
+a `token` query string parameter instead, verified by a `WebSocketLambdaAuthorizer` (`ws-authorizer.ts`) using
+[`aws-jwt-verify`](https://github.com/awslabs/aws-jwt-verify). This differs from the HTTP API's managed
+`HttpUserPoolAuthorizer`, which WebSocket APIs cannot use.
+
+### 5. The control plane never proxies app-server *input* traffic
 
 `create-session` and `resume-session` return the MicroVM's own `endpoint` and a short-lived
 `X-aws-proxy-auth` token (from `CreateMicrovmAuthToken`, scoped to a single port via `allowedPorts`). The
 client sends JSON-RPC requests to that endpoint directly. This keeps the control-plane Lambdas' latency and
-cost independent of Turn traffic volume; only the (much smaller) output-polling reads flow back through it.
+cost independent of Turn traffic volume; only the (much smaller) output-delivery path flows back through it.
 
-### 4. `/rpc` is a generic relay, not a typed Thread/Turn REST API
+### 6. `/rpc` is a generic relay, not a typed Thread/Turn REST API
 
 The in-VM server's `/rpc` endpoint forwards a raw JSON-RPC 2.0 request body verbatim to `codex app-server`'s
 stdin, rather than exposing fixed `/threads`/`/turns` REST routes with hardcoded method names. This reference
@@ -151,40 +187,40 @@ source, so it deliberately stays protocol-agnostic at the HTTP boundary -- see t
 [Codex CLI repository](https://github.com/openai/codex) for the actual `initialize`/thread/turn/item methods
 to send.
 
-### 5. Suspend beats terminate for cost
+### 7. Suspend beats terminate for cost
 
 `idlePolicy` auto-suspends an idle MicroVM (billed only for Firecracker snapshot storage) rather than
 terminating it. `POST /sessions/{id}/suspend` and `/resume` let a client that knows a session is temporarily
 unneeded (a closed tab) trigger that transition immediately instead of waiting out the idle timeout.
 
-### 6. The OpenAI API key never enters the image or Infrastructure-as-Code
+### 8. The OpenAI API key never enters the image or Infrastructure-as-Code
 
 `CfnMicrovmImage.environmentVariables` carries only `OPENAI_API_KEY_SECRET_ARN` (a fixed value for every
 session). `server/secret.mjs` resolves the actual secret value from Secrets Manager at container-start time,
 using the credentials the platform injects for the MicroVM's `executionRoleArn`.
 
-### 7. Sessions are owner-scoped end to end
+### 9. Sessions, events, and connections are owner-scoped end to end
 
-The Cognito JWT's `sub` claim becomes `ownerId` on every `SessionsTable` item; `get/delete/suspend/resume/
-get-events` all 404 on a session that isn't the caller's own, rather than leaking another user's MicroVM
-endpoint or output.
+The Cognito subject (`sub`) becomes `ownerId` on every `SessionsTable` and `ConnectionsTable` item; HTTP
+routes 404 and WebSocket `$connect` rejects a session that isn't the caller's own, rather than leaking another
+user's MicroVM endpoint or output.
 
 ## 🏛️ Well-Architected Alignment
 
 | Pillar | How this reference addresses it |
 |---|---|
 | Operational Excellence | CloudWatch access logs on the HTTP API stage and a dedicated CloudWatch log group per control-plane Lambda and per MicroVM image. |
-| Security | VM-level isolation per session (Firecracker, no shared kernel), Cognito JWT authorization on every route, owner-scoped session/event records, least-privilege DynamoDB/Secrets Manager grants. |
-| Reliability | Turn output in DynamoDB survives MicroVM SUSPEND/terminate independently; a single NAT Gateway is a deliberate cost/AZ-resilience tradeoff -- add a NAT Gateway per AZ for production. |
-| Performance Efficiency | MicroVMs resume from a pre-initialized Firecracker snapshot (with `codex app-server` and the in-VM HTTP server already running) instead of booting cold. |
-| Cost Optimization | `idlePolicy` auto-suspend, DynamoDB TTL for expired sessions, PAY_PER_REQUEST billing throughout. |
+| Security | VM-level isolation per session (Firecracker, no shared kernel), Cognito-backed authorization on every HTTP route and the WebSocket `$connect` route, owner-scoped session/event/connection records, least-privilege DynamoDB/Secrets Manager grants. |
+| Reliability | Turn output in DynamoDB survives MicroVM SUSPEND/terminate independently, and WebSocket delivery degrades gracefully to polling if a connection drops; a single NAT Gateway is a deliberate cost/AZ-resilience tradeoff -- add a NAT Gateway per AZ for production. |
+| Performance Efficiency | MicroVMs resume from a pre-initialized Firecracker snapshot (with `codex app-server` and the in-VM HTTP server already running) instead of booting cold; output reaches clients via push rather than fixed-interval polling. |
+| Cost Optimization | `idlePolicy` auto-suspend, DynamoDB TTL for expired sessions/connections, PAY_PER_REQUEST billing throughout, WebSocket push avoids wasted polling requests once a Turn goes idle. |
 
 ## 💰 Cost Optimization
 
 This reference introduces cost dimensions this repository's other patterns don't have (MicroVM run/suspend
-time, a NAT Gateway, Cognito). **Do not treat any number here as a quote** -- always check the AWS Pricing
-pages for Lambda MicroVMs, NAT Gateway, Cognito, and DynamoDB in your Region before estimating a real
-workload's cost.
+time, a NAT Gateway, Cognito, a WebSocket API). **Do not treat any number here as a quote** -- always check the
+AWS Pricing pages for Lambda MicroVMs, NAT Gateway, Cognito, API Gateway WebSocket APIs, and DynamoDB in your
+Region before estimating a real workload's cost.
 
 Rough cost *drivers*, in the order they matter for this architecture:
 
@@ -198,11 +234,16 @@ Rough cost *drivers*, in the order they matter for this architecture:
    consider VPC endpoints for any AWS service traffic MicroVMs need beyond internet egress.
 4. **Cognito** -- free tier covers a meaningful number of MAUs before per-MAU billing starts; the Plus
    feature plan (`AwsSolutions-COG8`, suppressed here) adds further per-MAU cost if enabled.
-5. **API Gateway HTTP API + control-plane Lambdas** -- negligible relative to the above: the control plane
-   only brokers session lifecycle and event-polling calls, not Turn input traffic.
-6. **DynamoDB** -- PAY_PER_REQUEST with a short TTL keeps this near-zero for typical session volumes; a
+5. **WebSocket API connection-minutes + messages** -- billed per connection-minute plus per message; for a
+   chatty Turn this replaces a stream of small polling requests with one open connection and one message per
+   event, which is typically cheaper than aggressive polling but is a cost dimension polling alone doesn't
+   have. `forward-event`'s DynamoDB Streams invocations are billed as ordinary Lambda invocations.
+6. **API Gateway HTTP API + control-plane Lambdas** -- negligible relative to the above: the control plane
+   only brokers session lifecycle and event-delivery calls, not Turn input traffic.
+7. **DynamoDB** -- PAY_PER_REQUEST with a short TTL keeps this near-zero for typical session volumes; a
    chatty Turn writes one `EventsTable` item per `codex app-server` output line, so very high-frequency event
-   streams are the one place this table's write cost is worth watching.
+   streams are the one place this table's write cost (and the corresponding Streams-triggered `forward-event`
+   invocations) is worth watching.
 
 ### Cost notes specific to this pattern
 
@@ -210,22 +251,27 @@ Rough cost *drivers*, in the order they matter for this architecture:
   suspends unused MicroVMs sooner at the cost of a resume round trip on the next request.
 - `controlPlane.suspendedDurationInMinutes` bounds how long you pay for snapshot storage before the platform
   terminates an abandoned session outright -- keep it aligned with `sessionRecordTtlInDays`.
+- A client that only needs occasional updates (not a live coding-agent UI) may be cheaper served by polling
+  `get-events` alone and never opening a WebSocket connection at all -- the push path is there for
+  responsiveness, not required for correctness.
 
 ## 🔒 Security Considerations
 
 ### Implemented
 
 - VM-level isolation per session (Firecracker MicroVMs, no shared kernel between sessions).
-- Cognito JWT authorization (`HttpUserPoolAuthorizer`) on every control-plane route.
-- Owner-scoped session and event records (`ownerId` from the JWT `sub` claim).
+- Cognito-backed authorization on every HTTP control-plane route (`HttpUserPoolAuthorizer`) and on the
+  WebSocket API's `$connect` route (a `WebSocketLambdaAuthorizer` verifying the same user pool's ID tokens).
+- Owner-scoped session, event, and connection records (`ownerId`/`sub` from the JWT).
 - The OpenAI API key lives only in Secrets Manager; only its ARN is baked into the image.
 - Least-privilege DynamoDB (`grantReadWriteData`/`grantWriteData`/`grantReadData`, each scoped to one table)
-  and Secrets Manager (`grantRead`, scoped to the one secret) grants.
+  and Secrets Manager (`grantRead`, scoped to the one secret) grants; `forward-event`'s
+  `execute-api:ManageConnections` grant is scoped to the one WebSocket API stage.
 - Outbound-only security group for the MicroVM egress path (no inbound rules).
 
 ### Intentionally out of scope (add per environment)
 
-- WAFv2 Web ACL on the HTTP API.
+- WAFv2 Web ACL on the HTTP API (WAF does not support WebSocket APIs).
 - Request body/schema validation beyond what the Lambda handlers check themselves.
 - Cognito MFA and the Plus feature plan (advanced security features).
 - VPC Flow Logs.
@@ -295,13 +341,17 @@ aws cognito-idp admin-set-user-password --user-pool-id <UserPoolId> --username y
 curl -X POST "$API_URL/sessions" -H "Authorization: Bearer $ID_TOKEN"
 # => { "sessionId": "...", "state": "PENDING", "endpoint": "https://...", "authToken": { "X-aws-proxy-auth": "..." } }
 
+# Open a WebSocket connection to receive output as it's written (WebSocketUrl from the stack output):
+wscat -c "$WEBSOCKET_URL?sessionId=$SESSION_ID&token=$ID_TOKEN"
+
 # Send a JSON-RPC request straight to the MicroVM's own endpoint (see the Codex CLI docs for the actual
 # initialize/thread/turn method names and parameters to use):
 curl -X POST "$ENDPOINT/rpc" -H "X-aws-proxy-auth: $AUTH_TOKEN" \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 
-# Poll for output until the Turn completes:
+# Output arrives on the WebSocket connection as it's written; catch up on anything written before it
+# registered (or if you'd rather not hold a WebSocket connection open at all) by polling instead:
 curl "$API_URL/sessions/$SESSION_ID/events?after=0" -H "Authorization: Bearer $ID_TOKEN"
 
 # When done:
@@ -322,12 +372,12 @@ output for `W3030` warnings after changing `hooks` or `cpuConfigurations`.
 
 ## ⚙️ Customization
 
-### Move from polling to SSE/WebSocket for output
+### Drop the WebSocket path and poll only
 
-The source article notes polling was chosen for implementation simplicity and that SSE/WebSocket would give a
-better experience. To do that, replace `get-events`'s request/response model with an API Gateway WebSocket
-API (or an SSE-capable Lambda response streaming setup) that still reads from `EventsTable` as its source of
-truth.
+If a client doesn't need near-real-time updates, it can call `GET /sessions/{id}/events` alone and never open
+a WebSocket connection -- `EventsTable` is the source of truth either way, so this needs no server-side
+change. To remove the WebSocket infrastructure entirely, delete the `WebSocketApi`/`WebSocketStage`, the
+`ws-*`/`forward-event` Lambdas, `ConnectionsTable`, and the `stream` property on `EventsTable`.
 
 ### Scope MicroVM data-plane IAM actions further
 
@@ -359,6 +409,19 @@ Confirm `create-session` sent `runHookPayload` -- if the in-VM server's `/run` h
 `sessionId`, the Event Handler drops every line rather than writing it unattributed (see
 `server/event-handler.mjs`).
 
+### WebSocket connection closes immediately with code 1008 (or `$connect` returns 401/404)
+
+- 401-shaped rejection: `ws-authorizer` could not verify the `token` query parameter -- check it's a Cognito
+  **ID** token (not an access token) for the same user pool/client the stack deployed.
+- 404-shaped rejection: `ws-connect` could not find a session matching `sessionId` owned by that token's
+  `sub` -- confirm `POST /sessions` was called with the same Cognito user first.
+
+### WebSocket connects but no events ever arrive
+
+Check `ForwardEventFunctionLogGroup` for `GoneException`/other `PostToConnection` errors. If nothing is
+logged at all, confirm the `EventsTable` DynamoDB Streams-triggered `AWS::Lambda::EventSourceMapping` is
+`Enabled` and that events are actually being written (see the previous item).
+
 ### `codex app-server` starts but immediately fails authentication
 
 The `OPENAI_API_KEY_SECRET_ARN` environment variable resolves to a Secrets Manager secret whose value is
@@ -383,6 +446,7 @@ Terminate any still-RUNNING/SUSPENDED sessions (`DELETE /sessions/{id}`) before 
 
 - [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)
 - [Announcing Lambda MicroVMs (AWS Compute Blog)](https://aws.amazon.com/blogs/compute/announcing-lambda-microvms-serverless-compute-environments-with-vm-level-isolation-and-near-instant-startup/)
+- [API Gateway WebSocket APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html)
 
 ### Codex
 
@@ -390,7 +454,7 @@ Terminate any still-RUNNING/SUSPENDED sessions (`DELETE /sessions/{id}`) before 
 
 ### Related Architectures
 
-- [`apigw-lambda-web-adapter`](../apigw-lambda-web-adapter/README.md) -- the API Gateway + Lambda pattern this control plane's routing follows.
+- [`apigw-lambda-web-adapter`](../apigw-lambda-web-adapter/README.md) -- the API Gateway + Lambda pattern this control plane's HTTP routing follows.
 
 ## 📄 License
 
