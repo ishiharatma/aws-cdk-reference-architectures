@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Sep 2026 19:11:32 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2026 20:39:05 GMT</lastBuildDate>
+    <item>
+      <title>Cognito + API Gateway Authentication &amp; Authorization</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cognito-apigw-auth</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cognito-apigw-auth</guid>
+      <pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Protect a REST API with Amazon Cognito: a user pool (groups, optional TOTP MFA, hosted UI with authorization code + PKCE, machine client via client_credentials), an API Gateway Cognito authorizer with per-method OAuth scopes, and Lambda functions enforcing group membership and per-user data ownership. The managed counterpart to the Keycloak pattern, with an end-to-end token-type and scope check script.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Cognito</category>
+      <category>API Gateway</category>
+      <category>OAuth2</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>Authorization</category>
+    </item>
     <item>
       <title>CDK Pipelines: Self-Mutating Pipeline with Dev/Prod Promotion</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cdk-pipelines-self-mutating</link>
