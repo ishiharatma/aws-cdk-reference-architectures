@@ -1,5 +1,17 @@
 [
   {
+    "id": "dynamodb-vector-search-semantic-api",
+    "title": "Semantic Search API with DynamoDB Native Vector Search",
+    "description": "A meaning-based search API on Amazon DynamoDB's native vector index (no OpenSearch): DynamoDB Streams triggers a Lambda that embeds each document with Bedrock Titan Text Embeddings V2, and SearchVectors with an inline category filter answers natural-language queries. Includes the CDK escape hatch for VectorIndexes and an end-to-end check script.",
+    "image": "dynamodb-vector-search-semantic-api/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "DynamoDB", "Vector Search", "Bedrock", "Lambda", "API Gateway", "Semantic Search"],
+    "link": "dynamodb-vector-search-semantic-api",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
     "id": "lambda-microvms-codex-appserver",
     "title": "Serverless Codex App Server on AWS Lambda MicroVMs",
     "description": "An on-demand, VM-isolated Codex App Server per session on AWS Lambda MicroVMs: an HTTP API with 7 Lambda functions brokers session lifecycle, and output is delivered by both polling and a WebSocket push path. Implements the architecture from the Japan Digital Design article, with the MicroVM image/network connector defined in CloudFormation.",

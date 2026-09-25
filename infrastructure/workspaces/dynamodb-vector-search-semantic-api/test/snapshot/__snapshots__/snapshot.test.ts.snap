@@ -1,0 +1,1385 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DynamodbVectorSearchSemanticApiStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiEndpoint4F160690": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApiF70053CD",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "ApiDeploymentStagetest22072A08",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "ApiKeyId": {
+      "Description": "API key ID (value: aws apigateway get-api-key --include-value --api-key <id>)",
+      "Value": {
+        "Ref": "ApiApiKey8A01341B",
+      },
+    },
+    "ApiUrl": {
+      "Description": "API Gateway URL",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApiF70053CD",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "ApiDeploymentStagetest22072A08",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "EmbedDlqUrl": {
+      "Description": "DLQ for failed embeddings",
+      "Value": {
+        "Ref": "EmbedDlq488EFD00",
+      },
+    },
+    "TableName": {
+      "Description": "DynamoDB table name",
+      "Value": {
+        "Ref": "DocumentsTable7E808EE5",
+      },
+    },
+    "VectorIndexName": {
+      "Description": "DynamoDB vector index name",
+      "Value": "embedding-idx",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ApiAccessLogsE9DF007D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApiAccountA18C9B29": {
+      "DeletionPolicy": "Retain",
+      "DependsOn": [
+        "ApiF70053CD",
+      ],
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "ApiCloudWatchRole73EC6FC4",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ApiGateway::Account",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "ApiApiKey8A01341B": {
+      "Properties": {
+        "Enabled": true,
+        "Name": "test-test-dvs-key",
+        "StageKeys": [
+          {
+            "RestApiId": {
+              "Ref": "ApiF70053CD",
+            },
+            "StageName": {
+              "Ref": "ApiDeploymentStagetest22072A08",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::ApiKey",
+    },
+    "ApiCloudWatchRole73EC6FC4": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "ApiCreateDocumentModelFCA04733": {
+      "Properties": {
+        "ContentType": "application/json",
+        "Name": "CreateDocument",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+        "Schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "body": {
+              "maxLength": 8000,
+              "minLength": 1,
+              "type": "string",
+            },
+            "category": {
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string",
+            },
+            "title": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string",
+            },
+          },
+          "required": [
+            "title",
+            "body",
+          ],
+          "type": "object",
+        },
+      },
+      "Type": "AWS::ApiGateway::Model",
+    },
+    "ApiDeploymentB17BE62D10b767264e7343e8a02053faa58971ab": {
+      "DependsOn": [
+        "ApiCreateDocumentModelFCA04733",
+        "ApidocumentsdocIdGET78E92E82",
+        "ApidocumentsdocIdCF43FE49",
+        "ApidocumentsPOSTCC934970",
+        "Apidocuments96E8449E",
+        "ApisearchGETCD9A8201",
+        "ApisearchACEE53D1",
+        "ApiRequestValidator87B335BA",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Semantic search API backed by DynamoDB native vector search",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "ApiDeploymentStagetest22072A08": {
+      "DependsOn": [
+        "ApiAccountA18C9B29",
+      ],
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogsE9DF007D",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "ApiDeploymentB17BE62D10b767264e7343e8a02053faa58971ab",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "ApiF70053CD": {
+      "Properties": {
+        "ApiKeySourceType": "HEADER",
+        "Description": "Semantic search API backed by DynamoDB native vector search",
+        "Name": "test-test-dvs-api",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "ApiRequestValidator87B335BA": {
+      "Properties": {
+        "Name": "test-test-dvs-request-validator",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+        "ValidateRequestBody": true,
+        "ValidateRequestParameters": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "ApiUsagePlanDBBE8AB1": {
+      "Properties": {
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "ApiF70053CD",
+            },
+            "Stage": {
+              "Ref": "ApiDeploymentStagetest22072A08",
+            },
+            "Throttle": {},
+          },
+        ],
+        "Quota": {
+          "Limit": 1000,
+          "Period": "DAY",
+        },
+        "Throttle": {
+          "BurstLimit": 10,
+          "RateLimit": 5,
+        },
+        "UsagePlanName": "test-test-dvs-usage-plan",
+      },
+      "Type": "AWS::ApiGateway::UsagePlan",
+    },
+    "ApiUsagePlanUsagePlanKeyResourceDynamodbVectorSearchSemanticApiApiKeyCB3B3A85006537F3": {
+      "Properties": {
+        "KeyId": {
+          "Ref": "ApiApiKey8A01341B",
+        },
+        "KeyType": "API_KEY",
+        "UsagePlanId": {
+          "Ref": "ApiUsagePlanDBBE8AB1",
+        },
+      },
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+    },
+    "Apidocuments96E8449E": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiF70053CD",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "documents",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "ApidocumentsPOSTApiPermissionDynamodbVectorSearchSemanticApi1E84F08DPOSTdocuments6CA7DFCF": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "IngestFunction4B2F2EB2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/",
+              {
+                "Ref": "ApiDeploymentStagetest22072A08",
+              },
+              "/POST/documents",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApidocumentsPOSTApiPermissionTestDynamodbVectorSearchSemanticApi1E84F08DPOSTdocuments42BB5481": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "IngestFunction4B2F2EB2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/test-invoke-stage/POST/documents",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApidocumentsPOSTCC934970": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "IngestFunction4B2F2EB2",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestModels": {
+          "application/json": {
+            "Ref": "ApiCreateDocumentModelFCA04733",
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "ApiRequestValidator87B335BA",
+        },
+        "ResourceId": {
+          "Ref": "Apidocuments96E8449E",
+        },
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApidocumentsdocIdCF43FE49": {
+      "Properties": {
+        "ParentId": {
+          "Ref": "Apidocuments96E8449E",
+        },
+        "PathPart": "{docId}",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "ApidocumentsdocIdGET78E92E82": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "GET",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "GetDocumentFunction5BCD7F55",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestParameters": {
+          "method.request.path.docId": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApiRequestValidator87B335BA",
+        },
+        "ResourceId": {
+          "Ref": "ApidocumentsdocIdCF43FE49",
+        },
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "ApidocumentsdocIdGETApiPermissionDynamodbVectorSearchSemanticApi1E84F08DGETdocumentsdocId08C90EE8": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetDocumentFunction5BCD7F55",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/",
+              {
+                "Ref": "ApiDeploymentStagetest22072A08",
+              },
+              "/GET/documents/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApidocumentsdocIdGETApiPermissionTestDynamodbVectorSearchSemanticApi1E84F08DGETdocumentsdocId0BD04CAE": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetDocumentFunction5BCD7F55",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/test-invoke-stage/GET/documents/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApisearchACEE53D1": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiF70053CD",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "search",
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "ApisearchGETApiPermissionDynamodbVectorSearchSemanticApi1E84F08DGETsearch7CC5B2A0": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SearchFunctionEC64A147",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/",
+              {
+                "Ref": "ApiDeploymentStagetest22072A08",
+              },
+              "/GET/search",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApisearchGETApiPermissionTestDynamodbVectorSearchSemanticApi1E84F08DGETsearchE66F2C4A": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SearchFunctionEC64A147",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "ApiF70053CD",
+              },
+              "/test-invoke-stage/GET/search",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ApisearchGETCD9A8201": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "GET",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "SearchFunctionEC64A147",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestParameters": {
+          "method.request.querystring.category": false,
+          "method.request.querystring.k": false,
+          "method.request.querystring.q": true,
+        },
+        "RequestValidatorId": {
+          "Ref": "ApiRequestValidator87B335BA",
+        },
+        "ResourceId": {
+          "Ref": "ApisearchACEE53D1",
+        },
+        "RestApiId": {
+          "Ref": "ApiF70053CD",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "DocumentsTable7E808EE5": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "docId",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "category",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "docId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_IMAGE",
+        },
+        "TableName": "test-test-dvs-documents",
+        "VectorIndexes": [
+          {
+            "Dimensions": 256,
+            "DistanceFunction": "COSINE",
+            "IndexName": "embedding-idx",
+            "Projection": {
+              "NonKeyAttributes": [
+                "title",
+                "category",
+              ],
+              "ProjectionType": "INCLUDE",
+            },
+            "SearchSchema": [
+              {
+                "AttributeName": "category",
+                "SearchSchemaElementType": "INLINE_FILTER",
+              },
+            ],
+            "VectorAttribute": {
+              "AttributeName": "embedding",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EmbedDlq488EFD00": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "test-test-dvs-embed-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EmbedDlqAlarm2EAE4A0D": {
+      "Properties": {
+        "AlarmDescription": "Documents failed embedding after all retries and were moved to the DLQ.",
+        "AlarmName": "test-test-dvs-embed-dlq-not-empty",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "EmbedDlq488EFD00",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Period": 60,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "EmbedDlqPolicy67F2FDCF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "EmbedDlq488EFD00",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "EmbedDlq488EFD00",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "EmbedFunctionA53A3F2B": {
+      "DependsOn": [
+        "EmbedFunctionServiceRoleDefaultPolicyEF6EAC8C",
+        "EmbedFunctionServiceRoleB25F1DF7",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "EMBEDDING_DIMENSIONS": "256",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "TABLE_NAME": {
+              "Ref": "DocumentsTable7E808EE5",
+            },
+            "VECTOR_INDEX_NAME": "embedding-idx",
+          },
+        },
+        "FunctionName": "test-test-dvs-embed",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "EmbedLogGroupA2F40CC0",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "EmbedFunctionServiceRoleB25F1DF7",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "EmbedFunctionDynamoDBEventSourceDynamodbVectorSearchSemanticApiDocumentsTableFBA85A8898DF8C62": {
+      "Properties": {
+        "BatchSize": 5,
+        "BisectBatchOnFunctionError": true,
+        "DestinationConfig": {
+          "OnFailure": {
+            "Destination": {
+              "Fn::GetAtt": [
+                "EmbedDlq488EFD00",
+                "Arn",
+              ],
+            },
+          },
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "DocumentsTable7E808EE5",
+            "StreamArn",
+          ],
+        },
+        "FilterCriteria": {
+          "Filters": [
+            {
+              "Pattern": "{"eventName":["INSERT","MODIFY"],"dynamodb":{"NewImage":{"embeddedAt":{"S":[{"exists":false}]}}}}",
+            },
+          ],
+        },
+        "FunctionName": {
+          "Ref": "EmbedFunctionA53A3F2B",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "MaximumBatchingWindowInSeconds": 1,
+        "MaximumRetryAttempts": 3,
+        "ParallelizationFactor": 1,
+        "StartingPosition": "TRIM_HORIZON",
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "EmbedFunctionServiceRoleB25F1DF7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EmbedFunctionServiceRoleDefaultPolicyEF6EAC8C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:UpdateItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsTable7E808EE5",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "bedrock:InvokeModel",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":bedrock:ap-northeast-1::foundation-model/amazon.titan-embed-text-v2:0",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "EmbedDlq488EFD00",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "dynamodb:ListStreams",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "dynamodb:DescribeStream",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsTable7E808EE5",
+                  "StreamArn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EmbedFunctionServiceRoleDefaultPolicyEF6EAC8C",
+        "Roles": [
+          {
+            "Ref": "EmbedFunctionServiceRoleB25F1DF7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "EmbedLogGroupA2F40CC0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetDocumentFunction5BCD7F55": {
+      "DependsOn": [
+        "GetDocumentFunctionServiceRoleDefaultPolicy11BB3790",
+        "GetDocumentFunctionServiceRole5F7958D9",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "EMBEDDING_DIMENSIONS": "256",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "TABLE_NAME": {
+              "Ref": "DocumentsTable7E808EE5",
+            },
+            "VECTOR_INDEX_NAME": "embedding-idx",
+          },
+        },
+        "FunctionName": "test-test-dvs-get-document",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetDocumentLogGroup0152F43D",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "GetDocumentFunctionServiceRole5F7958D9",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "GetDocumentFunctionServiceRole5F7958D9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GetDocumentFunctionServiceRoleDefaultPolicy11BB3790": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:GetItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsTable7E808EE5",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetDocumentFunctionServiceRoleDefaultPolicy11BB3790",
+        "Roles": [
+          {
+            "Ref": "GetDocumentFunctionServiceRole5F7958D9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "GetDocumentLogGroup0152F43D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "IngestFunction4B2F2EB2": {
+      "DependsOn": [
+        "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7",
+        "IngestFunctionServiceRole55EB4427",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "EMBEDDING_DIMENSIONS": "256",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "TABLE_NAME": {
+              "Ref": "DocumentsTable7E808EE5",
+            },
+            "VECTOR_INDEX_NAME": "embedding-idx",
+          },
+        },
+        "FunctionName": "test-test-dvs-ingest",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "IngestLogGroup131E2484",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "IngestFunctionServiceRole55EB4427",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "IngestFunctionServiceRole55EB4427": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:PutItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsTable7E808EE5",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "IngestFunctionServiceRoleDefaultPolicy8EB1E4A7",
+        "Roles": [
+          {
+            "Ref": "IngestFunctionServiceRole55EB4427",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "IngestLogGroup131E2484": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SearchFunctionEC64A147": {
+      "DependsOn": [
+        "SearchFunctionServiceRoleDefaultPolicyC1AA59F5",
+        "SearchFunctionServiceRole04BBC868",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "EMBEDDING_DIMENSIONS": "256",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "TABLE_NAME": {
+              "Ref": "DocumentsTable7E808EE5",
+            },
+            "VECTOR_INDEX_NAME": "embedding-idx",
+          },
+        },
+        "FunctionName": "test-test-dvs-search",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SearchLogGroup64E61B0B",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "SearchFunctionServiceRole04BBC868",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SearchFunctionServiceRole04BBC868": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SearchFunctionServiceRoleDefaultPolicyC1AA59F5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:SearchVectors",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsTable7E808EE5",
+                        "Arn",
+                      ],
+                    },
+                    "/index/embedding-idx",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "bedrock:InvokeModel",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":bedrock:ap-northeast-1::foundation-model/amazon.titan-embed-text-v2:0",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SearchFunctionServiceRoleDefaultPolicyC1AA59F5",
+        "Roles": [
+          {
+            "Ref": "SearchFunctionServiceRole04BBC868",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SearchLogGroup64E61B0B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`DynamodbVectorSearchSemanticApiStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Account": 1,
+  "AWS::ApiGateway::ApiKey": 1,
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 3,
+  "AWS::ApiGateway::Model": 1,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 3,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::ApiGateway::UsagePlan": 1,
+  "AWS::ApiGateway::UsagePlanKey": 1,
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 5,
+  "AWS::Lambda::EventSourceMapping": 1,
+  "AWS::Lambda::Function": 4,
+  "AWS::Lambda::Permission": 6,
+  "AWS::Logs::LogGroup": 5,
+  "AWS::SQS::Queue": 1,
+  "AWS::SQS::QueuePolicy": 1,
+}
+`;
