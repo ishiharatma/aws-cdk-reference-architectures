@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Sep 2026 21:00:25 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2026 21:44:50 GMT</lastBuildDate>
+    <item>
+      <title>Secrets Manager Rotation for Aurora (Single-User and Alternating Users)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/secrets-rotation-aurora</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/secrets-rotation-aurora</guid>
+      <pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Automatic credential rotation for Aurora PostgreSQL Serverless v2 with Secrets Manager hosted rotation: single-user rotation for the master secret and alternating-user rotation for the application secret, in isolated subnets with a Secrets Manager interface endpoint instead of a NAT gateway. A Data API consumer never holds a password; an end-to-end script runs real rotations and proves the new credentials work with zero failed queries.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Secrets Manager</category>
+      <category>Aurora</category>
+      <category>RDS Data API</category>
+      <category>Rotation</category>
+      <category>VPC Endpoint</category>
+      <category>Security</category>
+    </item>
     <item>
       <title>EventBridge Custom Bus: Content-Based Routing with Archive &amp; Replay</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/eventbridge-custom-bus</link>

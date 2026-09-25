@@ -1,5 +1,17 @@
 [
   {
+    "id": "secrets-rotation-aurora",
+    "title": "Secrets Manager Rotation for Aurora (Single-User and Alternating Users)",
+    "description": "Automatic credential rotation for Aurora PostgreSQL Serverless v2 with Secrets Manager hosted rotation: single-user rotation for the master secret and alternating-user rotation for the application secret, in isolated subnets with a Secrets Manager interface endpoint instead of a NAT gateway. A Data API consumer never holds a password; an end-to-end script runs real rotations and proves the new credentials work with zero failed queries.",
+    "image": "secrets-rotation-aurora/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Secrets Manager", "Aurora", "RDS Data API", "Rotation", "VPC Endpoint", "Security"],
+    "link": "secrets-rotation-aurora",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
     "id": "eventbridge-custom-bus",
     "title": "EventBridge Custom Bus: Content-Based Routing with Archive & Replay",
     "description": "A custom Amazon EventBridge bus for an order domain: rules route by content (numeric, prefix, anything-but) to SQS with an input transformer, Lambda, and CloudWatch Logs directly, with bounded retries plus a DLQ, bus-level logging (source, destination and delivery), and a replayable archive. Includes an end-to-end script that proves which events land where, and which land nowhere.",
