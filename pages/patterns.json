@@ -1,5 +1,30 @@
 [
   {
+    "id": "dynamodb-vector-search-semantic-api",
+    "title": "Semantic Search API with DynamoDB Native Vector Search",
+    "description": "A meaning-based search API on Amazon DynamoDB's native vector index (no OpenSearch): DynamoDB Streams triggers a Lambda that embeds each document with Bedrock Titan Text Embeddings V2, and SearchVectors with an inline category filter answers natural-language queries. Includes the CDK escape hatch for VectorIndexes and an end-to-end check script.",
+    "image": "dynamodb-vector-search-semantic-api/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "DynamoDB", "Vector Search", "Bedrock", "Lambda", "API Gateway", "Semantic Search"],
+    "link": "dynamodb-vector-search-semantic-api",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
+    "id": "lambda-microvms-codex-appserver",
+    "title": "Serverless Codex App Server on AWS Lambda MicroVMs",
+    "description": "An on-demand, VM-isolated Codex App Server per session on AWS Lambda MicroVMs: an HTTP API with 7 Lambda functions brokers session lifecycle, and output is delivered by both polling and a WebSocket push path. Implements the architecture from the Japan Digital Design article, with the MicroVM image/network connector defined in CloudFormation.",
+    "image": "lambda-microvms-codex-appserver/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Lambda", "MicroVMs", "API Gateway", "WebSocket", "Codex", "Serverless"],
+    "link": "lambda-microvms-codex-appserver",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-19",
+    "draft": true,
+    "articles": {}
+  },
+  {
     "id": "alb-keycloak-auth",
     "title": "ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless",
     "description": "AWS ALB built-in OIDC authentication backed by Keycloak running on ECS Fargate with Aurora Serverless V2 (PostgreSQL) as the session store. Two patterns: Pattern A uses Keycloak as a direct OIDC provider; Pattern B adds SAML identity brokering so Keycloak acts as both an OIDC provider to ALB and a SAML service provider to a corporate IdP. Includes setup scripts for realm/client configuration and ECS Exec enabled for connection testing.",
@@ -467,6 +492,32 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-19",
+    "articles": {}
+  },
+  {
+    "id": "s3-amplify-static-website",
+    "title": "S3 + Amplify Static Website Hosting",
+    "description": "Static website hosting with AWS Amplify Hosting in manual deployment mode (no Git connection): site files are packaged as a CDK asset, uploaded to S3, and deployed to Amplify by a Lambda-backed custom resource calling StartDeployment. Compared against the CloudFront + S3 pattern.",
+    "image": "",
+    "tags": ["CDK", "TypeScript", "Amplify", "S3", "Custom Resource", "Lambda"],
+    "link": "s3-amplify-static-website",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-08-03",
+    "draft": true,
+    "articles": {}
+  },
+  {
+    "id": "ecs-fargate-alb-StackSynthesizer",
+    "title": "ECS Fargate with ALB (CliCredentialsStackSynthesizer / PermissionsBoundary variant)",
+    "description": "A variant of the ECS Fargate + ALB reference for SCP-restricted accounts: with CDK_USE_CALLER_ROLE=true it deploys via CliCredentialsStackSynthesizer instead of the bootstrap roles, and applies PowerUserAccess as a PermissionsBoundary to every IAM role in the stage.",
+    "image": "ecs-fargate-alb-StackSynthesizer/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "ECS", "Fargate", "ALB", "StackSynthesizer", "PermissionsBoundary", "SCP"],
+    "link": "ecs-fargate-alb-StackSynthesizer",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-07-19",
+    "draft": true,
     "articles": {}
   }
 ]

@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 20 Sep 2026 22:39:08 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2026 18:16:07 GMT</lastBuildDate>
+    <item>
+      <title>Semantic Search API with DynamoDB Native Vector Search</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/dynamodb-vector-search-semantic-api</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/dynamodb-vector-search-semantic-api</guid>
+      <pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A meaning-based search API on Amazon DynamoDB&apos;s native vector index (no OpenSearch): DynamoDB Streams triggers a Lambda that embeds each document with Bedrock Titan Text Embeddings V2, and SearchVectors with an inline category filter answers natural-language queries. Includes the CDK escape hatch for VectorIndexes and an end-to-end check script.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>DynamoDB</category>
+      <category>Vector Search</category>
+      <category>Bedrock</category>
+      <category>Lambda</category>
+      <category>API Gateway</category>
+      <category>Semantic Search</category>
+    </item>
     <item>
       <title>ALB OIDC Authentication with Keycloak on ECS Fargate + Aurora Serverless</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/alb-keycloak-auth</link>

@@ -29,6 +29,7 @@ checked `aws fis list-actions`).
 - [fis-chaos-engineering.md](fis-chaos-engineering.md) — AWS FIS action gotchas: actions that sound plausible but don't exist, per-action infrastructure prerequisites, targeting quirks, pricing
 - [aws-cdk-deploy-operations.md](aws-cdk-deploy-operations.md) — CDK CLI/deploy operational gotchas: `deploy '**'` vs `--all`, `cdk.out` locking, SSO credential refresh, background-process hygiene
 - [aws-service-gotchas.md](aws-service-gotchas.md) — AWS service behaviors that looked like bugs until root-caused: withdrawn Aurora versions, NAT instance defaults, ASG Availability Zone behavior, Keycloak on ECS specifics
+- [dynamodb-vector-search.md](dynamodb-vector-search.md) — DynamoDB native vector search: CFn/CDK escape hatch for `VectorIndexes`, SearchSchema/AttributeDefinitions rule, `SearchVectors` request shape, PutItem-vs-UpdateItem indexing quirk, Lambda filter `exists` leaf-node trap
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory
