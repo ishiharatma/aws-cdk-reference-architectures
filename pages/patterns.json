@@ -1,5 +1,17 @@
 [
   {
+    "id": "eventbridge-custom-bus",
+    "title": "EventBridge Custom Bus: Content-Based Routing with Archive & Replay",
+    "description": "A custom Amazon EventBridge bus for an order domain: rules route by content (numeric, prefix, anything-but) to SQS with an input transformer, Lambda, and CloudWatch Logs directly, with bounded retries plus a DLQ, bus-level logging (source, destination and delivery), and a replayable archive. Includes an end-to-end script that proves which events land where, and which land nowhere.",
+    "image": "eventbridge-custom-bus/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "EventBridge", "SQS", "Lambda", "Event-Driven", "Archive", "Replay"],
+    "link": "eventbridge-custom-bus",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
     "id": "cognito-apigw-auth",
     "title": "Cognito + API Gateway Authentication & Authorization",
     "description": "Protect a REST API with Amazon Cognito: a user pool (groups, optional TOTP MFA, hosted UI with authorization code + PKCE, machine client via client_credentials), an API Gateway Cognito authorizer with per-method OAuth scopes, and Lambda functions enforcing group membership and per-user data ownership. The managed counterpart to the Keycloak pattern, with an end-to-end token-type and scope check script.",

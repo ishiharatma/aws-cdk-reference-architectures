@@ -32,6 +32,7 @@ checked `aws fis list-actions`).
 - [dynamodb-vector-search.md](dynamodb-vector-search.md) — DynamoDB native vector search: CFn/CDK escape hatch for `VectorIndexes`, SearchSchema/AttributeDefinitions rule, `SearchVectors` request shape, PutItem-vs-UpdateItem indexing quirk, Lambda filter `exists` leaf-node trap
 - [cdk-pipelines.md](cdk-pipelines.md) — CDK Pipelines: self-mutation is observable (cancelled + restarted run), Build-stage tests gate it, no Assets stage without assets, CodeCommit `Code` is initial-commit-only, pipeline does not delete its stacks
 - [cognito-api-gateway-auth.md](cognito-api-gateway-auth.md) — Cognito + API Gateway: ID vs access token (401), custom scopes only from OAuth flows, insufficient scope is 401, `cognito:groups` string, curl-scripted hosted-UI PKCE flow, DynamoDB `sub` reserved word
+- [eventbridge-custom-bus.md](eventbridge-custom-bus.md) — EventBridge: `logConfig` needs a Logs delivery, source filter, archive count lag, replay `FilterArns`, target DLQ scope
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory

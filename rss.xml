@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Sep 2026 20:39:05 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2026 21:00:25 GMT</lastBuildDate>
+    <item>
+      <title>EventBridge Custom Bus: Content-Based Routing with Archive &amp; Replay</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/eventbridge-custom-bus</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/eventbridge-custom-bus</guid>
+      <pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A custom Amazon EventBridge bus for an order domain: rules route by content (numeric, prefix, anything-but) to SQS with an input transformer, Lambda, and CloudWatch Logs directly, with bounded retries plus a DLQ, bus-level logging (source, destination and delivery), and a replayable archive. Includes an end-to-end script that proves which events land where, and which land nowhere.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>EventBridge</category>
+      <category>SQS</category>
+      <category>Lambda</category>
+      <category>Event-Driven</category>
+      <category>Archive</category>
+      <category>Replay</category>
+    </item>
     <item>
       <title>Cognito + API Gateway Authentication &amp; Authorization</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cognito-apigw-auth</link>

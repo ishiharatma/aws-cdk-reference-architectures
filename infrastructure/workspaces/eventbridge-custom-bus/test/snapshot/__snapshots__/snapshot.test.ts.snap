@@ -1,0 +1,966 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`EventbridgeCustomBusStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ArchiveName": {
+      "Value": "test-test-ebus-orders-archive",
+    },
+    "AuditLogGroupName": {
+      "Value": {
+        "Ref": "AuditLogGroup6D13791A",
+      },
+    },
+    "BusLogGroupName": {
+      "Value": {
+        "Ref": "BusLogGroup6C20395D",
+      },
+    },
+    "EventBusName": {
+      "Value": {
+        "Ref": "OrdersBus68D47F66",
+      },
+    },
+    "HighValueQueueUrl": {
+      "Value": {
+        "Ref": "HighValueQueue05BBCD1F",
+      },
+    },
+    "PaymentFailedQueueUrl": {
+      "Value": {
+        "Ref": "PaymentFailedQueue63AF4FAA",
+      },
+    },
+    "ProcessedTableName": {
+      "Value": {
+        "Ref": "ProcessedTable98849013",
+      },
+    },
+    "TargetDlqUrl": {
+      "Value": {
+        "Ref": "TargetDlqDD40F1FF",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AuditLogGroup6D13791A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/test-test-ebus/audit",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AuditRule28E59711": {
+      "Properties": {
+        "Description": "Every app.orders event to CloudWatch Logs",
+        "EventBusName": {
+          "Ref": "OrdersBus68D47F66",
+        },
+        "EventPattern": {
+          "source": [
+            "app.orders",
+          ],
+        },
+        "Name": "test-test-ebus-audit",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":logs:ap-northeast-1:123456789012:log-group:",
+                  {
+                    "Ref": "AuditLogGroup6D13791A",
+                  },
+                ],
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "RetryPolicy": {
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "BusLogDelivery": {
+      "DependsOn": [
+        "BusLogDestination",
+        "BusLogSource",
+      ],
+      "Properties": {
+        "DeliveryDestinationArn": {
+          "Fn::GetAtt": [
+            "BusLogDestination",
+            "Arn",
+          ],
+        },
+        "DeliverySourceName": "test-test-ebus-bus-log-source",
+      },
+      "Type": "AWS::Logs::Delivery",
+    },
+    "BusLogDestination": {
+      "Properties": {
+        "DestinationResourceArn": {
+          "Fn::GetAtt": [
+            "BusLogGroup6C20395D",
+            "Arn",
+          ],
+        },
+        "Name": "test-test-ebus-bus-log-destination",
+        "OutputFormat": "json",
+      },
+      "Type": "AWS::Logs::DeliveryDestination",
+    },
+    "BusLogGroup6C20395D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/vendedlogs/events/event-bus/test-test-ebus-orders",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "BusLogSource": {
+      "Properties": {
+        "LogType": "INFO_LOGS",
+        "Name": "test-test-ebus-bus-log-source",
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "OrdersBus68D47F66",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Logs::DeliverySource",
+    },
+    "EuOrdersRule622DE5FA": {
+      "Properties": {
+        "Description": "OrderPlaced from a region starting with "eu-"",
+        "EventBusName": {
+          "Ref": "OrdersBus68D47F66",
+        },
+        "EventPattern": {
+          "detail": {
+            "region": [
+              {
+                "prefix": "eu-",
+              },
+            ],
+          },
+          "detail-type": [
+            "OrderPlaced",
+          ],
+          "source": [
+            "app.orders",
+          ],
+        },
+        "Name": "test-test-ebus-eu-orders",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "ProcessorFunctionE1AA307D",
+                "Arn",
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "EuOrdersRuleAllowEventRuleEventbridgeCustomBusProcessorFunction33BB195F82118E5E": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ProcessorFunctionE1AA307D",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "EuOrdersRule622DE5FA",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F8FE310BF": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477FCustomResourcePolicyECD85654",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"CloudWatchLogs","action":"putResourcePolicy","parameters":{"policyName":"EventbridgeCustomBusEventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F76A63666","policyDocument":"{\\"Statement\\":[{\\"Action\\":[\\"logs:PutLogEvents\\",\\"logs:CreateLogStream\\"],\\"Effect\\":\\"Allow\\",\\"Principal\\":{\\"Service\\":\\"events.amazonaws.com\\"},\\"Resource\\":\\"",
+              {
+                "Fn::GetAtt": [
+                  "AuditLogGroup6D13791A",
+                  "Arn",
+                ],
+              },
+              "\\"}],\\"Version\\":\\"2012-10-17\\"}"},"physicalResourceId":{"id":"EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F"}}",
+            ],
+          ],
+        },
+        "Delete": "{"service":"CloudWatchLogs","action":"deleteResourcePolicy","parameters":{"policyName":"EventbridgeCustomBusEventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F76A63666"},"ignoreErrorCodesMatching":"ResourceNotFoundException"}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"CloudWatchLogs","action":"putResourcePolicy","parameters":{"policyName":"EventbridgeCustomBusEventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F76A63666","policyDocument":"{\\"Statement\\":[{\\"Action\\":[\\"logs:PutLogEvents\\",\\"logs:CreateLogStream\\"],\\"Effect\\":\\"Allow\\",\\"Principal\\":{\\"Service\\":\\"events.amazonaws.com\\"},\\"Resource\\":\\"",
+              {
+                "Fn::GetAtt": [
+                  "AuditLogGroup6D13791A",
+                  "Arn",
+                ],
+              },
+              "\\"}],\\"Version\\":\\"2012-10-17\\"}"},"physicalResourceId":{"id":"EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477F"}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::CloudwatchLogResourcePolicy",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477FCustomResourcePolicyECD85654": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "logs:PutResourcePolicy",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "logs:DeleteResourcePolicy",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EventsLogGroupPolicyEventbridgeCustomBusAuditRule9819477FCustomResourcePolicyECD85654",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "HighValueQueue05BBCD1F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "QueueName": "test-test-ebus-high-value",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "HighValueQueuePolicyCF48CF6F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "HighValueQueue05BBCD1F",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "HighValueRule480AD5A0",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "HighValueQueue05BBCD1F",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "HighValueQueue05BBCD1F",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "HighValueRule480AD5A0": {
+      "Properties": {
+        "Description": "OrderPlaced with amount >= 1000",
+        "EventBusName": {
+          "Ref": "OrdersBus68D47F66",
+        },
+        "EventPattern": {
+          "detail": {
+            "amount": [
+              {
+                "numeric": [
+                  ">=",
+                  1000,
+                ],
+              },
+            ],
+          },
+          "detail-type": [
+            "OrderPlaced",
+          ],
+          "source": [
+            "app.orders",
+          ],
+        },
+        "Name": "test-test-ebus-high-value",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "HighValueQueue05BBCD1F",
+                "Arn",
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "detail-amount": "$.detail.amount",
+                "detail-orderId": "$.detail.orderId",
+                "detail-region": "$.detail.region",
+              },
+              "InputTemplate": "{"orderId":<detail-orderId>,"amount":<detail-amount>,"region":<detail-region>,"tier":"high-value"}",
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "OrdersBus68D47F66": {
+      "Properties": {
+        "Description": "Order lifecycle events (app.orders)",
+        "LogConfig": {
+          "IncludeDetail": "FULL",
+          "Level": "INFO",
+        },
+        "Name": "test-test-ebus-orders",
+      },
+      "Type": "AWS::Events::EventBus",
+    },
+    "OrdersBusOrdersArchiveB29045C3": {
+      "Properties": {
+        "ArchiveName": "test-test-ebus-orders-archive",
+        "Description": "All app.orders events, replayable",
+        "EventPattern": {
+          "source": [
+            "app.orders",
+          ],
+        },
+        "KmsKeyIdentifier": "",
+        "RetentionDays": 1,
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "OrdersBus68D47F66",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Events::Archive",
+    },
+    "PaymentFailedQueue63AF4FAA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "QueueName": "test-test-ebus-payment-failed",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PaymentFailedQueuePolicyE9E62E6E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "PaymentFailedQueue63AF4FAA",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "PaymentFailedRule158975B9",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "PaymentFailedQueue63AF4FAA",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "PaymentFailedQueue63AF4FAA",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "PaymentFailedRule158975B9": {
+      "Properties": {
+        "Description": "PaymentFailed unless the customer cancelled",
+        "EventBusName": {
+          "Ref": "OrdersBus68D47F66",
+        },
+        "EventPattern": {
+          "detail": {
+            "reason": [
+              {
+                "anything-but": [
+                  "user_cancelled",
+                ],
+              },
+            ],
+          },
+          "detail-type": [
+            "PaymentFailed",
+          ],
+          "source": [
+            "app.orders",
+          ],
+        },
+        "Name": "test-test-ebus-payment-failed",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "PaymentFailedQueue63AF4FAA",
+                "Arn",
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "ProcessedTable98849013": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "orderId",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "eventId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "orderId",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "eventId",
+            "KeyType": "RANGE",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-ebus-processed",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ProcessorFunctionE1AA307D": {
+      "DependsOn": [
+        "ProcessorFunctionServiceRoleDefaultPolicyFC7E6FD8",
+        "ProcessorFunctionServiceRole6E94BAC6",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Ref": "ProcessedTable98849013",
+            },
+          },
+        },
+        "FunctionName": "test-test-ebus-processor",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ProcessorLogGroup6E9C0C0D",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ProcessorFunctionServiceRole6E94BAC6",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ProcessorFunctionServiceRole6E94BAC6": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ProcessorFunctionServiceRoleDefaultPolicyFC7E6FD8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:PutItem",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ProcessedTable98849013",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ProcessorFunctionServiceRoleDefaultPolicyFC7E6FD8",
+        "Roles": [
+          {
+            "Ref": "ProcessorFunctionServiceRole6E94BAC6",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ProcessorLogGroup6E9C0C0D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TargetDlqAlarm2633041F": {
+      "Properties": {
+        "AlarmDescription": "EventBridge could not deliver an event to a target after all retries.",
+        "AlarmName": "test-test-ebus-target-dlq-not-empty",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "TargetDlqDD40F1FF",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Period": 60,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "TargetDlqDD40F1FF": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "test-test-ebus-target-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TargetDlqPolicyB059D6F2": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "HighValueRule480AD5A0",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleEventbridgeCustomBusHighValueRuleC03EE847",
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "EuOrdersRule622DE5FA",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleEventbridgeCustomBusEuOrdersRuleA35E0B3C",
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "PaymentFailedRule158975B9",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TargetDlqDD40F1FF",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleEventbridgeCustomBusPaymentFailedRuleA0C6CC8E",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "TargetDlqDD40F1FF",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`EventbridgeCustomBusStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::Events::Archive": 1,
+  "AWS::Events::EventBus": 1,
+  "AWS::Events::Rule": 4,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::Permission": 1,
+  "AWS::Logs::Delivery": 1,
+  "AWS::Logs::DeliveryDestination": 1,
+  "AWS::Logs::DeliverySource": 1,
+  "AWS::Logs::LogGroup": 3,
+  "AWS::SQS::Queue": 3,
+  "AWS::SQS::QueuePolicy": 3,
+  "Custom::CloudwatchLogResourcePolicy": 1,
+}
+`;
