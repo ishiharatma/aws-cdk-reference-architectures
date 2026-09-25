@@ -1,5 +1,17 @@
 [
   {
+    "id": "cognito-apigw-auth",
+    "title": "Cognito + API Gateway Authentication & Authorization",
+    "description": "Protect a REST API with Amazon Cognito: a user pool (groups, optional TOTP MFA, hosted UI with authorization code + PKCE, machine client via client_credentials), an API Gateway Cognito authorizer with per-method OAuth scopes, and Lambda functions enforcing group membership and per-user data ownership. The managed counterpart to the Keycloak pattern, with an end-to-end token-type and scope check script.",
+    "image": "cognito-apigw-auth/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Cognito", "API Gateway", "OAuth2", "Lambda", "DynamoDB", "Authorization"],
+    "link": "cognito-apigw-auth",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
     "id": "cdk-pipelines-self-mutating",
     "title": "CDK Pipelines: Self-Mutating Pipeline with Dev/Prod Promotion",
     "description": "A self-mutating CDK Pipeline (aws-cdk-lib/pipelines) sourced from CodeCommit: the pipeline definition lives in the repository it builds, so a commit that changes the pipeline updates the pipeline itself. Build runs tsc + unit tests + CDK Nag, then Dev deploy with a smoke test, a manual approval, and Prod deploy. Includes an end-to-end check script that proves release and self-mutation.",
