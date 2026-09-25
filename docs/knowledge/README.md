@@ -33,6 +33,7 @@ checked `aws fis list-actions`).
 - [cdk-pipelines.md](cdk-pipelines.md) — CDK Pipelines: self-mutation is observable (cancelled + restarted run), Build-stage tests gate it, no Assets stage without assets, CodeCommit `Code` is initial-commit-only, pipeline does not delete its stacks
 - [cognito-api-gateway-auth.md](cognito-api-gateway-auth.md) — Cognito + API Gateway: ID vs access token (401), custom scopes only from OAuth flows, insufficient scope is 401, `cognito:groups` string, curl-scripted hosted-UI PKCE flow, DynamoDB `sub` reserved word
 - [eventbridge-custom-bus.md](eventbridge-custom-bus.md) — EventBridge: `logConfig` needs a Logs delivery, source filter, archive count lag, replay `FilterArns`, target DLQ scope
+- [secrets-manager-aurora-rotation.md](secrets-manager-aurora-rotation.md) — Aurora + Secrets Manager rotation: Data API caches secrets for minutes, alternating users flip the username, role must exist first, endpoint instead of NAT, force-delete secrets on teardown
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory
