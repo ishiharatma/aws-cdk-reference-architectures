@@ -1,5 +1,17 @@
 [
   {
+    "id": "cdk-pipelines-self-mutating",
+    "title": "CDK Pipelines: Self-Mutating Pipeline with Dev/Prod Promotion",
+    "description": "A self-mutating CDK Pipeline (aws-cdk-lib/pipelines) sourced from CodeCommit: the pipeline definition lives in the repository it builds, so a commit that changes the pipeline updates the pipeline itself. Build runs tsc + unit tests + CDK Nag, then Dev deploy with a smoke test, a manual approval, and Prod deploy. Includes an end-to-end check script that proves release and self-mutation.",
+    "image": "cdk-pipelines-self-mutating/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "CDK Pipelines", "CodePipeline", "CodeBuild", "CodeCommit", "CI/CD", "Self-Mutation"],
+    "link": "cdk-pipelines-self-mutating",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-09-25",
+    "articles": {}
+  },
+  {
     "id": "dynamodb-vector-search-semantic-api",
     "title": "Semantic Search API with DynamoDB Native Vector Search",
     "description": "A meaning-based search API on Amazon DynamoDB's native vector index (no OpenSearch): DynamoDB Streams triggers a Lambda that embeds each document with Bedrock Titan Text Embeddings V2, and SearchVectors with an inline category filter answers natural-language queries. Includes the CDK escape hatch for VectorIndexes and an end-to-end check script.",

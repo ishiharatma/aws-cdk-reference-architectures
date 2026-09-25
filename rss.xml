@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Sep 2026 18:16:07 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 25 Sep 2026 19:11:32 GMT</lastBuildDate>
+    <item>
+      <title>CDK Pipelines: Self-Mutating Pipeline with Dev/Prod Promotion</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cdk-pipelines-self-mutating</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/cdk-pipelines-self-mutating</guid>
+      <pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A self-mutating CDK Pipeline (aws-cdk-lib/pipelines) sourced from CodeCommit: the pipeline definition lives in the repository it builds, so a commit that changes the pipeline updates the pipeline itself. Build runs tsc + unit tests + CDK Nag, then Dev deploy with a smoke test, a manual approval, and Prod deploy. Includes an end-to-end check script that proves release and self-mutation.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>CDK Pipelines</category>
+      <category>CodePipeline</category>
+      <category>CodeBuild</category>
+      <category>CodeCommit</category>
+      <category>CI/CD</category>
+      <category>Self-Mutation</category>
+    </item>
     <item>
       <title>Semantic Search API with DynamoDB Native Vector Search</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/dynamodb-vector-search-semantic-api</link>
