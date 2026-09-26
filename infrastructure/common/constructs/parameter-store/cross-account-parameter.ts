@@ -1,4 +1,4 @@
-/* eslint-disable cdk/require-passing-this */
+/* eslint-disable awscdk/require-passing-this */
 import * as cdk from 'aws-cdk-lib';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
