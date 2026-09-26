@@ -558,14 +558,13 @@
   {
     "id": "ecs-fargate-alb-StackSynthesizer",
     "title": "ECS Fargate with ALB (CliCredentialsStackSynthesizer / PermissionsBoundary variant)",
-    "description": "A variant of the ECS Fargate + ALB reference for SCP-restricted accounts: with CDK_USE_CALLER_ROLE=true it deploys via CliCredentialsStackSynthesizer instead of the bootstrap roles, and applies PowerUserAccess as a PermissionsBoundary to every IAM role in the stage.",
+    "description": "A variant of the ECS Fargate + ALB reference for accounts that govern IAM with permissions boundaries: with CDK_USE_CALLER_ROLE=true it deploys via CliCredentialsStackSynthesizer instead of the bootstrap roles, and CDK_PERMISSIONS_BOUNDARY_POLICY_NAME applies a custom boundary (default: PowerUserAccess) to every IAM role in the stage. Deploy-verified, including a boundary on cfn-exec-role that denies roles created without it.",
     "image": "ecs-fargate-alb-StackSynthesizer/overview.drawio.svg",
     "tags": ["CDK", "TypeScript", "ECS", "Fargate", "ALB", "StackSynthesizer", "PermissionsBoundary", "SCP"],
     "link": "ecs-fargate-alb-StackSynthesizer",
     "difficulty": "advanced",
     "level": 300,
-    "date": "2026-07-19",
-    "draft": true,
+    "date": "2026-09-26",
     "articles": {}
   }
 ]
