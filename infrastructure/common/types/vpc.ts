@@ -98,7 +98,7 @@ export interface VpcCreateConfig {
     readonly natType?: NatType;
     /**
      * Instance type for NAT Instance
-     * @default ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.NANO)
+     * @default ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO)
      */
     readonly natInstanceType?: cdk.aws_ec2.InstanceType;
     /**

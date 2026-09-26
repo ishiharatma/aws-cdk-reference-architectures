@@ -347,7 +347,8 @@ export class VpcConstruct extends Construct {
             natProvider = ec2.NatProvider.instanceV2({
                 instanceType: config.natInstanceType
                 ? config.natInstanceType
-                : ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.NANO),
+                // t4g.nano (0.5GB) can be OOM-killed while the user data runs `yum install iptables-services`
+                : ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
                 machineImage: ec2.MachineImage.latestAmazonLinux2023({
                 edition: ec2.AmazonLinuxEdition.STANDARD,
                 cpuType: ec2.AmazonLinuxCpuType.ARM_64, //X86_64,
