@@ -571,6 +571,28 @@ albConditions: {
 - ✅ Separate roles for each task definition
 - ✅ Least privilege principle
 
+### Deploying Under a Permissions Boundary
+
+This workspace deploys in accounts where IAM privilege escalation is controlled with a
+permissions boundary. There are two ways to deploy, chosen by environment variables:
+
+| Mode | Command | Who creates the resources | Boundary on the app's roles |
+| ---- | ------- | ------------------------- | --------------------------- |
+| Caller credentials | `npm run stage:deploy:all:caller` (`CDK_USE_CALLER_ROLE=true`) | The person running the command (`CliCredentialsStackSynthesizer`) | `PowerUserAccess` (default) |
+| Bootstrap roles | `npm run stage:deploy:all` | `cdk-<qualifier>-cfn-exec-role` | The boundary named in `CDK_PERMISSIONS_BOUNDARY_POLICY_NAME` |
+
+- **Bootstrap roles with a custom boundary.** Create a customer managed policy that allows
+  everything except the escalation paths (`iam:CreateRole`/`CreateUser`/`Put*PermissionsBoundary`
+  unless the boundary is the policy itself, changes to the policy, and `iam:Delete*PermissionsBoundary`),
+  then run `cdk bootstrap --custom-permissions-boundary <policy-name>`. Only `cfn-exec-role`
+  gets the boundary. Deploy with the same name in `CDK_PERMISSIONS_BOUNDARY_POLICY_NAME` so every
+  role the app creates carries it; a role with a different or no boundary is denied.
+- **`PowerUserAccess` as the boundary of the bootstrap roles** makes `deploy-role` fail with
+  `iam:PassRole ... no permissions boundary allows the iam:PassRole action`. Use the caller
+  credentials mode there. Every stack, including `Cicd`, must receive the synthesizer.
+- The design, the verification results and the gotchas are in
+  [docs/knowledge/cdk-permissions-boundary.md](../../../docs/knowledge/cdk-permissions-boundary.md).
+
 ---
 
 ## Troubleshooting

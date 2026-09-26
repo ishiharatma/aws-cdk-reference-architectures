@@ -28,8 +28,8 @@ known, recurring trap, not a one-off.
 (`fis-arch-a-ecs-aurora`, and the shared `alb-keycloak-auth` workspace hit the same
 thing) `ec2.NatProvider.instanceV2`'s default userData runs
 `yum install iptables-services -y` and configures MASQUERADE on first boot. Paired with
-this repo's shared VPC construct's default NAT instance size (`T4G.NANO`, 0.5GiB RAM),
-that `yum install` gets **OOM-killed** on Amazon Linux 2023 often enough to be a real
+a `T4G.NANO` (0.5GiB RAM) NAT instance — this repo's shared VPC construct defaulted to
+that size until the change described under **Fix** below — that `yum install` gets **OOM-killed** on Amazon Linux 2023 often enough to be a real
 trap: the EC2 instance boots, passes every EC2/status-check health check, and never
 actually NATs anything, because the one command that would have installed `iptables`
 never finished.
@@ -44,11 +44,14 @@ correct. **Root-cause path that actually worked**: `aws ec2 get-console-output
 `Failed to enable unit: Unit file iptables.service does not exist.` and
 `sudo: /sbin/iptables: command not found`).
 
-**Fix**: bump the NAT instance to `T4G.MICRO` (1GiB) — a one-line `natInstanceType`
-override in the affected workspace's `dev-params.ts`, not a change to the shared VPC
-construct (the blast radius of changing the shared default touches every other
-workspace's committed snapshot tests; scope the fix to the workspace that needs it
-unless doing a deliberate, separately-reviewed repo-wide change).
+**Fix**: `NatType.INSTANCE` in the shared VPC construct
+(`infrastructure/common/constructs/vpc/vpc.ts`) now defaults to `T4G.MICRO` (1GiB).
+This was a deliberate repo-wide change, verified end-to-end on `ecs-fargate-alb-StackSynthesizer`
+(ECS tasks reached ECR through the NAT, ALB returned 200); it changed the committed
+snapshots of `alb-keycloak-auth`, `ecs-fargate-alb` and `ecs-fargate-alb-StackSynthesizer`
+by exactly one line (`t4g.nano` → `t4g.micro`). Workspaces that set `natInstanceType`
+explicitly, or use their own NAT provider (`NatType.CUSTOM_INSTANCE`,
+`vpc-natinstance-v2`), are unaffected and must be sized on their own.
 
 **A second trap once you've found the root cause**: an EC2 instance type change via
 CDK redeploy is an **in-place update**, not a replacement — and cloud-init's userData
@@ -58,6 +61,17 @@ even after the "fix" is deployed. Recovering it requires a manual
 `aws ec2 terminate-instances` (letting CloudFormation recreate it fresh) or a full
 stack teardown+redeploy — a plain `cdk deploy` on top of the existing broken instance
 will not fix it.
+
+## First-ever `AWS::CodeStarNotifications::NotificationRule` in an account fails once
+
+`pipeline.notifyOn(...)` creates a CodeStar Notifications rule. In an account that has
+never created one, the first `cdk deploy` fails with
+`Invalid request provided: AWS::CodeStarNotifications::NotificationRule` and the stack
+rolls back to `ROLLBACK_COMPLETE`. The service-linked role
+`AWSServiceRoleForCodeStarNotifications` is created asynchronously by that first request,
+which races the rule creation. Nothing is wrong with the template: just deploy again
+(CDK replaces the `ROLLBACK_COMPLETE` stack). Reproduced in two fresh accounts
+(2026-09-26), both times on the `Cicd` stack of `ecs-fargate-alb-StackSynthesizer`.
 
 ## Keycloak 26 split its health/metrics endpoints onto a separate management port
 

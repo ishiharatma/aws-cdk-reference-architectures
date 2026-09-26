@@ -573,6 +573,28 @@ albConditions: {
 - ✅ タスク定義ごとに個別のロール
 - ✅ 最小権限の原則
 
+### 権限境界（Permissions Boundary）の下でのデプロイ
+
+このワークスペースは、権限境界で IAM の権限昇格を統制しているアカウントでもデプロイできます。
+環境変数でデプロイ方式を切り替えます。
+
+| 方式 | コマンド | リソースを作成する主体 | アプリのロールに付く境界 |
+| ---- | -------- | ---------------------- | ------------------------ |
+| 実行者の認証情報 | `npm run stage:deploy:all:caller`（`CDK_USE_CALLER_ROLE=true`） | コマンドを実行した本人（`CliCredentialsStackSynthesizer`） | `PowerUserAccess`（既定） |
+| Bootstrap ロール | `npm run stage:deploy:all` | `cdk-<qualifier>-cfn-exec-role` | `CDK_PERMISSIONS_BOUNDARY_POLICY_NAME` で指定した境界 |
+
+- **カスタム境界を使う Bootstrap**: 権限昇格の経路以外をすべて許可するカスタマー管理ポリシーを作成します。
+  拒否するのは、境界がそのポリシー自身でない場合の `iam:CreateRole`/`CreateUser`/`Put*PermissionsBoundary`、
+  ポリシー自体の変更、`iam:Delete*PermissionsBoundary` です。その後
+  `cdk bootstrap --custom-permissions-boundary <ポリシー名>` を実行します。境界が付くのは
+  `cfn-exec-role` だけです。デプロイ時は同じ名前を `CDK_PERMISSIONS_BOUNDARY_POLICY_NAME` に指定し、
+  アプリが作る全ロールに同じ境界を付けます。別の境界や境界なしのロールは拒否されます。
+- **Bootstrap ロールの境界が `PowerUserAccess` の場合**、`deploy-role` が
+  `iam:PassRole ... no permissions boundary allows the iam:PassRole action` で失敗します。
+  その環境では実行者の認証情報方式を使います。`Cicd` を含む全スタックに synthesizer を渡す必要があります。
+- 設計、検証結果、注意点は
+  [docs/knowledge/cdk-permissions-boundary.md](../../../docs/knowledge/cdk-permissions-boundary.md) にまとめています。
+
 ---
 
 ## トラブルシューティング

@@ -40,6 +40,15 @@ but a long CloudFront/Aurora teardown can outlast them; for long-running destroy
 prefer `aws cloudformation delete-stack` + poll (the plain CLI auto-refreshes) over a
 single long `cdk destroy` invocation.
 
+## A shell `ENV` variable silently overrides `-c env=`
+
+This repo's `bin/*.ts` files resolve the environment as
+`process.env.ENV || app.node.tryGetContext("env")`, so an `ENV` already exported in the
+shell (e.g. `ENV=local` from a dev container) wins over `-c env=dev` and fails with
+`No parameters found for environment: local`. This also breaks `cdk bootstrap`, because
+the app in `cdk.json` is executed even for an explicit `aws://account/region`. Set
+`ENV` (and `PROJECT_NAME`) explicitly when running `cdk` by hand.
+
 ## `cdk.out` lock conflicts from stale background processes
 
 Running a new `cdk deploy`/`destroy` against a `cdk.out` directory that a previous
