@@ -100,6 +100,7 @@ export class EcsFargateAlbStage extends cdk.Stage {
       terminationProtection: props.terminationProtection,
       isAutoDeleteObject: props.isAutoDeleteObject,
       codecommitAccountId: props.codecommitParams.codecommitAccountId,
+      synthesizer: props.synthesizer,
     });
     cicdStack.addStackDependency(baseStack);
     cicdStack.addStackDependency(ecrStack);

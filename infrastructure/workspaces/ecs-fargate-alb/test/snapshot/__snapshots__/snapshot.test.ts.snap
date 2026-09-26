@@ -480,7 +480,7 @@ exports[`Stack Snapshot Tests BaseStack Snapshot should match snapshot 1`] = `
         "ImageId": {
           "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
         },
-        "InstanceType": "t4g.nano",
+        "InstanceType": "t4g.micro",
         "SecurityGroupIds": [
           {
             "Fn::GetAtt": [

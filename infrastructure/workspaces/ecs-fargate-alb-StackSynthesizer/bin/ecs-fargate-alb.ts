@@ -64,10 +64,19 @@ const stage = new EcsFargateAlbStage(app, `EcsFargateAlb${pascalCase(envName)}`,
 });
 
 // --------------------------------- Permission Boundary -------------------------
-// Apply PowerUserAccess as PermissionsBoundary to all IAM Roles in the stage.
-// Required by SCP that denies iam:CreateRole without this boundary.
+// Apply a PermissionsBoundary to all IAM Roles in the stage.
+// Set CDK_PERMISSIONS_BOUNDARY_POLICY_NAME to use a customer managed boundary policy
+// (e.g. the one passed to `cdk bootstrap --custom-permissions-boundary`).
+// Otherwise PowerUserAccess is applied, as required by an SCP that denies iam:CreateRole without it.
+const boundaryPolicyName = process.env.CDK_PERMISSIONS_BOUNDARY_POLICY_NAME;
 PermissionsBoundary.of(stage).apply(
-  ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess')
+  boundaryPolicyName
+    ? ManagedPolicy.fromManagedPolicyArn(
+        stage,
+        'PermissionsBoundaryPolicy',
+        `arn:aws:iam::${envParams.accountId ?? defaultEnv.account}:policy/${boundaryPolicyName}`,
+      )
+    : ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess')
 );
 
 // --------------------------------- Tagging  -------------------------------------
