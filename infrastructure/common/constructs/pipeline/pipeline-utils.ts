@@ -1,4 +1,4 @@
-/* eslint-disable cdk/require-passing-this */
+/* eslint-disable awscdk/require-passing-this */
 /**
  * Common utilities for Pipeline Constructs
  */

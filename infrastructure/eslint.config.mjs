@@ -1,7 +1,7 @@
 import pluginJs from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
 import unusedImportPlugin from "eslint-plugin-unused-imports";
-import eslintCdkPlugin from "eslint-cdk-plugin";
+import eslintCdkPlugin from "eslint-plugin-awscdk";
 import tseslint from "typescript-eslint";
 import jsdoc from "eslint-plugin-jsdoc";
 
@@ -26,7 +26,7 @@ export default tseslint.config(
   {
     plugins: {
       "unused-imports": unusedImportPlugin,
-      cdk: eslintCdkPlugin,
+      awscdk: eslintCdkPlugin,
       jsdoc: jsdoc,
     },
     rules: {
@@ -42,7 +42,7 @@ export default tseslint.config(
         },
       ],
       ...eslintCdkPlugin.configs.recommended.rules,
-      "cdk/no-variable-construct-id": "off",
+      "awscdk/no-variable-construct-id": "off",
       // JSDoc required for public exports
       "jsdoc/require-jsdoc": [
         "warn",
