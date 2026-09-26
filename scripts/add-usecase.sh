@@ -33,6 +33,14 @@ cdk init app --language typescript
 # so keeping it here would only cause version drift between workspaces.
 npm pkg delete devDependencies.aws-cdk
 
+# Pin the test/type toolchain. `cdk init` installs the latest majors (TypeScript 7, Jest 30, @swc/jest),
+# but this repository's tooling supports TypeScript < 6.1 only: typescript-eslint and eslint-cdk-plugin
+# declare that peer range, and ts-jest (used by templates/init-workspace/jest.config.js) needs the
+# TypeScript JS compiler API, which TypeScript 7 does not expose.
+npm pkg set "devDependencies.typescript=~6.0.3" "devDependencies.jest=^29.7.0" \
+    "devDependencies.ts-jest=^29.2.5" "devDependencies.@types/jest=^29.5.14"
+npm pkg delete devDependencies.@swc/core devDependencies.@swc/jest
+
 rm -rf node_modules package-lock.json
 
 # Create directory structure

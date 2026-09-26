@@ -1,17 +1,10 @@
 module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/test'],
   testMatch: ['**/*.test.ts'],
   transform: {
-    '^.+\\.tsx?$': [
-      '@swc/jest',
-      {
-        jsc: {
-          parser: { syntax: 'typescript', tsx: false, decorators: true },
-          target: 'es2022',
-        },
-      },
-    ],
+    '^.+\\.tsx?$': 'ts-jest'
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   collectCoverageFrom: [

@@ -1,18 +1,11 @@
 module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
   // `app/test` holds the tests that also gate the pipeline's own Build stage.
   roots: ['<rootDir>/test', '<rootDir>/app/test'],
   testMatch: ['**/*.test.ts'],
   transform: {
-    '^.+\\.tsx?$': [
-      '@swc/jest',
-      {
-        jsc: {
-          parser: { syntax: 'typescript', tsx: false, decorators: true },
-          target: 'es2022',
-        },
-      },
-    ],
+    '^.+\\.tsx?$': 'ts-jest'
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   collectCoverageFrom: [
