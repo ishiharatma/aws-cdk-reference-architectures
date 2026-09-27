@@ -14,6 +14,8 @@ This project watches [`awslabs/aws-service-eol-data`](https://github.com/awslabs
 
 It is a serverless pipeline, on a schedule:
 
+![overview](overview.drawio.svg)
+
 ```text
 EventBridge Scheduler (cron)
   └─→ Step Functions (Standard)
@@ -49,7 +51,7 @@ The Fetch step already produces a fully structured diff; a Lambda could format t
 
 ## Architecture Overview
 
-See the pipeline diagram above (this workspace ships a text diagram instead of `overview.drawio.svg`, pending a validated deploy — see [Draft status](#draft-status--caveats)).
+See `overview.drawio.svg` above (editable in draw.io / the VS Code drawio extension) and the equivalent text diagram in [Introduction](#introduction).
 
 ### Key Components
 
@@ -111,7 +113,7 @@ This workspace has been synthesized and unit-tested, but **not** deployed or run
 
 - `npm install`, `tsc --noEmit`, `npm run test:unit`, and `cdk synth` were all run successfully in this session (against a dummy 123456789012/ap-northeast-1 environment) — but `cdk deploy` has not, so no Lambda has actually executed and no Bedrock call has actually been made.
 - `test/unit` covers resource shape (Fine-grained Assertions) only — no snapshot, compliance (`cdk-nag`), or integration tests were added yet, unlike most workspaces in this repository.
-- No `overview.drawio.svg` was produced; the ASCII diagram above stands in for it until the architecture is validated end-to-end.
+- `overview.drawio.svg` uses real AWS4 icons for every managed service; Amazon Bedrock has no extracted icon in this repository yet, so its static preview is a hand-drawn stand-in (the editable draw.io model still references the genuine `mxgraph.aws4.bedrock` shape).
 - `report.bedrockModelId` in `parameters/dev-params.ts` is a placeholder cross-region inference profile ID — confirm the exact ID your account is entitled to call before deploying.
 - Only a `dev` parameter set exists (no `prd-params.ts`), matching this workspace's draft status.
 - `collector.datasetUrl` still points at `main` in `parameters/dev-params.ts` for simplicity — pin it to a tagged release before any real deployment (see the note in [Introduction](#introduction)).

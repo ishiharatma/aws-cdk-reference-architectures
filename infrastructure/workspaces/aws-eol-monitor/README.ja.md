@@ -12,6 +12,8 @@
 
 > このデータセットのREADMEには **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"**（公式のAWS APIではなく、ベストエフォートで提供されるコミュニティ管理のデータセット）、**"no guarantee of completeness, accuracy, or timeliness of updates"**（完全性・正確性・更新の即時性は保証されない）と明記されています。各エントリの`sourceUrl`はAWS公式ドキュメントへのリンクで、独自に検証するためのものです。何らかの判断を下す際に正とすべきは、このデータセットや後述の要約メールではなく、その`sourceUrl`先の公式ドキュメントです。詳細は[Draft状態と注意点](#draft状態と注意点)を参照してください。
 
+![overview](overview.drawio.svg)
+
 ```text
 EventBridge Scheduler (cron)
   └─→ Step Functions (Standard)
@@ -47,7 +49,7 @@ Fetchステップの時点で差分は既に構造化されており、Lambdaで
 
 ## アーキテクチャ概要
 
-上記のパイプライン図を参照してください（このワークスペースは、動作検証が済むまで`overview.drawio.svg`の代わりにテキスト図を採用しています。詳細は[Draft状態と注意点](#draft状態と注意点)）。
+上記の`overview.drawio.svg`(draw.io / VS Code drawio拡張で編集可能)と、[概要](#概要)内の同内容のテキスト図を参照してください。
 
 ### 主要コンポーネント
 
@@ -109,7 +111,7 @@ Lambda(1回の実行あたり短時間の呼び出し2回)、Step Functions(Stan
 
 - 本セッションでは`npm install`・`tsc --noEmit`・`npm run test:unit`・`cdk synth`(ダミーの123456789012/ap-northeast-1環境に対して)まではすべて成功しています。ただし`cdk deploy`は未実行のため、Lambdaが実際に動いたことも、Bedrockを実際に呼び出したこともありません。
 - `test/unit`はリソース形状の検証(Fine-grained Assertions)のみで、このリポジトリの他ワークスペースと異なりsnapshot/compliance(`cdk-nag`)/integrationテストは未追加です。
-- `overview.drawio.svg`は未作成です。アーキテクチャがエンドツーエンドで検証されるまで、上記のテキスト図で代替しています。
+- `overview.drawio.svg`は、管理対象サービスのほぼ全てに本物のAWS4アイコンを使用しています。ただしAmazon Bedrockはこのリポジトリ内にまだ抽出済みのアイコンが無いため、静的プレビューのみ簡易的な手描きアイコンで代替しています(draw.ioの編集用モデル側は本物の`mxgraph.aws4.bedrock`シェイプを参照しているため、draw.ioで開けば正式なアイコンで表示されます)。
 - `parameters/dev-params.ts`の`report.bedrockModelId`はサンプル用のクロスリージョン推論プロファイルIDです。デプロイ前に、対象アカウントで実際に呼び出せる正確なIDを確認してください。
 - ドラフト状態を反映して`dev`パラメータのみを用意しており、`prd-params.ts`は未作成です。
 - `parameters/dev-params.ts`の`collector.datasetUrl`は簡略化のため`main`を指したままです。実際にデプロイする前に、必ずタグ付きリリースへ固定してください([概要](#概要)の注記を参照)。
