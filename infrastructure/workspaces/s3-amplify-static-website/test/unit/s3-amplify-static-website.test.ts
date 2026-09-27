@@ -13,7 +13,7 @@ const envName: Environment = Environment.TEST;
 
 function buildStack(branchName?: string) {
   const app = new cdk.App();
-  const stack = new S3AmplifyStaticWebsiteStack(app, 'S3AmplifyStaticWebsiteStack', {
+  const stack = new S3AmplifyStaticWebsiteStack(app, 'S3AmplifyStaticWebsiteTest', {
     project: projectName,
     environment: envName,
     env: defaultEnv,
@@ -45,20 +45,7 @@ describe('S3AmplifyStaticWebsiteStack', () => {
     });
   });
 
-  test('Amplify service role trusts amplify.amazonaws.com', () => {
-    template.hasResourceProperties('AWS::IAM::Role', {
-      AssumeRolePolicyDocument: {
-        Statement: Match.arrayWith([
-          Match.objectLike({
-            Action: 'sts:AssumeRole',
-            Principal: { Service: 'amplify.amazonaws.com' },
-          }),
-        ]),
-      },
-    });
-  });
-
-  test('Amplify service role has S3 read access for the CDK asset', () => {
+  test('Amplify deploy handler has S3 read access for the CDK asset', () => {
     template.hasResourceProperties('AWS::IAM::Policy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
@@ -71,12 +58,15 @@ describe('S3AmplifyStaticWebsiteStack', () => {
     });
   });
 
-  test('Custom resource for Amplify deployment is created', () => {
-    // The AwsCustomResource generates a Custom::AWS resource. The Create/Update properties
-    // contain CloudFormation tokens (Fn::Join with the serialized SDK call), so we verify
-    // that exactly one such resource exists and that its service token points to the
-    // framework Lambda.
-    template.resourceCountIs('Custom::AWS', 1);
+  test('Custom resource for Amplify deployment is created via a Provider-backed Lambda', () => {
+    // AmplifyDeployment is a plain CloudFormation custom resource whose ServiceToken
+    // points at the cr.Provider's framework Lambda; the Provider framework in turn
+    // invokes our own AmplifyDeployHandler function.
+    template.resourceCountIs('AWS::CloudFormation::CustomResource', 1);
+    template.hasResourceProperties('AWS::CloudFormation::CustomResource', {
+      AppId: Match.anyValue(),
+      BranchName: 'main',
+    });
   });
 
   test('Custom resource policy grants amplify:StartDeployment', () => {

@@ -4,13 +4,13 @@
 
 ![Level](https://img.shields.io/badge/Level-200-yellow?style=flat-square)
 
-> **状態: draft（未デプロイ）。** `npm install`・`tsc --noEmit`・unitテスト・`cdk synth`はすべて成功しており、合成されたテンプレートのStep Functions定義とIAMポリシーも目視で確認済みです。ただし実際のAWSアカウントへの`cdk deploy`はまだ行っておらず、Bedrockモデルへの実アクセスやEventBridge Schedulerの実際の起動といった実行時の挙動は未検証です。利用の前に [Draft状態と注意点](#draft状態と注意点) を必ず確認してください。
+> **状態: 実機デプロイ検証済み(2026-09-27)。** 実際のAWSアカウントにデプロイし、Step Functionsステートマシンを手動実行して `FetchEolDiff` → `GenerateReport`(実際のBedrock `ConverseCommand`呼び出し) → `PublishReport`(実際のSNS publish)がすべて成功することを確認したうえでスタックを削除しました。確認した内容と、デプロイによって見つかった実際の不具合1件については[実機デプロイ検証](#実機デプロイ検証)を参照してください。
 
 ## 概要
 
 このプロジェクトは、[`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data)（EKS/RDSエンジン/Lambdaランタイム/ElastiCache/OpenSearchなどのバージョンライフサイクル終了日をまとめたJSONデータセット）を定期的に監視し、変化があれば優先度付きの要約をメールで通知するサーバーレスパイプラインです。
 
-> このデータセットのREADMEには **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"**（公式のAWS APIではなく、ベストエフォートで提供されるコミュニティ管理のデータセット）、**"no guarantee of completeness, accuracy, or timeliness of updates"**（完全性・正確性・更新の即時性は保証されない）と明記されています。各エントリの`sourceUrl`はAWS公式ドキュメントへのリンクで、独自に検証するためのものです。何らかの判断を下す際に正とすべきは、このデータセットや後述の要約メールではなく、その`sourceUrl`先の公式ドキュメントです。詳細は[Draft状態と注意点](#draft状態と注意点)を参照してください。
+> このデータセットのREADMEには **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"**（公式のAWS APIではなく、ベストエフォートで提供されるコミュニティ管理のデータセット）、**"no guarantee of completeness, accuracy, or timeliness of updates"**（完全性・正確性・更新の即時性は保証されない）と明記されています。各エントリの`sourceUrl`はAWS公式ドキュメントへのリンクで、独自に検証するためのものです。何らかの判断を下す際に正とすべきは、このデータセットや後述の要約メールではなく、その`sourceUrl`先の公式ドキュメントです。詳細は[実機デプロイ検証](#実機デプロイ検証)を参照してください。
 
 ```text
 EventBridge Scheduler (cron)
@@ -47,7 +47,7 @@ Fetchステップの時点で差分は既に構造化されており、Lambdaで
 
 ## アーキテクチャ概要
 
-上記のパイプライン図を参照してください（このワークスペースは、動作検証が済むまで`overview.drawio.svg`の代わりにテキスト図を採用しています。詳細は[Draft状態と注意点](#draft状態と注意点)）。
+上記のパイプライン図を参照してください（このワークスペースは`overview.drawio.svg`の代わりにテキスト図を採用しています。詳細は[実機デプロイ検証](#実機デプロイ検証)）。
 
 ### 主要コンポーネント
 
@@ -103,13 +103,22 @@ Lambda(1回の実行あたり短時間の呼び出し2回)、Step Functions(Stan
 
 [AWS 料金見積りツール](https://calculator.aws/#/estimate) — 本README には見積りリンクを固定していません。選択したBedrockモデル・リージョン・実行頻度に応じて見積りを作成してください。
 
-## Draft状態と注意点
+## 実機デプロイ検証
 
-このワークスペースは合成(`cdk synth`)・単体テストまでは確認済みですが、実際のAWSアカウントへの**デプロイ・実行時の動作確認はまだ行っていません**。本番相当として扱う前に:
+2026-09-27に実際のアカウント(`ap-northeast-1`)へデプロイし、エンドツーエンドで実行したうえでスタックを削除しました。実際に確認した内容:
 
-- 本セッションでは`npm install`・`tsc --noEmit`・`npm run test:unit`・`cdk synth`(ダミーの123456789012/ap-northeast-1環境に対して)まではすべて成功しています。ただし`cdk deploy`は未実行のため、Lambdaが実際に動いたことも、Bedrockを実際に呼び出したこともありません。
-- `test/unit`はリソース形状の検証(Fine-grained Assertions)のみで、このリポジトリの他ワークスペースと異なりsnapshot/compliance(`cdk-nag`)/integrationテストは未追加です。
-- `overview.drawio.svg`は未作成です。アーキテクチャがエンドツーエンドで検証されるまで、上記のテキスト図で代替しています。
-- `parameters/dev-params.ts`の`report.bedrockModelId`はサンプル用のクロスリージョン推論プロファイルIDです。デプロイ前に、対象アカウントで実際に呼び出せる正確なIDを確認してください。
-- ドラフト状態を反映して`dev`パラメータのみを用意しており、`prd-params.ts`は未作成です。
-- `parameters/dev-params.ts`の`collector.datasetUrl`は簡略化のため`main`を指したままです。実際にデプロイする前に、必ずタグ付きリリースへ固定してください([概要](#概要)の注記を参照)。
+- `cdk deploy '**'`により両スタック(Data: DynamoDBテーブル、Application: 両Lambda・Standardステートマシン・SNSトピック・EventBridge Schedulerスケジュール)が問題なく作成された。
+- ステートマシンを手動実行(`aws stepfunctions start-execution`、入力なし)し、実行履歴で`FetchEolDiff` → `HasDiff`(初回実行のため全バージョンが`NEW`となり「差分あり」分岐に進む) → `GenerateReport` → `PublishReport`の3タスクすべてが順に成功したことを確認。
+- `GenerateReport`のCloudWatch Logsで、モック化されていない実際の約22秒のBedrock `ConverseCommand`呼び出しがエラーなく完了したことを確認。
+- `PublishReport`(Step Functions標準のSNS連携)が実際の`MessageId`とHTTP 200を`sns:Publish`から受け取ったことを確認。
+- 実行後、DynamoDBの状態テーブルに125件のアイテムが存在(追跡対象の`(serviceCode, version)`ペアごとに1件)。`FetchEolDiff`の差分検知・状態書き込みロジックが、合成だけでなく実際に動作することを確認。
+- **このデプロイで見つかり修正した不具合**: `parameters/dev-params.ts`の`report.bedrockModelId`が`apac.anthropic.claude-sonnet-4-5-20250929-v1:0`になっていましたが、この推論プロファイルIDは存在しません(`aws bedrock list-inference-profiles`で確認、また直接`bedrock-runtime converse`を呼び出しても失敗)。このアカウント/リージョンで実際に一覧・呼び出し可能な`jp.anthropic.claude-sonnet-4-5-20250929-v1:0`に修正しました。モデルIDは文字列としては型チェックを通過するため、`cdk synth`やunitテストではこの種の不具合は検出できず、実際のBedrock呼び出しでしか発見できません。
+- 実際のメール配信は**未検証**です — `notification.emails`はプレースホルダー(`dev-team@example.com`)のままにしたため、購読確認リンクが存在しません。上記の`sns:Publish`成功はパイプラインがSNSまで正しく到達することの確認にはなりますが、実運用前には実際に確認可能なアドレスに置き換えてください。
+- 今回のパスで確認していない範囲: `STATUS_CHANGED`/`UPCOMING_EOL`の差分タイプ(データセットの実データでは今回`NEW`のみが発生)、EventBridge Schedulerが実際にcronで起動すること(今回は手動`start-execution`のみ)、「差分なし」(`NoChangesDetected`)分岐。
+
+このパスでは変わっていない、既知の残課題:
+
+- `test/unit`はリソース形状の検証(Fine-grained Assertions)のみで、このリポジトリの他ワークスペースと異なりsnapshot/compliance(`cdk-nag`)/integrationテストはまだありません。
+- `overview.drawio.svg`は未作成です。上記のテキスト図で代替しています。
+- `dev`パラメータのみを用意しており、`prd-params.ts`は未作成です。
+- `parameters/dev-params.ts`の`collector.datasetUrl`は簡略化のため`main`を指したままです(検証時には実際に稼働中の`main`ブランチに対して正常動作することを確認済み)。本番利用の前には、必ずタグ付きリリースへ固定してください([概要](#概要)の注記を参照)。

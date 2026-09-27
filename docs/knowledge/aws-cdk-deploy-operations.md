@@ -97,6 +97,27 @@ the PR.
   `dev-params.ts` only runs if something actually imports that module for its side
   effect. `tsc`/`npm run build` won't catch this (nothing is type-unsound), only a
   real deploy attempt surfaces it.
+- **A stray `tsc`-compiled `.js` file sitting next to a `.ts` module produces the
+  exact same *"No parameters found for environment: dev"* error, even with the
+  side-effect import correctly in place.** `tsc` (via `npm run build`) has no
+  `outDir` configured in this repo's `tsconfig.base.json`, so it compiles `.js`/`.d.ts`
+  files in place, right next to their `.ts` sources (they're gitignored — `*.js`/
+  `*.d.ts` — so this never shows up as a tracked diff). The `stage:deploy:all`/`synth`
+  scripts run the CDK app through `tsx`, which resolves a bare specifier like
+  `parameters/environments` via this repo's `"*": ["./*"]` tsconfig path fallback.
+  If a stale `parameters/environments.js` exists alongside `environments.ts`, some of
+  the app's imports of `parameters/environments` can resolve to the compiled `.js`
+  while others resolve to the `.ts` source — two different module instances, so the
+  `params` object one file mutates (`params[Environment.DEVELOPMENT] = devParams`)
+  is not the same object another file reads, and the reader sees an empty registry.
+  Confirmed in `aws-eol-monitor`: running `npm run build` (for lint/typecheck) right
+  before `npm run synth` reproduced this every time; deleting every non-`jest.config.js`
+  `.js`/`.d.ts` file under the workspace (`find . -name "*.js" -not -path "./node_modules/*"
+  -not -name "jest.config.js" -delete` and the `.d.ts` equivalent) before `synth`/`deploy`
+  fixed it immediately, with no code change. Any workspace using this
+  bare-specifier-registration pattern for its parameters should have its stray
+  `.js`/`.d.ts` cleaned before a `synth`/`deploy` step in the same session as a
+  `build`/`test` run.
 - **Deleting a workspace's `jest.config.js`** while cleaning up stray build artifacts
   (a `find . -name "*.js" | xargs rm -f` run without excluding config files) breaks
   Jest with a confusing `SyntaxError: Missing initializer in const declaration` on a

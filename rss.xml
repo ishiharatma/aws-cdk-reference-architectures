@@ -5,7 +5,35 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 26 Sep 2026 16:31:44 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2026 13:37:31 GMT</lastBuildDate>
+    <item>
+      <title>S3 + Amplify Static Website Hosting</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-amplify-static-website</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-amplify-static-website</guid>
+      <pubDate>Sun, 27 Sep 2026 12:00:00 GMT</pubDate>
+      <description>Static website hosting with AWS Amplify Hosting in manual deployment mode (no Git connection): site files are packaged as a CDK asset, and a Lambda-backed custom resource presigns an S3 URL for the zip and calls StartDeployment with it, avoiding a bucket policy on the shared CDK bootstrap bucket. Compared against the CloudFront + S3 pattern. Deploy-verified end-to-end, including a live HTTP 200 from the deployed site.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Amplify</category>
+      <category>S3</category>
+      <category>Custom Resource</category>
+      <category>Lambda</category>
+    </item>
+    <item>
+      <title>AWS Service EOL Monitor — Serverless EOL Watch with a Bedrock Digest</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/aws-eol-monitor</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/aws-eol-monitor</guid>
+      <pubDate>Sun, 27 Sep 2026 12:00:00 GMT</pubDate>
+      <description>A serverless pipeline that watches the awslabs/aws-service-eol-data dataset for AWS service/version end-of-life changes: EventBridge Scheduler triggers a Standard Step Functions workflow that diffs the dataset against a DynamoDB state table, asks Bedrock (Claude) to draft a prioritized Markdown digest only when something changed, and publishes it to SNS. Deploy-verified end-to-end, including a real Bedrock ConverseCommand call and SNS publish.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Step Functions</category>
+      <category>EventBridge Scheduler</category>
+      <category>Bedrock</category>
+      <category>DynamoDB</category>
+      <category>SNS</category>
+      <category>Lambda</category>
+    </item>
     <item>
       <title>ECS Fargate with ALB (CliCredentialsStackSynthesizer / PermissionsBoundary variant)</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecs-fargate-alb-StackSynthesizer</link>

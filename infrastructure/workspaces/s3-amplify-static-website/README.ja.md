@@ -23,33 +23,31 @@ Amplify Hosting の **マニュアルデプロイモード**（Git リポジト�
 ## アーキテクチャ概要
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  CDK デプロイ時                                          │
-│                                                         │
-│  1. CDK Asset → zip 作成 → CDK Bootstrap S3 バケット   │
-│  2. Amplify サービスロール → S3 読み取り権限付与        │
-│  3. AWS::Amplify::App + Branch 作成                     │
-│  4. カスタムリソース (Lambda) → StartDeployment 呼出し  │
-│     sourceUrl = s3://<bootstrap-bucket>/<hash>.zip      │
-│                                                         │
-│  アクセス時                                              │
-│                                                         │
-│  ユーザー → Amplify Hosting CDN → 静的コンテンツ配信    │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│  CDK デプロイ時                                                 │
+│                                                                 │
+│  1. CDK Asset → zip 作成 → CDK Bootstrap S3 バケット            │
+│  2. AWS::Amplify::App + Branch 作成                             │
+│  3. カスタムリソース (Lambda) → zipの署名付きGET URLを生成し、  │
+│     それを sourceUrl として StartDeployment を呼出し            │
+│                                                                 │
+│  アクセス時                                                      │
+│                                                                 │
+│  ユーザー → Amplify Hosting CDN → 静的コンテンツ配信             │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 **デプロイフロー:**
 
 1. `cdk deploy` 実行
 2. CDK がウェブサイトディレクトリを zip 圧縮し、CDK Bootstrap S3 バケットにアップロード（コンテンツハッシュ形式のキー）
-3. Amplify サービスロールが zip を読み取れるよう IAM 権限を付与
-4. CloudFormation が `AWS::Amplify::App` と `AWS::Amplify::Branch` を作成
-5. カスタムリソース（Lambda）が `amplify:StartDeployment` を呼び出し
-6. Amplify が zip を取得・展開し、管理 CDN 経由でコンテンツを配信
+3. CloudFormation が `AWS::Amplify::App` と `AWS::Amplify::Branch` を作成
+4. カスタムリソース（小さなLambda関数 `AmplifyDeployHandler`）が zip の署名付きS3 GET URLを生成し、それを`sourceUrl`として`amplify:StartDeployment`を呼び出し
+5. Amplify がその署名付きURLへの通常のHTTPS GETでzipを取得・展開し、管理CDN経由でコンテンツを配信
 
 **コンテンツ更新時:**
 
-ウェブサイトのファイルが変更されると CDK アセットのハッシュキーが変わり、`sourceUrl` が更新されます。次の `cdk deploy` で自動的に再デプロイが行われます。
+ウェブサイトのファイルが変更されると CDK アセットのハッシュキーが変わり、カスタムリソースが署名するオブジェクトも変わります。次の `cdk deploy` で自動的に再デプロイが行われます。
 
 ## プロジェクトのディレクトリ構成
 
@@ -86,26 +84,16 @@ const websiteAsset = new s3_assets.Asset(this, 'WebsiteAsset', {
 
 CDK がウェブサイトディレクトリを zip 圧縮し、CDK Bootstrap バケットにアップロードします。キーはコンテンツの SHA-256 ハッシュであるため、ファイルが変わると自動的に新しいキーが生成されます。
 
-### Amplify サービスロール
-
-```typescript
-const amplifyServiceRole = new iam.Role(this, 'AmplifyServiceRole', {
-  assumedBy: new iam.ServicePrincipal('amplify.amazonaws.com'),
-});
-websiteAsset.grantRead(amplifyServiceRole);
-```
-
-Amplify が `StartDeployment` 実行時に S3 から zip を取得するために使用するロールです。
-
 ### Amplify App
 
 ```typescript
 this.amplifyApp = new amplify.CfnApp(this, 'AmplifyApp', {
   name: `${props.project}-${props.environment}-website`,
   platform: 'WEB',
-  iamServiceRole: amplifyServiceRole.roleArn,
 });
 ```
+
+`iamServiceRole` は指定していません。このデザインでは Amplify が zip 取得のためにロールを引き受けることはなく（詳細は後述の[デプロイ用カスタムリソース](#デプロイ用カスタムリソース)を参照）、このサンプルでは Amplify が他の AWS サービスを代行呼び出しする必要もないためです。
 
 `platform: 'WEB'` は静的ウェブサイト（マネージド CDN）を意味します。`repository` や `accessToken` を指定しないことで **マニュアルデプロイモード** になります。
 
@@ -125,33 +113,35 @@ this.amplifyBranch = new amplify.CfnBranch(this, 'AmplifyBranch', {
 ### デプロイ用カスタムリソース
 
 ```typescript
-const deployAction = {
-  service: 'Amplify',
-  action: 'startDeployment',
-  parameters: {
-    appId: this.amplifyApp.attrAppId,
-    branchName,
-    sourceUrl: `s3://${websiteAsset.s3BucketName}/${websiteAsset.s3ObjectKey}`,
-    sourceUrlType: 'ZIP',
-  },
-  physicalResourceId: cr.PhysicalResourceId.of(
-    `${props.project}-${props.environment}-amplify-deploy`,
-  ),
-};
+const deployHandler = new lambdaNodejs.NodejsFunction(this, 'AmplifyDeployHandler', {
+  runtime: lambda.Runtime.NODEJS_22_X,
+  architecture: lambda.Architecture.ARM_64,
+  handler: 'handler',
+  entry: path.join(__dirname, '../../src/lambda/amplify-deploy/index.ts'),
+  timeout: cdk.Duration.seconds(60),
+  bundling: { minify: true, sourceMap: true, target: 'node22' },
+});
+websiteAsset.grantRead(deployHandler);
+deployHandler.addToRolePolicy(
+  new iam.PolicyStatement({ actions: ['amplify:StartDeployment'], resources: ['*'] }),
+);
 
-new cr.AwsCustomResource(this, 'AmplifyDeployment', {
-  onCreate: deployAction,
-  onUpdate: deployAction,  // sourceUrl が変わったとき自動的に再デプロイ
-  policy: cr.AwsCustomResourcePolicy.fromStatements([
-    new iam.PolicyStatement({
-      actions: ['amplify:StartDeployment'],
-      resources: ['*'],
-    }),
-  ]),
+const deployProvider = new cr.Provider(this, 'AmplifyDeployProvider', {
+  onEventHandler: deployHandler,
+});
+
+new cdk.CustomResource(this, 'AmplifyDeployment', {
+  serviceToken: deployProvider.serviceToken,
+  properties: {
+    AppId: this.amplifyApp.attrAppId,
+    BranchName: branchName,
+    BucketName: websiteAsset.s3BucketName,
+    ObjectKey: websiteAsset.s3ObjectKey,
+  },
 });
 ```
 
-`AwsCustomResource` は CloudFormation カスタムリソースとして動作し、スタック作成時（`onCreate`）とプロパティ変更時（`onUpdate`）に `amplify:StartDeployment` を呼び出します。
+`amplify:StartDeployment` に `s3://` URL をそのまま渡す方式は、`amplify.amazonaws.com` への読み取り権限を許可する**バケットポリシー**が必要です（[Amplify公式ドキュメント](https://docs.aws.amazon.com/amplify/latest/userguide/deploy-with-sdks.html)参照)。しかし zip はこのスタックが所有していない共有の CDK Bootstrap バケットに置かれているため、そのポリシーを付与できません。そこで `AmplifyDeployHandler`（自前の Lambda、[`cr.Provider`](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.custom_resources.Provider.html)でラップ）が自身の`s3:GetObject`権限を使って zip の短命な署名付きHTTPS GET URLを生成し、それを使って`amplify:StartDeployment`を呼び出します。Amplify 側は単なるHTTP GETを実行するだけなので、バケットポリシーも`iamServiceRole`も一切不要になります。作成時・更新時の両方で実行されます(コンテンツが変わればアセットキーも変わるため、自動的に新しいデプロイがトリガーされます)。よりシンプルな`cr.AwsCustomResource`を使った最初の実装からこの方式に置き換えた経緯は[実機デプロイ検証](#実機デプロイ検証)を参照してください。
 
 ## 前提条件
 
@@ -189,6 +179,22 @@ npm run destroy:all -- --project=sample --env=dev
 ```
 
 > **注意**: Amplify Hosting はデプロイしたコンテンツをホスト側で管理します。スタックを削除すると Amplify App ごと削除されます。
+
+## 実機デプロイ検証
+
+2026-09-27に実際のアカウント(`ap-northeast-1`)へデプロイし、確認したうえでスタックを削除しました。このデプロイで、単なる注意点としてではなく実際に修正した不具合が2つ見つかりました:
+
+1. **`s3:GetObjectAcl` / `s3:PutObjectAcl` の `AccessDenied`、それを解消した後にAmplify自身が返す`"The bucket policy is either missing or has insufficient permissions"`。** 元の実装は`sourceUrl: s3://<bootstrap-bucket>/<key>`をそのまま`amplify:StartDeployment`に渡していました。この経路は、`amplify.amazonaws.com`への読み取りを許可する**バケットポリシー**をS3バケット側に用意することを要求します([Amplify公式ガイド](https://docs.aws.amazon.com/amplify/latest/userguide/deploy-with-sdks.html)に明記)。しかし zip は共有の CDK Bootstrap バケット(`cdk-hnb659fds-assets-<account>-<region>`)にあり、このスタックはそれを所有していません。`websiteAsset.bucket`は内部的に`Bucket.fromBucketAttributes`によるインポート済み`IBucket`であるため、`addToResourcePolicy`を呼んでも静かに何も起きず、スタック内からこの要件を満たす方法がありませんでした。**修正**: `s3://` URLを直接渡す代わりに、小さなLambda(`AmplifyDeployHandler`)がデプロイ時に自身の`s3:GetObject`権限を使って署名付きHTTPS GET URLを生成するようにしました。Amplifyは単なるHTTP GETを実行するだけになり、バケットポリシーも`iamServiceRole`も一切不要になります。この不具合は`cdk synth`・unitテスト・cdk-nagのいずれでも検出できず、実際の`StartDeployment`呼び出しでしか見つかりませんでした。
+2. `cr.AwsCustomResource`(汎用SDK呼び出し用カスタムリソース)は署名付きURLを生成できません — その`parameters`は synth 時点で固定されるJSONだからです。そのため、実際のLambdaを使う`cr.Provider` + `CustomResource`への切り替えが必要になり、上記の図やコード例が典型的な`AwsCustomResource`の一行呼び出しと異なる形になっています。
+
+実際に確認した内容:
+
+- `cdk deploy '**'`は2回目の試行でクリーンにスタックを作成できました(1回目の試行が残した`ROLLBACK_COMPLETE`状態は、次の`cdk deploy`が自動的に削除して対処しました)。
+- `aws amplify list-jobs`でデプロイジョブのステータスが`SUCCEED`であることを確認。
+- `curl https://main.<app-id>.amplifyapp.com/`が実際に`HTTP 200`を返し、`frontend/static-web/index.html`の実コンテンツが返ってくることを確認 — 「スタックが`CREATE_COMPLETE`になった」だけでは終わらせていません。
+- 検証後にスタックを削除し、`aws cloudformation describe-stacks`で完全に消えたことを確認しました。
+
+今回のパスで確認していない範囲: コンテンツ更新(アセットハッシュの変化によるAmplifyの再デプロイトリガー)、デフォルトの`main`以外の`branchName`。
 
 ## CloudFront + S3 パターンとの使い分け
 

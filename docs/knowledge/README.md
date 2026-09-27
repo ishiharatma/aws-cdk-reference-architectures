@@ -35,6 +35,7 @@ checked `aws fis list-actions`).
 - [cognito-api-gateway-auth.md](cognito-api-gateway-auth.md) — Cognito + API Gateway: ID vs access token (401), custom scopes only from OAuth flows, insufficient scope is 401, `cognito:groups` string, curl-scripted hosted-UI PKCE flow, DynamoDB `sub` reserved word
 - [eventbridge-custom-bus.md](eventbridge-custom-bus.md) — EventBridge: `logConfig` needs a Logs delivery, source filter, archive count lag, replay `FilterArns`, target DLQ scope
 - [secrets-manager-aurora-rotation.md](secrets-manager-aurora-rotation.md) — Aurora + Secrets Manager rotation: Data API caches secrets for minutes, alternating users flip the username, role must exist first, endpoint instead of NAT, force-delete secrets on teardown
+- [amplify-hosting.md](amplify-hosting.md) — Amplify Hosting: `StartDeployment` with an `s3://` sourceUrl needs a bucket policy (not just IAM grants), why that's often unreachable for a CDK-asset zip, and the presigned-URL fix that avoids it entirely
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory

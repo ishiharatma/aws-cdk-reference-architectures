@@ -545,14 +545,13 @@
   {
     "id": "s3-amplify-static-website",
     "title": "S3 + Amplify Static Website Hosting",
-    "description": "Static website hosting with AWS Amplify Hosting in manual deployment mode (no Git connection): site files are packaged as a CDK asset, uploaded to S3, and deployed to Amplify by a Lambda-backed custom resource calling StartDeployment. Compared against the CloudFront + S3 pattern.",
+    "description": "Static website hosting with AWS Amplify Hosting in manual deployment mode (no Git connection): site files are packaged as a CDK asset, and a Lambda-backed custom resource presigns an S3 URL for the zip and calls StartDeployment with it, avoiding a bucket policy on the shared CDK bootstrap bucket. Compared against the CloudFront + S3 pattern. Deploy-verified end-to-end, including a live HTTP 200 from the deployed site.",
     "image": "",
     "tags": ["CDK", "TypeScript", "Amplify", "S3", "Custom Resource", "Lambda"],
     "link": "s3-amplify-static-website",
     "difficulty": "intermediate",
     "level": 200,
-    "date": "2026-08-03",
-    "draft": true,
+    "date": "2026-09-27",
     "articles": {}
   },
   {
@@ -565,6 +564,18 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-09-26",
+    "articles": {}
+  },
+  {
+    "id": "aws-eol-monitor",
+    "title": "AWS Service EOL Monitor — Serverless EOL Watch with a Bedrock Digest",
+    "description": "A serverless pipeline that watches the awslabs/aws-service-eol-data dataset for AWS service/version end-of-life changes: EventBridge Scheduler triggers a Standard Step Functions workflow that diffs the dataset against a DynamoDB state table, asks Bedrock (Claude) to draft a prioritized Markdown digest only when something changed, and publishes it to SNS. Deploy-verified end-to-end, including a real Bedrock ConverseCommand call and SNS publish.",
+    "image": "",
+    "tags": ["CDK", "TypeScript", "Step Functions", "EventBridge Scheduler", "Bedrock", "DynamoDB", "SNS", "Lambda"],
+    "link": "aws-eol-monitor",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-09-27",
     "articles": {}
   }
 ]
