@@ -158,6 +158,10 @@ export class AwsEolMonitorApplicationStack extends cdk.Stack {
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
       stateMachineName: `${namePrefix}-eol-monitor`,
       definitionBody: sfn.DefinitionBody.fromChainable(definition),
+      // Explicit even though STANDARD is CDK's implicit default: EXPRESS would
+      // silently truncate execution history to CloudWatch Logs only (no
+      // execution list in the console) and cap runtime at 5 minutes.
+      stateMachineType: sfn.StateMachineType.STANDARD,
       tracingEnabled: true,
       logs: {
         destination: stateMachineLogGroup,

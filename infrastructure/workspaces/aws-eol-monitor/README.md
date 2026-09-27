@@ -4,7 +4,7 @@
 
 ![Level](https://img.shields.io/badge/Level-200-yellow?style=flat-square)
 
-> **Status: draft / not yet deployed.** This workspace was authored as an architecture reference and has not been `cdk deploy`-ed or otherwise validated against a real AWS account. See [Draft status & caveats](#draft-status--caveats) before using it as anything other than a starting point.
+> **Status: draft / not yet deployed.** `npm install`, `tsc --noEmit`, the unit tests, and `cdk synth` all pass, and the synthesized template's Step Functions definition and IAM policies were inspected by hand — but this workspace has not been `cdk deploy`-ed against a real AWS account, so runtime behavior (Bedrock model access, actual EventBridge Scheduler firing, etc.) is still unverified. See [Draft status & caveats](#draft-status--caveats) before using it as anything other than a starting point.
 
 ## Introduction
 
@@ -107,9 +107,9 @@ Lambda (2 short invocations/run), Step Functions (Standard, a few state transiti
 
 ## Draft status & caveats
 
-This workspace has **not** been deployed or run against a live AWS account. Before treating it as production-ready:
+This workspace has been synthesized and unit-tested, but **not** deployed or run against a live AWS account. Before treating it as production-ready:
 
-- `cdk synth`/`cdk deploy` have not been executed in this session — `npm install` followed by `npm run synth` is the first thing to run.
+- `npm install`, `tsc --noEmit`, `npm run test:unit`, and `cdk synth` were all run successfully in this session (against a dummy 123456789012/ap-northeast-1 environment) — but `cdk deploy` has not, so no Lambda has actually executed and no Bedrock call has actually been made.
 - `test/unit` covers resource shape (Fine-grained Assertions) only — no snapshot, compliance (`cdk-nag`), or integration tests were added yet, unlike most workspaces in this repository.
 - No `overview.drawio.svg` was produced; the ASCII diagram above stands in for it until the architecture is validated end-to-end.
 - `report.bedrockModelId` in `parameters/dev-params.ts` is a placeholder cross-region inference profile ID — confirm the exact ID your account is entitled to call before deploying.

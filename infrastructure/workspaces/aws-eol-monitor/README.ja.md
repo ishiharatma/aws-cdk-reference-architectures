@@ -4,7 +4,7 @@
 
 ![Level](https://img.shields.io/badge/Level-200-yellow?style=flat-square)
 
-> **状態: draft（未デプロイ）。** このワークスペースはアーキテクチャ検討用に作成したもので、実際の`cdk deploy`や動作検証はまだ行っていません。利用の前に [Draft状態と注意点](#draft状態と注意点) を必ず確認してください。
+> **状態: draft（未デプロイ）。** `npm install`・`tsc --noEmit`・unitテスト・`cdk synth`はすべて成功しており、合成されたテンプレートのStep Functions定義とIAMポリシーも目視で確認済みです。ただし実際のAWSアカウントへの`cdk deploy`はまだ行っておらず、Bedrockモデルへの実アクセスやEventBridge Schedulerの実際の起動といった実行時の挙動は未検証です。利用の前に [Draft状態と注意点](#draft状態と注意点) を必ず確認してください。
 
 ## 概要
 
@@ -105,9 +105,9 @@ Lambda(1回の実行あたり短時間の呼び出し2回)、Step Functions(Stan
 
 ## Draft状態と注意点
 
-このワークスペースは実際のAWSアカウントへの**デプロイ・動作確認を行っていません**。本番相当として扱う前に:
+このワークスペースは合成(`cdk synth`)・単体テストまでは確認済みですが、実際のAWSアカウントへの**デプロイ・実行時の動作確認はまだ行っていません**。本番相当として扱う前に:
 
-- 本セッションでは`cdk synth`/`cdk deploy`を実行していません — まず`npm install`後に`npm run synth`を実行してください。
+- 本セッションでは`npm install`・`tsc --noEmit`・`npm run test:unit`・`cdk synth`(ダミーの123456789012/ap-northeast-1環境に対して)まではすべて成功しています。ただし`cdk deploy`は未実行のため、Lambdaが実際に動いたことも、Bedrockを実際に呼び出したこともありません。
 - `test/unit`はリソース形状の検証(Fine-grained Assertions)のみで、このリポジトリの他ワークスペースと異なりsnapshot/compliance(`cdk-nag`)/integrationテストは未追加です。
 - `overview.drawio.svg`は未作成です。アーキテクチャがエンドツーエンドで検証されるまで、上記のテキスト図で代替しています。
 - `parameters/dev-params.ts`の`report.bedrockModelId`はサンプル用のクロスリージョン推論プロファイルIDです。デプロイ前に、対象アカウントで実際に呼び出せる正確なIDを確認してください。

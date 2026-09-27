@@ -23,7 +23,7 @@ describe('AwsEolMonitorDataStack Fine-grained Assertions', () => {
 
   beforeAll(() => {
     const app = new cdk.App({ context: baseContext });
-    const stack = new AwsEolMonitorDataStack(app, 'DataStack', {
+    const stack = new AwsEolMonitorDataStack(app, 'Data', {
       project: projectName,
       environment: envName,
       env: defaultEnv,
@@ -50,14 +50,14 @@ describe('AwsEolMonitorApplicationStack Fine-grained Assertions', () => {
 
   beforeAll(() => {
     const app = new cdk.App({ context: baseContext });
-    const dataStack = new AwsEolMonitorDataStack(app, 'DataStack', {
+    const dataStack = new AwsEolMonitorDataStack(app, 'Data', {
       project: projectName,
       environment: envName,
       env: defaultEnv,
       isAutoDeleteObject: true,
       terminationProtection: false,
     });
-    const stack = new AwsEolMonitorApplicationStack(app, 'ApplicationStack', {
+    const stack = new AwsEolMonitorApplicationStack(app, 'Application', {
       project: projectName,
       environment: envName,
       env: defaultEnv,

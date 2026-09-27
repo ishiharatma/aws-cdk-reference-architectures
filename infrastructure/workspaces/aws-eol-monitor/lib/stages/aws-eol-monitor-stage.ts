@@ -50,6 +50,6 @@ export class AwsEolMonitorStage extends cdk.Stage {
           'AWS Service EOL Monitor - EventBridge Scheduler -> Step Functions (Lambda diff + Bedrock digest) -> SNS',
       },
     );
-    applicationStack.addDependency(dataStack);
+    applicationStack.addStackDependency(dataStack);
   }
 }
