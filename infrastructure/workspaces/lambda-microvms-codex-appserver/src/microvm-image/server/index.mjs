@@ -49,35 +49,53 @@ function sendJson(res, statusCode, body) {
   res.end(payload);
 }
 
+// Lambda MicroVMs calls lifecycle hooks as POST requests namespaced under
+// this exact path prefix (confirmed against the AWS Lambda MicroVMs
+// Developer Guide's "Lifecycle hooks" OpenAPI spec) -- not bare paths like
+// "/ready". Getting this wrong doesn't error visibly: the server just
+// answers every hook call with a 404 fallback, so the image build silently
+// times out waiting for a 200 on /ready that never comes.
+const HOOK_PREFIX = '/aws/lambda-microvms/runtime/v1';
+
 const server = createServer(async (req, res) => {
   try {
     const { pathname } = new URL(req.url ?? '/', 'http://localhost');
 
     // --- Platform lifecycle hooks (see Hooks.microvmHooks / microvmImageHooks
     //     in lib/stacks/lambda-microvms-codex-appserver-stack.ts) ---
-    if (pathname === '/ready' || pathname === '/validate') {
+    if (pathname === `${HOOK_PREFIX}/ready` || pathname === `${HOOK_PREFIX}/validate`) {
       return sendJson(res, ready && codex.isAlive ? 200 : 503, { ready: ready && codex.isAlive });
     }
 
-    if (pathname === '/run' && req.method === 'POST') {
+    if (pathname === `${HOOK_PREFIX}/run` && req.method === 'POST') {
+      // Per the Lambda MicroVMs OpenAPI spec, the /run body is
+      // { microvmId, runHookPayload }, where runHookPayload is the raw
+      // string RunMicrovmCommand.runHookPayload passed at RunMicrovm time
+      // -- not the session id itself. create-session.ts sets it to
+      // JSON.stringify({ sessionId }), so it needs a second parse here.
       const body = (await readJsonBody(req)) ?? {};
-      if (body.sessionId) {
-        eventHandler.setSessionId(body.sessionId);
+      if (typeof body.runHookPayload === 'string') {
+        try {
+          const { sessionId } = JSON.parse(body.runHookPayload);
+          if (sessionId) eventHandler.setSessionId(sessionId);
+        } catch (err) {
+          console.error('[hooks] failed to parse runHookPayload', err);
+        }
       }
       return sendJson(res, 200, { started: true });
     }
 
-    if (pathname === '/suspend' && req.method === 'POST') {
+    if (pathname === `${HOOK_PREFIX}/suspend` && req.method === 'POST') {
       console.log('[hooks] suspend');
       return sendJson(res, 200, {});
     }
 
-    if (pathname === '/resume' && req.method === 'POST') {
+    if (pathname === `${HOOK_PREFIX}/resume` && req.method === 'POST') {
       console.log('[hooks] resume');
       return sendJson(res, 200, {});
     }
 
-    if (pathname === '/terminate' && req.method === 'POST') {
+    if (pathname === `${HOOK_PREFIX}/terminate` && req.method === 'POST') {
       console.log('[hooks] terminate');
       codex.terminate();
       return sendJson(res, 200, {});

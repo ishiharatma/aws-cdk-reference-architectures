@@ -3,14 +3,18 @@
 # MicroVM image for the "Serverless Codex App Server" reference architecture.
 #
 # AWS Lambda MicroVMs builds this Dockerfile inside a clean build MicroVM,
-# starts the resulting container (server/index.mjs, below), and polls its
-# GET /ready endpoint until it returns 200. Once ready, Lambda takes a
-# Firecracker snapshot of the running memory + disk state. Every later
-# RunMicrovm call resumes a fresh MicroVM from that snapshot -- so
-# codex app-server is already spawned and this server is already listening
-# by the time a session's MicroVM finishes launching; the /run hook (POST,
-# called at that point with RunMicrovmRequest.runHookPayload as its body)
-# only needs to bind the resumed process to its session id.
+# starts the resulting container (server/index.mjs, below), and POSTs to
+# /aws/lambda-microvms/runtime/v1/ready until it returns 200 (all lifecycle
+# hooks are POST requests under that exact path prefix -- see the AWS Lambda
+# MicroVMs Developer Guide's "Lifecycle hooks" OpenAPI spec; a server that
+# only answers bare paths like "/ready" gets a silent 404 on every hook call
+# and the build just times out). Once ready, Lambda takes a Firecracker
+# snapshot of the running memory + disk state. Every later RunMicrovm call
+# resumes a fresh MicroVM from that snapshot -- so codex app-server is
+# already spawned and this server is already listening by the time a
+# session's MicroVM finishes launching; the /run hook (POST, called at that
+# point with { microvmId, runHookPayload } as its body) only needs to bind
+# the resumed process to its session id.
 #
 # NOTE: the base image tag below is a placeholder. Pin it to the OS/runtime
 # your Lambda MicroVMs "base image" (baseImageArn/baseImageVersion in
@@ -37,6 +41,11 @@ COPY server/ ./server/
 # allowedPorts scoped into CreateMicrovmAuthToken.
 ENV CODEX_APP_SERVER_PORT=8080
 ENV CODEX_HOME=/opt/codex-app-server/.codex
+# codex app-server refuses to start if CODEX_HOME doesn't already exist
+# ("CODEX_HOME points to ... but that path does not exist") -- confirmed by
+# a real image build: the process exited immediately with that error since
+# nothing had ever created this directory.
+RUN mkdir -p "$CODEX_HOME"
 
 # ARN of the Secrets Manager secret holding the OpenAI API key. Set as a
 # fixed CfnMicrovmImage.environmentVariables entry by the stack (same value

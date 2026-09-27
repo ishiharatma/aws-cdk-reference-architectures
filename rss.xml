@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 27 Sep 2026 13:37:31 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2026 16:39:06 GMT</lastBuildDate>
+    <item>
+      <title>Serverless Codex App Server on AWS Lambda MicroVMs</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/lambda-microvms-codex-appserver</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/lambda-microvms-codex-appserver</guid>
+      <pubDate>Sun, 27 Sep 2026 12:00:00 GMT</pubDate>
+      <description>An on-demand, VM-isolated Codex App Server per session on AWS Lambda MicroVMs: a control plane of 10 Lambda functions (7 HTTP + 3 WebSocket) brokers session lifecycle, and output is delivered by both polling and a WebSocket push path. Implements the architecture from the Japan Digital Design article, with the MicroVM image/network connector defined in CloudFormation. Deploy-verified end-to-end (session creation through a real codex app-server JSON-RPC handshake and DynamoDB event persistence), with 6 real bugs found and fixed.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Lambda</category>
+      <category>MicroVMs</category>
+      <category>API Gateway</category>
+      <category>WebSocket</category>
+      <category>Codex</category>
+      <category>Serverless</category>
+    </item>
     <item>
       <title>S3 + Amplify Static Website Hosting</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/s3-amplify-static-website</link>

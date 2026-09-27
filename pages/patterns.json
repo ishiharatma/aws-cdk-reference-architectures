@@ -62,14 +62,13 @@
   {
     "id": "lambda-microvms-codex-appserver",
     "title": "Serverless Codex App Server on AWS Lambda MicroVMs",
-    "description": "An on-demand, VM-isolated Codex App Server per session on AWS Lambda MicroVMs: an HTTP API with 7 Lambda functions brokers session lifecycle, and output is delivered by both polling and a WebSocket push path. Implements the architecture from the Japan Digital Design article, with the MicroVM image/network connector defined in CloudFormation.",
+    "description": "An on-demand, VM-isolated Codex App Server per session on AWS Lambda MicroVMs: a control plane of 10 Lambda functions (7 HTTP + 3 WebSocket) brokers session lifecycle, and output is delivered by both polling and a WebSocket push path. Implements the architecture from the Japan Digital Design article, with the MicroVM image/network connector defined in CloudFormation. Deploy-verified end-to-end (session creation through a real codex app-server JSON-RPC handshake and DynamoDB event persistence), with 6 real bugs found and fixed.",
     "image": "lambda-microvms-codex-appserver/overview.drawio.svg",
     "tags": ["CDK", "TypeScript", "Lambda", "MicroVMs", "API Gateway", "WebSocket", "Codex", "Serverless"],
     "link": "lambda-microvms-codex-appserver",
     "difficulty": "advanced",
     "level": 300,
-    "date": "2026-09-19",
-    "draft": true,
+    "date": "2026-09-27",
     "articles": {}
   },
   {

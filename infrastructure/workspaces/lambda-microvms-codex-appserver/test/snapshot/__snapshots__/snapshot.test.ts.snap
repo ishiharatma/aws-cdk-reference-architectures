@@ -99,7 +99,7 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
           ],
         },
         "CodeArtifact": {
-          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/adff2d8040bf03a0edb82b41ce1c50bc51889cd376eff38377e5ca5514f0eb6b.zip",
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/d59c3e28560eb003606531fed15fb2ebf07f2c757d3b9c184833309198da074b.zip",
         },
         "CpuConfigurations": [
           {
@@ -366,12 +366,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -386,6 +386,30 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                   "Arn",
                 ],
               },
+            },
+            {
+              "Action": "lambda:PassNetworkConnector",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "MicrovmEgressConnector",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:*",
+                    ],
+                  ],
+                },
+              ],
             },
           ],
           "Version": "2012-10-17",
@@ -548,12 +572,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -993,12 +1017,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -1199,12 +1223,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -1729,8 +1753,46 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
           },
         },
         "Name": "test-test-codex-egress",
+        "OperatorRole": {
+          "Fn::GetAtt": [
+            "MicrovmEgressConnectorOperatorRoleA1E76061",
+            "Arn",
+          ],
+        },
       },
       "Type": "AWS::Lambda::NetworkConnector",
+    },
+    "MicrovmEgressConnectorOperatorRoleA1E76061": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda to manage ENIs in the MicroVM egress subnets on behalf of the network connector",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
     },
     "MicrovmEgressSecurityGroupAAE258E4": {
       "Properties": {
@@ -1865,6 +1927,29 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
                   ],
                 },
               ],
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "OpenAiApiKeySecret05681F66",
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmImageLogGroup9AB810C2",
+                  "Arn",
+                ],
+              },
             },
           ],
           "Version": "2012-10-17",
@@ -2046,12 +2131,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -2249,12 +2334,12 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Complete CloudFormation temp
             },
             {
               "Action": [
-                "lambda-microvms:RunMicrovm",
-                "lambda-microvms:GetMicrovm",
-                "lambda-microvms:TerminateMicrovm",
-                "lambda-microvms:SuspendMicrovm",
-                "lambda-microvms:ResumeMicrovm",
-                "lambda-microvms:CreateMicrovmAuthToken",
+                "lambda:RunMicrovm",
+                "lambda:GetMicrovm",
+                "lambda:TerminateMicrovm",
+                "lambda:SuspendMicrovm",
+                "lambda:ResumeMicrovm",
+                "lambda:CreateMicrovmAuthToken",
               ],
               "Effect": "Allow",
               "Resource": "*",
@@ -3372,7 +3457,7 @@ exports[`LambdaMicrovmsCodexAppserverStack Snapshot Resource types and counts 1`
   "AWS::EC2::VPC": 1,
   "AWS::EC2::VPCGatewayAttachment": 1,
   "AWS::IAM::Policy": 11,
-  "AWS::IAM::Role": 12,
+  "AWS::IAM::Role": 13,
   "AWS::Lambda::EventSourceMapping": 1,
   "AWS::Lambda::Function": 10,
   "AWS::Lambda::MicrovmImage": 1,
