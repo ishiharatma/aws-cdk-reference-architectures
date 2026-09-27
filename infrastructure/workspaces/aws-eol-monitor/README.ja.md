@@ -8,7 +8,9 @@
 
 ## 概要
 
-このプロジェクトは、[`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data)（EKS/RDSエンジン/Lambdaランタイム/ElastiCache/OpenSearchなどのバージョンライフサイクル終了日をまとめた、コミュニティ管理のJSONデータセット）を定期的に監視し、変化があれば優先度付きの要約をメールで通知するサーバーレスパイプラインです。
+このプロジェクトは、[`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data)（EKS/RDSエンジン/Lambdaランタイム/ElastiCache/OpenSearchなどのバージョンライフサイクル終了日をまとめたJSONデータセット）を定期的に監視し、変化があれば優先度付きの要約をメールで通知するサーバーレスパイプラインです。
+
+> このデータセットのREADMEには **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"**（公式のAWS APIではなく、ベストエフォートで提供されるコミュニティ管理のデータセット）、**"no guarantee of completeness, accuracy, or timeliness of updates"**（完全性・正確性・更新の即時性は保証されない）と明記されています。各エントリの`sourceUrl`はAWS公式ドキュメントへのリンクで、独自に検証するためのものです。何らかの判断を下す際に正とすべきは、このデータセットや後述の要約メールではなく、その`sourceUrl`先の公式ドキュメントです。詳細は[Draft状態と注意点](#draft状態と注意点)を参照してください。
 
 ```text
 EventBridge Scheduler (cron)
@@ -79,7 +81,7 @@ PROJECT=myproj ENV=dev npm run deploy:all
 
 デプロイ前に確認すること:
 
-1. `parameters/dev-params.ts`を編集— 実際の`notification.emails`アドレス、アカウントでモデルアクセスが有効な`bedrockModelId`、（推奨）`collector.datasetUrl`をコミットSHAに固定。
+1. `parameters/dev-params.ts`を編集— 実際の`notification.emails`アドレス、アカウントでモデルアクセスが有効な`bedrockModelId`、そして`collector.datasetUrl`を`main`ではなく[タグ付きリリース](https://github.com/awslabs/aws-service-eol-data/tags)に固定する(データセット側のREADMEでも本番利用時の推奨事項として明記されている)。
 2. 初回デプロイ後、SNSのメールサブスクリプション確認メールを承認する — 承認しない限り要約は届かない。
 3. 対象リージョンでBedrockモデルのアクセス許可をまだリクエストしていない場合はリクエストする(Bedrockコンソール → モデルアクセス)。
 
@@ -110,3 +112,4 @@ Lambda(1回の実行あたり短時間の呼び出し2回)、Step Functions(Stan
 - `overview.drawio.svg`は未作成です。アーキテクチャがエンドツーエンドで検証されるまで、上記のテキスト図で代替しています。
 - `parameters/dev-params.ts`の`report.bedrockModelId`はサンプル用のクロスリージョン推論プロファイルIDです。デプロイ前に、対象アカウントで実際に呼び出せる正確なIDを確認してください。
 - ドラフト状態を反映して`dev`パラメータのみを用意しており、`prd-params.ts`は未作成です。
+- `parameters/dev-params.ts`の`collector.datasetUrl`は簡略化のため`main`を指したままです。実際にデプロイする前に、必ずタグ付きリリースへ固定してください([概要](#概要)の注記を参照)。

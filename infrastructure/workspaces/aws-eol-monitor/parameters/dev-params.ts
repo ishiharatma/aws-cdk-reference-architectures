@@ -13,8 +13,13 @@ const devParams: EnvParams = {
   stackNamePrefix: 'aws-eol-monitor',
 
   collector: {
-    // Pinned to a commit rather than `main` so an upstream schema change
-    // doesn't silently break the parser. Update deliberately.
+    // The dataset's own README says: "Pin to a tagged release - for
+    // production integrations, pin to a specific release rather than
+    // tracking the main branch." This sample still points at `main` for
+    // simplicity; before a real deployment, check
+    // https://github.com/awslabs/aws-service-eol-data/tags for the latest
+    // tag and replace `main` with it (e.g. `.../v1.2.0/data/eol.json`), so
+    // an upstream schema change can't silently break the parser.
     datasetUrl:
       'https://raw.githubusercontent.com/awslabs/aws-service-eol-data/main/data/eol.json',
     upcomingThresholdDays: 180,

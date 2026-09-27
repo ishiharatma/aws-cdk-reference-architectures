@@ -14,9 +14,10 @@ export interface NotificationParams {
  */
 export interface CollectorParams {
   /**
-   * Raw URL of `awslabs/aws-service-eol-data`'s `data/eol.json`.
-   * Pinning to a tag/commit instead of `main` avoids upstream schema
-   * changes breaking the parser without notice.
+   * Raw URL of `awslabs/aws-service-eol-data`'s `data/eol.json`. The
+   * dataset's own README recommends pinning to a tagged release rather
+   * than tracking `main` for production integrations, so an upstream
+   * schema change can't silently break the parser.
    */
   readonly datasetUrl: string;
   /**

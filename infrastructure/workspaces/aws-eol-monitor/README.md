@@ -8,7 +8,9 @@
 
 ## Introduction
 
-This project watches [`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data) — a community-maintained, machine-readable JSON dataset of AWS service/version end-of-life (EOL) dates (EKS, RDS engines, Lambda runtimes, ElastiCache, OpenSearch, and more) — for changes, and turns any change into a prioritized digest sent by email.
+This project watches [`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data) — a machine-readable JSON dataset of AWS service/version end-of-life (EOL) dates (EKS, RDS engines, Lambda runtimes, ElastiCache, OpenSearch, and more) — for changes, and turns any change into a prioritized digest sent by email.
+
+> The dataset's own README states it is **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"** with **"no guarantee of completeness, accuracy, or timeliness of updates."** Every entry's `sourceUrl` links to the official AWS documentation for independent verification — that page, not this dataset or the digest below, is the source of truth for any decision. See [Draft status & caveats](#draft-status--caveats) for how this affects `collector.datasetUrl`.
 
 It is a serverless pipeline, on a schedule:
 
@@ -81,7 +83,7 @@ PROJECT=myproj ENV=dev npm run deploy:all
 
 Before deploying:
 
-1. Edit `parameters/dev-params.ts` — a real `notification.emails` address, a `bedrockModelId` your account has model access to, and (recommended) pin `collector.datasetUrl` to a commit SHA.
+1. Edit `parameters/dev-params.ts` — a real `notification.emails` address, a `bedrockModelId` your account has model access to, and pin `collector.datasetUrl` to a tagged release (see [tags](https://github.com/awslabs/aws-service-eol-data/tags)) instead of `main`, per the dataset's own recommendation.
 2. Confirm the SNS email subscription from the confirmation email after the first deploy — no digest is delivered until you do.
 3. Request Bedrock model access for the chosen model in the target region if you haven't already (Bedrock console → Model access).
 
@@ -112,3 +114,4 @@ This workspace has **not** been deployed or run against a live AWS account. Befo
 - No `overview.drawio.svg` was produced; the ASCII diagram above stands in for it until the architecture is validated end-to-end.
 - `report.bedrockModelId` in `parameters/dev-params.ts` is a placeholder cross-region inference profile ID — confirm the exact ID your account is entitled to call before deploying.
 - Only a `dev` parameter set exists (no `prd-params.ts`), matching this workspace's draft status.
+- `collector.datasetUrl` still points at `main` in `parameters/dev-params.ts` for simplicity — pin it to a tagged release before any real deployment (see the note in [Introduction](#introduction)).
