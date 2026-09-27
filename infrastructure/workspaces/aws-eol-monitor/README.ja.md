@@ -112,7 +112,7 @@ Lambda(1回の実行あたり短時間の呼び出し2回)、Step Functions(Stan
 - `GenerateReport`のCloudWatch Logsで、モック化されていない実際の約22秒のBedrock `ConverseCommand`呼び出しがエラーなく完了したことを確認。
 - `PublishReport`(Step Functions標準のSNS連携)が実際の`MessageId`とHTTP 200を`sns:Publish`から受け取ったことを確認。
 - 実行後、DynamoDBの状態テーブルに125件のアイテムが存在(追跡対象の`(serviceCode, version)`ペアごとに1件)。`FetchEolDiff`の差分検知・状態書き込みロジックが、合成だけでなく実際に動作することを確認。
-- **このデプロイで見つかり修正した不具合**: `parameters/dev-params.ts`の`report.bedrockModelId`が`apac.anthropic.claude-sonnet-4-5-20250929-v1:0`になっていましたが、この推論プロファイルIDは存在しません(`aws bedrock list-inference-profiles`で確認、また直接`bedrock-runtime converse`を呼び出しても失敗)。このアカウント/リージョンで実際に一覧・呼び出し可能な`jp.anthropic.claude-sonnet-4-5-20250929-v1:0`に修正しました。モデルIDは文字列としては型チェックを通過するため、`cdk synth`やunitテストではこの種の不具合は検出できず、実際のBedrock呼び出しでしか発見できません。
+- **このデプロイで見つかり修正した不具合**: `parameters/dev-params.ts`の`report.bedrockModelId`が`apac.anthropic.claude-sonnet-4-5-20250929-v1:0`になっていましたが、この推論プロファイルIDは存在しません(`aws bedrock list-inference-profiles`で確認、また直接`bedrock-runtime converse`を呼び出しても失敗)。モデルIDは文字列としては型チェックを通過するため、`cdk synth`やunitテストではこの種の不具合は検出できず、実際のBedrock呼び出しでしか発見できません。このアカウント/リージョンで実際に一覧・呼び出し可能な`jp.anthropic.claude-sonnet-4-6`に修正しました。
 - 実際のメール配信は**未検証**です — `notification.emails`はプレースホルダー(`dev-team@example.com`)のままにしたため、購読確認リンクが存在しません。上記の`sns:Publish`成功はパイプラインがSNSまで正しく到達することの確認にはなりますが、実運用前には実際に確認可能なアドレスに置き換えてください。
 - 今回のパスで確認していない範囲: `STATUS_CHANGED`/`UPCOMING_EOL`の差分タイプ(データセットの実データでは今回`NEW`のみが発生)、EventBridge Schedulerが実際にcronで起動すること(今回は手動`start-execution`のみ)、「差分なし」(`NoChangesDetected`)分岐。
 

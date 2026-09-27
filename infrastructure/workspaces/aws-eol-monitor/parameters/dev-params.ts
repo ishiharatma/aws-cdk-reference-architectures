@@ -32,7 +32,7 @@ const devParams: EnvParams = {
 
   report: {
     // Cross-region inference profile ID for Claude on Bedrock.
-    bedrockModelId: 'jp.anthropic.claude-sonnet-4-5-20250929-v1:0',
+    bedrockModelId: 'jp.anthropic.claude-sonnet-4-6',
     locale: 'ja',
   },
 
