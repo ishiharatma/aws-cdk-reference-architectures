@@ -3,10 +3,11 @@
   "compilerOptions": {
     "paths": {
       "lib/*": ["./lib/*"],
+      "src/*": ["./src/*"],
       "test/*": ["./test/*"],
       "@common/*": ["../../common/*"],
       "*": ["./*"]
     }
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts"]
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "src/**/*.ts", "test/**/*.ts"]
 }

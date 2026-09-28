@@ -16,7 +16,7 @@ const testParams: EnvParams = {
   },
 
   report: {
-    bedrockModelId: 'apac.anthropic.claude-sonnet-4-5-20250929-v1:0',
+    bedrockModelId: 'jp.anthropic.claude-sonnet-4-6',
     locale: 'ja',
   },
 

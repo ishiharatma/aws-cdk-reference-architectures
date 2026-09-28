@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
 {
@@ -55,28 +55,53 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     },
   },
   "Resources": {
-    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+    "AmplifyApp": {
+      "Properties": {
+        "Name": "TestProject-test-website",
+        "Platform": "WEB",
+      },
+      "Type": "AWS::Amplify::App",
+    },
+    "AmplifyBranch": {
+      "Properties": {
+        "AppId": {
+          "Fn::GetAtt": [
+            "AmplifyApp",
+            "AppId",
+          ],
+        },
+        "BranchName": "main",
+        "EnableAutoBuild": false,
+        "EnablePullRequestPreview": false,
+      },
+      "Type": "AWS::Amplify::Branch",
+    },
+    "AmplifyDeployHandler0A466203": {
       "DependsOn": [
-        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+        "AmplifyDeployHandlerServiceRoleDefaultPolicyDCC3472D",
+        "AmplifyDeployHandlerServiceRole2DE2068B",
       ],
       "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
+          "S3Key": "<asset-hash>.zip",
         },
         "Handler": "index.handler",
         "Role": {
           "Fn::GetAtt": [
-            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "AmplifyDeployHandlerServiceRole2DE2068B",
             "Arn",
           ],
         },
-        "Runtime": "nodejs24.x",
-        "Timeout": 120,
+        "Runtime": "nodejs22.x",
+        "Timeout": 60,
       },
       "Type": "AWS::Lambda::Function",
     },
-    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+    "AmplifyDeployHandlerServiceRole2DE2068B": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -107,123 +132,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       },
       "Type": "AWS::IAM::Role",
     },
-    "AmplifyApp": {
-      "Properties": {
-        "IAMServiceRole": {
-          "Fn::GetAtt": [
-            "AmplifyServiceRole1EB3E935",
-            "Arn",
-          ],
-        },
-        "Name": "TestProject-test-website",
-        "Platform": "WEB",
-      },
-      "Type": "AWS::Amplify::App",
-    },
-    "AmplifyBranch": {
-      "Properties": {
-        "AppId": {
-          "Fn::GetAtt": [
-            "AmplifyApp",
-            "AppId",
-          ],
-        },
-        "BranchName": "main",
-        "EnableAutoBuild": false,
-        "EnablePullRequestPreview": false,
-      },
-      "Type": "AWS::Amplify::Branch",
-    },
-    "AmplifyDeploymentCustomResourcePolicy31203C06": {
-      "DependsOn": [
-        "AmplifyBranch",
-      ],
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "amplify:StartDeployment",
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "AmplifyDeploymentCustomResourcePolicy31203C06",
-        "Roles": [
-          {
-            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "AmplifyDeploymentDC385B5B": {
-      "DeletionPolicy": "Delete",
-      "DependsOn": [
-        "AmplifyBranch",
-        "AmplifyDeploymentCustomResourcePolicy31203C06",
-      ],
-      "Properties": {
-        "Create": {
-          "Fn::Join": [
-            "",
-            [
-              "{"service":"Amplify","action":"startDeployment","parameters":{"appId":"",
-              {
-                "Fn::GetAtt": [
-                  "AmplifyApp",
-                  "AppId",
-                ],
-              },
-              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
-            ],
-          ],
-        },
-        "InstallLatestAwsSdk": true,
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
-            "Arn",
-          ],
-        },
-        "Update": {
-          "Fn::Join": [
-            "",
-            [
-              "{"service":"Amplify","action":"startDeployment","parameters":{"appId":"",
-              {
-                "Fn::GetAtt": [
-                  "AmplifyApp",
-                  "AppId",
-                ],
-              },
-              "","branchName":"main","sourceUrl":"s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip","sourceUrlType":"ZIP"},"physicalResourceId":{"id":"TestProject-test-amplify-deploy"}}",
-            ],
-          ],
-        },
-      },
-      "Type": "Custom::AWS",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "AmplifyServiceRole1EB3E935": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "amplify.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "AmplifyServiceRoleDefaultPolicyA4A29B19": {
+    "AmplifyDeployHandlerServiceRoleDefaultPolicyDCC3472D": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -261,17 +170,167 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
                 },
               ],
             },
+            {
+              "Action": "amplify:StartDeployment",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "AmplifyServiceRoleDefaultPolicyA4A29B19",
+        "PolicyName": "AmplifyDeployHandlerServiceRoleDefaultPolicyDCC3472D",
         "Roles": [
           {
-            "Ref": "AmplifyServiceRole1EB3E935",
+            "Ref": "AmplifyDeployHandlerServiceRole2DE2068B",
           },
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "AmplifyDeployProviderframeworkonEvent5D3BC0BE": {
+      "DependsOn": [
+        "AmplifyDeployProviderframeworkonEventServiceRoleDefaultPolicy942E7A35",
+        "AmplifyDeployProviderframeworkonEventServiceRole2C3193E6",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip",
+        },
+        "Description": "AWS CDK resource provider framework - onEvent (S3AmplifyStaticWebsite/AmplifyDeployProvider)",
+        "Environment": {
+          "Variables": {
+            "USER_ON_EVENT_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "AmplifyDeployHandler0A466203",
+                "Arn",
+              ],
+            },
+          },
+        },
+        "Handler": "framework.onEvent",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "FATAL",
+          "LogFormat": "JSON",
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "AmplifyDeployProviderframeworkonEventServiceRole2C3193E6",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AmplifyDeployProviderframeworkonEventServiceRole2C3193E6": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AmplifyDeployProviderframeworkonEventServiceRoleDefaultPolicy942E7A35": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AmplifyDeployHandler0A466203",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AmplifyDeployHandler0A466203",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:GetFunction",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "AmplifyDeployHandler0A466203",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AmplifyDeployProviderframeworkonEventServiceRoleDefaultPolicy942E7A35",
+        "Roles": [
+          {
+            "Ref": "AmplifyDeployProviderframeworkonEventServiceRole2C3193E6",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AmplifyDeployment": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AmplifyBranch",
+      ],
+      "Properties": {
+        "AppId": {
+          "Fn::GetAtt": [
+            "AmplifyApp",
+            "AppId",
+          ],
+        },
+        "BranchName": "main",
+        "BucketName": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+        "ObjectKey": "0b629dd01a875f96ce9d0f44df406d3960b80cdcdec72f01b2e549138d2fb995.zip",
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AmplifyDeployProviderframeworkonEvent5D3BC0BE",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
     },
   },
   "Rules": {
@@ -308,9 +367,9 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types a
 {
   "AWS::Amplify::App": 1,
   "AWS::Amplify::Branch": 1,
+  "AWS::CloudFormation::CustomResource": 1,
   "AWS::IAM::Policy": 2,
   "AWS::IAM::Role": 2,
-  "AWS::Lambda::Function": 1,
-  "Custom::AWS": 1,
+  "AWS::Lambda::Function": 2,
 }
 `;

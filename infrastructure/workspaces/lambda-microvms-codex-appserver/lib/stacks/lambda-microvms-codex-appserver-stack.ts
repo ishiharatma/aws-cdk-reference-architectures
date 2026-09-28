@@ -87,8 +87,25 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       allowAllOutbound: true,
     });
 
+    // A VPC_EGRESS connector requires an operator role Lambda can assume to
+    // manage ENIs in the target subnets (ec2:CreateNetworkInterface and the
+    // matching describe/delete actions) -- confirmed only by a real deploy:
+    // CDK synth and the CloudFormation schema both accept the connector
+    // without one, but CREATE_FAILED at deploy time with "NetworkConnectorOperatorRole
+    // is required for VPC_EGRESS connector type". AWSLambdaVPCAccessExecutionRole
+    // grants exactly that permission set (it's the same role shape a
+    // VPC-attached Lambda function's own execution role would need).
+    const networkConnectorOperatorRole = new iam.Role(this, 'MicrovmEgressConnectorOperatorRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'Assumed by Lambda to manage ENIs in the MicroVM egress subnets on behalf of the network connector',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+      ],
+    });
+
     const egressNetworkConnector = new lambda.CfnNetworkConnector(this, 'MicrovmEgressConnector', {
       name: `${namePrefix}-egress`,
+      operatorRole: networkConnectorOperatorRole.roleArn,
       configuration: {
         vpcEgressConfiguration: {
           associatedComputeResourceTypes: ['MicroVm'],
@@ -177,6 +194,14 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       description: 'Assumed by Lambda MicroVMs while building the codex app-server image (create-microvm-image)',
     });
     microvmImageAsset.bucket.grantRead(buildRole);
+    // The image build's validate/ready hook actually runs server/index.mjs
+    // (to confirm codex app-server starts before snapshotting), which calls
+    // resolveOpenAiApiKey() -- and it runs under buildRole's credentials at
+    // that point, not executionRole's. Confirmed by a real build failure:
+    // "AccessDeniedException: ... assumed-role/MicrovmImageBuildRole...
+    // secretsmanager:GetSecretValue" even though executionRole already had
+    // this grant.
+    openAiApiKeySecret.grantRead(buildRole);
 
     const executionRole = new iam.Role(this, 'MicrovmExecutionRole', {
       assumedBy: microvmServicePrincipal,
@@ -192,6 +217,11 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy,
     });
+    // Without this, the build produces zero CloudWatch output on failure --
+    // confirmed by a real deploy: the image build failed ("did not
+    // stabilize") and the configured log group had no log streams at all,
+    // because buildRole was never granted permission to write to it.
+    microvmImageLogGroup.grantWrite(buildRole);
 
     const microvmImage = new lambda.CfnMicrovmImage(this, 'CodexAppServerImage', {
       name: microvmImageParams.name ?? `${namePrefix}-image`,
@@ -312,15 +342,23 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     // minted at RunMicrovm time, so their resource ARNs cannot be known
     // ahead of deployment; scoped to '*' and suppressed in
     // test/compliance/cdk-nag.test.ts with that rationale.
+    //
+    // IAM action prefix is `lambda:`, not `lambda-microvms:` -- despite the
+    // dedicated `@aws-sdk/client-lambda-microvms` SDK client and `aws
+    // lambda-microvms ...` CLI namespace, these actions are authorized under
+    // the core Lambda service (matching the `AWS::Lambda::MicrovmImage` /
+    // `AWS::Lambda::NetworkConnector` CFN resource types). Confirmed by a
+    // real AccessDeniedException naming `lambda:RunMicrovm` as the missing
+    // permission when this policy still said `lambda-microvms:RunMicrovm`.
     const microvmDataPlanePolicy = new iam.PolicyStatement({
       sid: 'LambdaMicrovmsDataPlane',
       actions: [
-        'lambda-microvms:RunMicrovm',
-        'lambda-microvms:GetMicrovm',
-        'lambda-microvms:TerminateMicrovm',
-        'lambda-microvms:SuspendMicrovm',
-        'lambda-microvms:ResumeMicrovm',
-        'lambda-microvms:CreateMicrovmAuthToken',
+        'lambda:RunMicrovm',
+        'lambda:GetMicrovm',
+        'lambda:TerminateMicrovm',
+        'lambda:SuspendMicrovm',
+        'lambda:ResumeMicrovm',
+        'lambda:CreateMicrovmAuthToken',
       ],
       resources: ['*'],
     });
@@ -350,6 +388,25 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     // RunMicrovmRequest.executionRoleArn requires the caller to be able to
     // pass that role to the Lambda MicroVMs service.
     executionRole.grantPassRole(createSessionFn.grantPrincipal);
+    // RunMicrovmRequest.egressNetworkConnectors requires an analogous
+    // "pass" grant for the network connector itself -- confirmed by a real
+    // AccessDeniedException naming lambda:PassNetworkConnector as the
+    // missing permission (RunMicrovm succeeded once this was added).
+    // RunMicrovm also implicitly attaches an AWS-managed ingress connector
+    // (observed: arn:aws:lambda:<region>:aws:network-connector:
+    // aws-network-connector:HTTP_INGRESS) even though this stack never
+    // passes `ingressNetworkConnectors` explicitly -- that ARN needs the
+    // same grant, confirmed by the identical AccessDeniedException naming
+    // it instead once the egress connector grant alone was in place.
+    createSessionFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['lambda:PassNetworkConnector'],
+        resources: [
+          egressNetworkConnector.attrArn,
+          `arn:${cdk.Aws.PARTITION}:lambda:${this.region}:aws:network-connector:aws-network-connector:*`,
+        ],
+      }),
+    );
 
     const getSessionFn = makeControlPlaneFunction('GetSessionFunction', 'get-session.ts');
     const deleteSessionFn = makeControlPlaneFunction('DeleteSessionFunction', 'delete-session.ts');

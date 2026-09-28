@@ -142,12 +142,15 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
     });
 
     test('functions are granted the lambda-microvms session lifecycle actions', () => {
+      // IAM action prefix is `lambda:`, not `lambda-microvms:` -- confirmed
+      // by a real AccessDeniedException naming lambda:RunMicrovm as the
+      // missing permission.
       template.hasResourceProperties('AWS::IAM::Policy', {
         PolicyDocument: {
           Statement: Match.arrayWith([
             Match.objectLike({
               Effect: 'Allow',
-              Action: Match.arrayWith(['lambda-microvms:RunMicrovm', 'lambda-microvms:CreateMicrovmAuthToken']),
+              Action: Match.arrayWith(['lambda:RunMicrovm', 'lambda:CreateMicrovmAuthToken']),
             }),
           ]),
         },

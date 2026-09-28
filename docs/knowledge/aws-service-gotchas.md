@@ -150,6 +150,25 @@ Two behavior modes, and the distinction matters (deploy-verified in `fis-arch-h`
 (`ap-northeast-1a`) — resolve it first with
 `aws ec2 describe-availability-zones --filters "Name=zone-name,Values=<name>"`.
 
+## A Bedrock cross-region inference profile ID can look plausible and not exist
+
+`aws-eol-monitor`'s `parameters/dev-params.ts` had `report.bedrockModelId` set to
+`apac.anthropic.claude-sonnet-4-5-20250929-v1:0` — a syntactically valid-looking
+cross-region inference profile ID (region-group prefix + provider + model + version),
+but it does not exist in this account/region. `cdk synth` and unit tests both pass
+regardless, since the model ID is just a string to CDK; only a real Bedrock call
+surfaces the problem, with a Bedrock-side "on-demand throughput isn't supported" or
+model-not-found error. **Confirmed** via
+`aws bedrock list-inference-profiles --region ap-northeast-1 --query "inferenceProfileSummaries[].inferenceProfileId"`
+— for this model, only `jp.anthropic.claude-sonnet-4-5-20250929-v1:0` and
+`global.anthropic.claude-sonnet-4-5-20250929-v1:0` were listed, no `apac.` variant.
+A direct `aws bedrock-runtime converse --model-id jp.anthropic.claude-sonnet-4-5-...`
+call succeeded once switched to the listed ID. **Before hardcoding any cross-region
+inference profile ID in a workspace, verify it against `list-inference-profiles` for
+the target account/region** rather than inferring the region-group prefix (`us.`,
+`eu.`, `apac.`, `jp.`, ...) from the target region's geography — the actual set of
+prefixes offered varies by model and isn't always the one you'd guess.
+
 ## CDK's `AutoScalingGroup#healthCheck` and L2 property lag behind CloudFormation
 
 Newer CloudFormation properties (like `AvailabilityZoneImpairmentPolicy`, or the

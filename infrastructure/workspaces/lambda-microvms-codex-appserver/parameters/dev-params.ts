@@ -5,11 +5,11 @@ const devParams: EnvParams = {
   stackNamePrefix: 'lambda-microvms-codex-appserver',
   region: 'ap-northeast-1',
   microvmImage: {
-    // Placeholder values. Replace with a real base image ARN/version for
-    // your account and Region before deploying -- discover candidates with:
-    //   aws lambda-microvms list-managed-microvm-images
-    baseImageArn: 'arn:aws:lambda-microvms:ap-northeast-1:REPLACE_WITH_ACCOUNT_ID:image/REPLACE_ME',
-    baseImageVersion: 'REPLACE_ME',
+    // Discovered via `aws lambda-microvms list-managed-microvm-images` /
+    // `list-managed-microvm-image-versions` against drillexercises-dev,
+    // ap-northeast-1 (2026-09-27) -- the AWS-managed al2023 base image.
+    baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1',
+    baseImageVersion: '1',
   },
   controlPlane: {},
 };

@@ -10,10 +10,10 @@
 > push path alongside polling (see "Design Decisions" #2). Two other implementation details the article
 > doesn't spell out at the API level were filled in independently from the AWS Lambda MicroVMs public API
 > surface (`@aws-sdk/client-lambda-microvms`, the `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`
-> CloudFormation schemas) and are called out where relevant below: the IAM service principal Lambda MicroVMs
-> assumes for build/execution roles, and `codex app-server`'s exact stdio JSON-RPC framing/method names.
-> Verify both against the current AWS Lambda MicroVMs Developer Guide and the
-> [Codex CLI source](https://github.com/openai/codex) before production use.
+> CloudFormation schemas): the IAM service principal Lambda MicroVMs assumes for build/execution roles, and
+> `codex app-server`'s exact stdio JSON-RPC framing. Both were confirmed correct by a real deploy on
+> 2026-09-27 -- see [Deploy verification](#-deploy-verification), which also documents six real bugs the
+> deploy caught and fixed that neither of these two guesses accounts for.
 
 ## 📑 Table of Contents
 
@@ -27,6 +27,7 @@
 - [Usage](#usage)
 - [Testing Strategy](#-testing-strategy)
 - [Customization](#️-customization)
+- [Deploy verification](#-deploy-verification)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)
@@ -282,31 +283,36 @@ Rough cost *drivers*, in the order they matter for this architecture:
   `/terminate` alike, since they share one `Hooks.port`. Restrict this further per environment if the
   platform's own hook-invocation channel is not otherwise isolated from client traffic.
 
-### Two items to verify before production use
+### Two items resolved by deploy verification
 
-1. **IAM trust policy.** `microvmServicePrincipal` in the stack uses `lambda.amazonaws.com` as a best guess
-   for the principal Lambda MicroVMs assumes to build images and run MicroVMs. Confirm the actual required
-   principal (and any `sts:ExternalId`/condition keys) in the AWS Lambda MicroVMs Developer Guide.
-2. **`codex app-server`'s JSON-RPC framing and method names.** `server/codex-process.mjs` assumes
-   newline-delimited JSON over stdio; `/rpc` forwards requests verbatim rather than assuming specific method
-   names. Confirm both against the [Codex CLI source](https://github.com/openai/codex).
+Both items previously listed here as unverified were confirmed correct by a real deploy on
+2026-09-27 (see [Deploy verification](#-deploy-verification)):
+
+1. **IAM trust policy.** `microvmServicePrincipal` using `lambda.amazonaws.com` is correct --
+   image builds and MicroVM execution both succeeded with it.
+2. **`codex app-server`'s JSON-RPC framing.** Newline-delimited JSON over stdio is correct -- a
+   real `initialize` request/response round-trip succeeded through `/rpc` unchanged.
 
 ### CDK Nag
 
 `test/compliance/cdk-nag.test.ts` runs the `AwsSolutionsChecks` pack and asserts zero unsuppressed
 warnings/errors. Every suppression carries a reason tied to one of the "intentionally out of scope" items
-above, plus `AwsSolutions-IAM5` for the `lambda-microvms:*` actions (their resource ARNs -- MicroVM and image
+above, plus `AwsSolutions-IAM5` for the MicroVM data-plane actions (their resource ARNs -- MicroVM and image
 identifiers -- are minted at `RunMicrovm` time and cannot be scoped ahead of deployment).
 
 ## 📋 Prerequisites
 
 - Node.js 20.x+, the AWS CDK CLI, and an AWS profile as described in the repository root README.
-- **A real MicroVM base image ARN and version.** `parameters/dev-params.ts` ships placeholders
-  (`baseImageArn: 'arn:aws:lambda-microvms:...:image/REPLACE_ME'`). Discover real values with:
+- **A real MicroVM base image ARN and version.** `parameters/dev-params.ts` ships placeholders.
+  Discover real values with:
   ```sh
   aws lambda-microvms list-managed-microvm-images
+  aws lambda-microvms list-managed-microvm-image-versions --image-identifier <arn-from-above>
   ```
-  and update `parameters/dev-params.ts` before deploying.
+  and update `parameters/dev-params.ts` before deploying. The real ARN format is
+  `arn:aws:lambda:<region>:aws:microvm-image:<name>-<version>` (e.g.
+  `arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1`) -- under the `lambda:` namespace
+  with an `aws:` account segment, not `arn:aws:lambda-microvms:...:image/...`.
 - Access to AWS Lambda MicroVMs in your target account/Region (a preview/limited-availability feature as of
   this reference's authoring -- confirm it is enabled for your account).
 - An OpenAI API key to populate the `OpenAiApiKeySecret` (its ARN is a stack output) after the first deploy.
@@ -390,6 +396,60 @@ the corresponding `AwsSolutions-IAM5` suppression.
 Change `natGateways: 1` to `natGateways: 2` in the `Vpc` construct for production-grade AZ resilience (at
 roughly double the NAT Gateway cost).
 
+## ✅ Deploy verification
+
+Deployed to a real account (`ap-northeast-1`) on 2026-09-27, tested at the infrastructure and
+JSON-RPC protocol level, then torn down. No OpenAI API key was used (kept scope to infrastructure
+verification) -- the OpenAI-key-authenticated Turn itself was not exercised. Six real bugs were
+found and fixed along the way, none of which any static check (`cdk synth`, unit tests, cdk-nag)
+could have caught, since every one is a live-service behavior:
+
+1. **`AWS::Lambda::NetworkConnector` needs an `operatorRole`** for `VPC_EGRESS` connectors --
+   `CREATE_FAILED` with `"NetworkConnectorOperatorRole is required for VPC_EGRESS connector type"`.
+   Added an IAM role (`AWSLambdaVPCAccessExecutionRole` managed policy) and passed it as
+   `operatorRole`.
+2. **The image build's `/ready`/`/validate` hooks run under the build role's credentials, not the
+   execution role's** -- the build failed with `secretsmanager:GetSecretValue` `AccessDeniedException`
+   naming the build role, even though the execution role already had that grant. Granted the build
+   role the same read access.
+3. **`codex app-server` refuses to start if `CODEX_HOME` doesn't exist** -- `ENV CODEX_HOME=...` in
+   the Dockerfile doesn't create the directory. Added `RUN mkdir -p "$CODEX_HOME"`.
+4. **Lifecycle hooks live under `/aws/lambda-microvms/runtime/v1/<hook-name>`, not bare paths** --
+   confirmed against the AWS Lambda MicroVMs Developer Guide's OpenAPI spec. The server answering
+   bare `/ready` got a silent 404 on every hook call, and the build just timed out with zero
+   application-level error. This was the fix that took the build from failing twice to succeeding
+   on the next attempt. Also fixed: the `/run` hook's body is `{ microvmId, runHookPayload }` where
+   `runHookPayload` is a string requiring a second `JSON.parse`, not `{ sessionId }` directly.
+5. **The IAM action prefix is `lambda:`, not `lambda-microvms:`** -- despite the dedicated SDK/CLI
+   namespace, `RunMicrovm` and friends are authorized under core Lambda. Confirmed by a real
+   `AccessDeniedException` naming `lambda:RunMicrovm`.
+6. **`RunMicrovm` needs `lambda:PassNetworkConnector`** on the egress connector's ARN (a
+   `PassRole`-shaped grant), *and* on an AWS-managed ingress connector
+   (`arn:...:network-connector:aws-network-connector:HTTP_INGRESS`) that gets implicitly attached
+   even when `ingressNetworkConnectors` is never set.
+
+Full writeup with confirmation details for each: [`docs/knowledge/lambda-microvms.md`](../../../docs/knowledge/lambda-microvms.md).
+
+What was actually confirmed, end to end, with all six fixes applied:
+
+- `cdk deploy '**'` created the full stack (VPC/NAT, Cognito, HTTP + WebSocket APIs, 10 Lambdas,
+  the MicroVM image) cleanly.
+- `POST /sessions` (as a real Cognito-authenticated user) returned `201` with a real MicroVM
+  endpoint and auth token; `GET /sessions/{id}` showed the MicroVM reach `RUNNING`.
+- `POST {endpoint}/rpc` with `X-aws-proxy-auth` reached the in-VM server, which relayed to a real
+  `codex app-server` child process over stdio -- a malformed `initialize` request got a genuine
+  JSON-RPC error from codex itself (`missing field 'clientInfo'`), and a corrected one got a real
+  successful handshake response (`codexHome`, `platformOs`, etc.).
+- `GET /sessions/{id}/events` showed the DynamoDB Streams pipeline working: the `initialize`
+  response, a real `configWarning` event from codex about a missing `bubblewrap` sandbox
+  dependency, and a `remoteControl/status/changed` event, all persisted and readable back.
+- `DELETE /sessions/{id}` (`TerminateMicrovm`) correctly transitioned both test MicroVMs to
+  `TERMINATED`, confirmed via `aws lambda-microvms list-microvms`.
+- The stack was destroyed afterward and confirmed gone.
+
+Not covered by this pass: an actual OpenAI-backed Turn (needs a real API key), suspend/resume,
+auto-resume-on-traffic, and the WebSocket push path.
+
 ## 🔧 Troubleshooting
 
 ### `cdk deploy` fails validating `CfnMicrovmImage`
@@ -397,11 +457,48 @@ roughly double the NAT Gateway cost).
 Check `baseImageArn`/`baseImageVersion` in `parameters/dev-params.ts` -- the placeholders will fail at deploy
 time. Re-run `aws lambda-microvms list-managed-microvm-images` for current values.
 
+### `AWS::Lambda::MicrovmImage ... did not stabilize` with zero application logs
+
+Almost always means your in-VM server is answering hook requests at the wrong path. Lambda calls
+lifecycle hooks as **`POST /aws/lambda-microvms/runtime/v1/<hook-name>`**, not bare paths like
+`/ready` -- a server that only recognizes `/ready` gets a 404 on every call and the build just
+times out, with nothing informative logged (the 404 itself is never surfaced as an error since the
+application "successfully" handled the request, just with the wrong response). Check the build's
+`MicrovmImageLogGroup` -- if you see the server's own "listening" line but no follow-up activity at
+all, this is the likely cause. See `docs/knowledge/lambda-microvms.md` for the full writeup.
+
+If the build log group has **zero log streams whatsoever** (not even a "listening" line), check
+that the build role has `logs:CreateLogStream`/`PutLogEvents` on the configured log group --
+`logging.cloudWatch.logGroup` alone doesn't imply write access.
+
+### `RunMicrovm` fails with `AccessDeniedException` naming `lambda:RunMicrovm`, `lambda:PassNetworkConnector`, or `secretsmanager:GetSecretValue`
+
+- `lambda:RunMicrovm` (or any other MicroVM data-plane action): confirm the IAM policy uses the
+  `lambda:` action prefix, not `lambda-microvms:` -- despite the dedicated SDK/CLI namespace, IAM
+  authorizes these under core Lambda.
+- `lambda:PassNetworkConnector`: `RunMicrovmRequest.egressNetworkConnectors` needs a `PassRole`-like
+  grant on the connector's own ARN. If the error instead names
+  `arn:...:network-connector:aws-network-connector:HTTP_INGRESS` (an AWS-managed ARN you never
+  referenced), `RunMicrovm` implicitly attaches a default ingress connector even when
+  `ingressNetworkConnectors` is left unset -- grant `PassNetworkConnector` on
+  `arn:<partition>:lambda:<region>:aws:network-connector:aws-network-connector:*` too.
+- `secretsmanager:GetSecretValue` naming the **build role** (not the execution role): your
+  application resolves a secret during startup, and the build's `/ready`/`/validate` hook runs
+  under build-role credentials, not the execution role's -- grant the build role the same
+  read-time permissions.
+
+If a fix for any of these still fails identically immediately after `cdk deploy` reports success,
+suspect IAM propagation lag rather than a wrong fix -- confirm the deployed template
+(`aws cloudformation get-template`) already has the right policy, then retry after a short wait.
+
 ### `RunMicrovm` succeeds but `POST {endpoint}/rpc` never responds
 
 Check the MicroVM's CloudWatch log group (`MicrovmImageLogGroup`) for `[server]`/`[codex app-server]` log
 lines. If the in-VM server never logs "listening", the container's `ENTRYPOINT` may be failing before
-`server/index.mjs` binds its port -- check for an `npm install` failure baked into the image.
+`server/index.mjs` binds its port -- check for an `npm install` failure baked into the image, or
+`codex app-server` exiting immediately with `CODEX_HOME points to "..." but that path does not
+exist` (setting `ENV CODEX_HOME=...` in the Dockerfile does not create the directory -- a
+`RUN mkdir -p "$CODEX_HOME"` step is required).
 
 ### `GET /sessions/{id}/events` always returns an empty list
 

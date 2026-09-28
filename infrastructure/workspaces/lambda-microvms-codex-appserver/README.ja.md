@@ -9,11 +9,11 @@
 > 選択でSSE/WebSocketの方が体験は良いと述べています。本実装では元記事から一歩進めて、ポーリングに加えて
 > WebSocketによるpush配信経路を追加しています(詳細は「設計判断」#2)。記事本文がAPIレベルまで詳述していない
 > その他2箇所は、AWS Lambda MicroVMsの公開API仕様(`@aws-sdk/client-lambda-microvms`、
-> `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`のCloudFormationスキーマ)から独自に補完しており、
-> 該当箇所には以下で個別に注記しています: Lambda MicroVMsがビルド/実行ロールをAssumeする際のIAMサービス
-> プリンシパル、および`codex app-server`の正確なstdio JSON-RPCフレーミング/メソッド名。本番利用前には、
-> AWS Lambda MicroVMs Developer Guideと[Codex CLIのソースコード](https://github.com/openai/codex)の両方で
-> 必ず確認してください。
+> `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`のCloudFormationスキーマ)から独自に補完しました:
+> Lambda MicroVMsがビルド/実行ロールをAssumeする際のIAMサービスプリンシパル、および`codex app-server`の
+> 正確なstdio JSON-RPCフレーミング。両方とも2026-09-27の実機デプロイで正しいことを確認済みです —
+> [実機デプロイ検証](#-実機デプロイ検証)を参照してください。この検証では、これら2つの推測とは別に、
+> 実際にデプロイで見つかり修正した不具合6件も記録しています。
 
 ## 📑 目次
 
@@ -27,6 +27,7 @@
 - [使い方](#使い方)
 - [テスト戦略](#-テスト戦略)
 - [カスタマイズ](#️-カスタマイズ)
+- [実機デプロイ検証](#-実機デプロイ検証)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -284,32 +285,35 @@ Cognito、API Gateway WebSocket API、DynamoDB)を確認してください。
   `/suspend`・`/resume`・`/terminate`のいずれにも到達できます。プラットフォーム自身のフック呼び出し経路が
   クライアントトラフィックから別途分離されていない場合は、環境ごとにさらに制限を追加してください。
 
-### 本番利用前に検証すべき2点
+### 実機デプロイ検証で解決した2点
 
-1. **IAM信頼ポリシー。** スタック内の`microvmServicePrincipal`は、Lambda MicroVMsがイメージビルドおよび
-   MicroVM実行の際にAssumeするプリンシパルとして`lambda.amazonaws.com`を最有力の推測値として使用しています。
-   実際に必要なプリンシパル(および`sts:ExternalId`等の条件キー)をAWS Lambda MicroVMs Developer Guideで
-   確認してください。
-2. **`codex app-server`のJSON-RPCフレーミングとメソッド名。** `server/codex-process.mjs`は改行区切りJSONを
-   stdio経由でやり取りすると仮定しており、`/rpc`は特定のメソッド名を前提とせずリクエストをそのまま転送します。
-   両方とも[Codex CLIのソースコード](https://github.com/openai/codex)で確認してください。
+以前ここに未検証として記載していた2点は、2026-09-27の実機デプロイで正しいことが確認できました
+(詳細は[実機デプロイ検証](#-実機デプロイ検証)参照):
+
+1. **IAM信頼ポリシー。** `microvmServicePrincipal`に`lambda.amazonaws.com`を使う実装は正しい —
+   イメージビルド・MicroVM実行ともにこれで成功しました。
+2. **`codex app-server`のJSON-RPCフレーミング。** 改行区切りJSON(stdio)は正しい — `/rpc`経由の
+   実際の`initialize`リクエスト/レスポンスの往復が変更なしで成功しました。
 
 ### CDK Nag
 
 `test/compliance/cdk-nag.test.ts`が`AwsSolutionsChecks`パックを実行し、サプレッションされていない警告/エラー
 がゼロであることを検証します。各サプレッションは上記の「意図的にスコープ外」項目のいずれかに紐づく理由を持ち、
-加えて`lambda-microvms:*`アクション向けの`AwsSolutions-IAM5`も含みます(これらのリソースARN -- MicroVMおよび
+加えてMicroVMデータプレーンアクション向けの`AwsSolutions-IAM5`も含みます(これらのリソースARN -- MicroVMおよび
 イメージの識別子 -- は`RunMicrovm`実行時に採番されるため、デプロイ前にスコープを絞り込めません)。
 
 ## 📋 前提条件
 
 - Node.js 20.x以降、AWS CDK CLI、リポジトリルートのREADMEに記載のAWSプロファイル設定。
-- **実在するMicroVMベースイメージのARNとバージョン。** `parameters/dev-params.ts`はプレースホルダー
-  (`baseImageArn: 'arn:aws:lambda-microvms:...:image/REPLACE_ME'`)で出荷されます。以下のコマンドで実際の値を
-  取得し、デプロイ前に`parameters/dev-params.ts`を更新してください。
+- **実在するMicroVMベースイメージのARNとバージョン。** `parameters/dev-params.ts`はプレースホルダーで
+  出荷されます。以下のコマンドで実際の値を取得し、デプロイ前に`parameters/dev-params.ts`を更新してください。
   ```sh
   aws lambda-microvms list-managed-microvm-images
+  aws lambda-microvms list-managed-microvm-image-versions --image-identifier <上記で得たarn>
   ```
+  実際のARN形式は`arn:aws:lambda:<region>:aws:microvm-image:<name>-<version>`(例:
+  `arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1`)です -- `lambda:`名前空間で
+  アカウント部分が`aws:`であり、`arn:aws:lambda-microvms:...:image/...`ではありません。
 - 対象アカウント/リージョンでのAWS Lambda MicroVMsへのアクセス(本実装作成時点ではプレビュー/限定提供機能の
   可能性があります -- アカウントで有効化されているか確認してください)。
 - 初回デプロイ後に`OpenAiApiKeySecret`(そのARNはスタック出力に含まれます)へ設定するOpenAI APIキー。
@@ -392,6 +396,58 @@ WebSocketインフラを完全に削除する場合は、`WebSocketApi`/`WebSock
 `Vpc`コンストラクトの`natGateways: 1`を`natGateways: 2`に変更すると、本番グレードのAZ耐性が得られます(NAT Gateway
 のコストはおおむね倍になります)。
 
+## ✅ 実機デプロイ検証
+
+2026-09-27に実際のアカウント(`ap-northeast-1`)へデプロイし、インフラおよびJSON-RPCプロトコルレベルで
+検証したうえでスタックを削除しました。OpenAI APIキーは使用していません(インフラ検証にスコープを絞った
+ため)-- OpenAI APIキーで認証される実際のTurnそのものは実行していません。この過程で6件の実際の不具合を
+発見・修正しました。いずれも静的チェック(`cdk synth`・unitテスト・cdk-nag)では検出できません。すべて
+実サービスの挙動だからです:
+
+1. **`AWS::Lambda::NetworkConnector`は`VPC_EGRESS`コネクタに`operatorRole`が必要** --
+   `"NetworkConnectorOperatorRole is required for VPC_EGRESS connector type"`で`CREATE_FAILED`。
+   IAMロール(`AWSLambdaVPCAccessExecutionRole`管理ポリシー)を追加し、`operatorRole`として渡しました。
+2. **イメージビルドの`/ready`/`/validate`フックは実行ロールではなくビルドロールの認証情報で実行される** --
+   実行ロールに既にその権限があるにも関わらず、ビルドロールを名指しした`secretsmanager:GetSecretValue`の
+   `AccessDeniedException`でビルドが失敗しました。ビルドロールにも同じ読み取り権限を付与しました。
+3. **`codex app-server`は`CODEX_HOME`が存在しないと起動を拒否する** -- Dockerfileの`ENV CODEX_HOME=...`
+   だけではディレクトリは作成されません。`RUN mkdir -p "$CODEX_HOME"`を追加しました。
+4. **ライフサイクルフックは`/aws/lambda-microvms/runtime/v1/<hook-name>`配下にあり、裸のパスではない** --
+   AWS Lambda MicroVMs Developer GuideのOpenAPI仕様で確認済み。裸の`/ready`しか応答しないサーバーは
+   すべてのフック呼び出しで静かに404を返され、ビルドはアプリレベルのエラーが一切ないままタイムアウトして
+   いました。この修正が、2回連続失敗していたビルドを次の試行で成功させた決定打でした。あわせて修正:
+   `/run`フックのボディは`{ microvmId, runHookPayload }`であり、`runHookPayload`は文字列で二重に
+   `JSON.parse`する必要があります(`{ sessionId }`を直接受け取るわけではありません)。
+5. **IAMアクションのプレフィックスは`lambda-microvms:`ではなく`lambda:`** -- 専用のSDK/CLI名前空間が
+   あるにも関わらず、`RunMicrovm`などはコアのLambdaの下で認可されます。`lambda:RunMicrovm`を名指しする
+   実際の`AccessDeniedException`で確認しました。
+6. **`RunMicrovm`にはegressコネクタのARNへの`lambda:PassNetworkConnector`(`PassRole`に似た権限付与)が
+   必要**、さらに`ingressNetworkConnectors`を一切設定していなくても暗黙に付与されるAWS管理のingress
+   コネクタ(`arn:...:network-connector:aws-network-connector:HTTP_INGRESS`)にも同権限が必要でした。
+
+各項目の確認方法を含む詳細:
+[`docs/knowledge/lambda-microvms.md`](../../../docs/knowledge/lambda-microvms.md)。
+
+6件すべて修正したうえで、実際にエンドツーエンドで確認できた内容:
+
+- `cdk deploy '**'`がスタック全体(VPC/NAT、Cognito、HTTP+WebSocket API、Lambda 10個、MicroVMイメージ)を
+  問題なく作成しました。
+- 実際にCognito認証したユーザーとして`POST /sessions`を呼ぶと、実際のMicroVMエンドポイントと認証トークン
+  付きで`201`が返り、`GET /sessions/{id}`でMicroVMが`RUNNING`に遷移したことを確認しました。
+- `X-aws-proxy-auth`付きで`POST {endpoint}/rpc`を呼ぶとMicroVM内サーバーに到達し、stdio経由で実際の
+  `codex app-server`子プロセスにリレーされました -- 不正な`initialize`リクエストにはcodex自身からの
+  本物のJSON-RPCエラー(`missing field 'clientInfo'`)が返り、修正したリクエストには実際に成功した
+  ハンドシェイクレスポンス(`codexHome`・`platformOs`など)が返ってきました。
+- `GET /sessions/{id}/events`で、DynamoDB Streamsパイプラインが機能していることを確認しました:
+  `initialize`のレスポンス、`bubblewrap`サンドボックス依存が見つからないという実際のcodexからの
+  `configWarning`イベント、`remoteControl/status/changed`イベントが、すべて永続化され読み出せました。
+- `DELETE /sessions/{id}`(`TerminateMicrovm`)により、テストした両方のMicroVMが正しく`TERMINATED`に
+  遷移したことを`aws lambda-microvms list-microvms`で確認しました。
+- 検証後にスタックを削除し、完全に消えたことを確認しました。
+
+今回のパスで確認していない範囲: 実際のOpenAI APIキーによるTurn(本物のAPIキーが必要)、suspend/resume、
+トラフィックによる自動resume、WebSocketのpush配信経路。
+
 ## 🔧 トラブルシューティング
 
 ### `CfnMicrovmImage`の検証で`cdk deploy`が失敗する
@@ -399,12 +455,46 @@ WebSocketインフラを完全に削除する場合は、`WebSocketApi`/`WebSock
 `parameters/dev-params.ts`の`baseImageArn`/`baseImageVersion`を確認してください -- プレースホルダーのままでは
 デプロイ時に失敗します。`aws lambda-microvms list-managed-microvm-images`を再実行して現在の値を取得してください。
 
+### `AWS::Lambda::MicrovmImage ... did not stabilize`(アプリログは一切なし)
+
+ほとんどの場合、MicroVM内サーバーがフックを間違ったパスで待ち受けています。Lambdaはライフサイクルフックを
+**`POST /aws/lambda-microvms/runtime/v1/<hook-name>`** として呼び出します。`/ready`のような裸のパスでは
+ありません -- `/ready`しか認識しないサーバーはすべての呼び出しで404を返し、ビルドは何の手がかりもないまま
+タイムアウトします(404自体はアプリ側から見れば「正常に処理した」ことになるため、エラーとして表面化しません)。
+ビルドの`MicrovmImageLogGroup`を確認してください -- サーバー自身の「listening」ログは出ているのにその後
+何も起きていなければ、これが原因である可能性が高いです。詳細は`docs/knowledge/lambda-microvms.md`を参照。
+
+ビルドのロググループに**ログストリームが一つも存在しない**場合は、ビルドロールに設定したロググループへの
+`logs:CreateLogStream`/`PutLogEvents`権限があるか確認してください -- `logging.cloudWatch.logGroup`を
+設定しただけでは書き込み権限は付与されません。
+
+### `RunMicrovm`が`AccessDeniedException`で失敗し、`lambda:RunMicrovm`・`lambda:PassNetworkConnector`・`secretsmanager:GetSecretValue`のいずれかが名指しされる
+
+- `lambda:RunMicrovm`(他のMicroVMデータプレーンアクションも同様): IAMポリシーのアクションプレフィックスが
+  `lambda-microvms:`ではなく`lambda:`になっているか確認してください -- 専用のSDK/CLI名前空間があるにも
+  関わらず、これらはコアのLambdaサービスの下で認可されます。
+- `lambda:PassNetworkConnector`: `RunMicrovmRequest.egressNetworkConnectors`には、コネクタ自身のARNへの
+  `PassRole`に似た権限付与が必要です。エラーが代わりに(参照した覚えのない)AWS管理ARN
+  `arn:...:network-connector:aws-network-connector:HTTP_INGRESS`を名指しする場合、`ingressNetworkConnectors`
+  を未設定のままにしていても`RunMicrovm`は暗黙にデフォルトのingressコネクタを付与します --
+  `arn:<partition>:lambda:<region>:aws:network-connector:aws-network-connector:*`にも
+  `PassNetworkConnector`を付与してください。
+- `secretsmanager:GetSecretValue`が**ビルドロール**(実行ロールではなく)を名指しする場合: アプリケーションが
+  起動時にシークレットを解決しており、ビルドの`/ready`/`/validate`フックは実行ロールではなくビルドロールの
+  認証情報で実行されます -- ビルドロールにも同じ読み取り権限を付与してください。
+
+`cdk deploy`が成功と報告した直後に、これらのいずれかの修正がまったく同じエラーで失敗し続ける場合は、修正が
+間違っているのではなくIAMの反映遅延を疑ってください -- まずデプロイ済みのテンプレート
+(`aws cloudformation get-template`)に正しいポリシーが含まれているか確認し、少し待ってから再試行してください。
+
 ### `RunMicrovm`は成功するが`POST {endpoint}/rpc`が応答しない
 
 MicroVMのCloudWatchロググループ(`MicrovmImageLogGroup`)で`[server]`/`[codex app-server]`のログ行を確認して
 ください。MicroVM内サーバーが「listening」というログを一度も出していない場合、`server/index.mjs`がポートを
 バインドする前にコンテナの`ENTRYPOINT`が失敗している可能性があります -- イメージに焼き込まれた`npm install`
-が失敗していないか確認してください。
+が失敗していないか、あるいは`codex app-server`が`CODEX_HOME points to "..." but that path does not exist`
+で即座に終了していないか確認してください(Dockerfileで`ENV CODEX_HOME=...`を設定してもディレクトリは
+作成されません -- `RUN mkdir -p "$CODEX_HOME"`のステップが必要です)。
 
 ### `GET /sessions/{id}/events`が常に空のリストを返す
 

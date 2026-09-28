@@ -79,7 +79,7 @@ function applySuppressions(stack: cdk.Stack): void {
       {
         id: 'AwsSolutions-IAM5',
         reason:
-          'lambda-microvms:* actions (RunMicrovm, GetMicrovm, SuspendMicrovm, ResumeMicrovm, TerminateMicrovm, ' +
+          'lambda:* MicroVM data-plane actions (RunMicrovm, GetMicrovm, SuspendMicrovm, ResumeMicrovm, TerminateMicrovm, ' +
           'CreateMicrovmAuthToken) operate on MicroVM/image identifiers generated at RunMicrovm time, so their ' +
           'resource ARNs are unknown ahead of deployment. DynamoDB grant*Data helpers add a table/index/* resource ' +
           'so secondary indexes remain reachable; both are limited to this session table and this MicroVM image.',

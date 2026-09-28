@@ -97,6 +97,27 @@ the PR.
   `dev-params.ts` only runs if something actually imports that module for its side
   effect. `tsc`/`npm run build` won't catch this (nothing is type-unsound), only a
   real deploy attempt surfaces it.
+- **A stray `tsc`-compiled `.js` file sitting next to a `.ts` module produces the
+  exact same *"No parameters found for environment: dev"* error, even with the
+  side-effect import correctly in place.** `tsc` (via `npm run build`) has no
+  `outDir` configured in this repo's `tsconfig.base.json`, so it compiles `.js`/`.d.ts`
+  files in place, right next to their `.ts` sources (they're gitignored — `*.js`/
+  `*.d.ts` — so this never shows up as a tracked diff). The `stage:deploy:all`/`synth`
+  scripts run the CDK app through `tsx`, which resolves a bare specifier like
+  `parameters/environments` via this repo's `"*": ["./*"]` tsconfig path fallback.
+  If a stale `parameters/environments.js` exists alongside `environments.ts`, some of
+  the app's imports of `parameters/environments` can resolve to the compiled `.js`
+  while others resolve to the `.ts` source — two different module instances, so the
+  `params` object one file mutates (`params[Environment.DEVELOPMENT] = devParams`)
+  is not the same object another file reads, and the reader sees an empty registry.
+  Confirmed in `aws-eol-monitor`: running `npm run build` (for lint/typecheck) right
+  before `npm run synth` reproduced this every time; deleting every non-`jest.config.js`
+  `.js`/`.d.ts` file under the workspace (`find . -name "*.js" -not -path "./node_modules/*"
+  -not -name "jest.config.js" -delete` and the `.d.ts` equivalent) before `synth`/`deploy`
+  fixed it immediately, with no code change. Any workspace using this
+  bare-specifier-registration pattern for its parameters should have its stray
+  `.js`/`.d.ts` cleaned before a `synth`/`deploy` step in the same session as a
+  `build`/`test` run.
 - **Deleting a workspace's `jest.config.js`** while cleaning up stray build artifacts
   (a `find . -name "*.js" | xargs rm -f` run without excluding config files) breaks
   Jest with a confusing `SyntaxError: Missing initializer in const declaration` on a
@@ -105,3 +126,43 @@ the PR.
   parse error looks nothing like "config file missing." If this error shows up on a
   line that is unambiguously valid TypeScript, check for a missing `jest.config.js`
   before doubting the code.
+
+## `NodejsFunction` bundling with `sourceMap: true` produces a non-reproducible asset hash across checkouts
+
+A raw `expect(stackTemplate.toJSON()).toMatchSnapshot()` snapshot test that includes a
+`lambdaNodejs.NodejsFunction` bundled with `sourceMap: true` can pass locally and still
+fail in CI on the exact same code, with the diff being only the Lambda's `Code.S3Key`
+(the CDK asset content hash). Root cause: esbuild's inline source map embeds a
+**relative path from the bundling temp directory back to the source file**
+(`sources: ["../../../workspaces/aws-cdk-reference-architectures/infrastructure/workspaces/<ws>/src/..."]`).
+That relative path's exact string depends on the repo's absolute checkout location —
+this repo's devcontainer checks out to `/workspaces/aws-cdk-reference-architectures`,
+while a GitHub Actions runner checks out to
+`/home/runner/work/aws-cdk-reference-architectures/aws-cdk-reference-architectures` — a
+different number of path segments, so a genuinely different byte sequence gets zipped
+into the asset, producing a different SHA-256 hash. The template's actual
+infrastructure is identical; only the embedded debug metadata differs.
+
+**Confirmed**: reproduced by re-running `cdk synth` on the *same* machine and seeing the
+hash for a `sourceMap: true` asset change between invocations with different construct
+nesting depth (a `Stage`-wrapped real deploy vs. a bare `Stack` in a unit test change
+how many `../` segments separate the bundling temp dir from the repo root), and by
+comparing a locally-committed snapshot against a GitHub Actions CI run of the identical
+commit, where only the `S3Key` differed.
+
+**Fix** (the pattern already used by `dynamodb-vector-search-semantic-api`, applied
+retroactively to `s3-amplify-static-website` once its own `AmplifyDeployHandler`
+function hit this): normalize the hash out of the snapshot before comparing, rather
+than removing `sourceMap: true` (which is otherwise useful for readable stack traces
+in CloudWatch Logs):
+
+```typescript
+const templateJson = JSON.parse(
+  JSON.stringify(stackTemplate.toJSON()).replace(/"S3Key":"[0-9a-f]{64}\.zip"/g, '"S3Key":"<asset-hash>.zip"'),
+);
+expect(templateJson).toMatchSnapshot();
+```
+
+Any workspace adding a **new** `NodejsFunction` with `sourceMap: true` to a stack that
+already has a snapshot test should apply this same normalization up front, rather than
+discovering it via a CI-only failure after the PR is already open.

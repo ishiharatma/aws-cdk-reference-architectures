@@ -4,13 +4,13 @@
 
 ![Level](https://img.shields.io/badge/Level-200-yellow?style=flat-square)
 
-> **Status: draft / not yet deployed.** `npm install`, `tsc --noEmit`, the unit tests, and `cdk synth` all pass, and the synthesized template's Step Functions definition and IAM policies were inspected by hand — but this workspace has not been `cdk deploy`-ed against a real AWS account, so runtime behavior (Bedrock model access, actual EventBridge Scheduler firing, etc.) is still unverified. See [Draft status & caveats](#draft-status--caveats) before using it as anything other than a starting point.
+> **Status: deploy-verified (2026-09-27).** Deployed against a real AWS account and run end-to-end: the Step Functions state machine was started manually and completed `FetchEolDiff` → `GenerateReport` (a real Bedrock `ConverseCommand` call) → `PublishReport` (a real SNS publish) successfully, then the stack was destroyed. See [Deploy verification](#deploy-verification) for what was checked and one real bug the deploy caught.
 
 ## Introduction
 
 This project watches [`awslabs/aws-service-eol-data`](https://github.com/awslabs/aws-service-eol-data) — a machine-readable JSON dataset of AWS service/version end-of-life (EOL) dates (EKS, RDS engines, Lambda runtimes, ElastiCache, OpenSearch, and more) — for changes, and turns any change into a prioritized digest sent by email.
 
-> The dataset's own README states it is **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"** with **"no guarantee of completeness, accuracy, or timeliness of updates."** Every entry's `sourceUrl` links to the official AWS documentation for independent verification — that page, not this dataset or the digest below, is the source of truth for any decision. See [Draft status & caveats](#draft-status--caveats) for how this affects `collector.datasetUrl`.
+> The dataset's own README states it is **"NOT AN OFFICIAL AWS API. This is a community-maintained dataset provided on a best-effort basis"** with **"no guarantee of completeness, accuracy, or timeliness of updates."** Every entry's `sourceUrl` links to the official AWS documentation for independent verification — that page, not this dataset or the digest below, is the source of truth for any decision. See [Deploy verification](#deploy-verification) for how this affects `collector.datasetUrl`.
 
 It is a serverless pipeline, on a schedule:
 
@@ -49,7 +49,7 @@ The Fetch step already produces a fully structured diff; a Lambda could format t
 
 ## Architecture Overview
 
-See the pipeline diagram above (this workspace ships a text diagram instead of `overview.drawio.svg`, pending a validated deploy — see [Draft status](#draft-status--caveats)).
+See the pipeline diagram above (this workspace ships a text diagram instead of `overview.drawio.svg` — see [Deploy verification](#deploy-verification)).
 
 ### Key Components
 
@@ -105,13 +105,22 @@ Lambda (2 short invocations/run), Step Functions (Standard, a few state transiti
 
 [AWS Pricing Calculator](https://calculator.aws/#/estimate) — no pre-built estimate is linked here; build one for your chosen Bedrock model, region, and schedule frequency.
 
-## Draft status & caveats
+## Deploy verification
 
-This workspace has been synthesized and unit-tested, but **not** deployed or run against a live AWS account. Before treating it as production-ready:
+Deployed to a real account (`ap-northeast-1`) and run end-to-end on 2026-09-27, then torn down. What was actually checked:
 
-- `npm install`, `tsc --noEmit`, `npm run test:unit`, and `cdk synth` were all run successfully in this session (against a dummy 123456789012/ap-northeast-1 environment) — but `cdk deploy` has not, so no Lambda has actually executed and no Bedrock call has actually been made.
-- `test/unit` covers resource shape (Fine-grained Assertions) only — no snapshot, compliance (`cdk-nag`), or integration tests were added yet, unlike most workspaces in this repository.
-- No `overview.drawio.svg` was produced; the ASCII diagram above stands in for it until the architecture is validated end-to-end.
-- `report.bedrockModelId` in `parameters/dev-params.ts` is a placeholder cross-region inference profile ID — confirm the exact ID your account is entitled to call before deploying.
-- Only a `dev` parameter set exists (no `prd-params.ts`), matching this workspace's draft status.
-- `collector.datasetUrl` still points at `main` in `parameters/dev-params.ts` for simplicity — pin it to a tagged release before any real deployment (see the note in [Introduction](#introduction)).
+- `cdk deploy '**'` created both stacks cleanly (Data: the DynamoDB table; Application: both Lambdas, the Standard state machine, the SNS topic, the EventBridge Scheduler schedule).
+- The state machine was started manually (`aws stepfunctions start-execution`, no input) and its execution history showed all three tasks actually run in order and succeed: `FetchEolDiff` → `HasDiff` (took the "has diff" branch, since a first run reports every tracked version as `NEW`) → `GenerateReport` → `PublishReport`.
+- `GenerateReport`'s CloudWatch Logs confirmed a real ~22s Bedrock `ConverseCommand` call with no errors — not a mocked or skipped path.
+- `PublishReport` (Step Functions' native SNS integration) returned a real `MessageId` with HTTP 200 from `sns:Publish`.
+- The DynamoDB state table held 125 items after the run (one per tracked `(serviceCode, version)` pair) — the diff/state-write logic in `FetchEolDiff` is confirmed working, not just synthesizing correctly.
+- **Bug found and fixed by this deploy**: `report.bedrockModelId` in `parameters/dev-params.ts` was `apac.anthropic.claude-sonnet-4-5-20250929-v1:0` — this inference profile ID does not exist (confirmed via `aws bedrock list-inference-profiles`, and a direct `bedrock-runtime converse` call against it fails). `cdk synth`/unit tests never catch this class of bug since the model ID is just a string from the model's perspective — only a real Bedrock call surfaces it. It's now `jp.anthropic.claude-sonnet-4-6`, listed and confirmed callable in this account/region via a direct `bedrock-runtime converse` call.
+- Actual email delivery was **not** verified — `notification.emails` was left at its placeholder (`dev-team@example.com`), so no confirmation link exists to accept; the SNS `Publish` call succeeding (see above) confirms the pipeline reaches SNS correctly, but replace the placeholder with a real, confirmable address before relying on this for real notifications.
+- Not covered by this pass: `STATUS_CHANGED`/`UPCOMING_EOL` diff types (the dataset's live content only produced `NEW` entries on this run), the EventBridge Scheduler actually firing on its cron (only a manual `start-execution` was used), and the "no diff" (`NoChangesDetected`) branch.
+
+Other known gaps, unchanged by this pass:
+
+- `test/unit` covers resource shape (Fine-grained Assertions) only — no snapshot, compliance (`cdk-nag`), or integration tests exist yet, unlike most workspaces in this repository.
+- No `overview.drawio.svg` was produced; the ASCII diagram above stands in for it.
+- Only a `dev` parameter set exists (no `prd-params.ts`).
+- `collector.datasetUrl` still points at `main` in `parameters/dev-params.ts` for simplicity (this ran successfully against the live `main` branch during verification) — pin it to a tagged release before any production use (see the note in [Introduction](#introduction)).
