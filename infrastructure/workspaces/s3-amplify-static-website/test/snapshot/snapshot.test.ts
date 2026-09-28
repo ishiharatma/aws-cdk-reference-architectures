@@ -28,7 +28,13 @@ describe('Stack Snapshot Tests', () => {
 
   describe('CloudFormation Template Snapshots', () => {
     test('Complete CloudFormation template snapshot', () => {
-      expect(stackTemplate.toJSON()).toMatchSnapshot();
+      const templateJson = JSON.parse(
+        // Lambda asset hashes change with any bundle byte (including the inline
+        // source map's embedded path, which varies by checkout location); normalize
+        // them so snapshots track infra, not bundler/environment output.
+        JSON.stringify(stackTemplate.toJSON()).replace(/"S3Key":"[0-9a-f]{64}\.zip"/g, '"S3Key":"<asset-hash>.zip"'),
+      );
+      expect(templateJson).toMatchSnapshot();
     });
 
     test('Resource types and counts', () => {

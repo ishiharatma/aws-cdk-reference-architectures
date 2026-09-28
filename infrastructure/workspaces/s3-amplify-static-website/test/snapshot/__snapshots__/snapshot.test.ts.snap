@@ -87,7 +87,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "3da13cb432efd23ca971610a04fc6360e94b93190b67008a72e0ee6e48e6b2a6.zip",
+          "S3Key": "<asset-hash>.zip",
         },
         "Handler": "index.handler",
         "Role": {
@@ -195,7 +195,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "e16ffb3b34af185b8b30c88fdb19faa13b6c42bb38580485c4e84b384ee48b63.zip",
+          "S3Key": "<asset-hash>.zip",
         },
         "Description": "AWS CDK resource provider framework - onEvent (S3AmplifyStaticWebsite/AmplifyDeployProvider)",
         "Environment": {
