@@ -19,6 +19,11 @@ const devParams: EnvParams = {
   additionalSecurityHubStandardArns: [],
   enableUnusedAccessAnalyzer: false,
   unusedAccessAgeDays: 90,
+  notification: {
+    severities: ['CRITICAL', 'HIGH'],
+    // Add addresses here; each recipient must confirm the subscription email.
+    emails: [],
+  },
 };
 
 // Register in the params object

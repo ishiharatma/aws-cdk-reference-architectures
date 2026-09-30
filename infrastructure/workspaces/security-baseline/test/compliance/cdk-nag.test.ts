@@ -52,6 +52,17 @@ describe('CDK Nag AwsSolutions Pack', () => {
 function applySuppressions(stack: SecurityBaselineStack): void {
   NagSuppressions.addResourceSuppressionsByPath(
     stack,
+    `/${stack.node.id}/Notification/Dlq/Resource`,
+    [
+      {
+        id: 'AwsSolutions-SQS3',
+        reason:
+          'This queue is itself the dead-letter destination for undeliverable findings; a DLQ for the DLQ adds nothing.',
+      },
+    ]
+  );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
     `/${stack.node.id}/Config/RecorderRole/Resource`,
     [
       {

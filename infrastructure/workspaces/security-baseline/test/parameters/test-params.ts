@@ -19,6 +19,10 @@ const testParams: EnvParams = {
   additionalSecurityHubStandardArns: [],
   enableUnusedAccessAnalyzer: true,
   unusedAccessAgeDays: 90,
+  notification: {
+    severities: ['CRITICAL', 'HIGH'],
+    emails: ['security@example.com'],
+  },
 };
 
 params[Environment.TEST] = testParams;

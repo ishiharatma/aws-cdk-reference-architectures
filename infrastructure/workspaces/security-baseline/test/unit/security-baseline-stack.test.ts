@@ -273,13 +273,125 @@ describe('SecurityBaselineStack', () => {
     });
   });
 
-  describe('outputs', () => {
-    test('exposes the archive bucket, trail, detector and hub', () => {
-      ['LogArchiveBucketName', 'TrailArn', 'GuardDutyDetectorId', 'SecurityHubArn'].forEach(
-        (name) => {
-          expect(template.toJSON().Outputs).toHaveProperty(name);
-        }
+  describe('findings notification', () => {
+    test('a rule matches new, active, high-severity Security Hub findings', () => {
+      template.hasResourceProperties('AWS::Events::Rule', {
+        Name: 'test-test-secbase-findings',
+        State: 'ENABLED',
+        EventPattern: {
+          source: ['aws.securityhub'],
+          'detail-type': ['Security Hub Findings - Imported'],
+          detail: {
+            findings: {
+              Severity: { Label: ['CRITICAL', 'HIGH'] },
+              Workflow: { Status: ['NEW'] },
+              RecordState: ['ACTIVE'],
+            },
+          },
+        },
+      });
+    });
+
+    test('the severities come from parameters', () => {
+      const t = build({ notification: { severities: ['CRITICAL'], emails: [] } });
+      t.hasResourceProperties('AWS::Events::Rule', {
+        EventPattern: Match.objectLike({
+          detail: { findings: Match.objectLike({ Severity: { Label: ['CRITICAL'] } }) },
+        }),
+      });
+    });
+
+    test('the topic is encrypted with the CMK, and TLS is required', () => {
+      template.hasResourceProperties('AWS::SNS::Topic', {
+        TopicName: 'test-test-secbase-findings',
+        KmsMasterKeyId: Match.anyValue(),
+      });
+      template.hasResourceProperties('AWS::SNS::TopicPolicy', {
+        PolicyDocument: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Effect: 'Deny',
+              Condition: { Bool: { 'aws:SecureTransport': 'false' } },
+            }),
+          ]),
+        },
+      });
+    });
+
+    test('the key policy lets EventBridge use the key, for this account only', () => {
+      template.hasResourceProperties('AWS::KMS::Key', {
+        KeyPolicy: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Sid: 'AllowEventBridgeToUseKeyForFindingsTopic',
+              Principal: { Service: 'events.amazonaws.com' },
+              Action: ['kms:Decrypt', 'kms:GenerateDataKey*'],
+              Condition: { StringEquals: { 'aws:SourceAccount': '123456789012' } },
+            }),
+          ]),
+        },
+      });
+    });
+
+    test('the target publishes to the topic with bounded retries and a DLQ', () => {
+      template.hasResourceProperties('AWS::Events::Rule', {
+        Name: 'test-test-secbase-findings',
+        Targets: [
+          Match.objectLike({
+            RetryPolicy: { MaximumEventAgeInSeconds: 3600, MaximumRetryAttempts: 3 },
+            DeadLetterConfig: { Arn: Match.anyValue() },
+            InputTransformer: Match.anyValue(),
+          }),
+        ],
+      });
+      template.hasResourceProperties('AWS::SQS::Queue', {
+        QueueName: 'test-test-secbase-findings-dlq',
+        SqsManagedSseEnabled: true,
+        MessageRetentionPeriod: 14 * 24 * 60 * 60,
+      });
+    });
+
+    test('the message is a readable text template with the finding fields', () => {
+      const rule: any = Object.values(template.findResources('AWS::Events::Rule')).find(
+        (r: any) => r.Properties.Name === 'test-test-secbase-findings'
       );
+      const paths = JSON.stringify(rule.Properties.Targets[0].InputTransformer.InputPathsMap);
+      [
+        'Severity.Label',
+        'Title',
+        'AwsAccountId',
+        'Region',
+        'ProductName',
+        'Resources[0].Id',
+        'Id',
+      ].forEach((f) => {
+        expect(paths).toContain(`$.detail.findings[0].${f}`);
+      });
+    });
+
+    test('each configured email is subscribed, and none when the list is empty', () => {
+      template.hasResourceProperties('AWS::SNS::Subscription', {
+        Protocol: 'email',
+        Endpoint: 'security@example.com',
+      });
+      build({ notification: { severities: ['HIGH'], emails: [] } }).resourceCountIs(
+        'AWS::SNS::Subscription',
+        0
+      );
+    });
+  });
+
+  describe('outputs', () => {
+    test('exposes the archive bucket, trail, detector, hub and topic', () => {
+      [
+        'LogArchiveBucketName',
+        'TrailArn',
+        'GuardDutyDetectorId',
+        'SecurityHubArn',
+        'FindingsTopicArn',
+      ].forEach((name) => {
+        expect(template.toJSON().Outputs).toHaveProperty(name);
+      });
     });
   });
 });

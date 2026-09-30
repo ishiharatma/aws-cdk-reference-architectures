@@ -18,6 +18,14 @@ export interface GuardDutyFeatureParams {
   readonly lambdaNetworkLogs: boolean;
 }
 
+/** Notification of Security Hub findings by email. */
+export interface NotificationParams {
+  /** Security Hub severity labels that trigger a notification (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFORMATIONAL`). */
+  readonly severities: string[];
+  /** Email addresses subscribed to the topic; each must confirm the subscription. Empty creates no subscribers. */
+  readonly emails: string[];
+}
+
 /**
  * Environment parameters type
  */
@@ -37,6 +45,8 @@ export interface EnvParams extends EnvironmentConfig {
   readonly enableUnusedAccessAnalyzer: boolean;
   /** Days without use after which the unused-access analyzer reports a finding. */
   readonly unusedAccessAgeDays: number;
+  /** Findings notification (EventBridge rule -> SNS topic -> email). */
+  readonly notification: NotificationParams;
 }
 
 // Object to store parameters for each environment

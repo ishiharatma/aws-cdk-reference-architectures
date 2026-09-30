@@ -3,6 +3,11 @@
 exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
 {
   "Outputs": {
+    "FindingsTopicArn": {
+      "Value": {
+        "Ref": "NotificationTopicC6E25629",
+      },
+    },
     "GuardDutyDetectorId": {
       "Value": {
         "Ref": "GuardDuty32B27AAC",
@@ -682,7 +687,7 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     "LogArchiveKey11A44769": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "Description": "CloudTrail log encryption key (security baseline)",
+        "Description": "Security baseline key: CloudTrail log files and the findings topic",
         "EnableKeyRotation": true,
         "KeyPolicy": {
           "Statement": [
@@ -705,12 +710,236 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
               },
               "Resource": "*",
             },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+              "Sid": "AllowEventBridgeToUseKeyForFindingsTopic",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+            },
           ],
           "Version": "2012-10-17",
         },
       },
       "Type": "AWS::KMS::Key",
       "UpdateReplacePolicy": "Delete",
+    },
+    "NotificationDlq07D8B1CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "TestProject-test-secbase-findings-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NotificationDlqPolicy1CDFDA72": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "NotificationRule3D872B29",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleSecurityBaselineNotificationRuleBD9B72D0",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "NotificationDlq07D8B1CA",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "NotificationRule3D872B29": {
+      "Properties": {
+        "Description": "Security Hub findings (CRITICAL, HIGH) that are new and active",
+        "EventPattern": {
+          "detail": {
+            "findings": {
+              "RecordState": [
+                "ACTIVE",
+              ],
+              "Severity": {
+                "Label": [
+                  "CRITICAL",
+                  "HIGH",
+                ],
+              },
+              "Workflow": {
+                "Status": [
+                  "NEW",
+                ],
+              },
+            },
+          },
+          "detail-type": [
+            "Security Hub Findings - Imported",
+          ],
+          "source": [
+            "aws.securityhub",
+          ],
+        },
+        "Name": "TestProject-test-secbase-findings",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "NotificationTopicC6E25629",
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "detail-findings-0--AwsAccountId": "$.detail.findings[0].AwsAccountId",
+                "detail-findings-0--Id": "$.detail.findings[0].Id",
+                "detail-findings-0--ProductName": "$.detail.findings[0].ProductName",
+                "detail-findings-0--Region": "$.detail.findings[0].Region",
+                "detail-findings-0--Resources-0--Id": "$.detail.findings[0].Resources[0].Id",
+                "detail-findings-0--Severity-Label": "$.detail.findings[0].Severity.Label",
+                "detail-findings-0--Title": "$.detail.findings[0].Title",
+              },
+              "InputTemplate": ""[<detail-findings-0--Severity-Label>] <detail-findings-0--Title>\\nAccount: <detail-findings-0--AwsAccountId>  Region: <detail-findings-0--Region>\\nProduct: <detail-findings-0--ProductName>\\nResource: <detail-findings-0--Resources-0--Id>\\nFinding ID: <detail-findings-0--Id>"",
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "NotificationTopicC6E25629": {
+      "Properties": {
+        "DisplayName": "Security baseline findings",
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "LogArchiveKey11A44769",
+            "Arn",
+          ],
+        },
+        "TopicName": "TestProject-test-secbase-findings",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "NotificationTopicPolicy71FCD286": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "NotificationTopicC6E25629",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "NotificationTopicC6E25629",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "NotificationTopicC6E25629",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "NotificationTopicsecurityexamplecomC7DE0CC8": {
+      "Properties": {
+        "Endpoint": "security@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "NotificationTopicC6E25629",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
     },
     "SecurityHubA8F400AD": {
       "DependsOn": [
@@ -787,6 +1016,7 @@ exports[`Stack Snapshot Tests Resource types and counts 1`] = `
   "AWS::Config::ConfigRule": 11,
   "AWS::Config::ConfigurationRecorder": 1,
   "AWS::Config::DeliveryChannel": 1,
+  "AWS::Events::Rule": 1,
   "AWS::GuardDuty::Detector": 1,
   "AWS::IAM::Policy": 1,
   "AWS::IAM::Role": 3,
@@ -795,6 +1025,11 @@ exports[`Stack Snapshot Tests Resource types and counts 1`] = `
   "AWS::Logs::LogGroup": 1,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::SQS::Queue": 1,
+  "AWS::SQS::QueuePolicy": 1,
   "AWS::SecurityHub::Hub": 1,
   "AWS::SecurityHub::Standard": 1,
   "Custom::S3AutoDeleteObjects": 1,

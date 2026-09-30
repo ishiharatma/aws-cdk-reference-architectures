@@ -7,6 +7,7 @@ import { CloudTrailConstruct } from 'lib/constructs/cloudtrail-construct';
 import { ConfigConstruct } from 'lib/constructs/config-construct';
 import { GuardDutyConstruct } from 'lib/constructs/guardduty-construct';
 import { LogArchiveConstruct } from 'lib/constructs/log-archive-construct';
+import { NotificationConstruct } from 'lib/constructs/notification-construct';
 import { SecurityHubConstruct } from 'lib/constructs/security-hub-construct';
 
 /** Properties for {@link SecurityBaselineStack}. */
@@ -26,7 +27,9 @@ export interface SecurityBaselineStackProps extends cdk.StackProps {
  *   Public / unused access ► Access Analyzer ─┼─► Security Hub (AWS Foundational Security Best Practices)
  *   Config rules & controls ──────────────────┘
  *
- * Detection only: nothing here blocks or remediates, and nothing notifies. Findings are read in Security Hub.
+ * Detection only: nothing here blocks or remediates. High-severity findings are emailed through
+ *   Security Hub ─► EventBridge rule ─► SNS topic ─► email
+ * and all findings can be read in Security Hub.
  * These services are account-and-Region singletons; see the README for what happens if any is already enabled.
  */
 export class SecurityBaselineStack extends cdk.Stack {
@@ -81,11 +84,23 @@ export class SecurityBaselineStack extends cdk.Stack {
     securityHub.node.addDependency(accessAnalyzer);
 
     // ---------------------------------------------------------------------------------------------
+    // Notification: Security Hub findings -> EventBridge -> SNS -> email
+    // ---------------------------------------------------------------------------------------------
+    const notification = new NotificationConstruct(this, 'Notification', {
+      namePrefix,
+      key: archive.key,
+      severities: params.notification.severities,
+      emails: params.notification.emails,
+      isAutoDeleteObject,
+    });
+
+    // ---------------------------------------------------------------------------------------------
     // Outputs (human-facing; not consumed by other stacks)
     // ---------------------------------------------------------------------------------------------
     new cdk.CfnOutput(this, 'LogArchiveBucketName', { value: archive.bucket.bucketName });
     new cdk.CfnOutput(this, 'TrailArn', { value: trail.trail.trailArn });
     new cdk.CfnOutput(this, 'GuardDutyDetectorId', { value: guardDuty.detector.ref });
     new cdk.CfnOutput(this, 'SecurityHubArn', { value: securityHub.hub.attrArn });
+    new cdk.CfnOutput(this, 'FindingsTopicArn', { value: notification.topic.topicArn });
   }
 }

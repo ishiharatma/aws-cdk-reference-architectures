@@ -13,12 +13,12 @@ export interface LogArchiveConstructProps {
 
 /**
  * The account's audit-log archive: one private, versioned S3 bucket shared by CloudTrail and AWS Config,
- * and the customer managed KMS key CloudTrail uses to encrypt its log files.
+ * and the customer managed KMS key used to encrypt CloudTrail log files and the findings topic.
  */
 export class LogArchiveConstruct extends Construct {
   /** Bucket that receives CloudTrail and AWS Config deliveries. */
   public readonly bucket: s3.IBucket;
-  /** Customer managed key for CloudTrail log files and the CloudTrail CloudWatch Logs group. */
+  /** Customer managed key for CloudTrail log files and the findings SNS topic. */
   public readonly key: kms.IKey;
 
   /**
@@ -36,7 +36,7 @@ export class LogArchiveConstruct extends Construct {
       : cdk.RemovalPolicy.RETAIN;
 
     this.key = new kms.Key(this, 'Key', {
-      description: 'CloudTrail log encryption key (security baseline)',
+      description: 'Security baseline key: CloudTrail log files and the findings topic',
       enableKeyRotation: true,
       removalPolicy,
     });

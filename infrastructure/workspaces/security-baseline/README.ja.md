@@ -7,7 +7,7 @@
 
 > ⚠️ **Draft — 実機デプロイ未検証です。** このワークスペースは synth と、ユニット・スナップショット・CDK Nag のテストには通りますが、実際の AWS アカウントには**デプロイしていません**。[既知のリスク](#-既知のリスク未検証)に書いた挙動は、AWS のドキュメントとサービス設計からの想定であり、観測した結果ではありません。実機検証が済むまでは `pages/patterns.json` で `draft: true` として登録しています（手順は [`docs/knowledge/deploy-verification-workflow.md`](../../../docs/knowledge/deploy-verification-workflow.md)）。
 
-**単一アカウント向けのセキュリティベースライン**です。監査証跡（**CloudTrail**）、構成履歴とルール（**AWS Config**）、脅威検出（**GuardDuty**）、外部/未使用アクセスの分析（**IAM Access Analyzer**）、そして検出結果を一か所で読むための **Security Hub** を、1つの CDK スタックで構成します。**検出のみ**です。操作のブロック、検出結果の自動修復、通知は行いません。
+**単一アカウント向けのセキュリティベースライン**です。監査証跡（**CloudTrail**）、構成履歴とルール（**AWS Config**）、脅威検出（**GuardDuty**）、外部/未使用アクセスの分析（**IAM Access Analyzer**）、そして検出結果を一か所で読むための **Security Hub** を、1つの CDK スタックで構成します。**検出と通知までで、予防は行いません**。操作のブロックや検出結果の自動修復はせず、重大度の高い新しい検出結果は EventBridge と SNS でメール通知します。
 
 | サービス | このスタックが作るもの |
 |---|---|
@@ -16,7 +16,8 @@
 | **GuardDuty** | S3、EBS マルウェア、RDS ログイン、Lambda ネットワークの各保護プランを持つ検出器（プランごとにパラメータ） |
 | **IAM Access Analyzer** | アカウントスコープの外部アクセスアナライザー。任意で未使用アクセスアナライザー（有料、`dev` では無効） |
 | **Security Hub** | AWS 基礎セキュリティのベストプラクティスを購読するハブ（追加の標準はパラメータ） |
-| **ログアーカイブ** | プライベート・バージョニング有効・TLS 必須で、ライフサイクルによる期限切れを設定した S3 バケット 1 つと、ローテーション有効な CMK |
+| **通知** | 新規・アクティブな `CRITICAL`/`HIGH` の Security Hub 検出結果に対する EventBridge ルール → SNS トピック（CMK 暗号化、TLS 必須）→ メール。再試行と DLQ 付き |
+| **ログアーカイブ** | プライベート・バージョニング有効・TLS 必須で、ライフサイクルによる期限切れを設定した S3 バケット 1 つと、ローテーション有効な CMK（検出結果のトピックの暗号化にも使用） |
 
 ## 📑 目次
 
@@ -43,6 +44,7 @@
 - **`CloudTrailConstruct`** — `cloudtrail.Trail`。マルチリージョン、`cloudtrail/` プレフィックスへ配信、ログファイルは CMK で暗号化、CloudWatch Logs のロググループの保持期間はパラメータ化。
 - **`ConfigConstruct`** — レコーダーロール（AWS 管理の `AWS_ConfigRole`）、Config 配信用のバケットポリシー、レコーダー、配信チャネル（`config/` プレフィックス、24 時間ごとのスナップショット）、マネージドルール。
 - **`GuardDutyConstruct`**、**`AccessAnalyzerConstruct`**、**`SecurityHubConstruct`** — 検出器 1 つ、アナライザー最大 2 つ、ハブ 1 つと、購読する標準ごとに 1 つの `AWS::SecurityHub::Standard`。
+- **`NotificationConstruct`** — Security Hub の検出結果に対するルール、SNS トピックとメール購読、配信できなかったイベント用の DLQ。暗号化したトピックに EventBridge が発行できるよう、CMK のキーポリシーも拡張します。
 - **`SecurityBaselineStack`** — Construct を組み合わせて順序付けします。ハブより前に Config、GuardDuty、Access Analyzer を作成します。
 
 ### Config マネージドルール
@@ -51,9 +53,9 @@
 
 ## 🎯 設計判断とベストプラクティス
 
-### 1. あえて「検出のみ」
+### 1. 観測して人に知らせるだけで、何も変更しない
 
-ここにあるサービスはすべて観測するだけです。ブロック（SCP などの予防的統制）も、修復（自動修復）も、通知（EventBridge → SNS）も行いません。共有アカウントでリソースを勝手に変更するベースラインは、想定外の事故のもとです。検出結果は Security Hub で読みます。通知は次の一歩として自然ですが、ここでは対象外です。
+ここにあるサービスはすべて観測するだけです。ブロック（SCP などの予防的統制）も、修復（自動修復）も行いません。共有アカウントでリソースを勝手に変更するベースラインは、想定外の事故のもとです。外向きの動作は、重大度の高い新しい検出結果のメール通知だけです。それ以外は Security Hub で読みます。
 
 ### 2. CloudTrail と Config で 1 つのバケットを共有
 
@@ -75,17 +77,29 @@ GuardDuty の保護プランは個別の真偽値です。未使用アクセス�
 
 各マネージドルールを `SourceIdentifier` で検証し、すべてのルールと配信チャネルがレコーダーに依存していることも検証しています。識別子の 1 つ（`INCOMING_SSH_DISABLED`）は CDK に定数がないため、文字列で渡しています。
 
-### 7. 環境別パラメータ
+### 7. Security Hub へのルール 1 本で全ソースをカバー
 
-`logArchiveExpirationDays`、`trailLogGroupRetentionDays`、`guardDuty.*`、`additionalSecurityHubStandardArns`、`enableUnusedAccessAnalyzer`、`unusedAccessAgeDays` を `parameters/<env>-params.ts` で指定します。
+GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Security Hub に集まるため、Security Hub の検出結果に対するルール 1 本で全部を通知できます。対象は、設定した重大度（既定は `CRITICAL` と `HIGH`）の**新規かつアクティブ**な検出結果だけなので、あとで解決済みや抑制済みになったものが再び通知されることはありません。メッセージは生のイベントではなく、短いテキスト（重大度、タイトル、アカウント、リージョン、プロダクト、リソース、検出結果 ID）です。
+
+### 8. トピックを暗号化するので、キーポリシーで EventBridge を許可する
+
+カスタマーマネージドキーで暗号化した SNS トピックは、キーポリシーが `events.amazonaws.com` を許可している場合にだけ、EventBridge からのイベントを受け付けます。スタックはそのステートメントを追加します。条件はルールの ARN ではなくこのアカウント（`aws:SourceAccount`）にしています。ルール ARN にすると、キー → トピック → ルール → キーという循環依存になるためです。
+
+### 9. 再試行は有限にして、その先は DLQ
+
+トピックへの配信は最大 3 回、最長 60 分まで再試行し、それでも失敗したものは DLQ（SQS、SSE、TLS 必須、保持 14 日）に入ります。DLQ がなければ、配信の失敗で検出結果が黙って失われます。
+
+### 10. 環境別パラメータ
+
+`logArchiveExpirationDays`、`trailLogGroupRetentionDays`、`guardDuty.*`、`additionalSecurityHubStandardArns`、`enableUnusedAccessAnalyzer`、`unusedAccessAgeDays`、`notification.severities`、`notification.emails` を `parameters/<env>-params.ts` で指定します。
 
 ## 🏛️ Well-Architected との対応
 
 | 柱 | 実装 |
 |---|---|
-| **運用上の優秀性** | すべてコード化。Config の履歴で「何が変わったか」に答えられる。スナップショットとユニットテストで構成を固定 |
+| **運用上の優秀性** | すべてコード化。重大度の高い新しい検出結果をメール通知。Config の履歴で「何が変わったか」に答えられる。スナップショットとユニットテストで構成を固定 |
 | **セキュリティ** | 整合性検証つきの監査証跡、ローテーション有効な CMK、プライベートで TLS 必須のアーカイブ、脅威検出、基礎セキュリティのベストプラクティス |
-| **信頼性** | マルチリージョン証跡、バージョニング付きアーカイブ、故障しうる実行時コンポーネントなし |
+| **信頼性** | マルチリージョン証跡、バージョニング付きアーカイブ、通知の有限な再試行と DLQ、故障しうるコンピュートなし |
 | **パフォーマンス効率** | マネージドサービスのみ。コンピュートなし |
 | **コスト最適化** | 有料オプションはオプトインのパラメータ。ライフサイクルで保存量に上限 |
 | **持続可能性** | コンピュートなし。保持期間はパラメータで制限 |
@@ -102,6 +116,8 @@ GuardDuty の保護プランは個別の真偽値です。未使用アクセス�
 | Security Hub | セキュリティチェックと検出結果の取り込み | 購読する標準の数 |
 | Access Analyzer | 外部アクセスは無料。未使用アクセスは分析した IAM ロール/ユーザーごと | `enableUnusedAccessAnalyzer` |
 | S3 | ストレージ、リクエスト | `logArchiveExpirationDays` |
+| EventBridge | デフォルトバス上の AWS サービスのイベントは EventBridge では課金されない | — |
+| SNS / SQS | メール配信とリクエスト（想定する検出結果の量では小さい） | `notification.severities` の重大度フィルター |
 | KMS | キーとリクエスト | — |
 
 最新の単価は各料金ページで確認してください: [CloudTrail](https://aws.amazon.com/cloudtrail/pricing/)、[Config](https://aws.amazon.com/config/pricing/)、[GuardDuty](https://aws.amazon.com/guardduty/pricing/)、[Security Hub](https://aws.amazon.com/security-hub/pricing/)、[IAM Access Analyzer](https://aws.amazon.com/iam/access-analyzer/pricing/)。
@@ -113,16 +129,18 @@ GuardDuty の保護プランは個別の真偽値です。未使用アクセス�
 - ✅ アーカイブバケット: パブリックアクセスブロック、バージョニング、TLS 必須、バケット所有者強制
 - ✅ Config の配信は `config.amazonaws.com` のみに許可し、対象はこのアカウント（`aws:SourceAccount`）、`bucket-owner-full-control`、`config/` プレフィックスのみ
 - ✅ GuardDuty、Config、Access Analyzer の検出結果を Security Hub に集約
+- ✅ 検出結果のトピックは CMK で暗号化し TLS 必須。キーポリシーは、このアカウントの EventBridge にのみ許可
 
 ### CDK Nag の抑制（理由つき）
 
 | ルール | 対象 | 理由 |
 |---|---|---|
 | `AwsSolutions-S1` | アーカイブバケット | 監査ログの最終保管先であり、サーバーアクセスログを取るとログ用バケットがさらに必要になり、そのバケット自体にもログが必要になるため |
+| `AwsSolutions-SQS3` | 検出結果の DLQ | 配信できなかった検出結果の最終的な保管先そのものなので、DLQ の DLQ は意味がないため |
 | `AwsSolutions-IAM4` | Config レコーダーロール | `AWS_ConfigRole` は、レコーダーロール向けに AWS が公開している管理ポリシーで、新しいリソース種別に合わせて AWS が更新するため |
 
 ### 対象外（環境ごとに追加）
-- 重大度の高い検出結果への**通知**（EventBridge → SNS/ChatOps）と**自動修復**
+- **チャット連携**（AWS Chatbot / Slack）、ページング、**自動修復**
 - **組織全体**での有効化（委任管理者、メンバーアカウントの自動有効化）
 - **予防的**統制（SCP、Permission Boundary）と CloudTrail の**データイベント**
 - Config への **CMK 適用**、アーカイブの S3 **Object Lock**
@@ -135,6 +153,8 @@ GuardDuty の保護プランは個別の真偽値です。未使用アクセス�
 - **Config レコーダーの順序。** 配信チャネルとルールはレコーダーに、チャネルはバケットポリシーにも依存するよう宣言しています。初回デプロイで配信チャネルが失敗したら、まずバケットポリシーとレコーダーを確認してください。
 - **Security Hub のコントロールには Config が必要です。** Config に依存するコントロールは、レコーダーが記録を始めるまでデータが出ません。ハブはレコーダーの後に作られますが、結果はすぐには出ません。
 - **証跡の KMS キーポリシー**は CDK の `Trail` Construct が生成します。CloudTrail の配信がアクセスエラーで失敗したら、まずそのキーポリシーを確認してください。
+- **イベントの形式は前提です。** ルールは `source: aws.securityhub`、`detail-type: Security Hub Findings - Imported`、`detail.findings[]` 配下の検出結果フィールド（`Severity.Label`、`Workflow.Status`、`RecordState`）に一致させています。ドキュメントに沿った形式ですが、実際の検出結果では**確認していません**。お使いの Security Hub が別の形式で出力する場合、ルールは何にも一致しません。サンプルの検出結果（GuardDuty のサンプル検出結果）を生成して、メールが届くことを確認してください。
+- **メール購読には確認が必要です。** 各アドレスに確認メールが届き、確認するまで何も受信しません。`notification.emails: []`（`dev` の既定）では、購読者なしでトピックだけが作られます。
 - **残るリソース。** `isAutoDeleteObject: false`（本番）では、スタック削除後もバケットとキーが残ります。
 
 ## 📋 前提条件
@@ -154,18 +174,18 @@ npm run synth            -w workspaces/security-baseline
 npm run stage:deploy:all -w workspaces/security-baseline
 ```
 
-デプロイ後は、Security Hub のコンソールで検出結果を確認します。GuardDuty の基礎的な検出には設定が不要です。検出結果をすぐ確認するには、GuardDuty コンソールのサンプル検出結果の機能が最も手早い方法です。
+デプロイ後は、（`notification.emails` を設定した場合は）確認メールを承認し、Security Hub のコンソールで検出結果を確認します。GuardDuty の基礎的な検出には設定が不要です。検出結果をすぐ確認するには、GuardDuty コンソールのサンプル検出結果の機能が最も手早い方法です。
 
 ## 🧪 テスト戦略
 
 ```bash
-npm test -w workspaces/security-baseline   # 26 件
+npm test -w workspaces/security-baseline   # 33 件
 ```
 
 | 種別 | 対象 |
 |---|---|
 | スナップショット（2） | テンプレート全体とリソース数 |
-| ユニット（22） | アーカイブの堅牢化と環境ごとの削除ポリシー、証跡のプロパティ、Config のレコーダー・チャネル・バケットポリシー・ルールとその順序、GuardDuty の機能（無効化した機能を含む）、2 種類のアナライザー、ハブ・標準・順序、出力 |
+| ユニット（29） | アーカイブの堅牢化と環境ごとの削除ポリシー、証跡のプロパティ、Config のレコーダー・チャネル・バケットポリシー・ルールとその順序、GuardDuty の機能（無効化した機能を含む）、2 種類のアナライザー、ハブ・標準・順序、検出結果ルールのパターン、重大度パラメータ、トピックの暗号化と TLS、EventBridge 向けキーポリシー、再試行と DLQ、メッセージのフィールド、購読、出力 |
 | コンプライアンス（2） | CDK Nag `AwsSolutions` |
 
 スタックをデプロイしていないため、（`eventbridge-custom-bus` にあるような）**運用確認スクリプトはありません**。
@@ -176,7 +196,7 @@ npm test -w workspaces/security-baseline   # 26 件
 - **標準の追加**: `additionalSecurityHubStandardArns`（ARN は Security Hub コンソールから、対象リージョンのものをコピー）。
 - **他のリージョン**: リージョンごとにスタックをデプロイします。
 - **組織**: アカウントが多い場合は、アカウントごとのスタックではなく、委任管理者と組織レベルの有効化を使います。
-- **通知**: Security Hub の検出結果に対する EventBridge ルールから SNS へ。
+- **通知**: `notification.emails` を設定し、`notification.severities` を広げたり絞ったりします。チャットに送るには、トピックに AWS Chatbot を購読させます。
 
 ## 🧹 クリーンアップ
 
@@ -198,7 +218,7 @@ npm run stage:destroy:all -w workspaces/security-baseline
 ### 関連アーキテクチャ
 - [iam-basics](../iam-basics/) — IAM ロール、ポリシー、ユーザー
 - [s3-basics](../s3-basics/) — S3 バケットの堅牢化オプション
-- [eventbridge-custom-bus](../eventbridge-custom-bus/) — 通知拡張のためのイベントルーティングの部品
+- [eventbridge-custom-bus](../eventbridge-custom-bus/) — EventBridge のルール、ターゲット、再試行、DLQ を掘り下げた例
 
 ## 📄 ライセンス
 
@@ -210,4 +230,4 @@ npm run stage:destroy:all -w workspaces/security-baseline
 
 ---
 
-**注意**: これはドラフトのリファレンス実装で、実機デプロイの検証はしていません。[既知のリスク](#-既知のリスク未検証)を確認し、通知、組織レベルの有効化、予防的統制を加えてから利用してください。
+**注意**: これはドラフトのリファレンス実装で、実機デプロイの検証はしていません。[既知のリスク](#-既知のリスク未検証)を確認し、組織レベルの有効化と予防的統制を加えてから利用してください。
