@@ -576,5 +576,18 @@
     "level": 200,
     "date": "2026-09-27",
     "articles": {}
+  },
+  {
+    "id": "security-baseline",
+    "title": "Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer & Security Hub",
+    "description": "A single-account, detection-only security baseline in one CDK stack: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices. Draft: synthesized and tested (unit, snapshot, CDK Nag) but not deploy-verified.",
+    "image": "security-baseline/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Security", "CloudTrail", "Config", "GuardDuty", "Access Analyzer", "Security Hub"],
+    "link": "security-baseline",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-09-30",
+    "draft": true,
+    "articles": {}
   }
 ]
