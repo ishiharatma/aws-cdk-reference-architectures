@@ -79,15 +79,21 @@ scan "Real email addresses" \
 
 # ── 3. AWS account IDs ────────────────────────────────────────
 # Exclude AWS's own placeholder account IDs used throughout their docs
-# (123456789012, 111122223333, 999988887777, 222222222222, ...) and 12-digit
-# runs that are actually part of a UUID (e.g. trailing segment of a v4 UUID).
+# (123456789012, 111122223333, 999988887777, 222222222222, ...), 12-digit
+# runs that are actually part of a UUID (e.g. trailing segment of a v4 UUID),
+# and 753240598075, the AWS-owned account that publishes the public Lambda Web
+# Adapter layer (documented in apigw-lambda-web-adapter; not a private account).
 scan "12-digit account IDs" '\b[0-9]{12}\b' \
   '\b(123456789012|111122223333|999988887777|222222222222|333333333333|444455556666|1{12})\b' \
-  '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
+  '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' \
+  '\b753240598075\b'
 
 # ── 4. Machine-local absolute paths ───────────────────────────
+# /home/runner/work/ is the standard GitHub Actions runner workspace (a CI path
+# quoted in docs, not a contributor's machine), so it is excluded.
 scan "Machine-local absolute paths" \
-  '/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:\\+Users\\+[A-Za-z0-9._-]+'
+  '/Users/[A-Za-z0-9._-]+|/home/[A-Za-z0-9._-]+|[A-Za-z]:\\+Users\\+[A-Za-z0-9._-]+' \
+  '/home/runner/work/'
 
 # ── 5. Environment-specific patterns (if a local file exists) ─
 if [ -f "$LOCAL_PATTERNS" ]; then

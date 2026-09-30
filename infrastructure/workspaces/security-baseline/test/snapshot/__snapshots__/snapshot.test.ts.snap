@@ -1,0 +1,1037 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "FindingsTopicArn": {
+      "Value": {
+        "Ref": "NotificationTopicC6E25629",
+      },
+    },
+    "GuardDutyDetectorId": {
+      "Value": {
+        "Ref": "GuardDuty32B27AAC",
+      },
+    },
+    "LogArchiveBucketName": {
+      "Value": {
+        "Ref": "LogArchiveBucket6951A440",
+      },
+    },
+    "SecurityHubArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecurityHubA8F400AD",
+          "ARN",
+        ],
+      },
+    },
+    "TrailArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CloudTrailC9F33A50",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AccessAnalyzerExternalAccessA986A651": {
+      "Properties": {
+        "AnalyzerName": "TestProject-test-secbase-external-access",
+        "Type": "ACCOUNT",
+      },
+      "Type": "AWS::AccessAnalyzer::Analyzer",
+    },
+    "AccessAnalyzerUnusedAccess2850ED18": {
+      "Properties": {
+        "AnalyzerConfiguration": {
+          "UnusedAccessConfiguration": {
+            "UnusedAccessAge": 90,
+          },
+        },
+        "AnalyzerName": "TestProject-test-secbase-unused-access",
+        "Type": "ACCOUNT_UNUSED_ACCESS",
+      },
+      "Type": "AWS::AccessAnalyzer::Analyzer",
+    },
+    "CloudTrailC9F33A50": {
+      "DependsOn": [
+        "CloudTrailLogsRoleDefaultPolicy8F725F19",
+        "CloudTrailLogsRoleBD36BABD",
+        "LogArchiveBucketPolicyA8D97FF8",
+      ],
+      "Properties": {
+        "CloudWatchLogsLogGroupArn": {
+          "Fn::GetAtt": [
+            "CloudTrailLogGroupBEFC9956",
+            "Arn",
+          ],
+        },
+        "CloudWatchLogsRoleArn": {
+          "Fn::GetAtt": [
+            "CloudTrailLogsRoleBD36BABD",
+            "Arn",
+          ],
+        },
+        "EnableLogFileValidation": true,
+        "EventSelectors": [
+          {
+            "IncludeManagementEvents": true,
+            "ReadWriteType": "All",
+          },
+        ],
+        "IncludeGlobalServiceEvents": true,
+        "IsLogging": true,
+        "IsMultiRegionTrail": true,
+        "KMSKeyId": {
+          "Fn::GetAtt": [
+            "LogArchiveKey11A44769",
+            "Arn",
+          ],
+        },
+        "S3BucketName": {
+          "Ref": "LogArchiveBucket6951A440",
+        },
+        "S3KeyPrefix": "cloudtrail",
+        "TrailName": "TestProject-test-secbase-trail",
+      },
+      "Type": "AWS::CloudTrail::Trail",
+    },
+    "CloudTrailLogGroupBEFC9956": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 90,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CloudTrailLogsRoleBD36BABD": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CloudTrailLogsRoleDefaultPolicy8F725F19": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogStream",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CloudTrailLogGroupBEFC9956",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CloudTrailLogsRoleDefaultPolicy8F725F19",
+        "Roles": [
+          {
+            "Ref": "CloudTrailLogsRoleBD36BABD",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ConfigDeliveryChannel51D44D28": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+        "LogArchiveBucketAutoDeleteObjectsCustomResource8F647390",
+        "LogArchiveBucketPolicyA8D97FF8",
+        "LogArchiveBucket6951A440",
+      ],
+      "Properties": {
+        "ConfigSnapshotDeliveryProperties": {
+          "DeliveryFrequency": "TwentyFour_Hours",
+        },
+        "S3BucketName": {
+          "Ref": "LogArchiveBucket6951A440",
+        },
+        "S3KeyPrefix": "config",
+      },
+      "Type": "AWS::Config::DeliveryChannel",
+    },
+    "ConfigRecorder49EDB580": {
+      "Properties": {
+        "RecordingGroup": {
+          "AllSupported": true,
+          "IncludeGlobalResourceTypes": true,
+        },
+        "RoleARN": {
+          "Fn::GetAtt": [
+            "ConfigRecorderRole427F71C6",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Config::ConfigurationRecorder",
+    },
+    "ConfigRecorderRole427F71C6": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "config.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "AWS Config recorder role",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWS_ConfigRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ConfigRuleACCESSKEYSROTATEDBA88DADB": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "ACCESS_KEYS_ROTATED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleCLOUDTRAILENABLED93F0890B": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "CLOUD_TRAIL_ENABLED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleENCRYPTEDVOLUMES9A61AE45": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "ENCRYPTED_VOLUMES",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleIAMROOTACCESSKEYCHECKFCC11D8C": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "IAM_ROOT_ACCESS_KEY_CHECK",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleIAMUSERNOPOLICIESCHECK5ABAF918": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "IAM_USER_NO_POLICIES_CHECK",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleINCOMINGSSHDISABLED1C7AC568": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "INCOMING_SSH_DISABLED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleRDSSTORAGEENCRYPTEDA1B9F64A": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "RDS_STORAGE_ENCRYPTED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleROOTACCOUNTMFAENABLEDC9067280": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "ROOT_ACCOUNT_MFA_ENABLED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleS3BUCKETLEVELPUBLICACCESSPROHIBITEDC34DCC08": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "S3_BUCKET_LEVEL_PUBLIC_ACCESS_PROHIBITED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleS3BUCKETPUBLICREADPROHIBITED4F9FEA27": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "S3_BUCKET_PUBLIC_READ_PROHIBITED",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigRuleS3BUCKETSSLREQUESTSONLY491AC2AF": {
+      "DependsOn": [
+        "ConfigRecorder49EDB580",
+      ],
+      "Properties": {
+        "Source": {
+          "Owner": "AWS",
+          "SourceIdentifier": "S3_BUCKET_SSL_REQUESTS_ONLY",
+        },
+      },
+      "Type": "AWS::Config::ConfigRule",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "LogArchiveBucket6951A440",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GuardDuty32B27AAC": {
+      "Properties": {
+        "Enable": true,
+        "Features": [
+          {
+            "Name": "S3_DATA_EVENTS",
+            "Status": "ENABLED",
+          },
+          {
+            "Name": "EBS_MALWARE_PROTECTION",
+            "Status": "ENABLED",
+          },
+          {
+            "Name": "RDS_LOGIN_EVENTS",
+            "Status": "ENABLED",
+          },
+          {
+            "Name": "LAMBDA_NETWORK_LOGS",
+            "Status": "ENABLED",
+          },
+        ],
+        "FindingPublishingFrequency": "FIFTEEN_MINUTES",
+      },
+      "Type": "AWS::GuardDuty::Detector",
+    },
+    "LogArchiveBucket6951A440": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "ExpirationInDays": 365,
+              "Id": "expire-audit-logs",
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 365,
+              },
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogArchiveBucketAutoDeleteObjectsCustomResource8F647390": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "LogArchiveBucketPolicyA8D97FF8",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "LogArchiveBucket6951A440",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogArchiveBucketPolicyA8D97FF8": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "LogArchiveBucket6951A440",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "LogArchiveBucket6951A440",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "LogArchiveBucket6951A440",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "LogArchiveBucket6951A440",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "LogArchiveBucket6951A440",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:GetBucketAcl",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "LogArchiveBucket6951A440",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "StringEquals": {
+                  "s3:x-amz-acl": "bucket-owner-full-control",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "LogArchiveBucket6951A440",
+                        "Arn",
+                      ],
+                    },
+                    "/cloudtrail/AWSLogs/123456789012/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "s3:GetBucketAcl",
+                "s3:ListBucket",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "config.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "LogArchiveBucket6951A440",
+                  "Arn",
+                ],
+              },
+              "Sid": "AWSConfigBucketPermissionsCheck",
+            },
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "s3:x-amz-acl": "bucket-owner-full-control",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "config.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "LogArchiveBucket6951A440",
+                        "Arn",
+                      ],
+                    },
+                    "/config/AWSLogs/123456789012/Config/*",
+                  ],
+                ],
+              },
+              "Sid": "AWSConfigBucketDelivery",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "LogArchiveKey11A44769": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Security baseline key: CloudTrail log files and the findings topic",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+              "Sid": "AllowEventBridgeToUseKeyForFindingsTopic",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NotificationDlq07D8B1CA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "TestProject-test-secbase-findings-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NotificationDlqPolicy1CDFDA72": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "NotificationRule3D872B29",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleSecurityBaselineNotificationRuleBD9B72D0",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "NotificationDlq07D8B1CA",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "NotificationRule3D872B29": {
+      "Properties": {
+        "Description": "Security Hub findings (CRITICAL, HIGH) that are new and active",
+        "EventPattern": {
+          "detail": {
+            "findings": {
+              "RecordState": [
+                "ACTIVE",
+              ],
+              "Severity": {
+                "Label": [
+                  "CRITICAL",
+                  "HIGH",
+                ],
+              },
+              "Workflow": {
+                "Status": [
+                  "NEW",
+                ],
+              },
+            },
+          },
+          "detail-type": [
+            "Security Hub Findings - Imported",
+          ],
+          "source": [
+            "aws.securityhub",
+          ],
+        },
+        "Name": "TestProject-test-secbase-findings",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "NotificationTopicC6E25629",
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "NotificationDlq07D8B1CA",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "detail-findings-0--AwsAccountId": "$.detail.findings[0].AwsAccountId",
+                "detail-findings-0--Id": "$.detail.findings[0].Id",
+                "detail-findings-0--ProductName": "$.detail.findings[0].ProductName",
+                "detail-findings-0--Region": "$.detail.findings[0].Region",
+                "detail-findings-0--Resources-0--Id": "$.detail.findings[0].Resources[0].Id",
+                "detail-findings-0--Severity-Label": "$.detail.findings[0].Severity.Label",
+                "detail-findings-0--Title": "$.detail.findings[0].Title",
+              },
+              "InputTemplate": ""[<detail-findings-0--Severity-Label>] <detail-findings-0--Title>\\nAccount: <detail-findings-0--AwsAccountId>  Region: <detail-findings-0--Region>\\nProduct: <detail-findings-0--ProductName>\\nResource: <detail-findings-0--Resources-0--Id>\\nFinding ID: <detail-findings-0--Id>"",
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 3,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "NotificationTopicC6E25629": {
+      "Properties": {
+        "DisplayName": "Security baseline findings",
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "LogArchiveKey11A44769",
+            "Arn",
+          ],
+        },
+        "TopicName": "TestProject-test-secbase-findings",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "NotificationTopicPolicy71FCD286": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "NotificationTopicC6E25629",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "NotificationTopicC6E25629",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "NotificationTopicC6E25629",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "NotificationTopicsecurityexamplecomC7DE0CC8": {
+      "Properties": {
+        "Endpoint": "security@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "NotificationTopicC6E25629",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "SecurityHubA8F400AD": {
+      "DependsOn": [
+        "AccessAnalyzerExternalAccessA986A651",
+        "AccessAnalyzerUnusedAccess2850ED18",
+        "ConfigRecorder49EDB580",
+        "GuardDuty32B27AAC",
+      ],
+      "Properties": {
+        "AutoEnableControls": true,
+        "ControlFindingGenerator": "SECURITY_CONTROL",
+        "EnableDefaultStandards": false,
+      },
+      "Type": "AWS::SecurityHub::Hub",
+    },
+    "SecurityHubStandard031B3CC3B": {
+      "DependsOn": [
+        "AccessAnalyzerExternalAccessA986A651",
+        "AccessAnalyzerUnusedAccess2850ED18",
+        "GuardDuty32B27AAC",
+        "SecurityHubA8F400AD",
+      ],
+      "Properties": {
+        "StandardsArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":securityhub:ap-northeast-1::standards/aws-foundational-security-best-practices/v/1.0.0",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::SecurityHub::Standard",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Resource types and counts 1`] = `
+{
+  "AWS::AccessAnalyzer::Analyzer": 2,
+  "AWS::CloudTrail::Trail": 1,
+  "AWS::Config::ConfigRule": 11,
+  "AWS::Config::ConfigurationRecorder": 1,
+  "AWS::Config::DeliveryChannel": 1,
+  "AWS::Events::Rule": 1,
+  "AWS::GuardDuty::Detector": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 3,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::SQS::Queue": 1,
+  "AWS::SQS::QueuePolicy": 1,
+  "AWS::SecurityHub::Hub": 1,
+  "AWS::SecurityHub::Standard": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
