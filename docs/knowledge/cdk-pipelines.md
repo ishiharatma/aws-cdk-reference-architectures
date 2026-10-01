@@ -53,3 +53,24 @@ and contain the app.
 `cdk synth -c project=<p> -c env=<e>` generated from the props used at first deploy is preserved
 across self-mutations. Relying on `cdk.json` context or laptop environment variables makes the
 pipeline synthesize something different from what was first deployed.
+
+## `CodeCommitSourceAction` already creates a trigger rule — a custom EventBridge rule doubles executions
+
+`CodeCommitSourceAction` defaults to `trigger: EVENTS` and auto-generates an EventBridge rule
+that starts the pipeline on push. Adding your own rule for the same `referenceUpdated` event
+(e.g. to pass extra input) makes one push start **two** executions at nearly the same time,
+which also doubles any per-execution cost such as Bedrock calls. **Confirmed** by listing
+`aws codepipeline list-pipeline-executions` after a single push: two executions with a
+`trigger` type of `CloudWatchEvent`, seconds apart. **Fix**: set
+`trigger: codepipeline_actions.CodeCommitTrigger.NONE` on the source action and keep only the
+custom rule as the trigger source.
+
+## A pending manual approval blocks later executions of a V2 pipeline (SUPERSEDED mode)
+
+In a V2 pipeline with the default `SUPERSEDED` execution mode, an execution waiting at a manual
+Approve action locks that stage. Later executions finish their earlier stages and then wait in
+front of the Approve stage instead of proceeding (the console shows the count of waiting
+executions, e.g. `≫1`, between the two stages). **Confirmed** on a deployed pipeline: after an
+initial commit was left pending at Approve, a later low-risk execution never reached Deploy;
+rejecting the first execution let the waiting one enter Approve. With a manual approval gate,
+do not leave old executions pending.

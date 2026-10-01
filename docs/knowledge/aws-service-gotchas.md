@@ -169,6 +169,24 @@ the target account/region** rather than inferring the region-group prefix (`us.`
 `eu.`, `apac.`, `jp.`, ...) from the target region's geography — the actual set of
 prefixes offered varies by model and isn't always the one you'd guess.
 
+## IAM for Bedrock cross-region inference profiles must not pin the `foundation-model` region
+
+Granting `bedrock:InvokeModel` on a `foundation-model` ARN scoped to the stack's region fails
+with AccessDenied when the model is called through a cross-region inference profile. Two
+distinct failures were hit in sequence:
+
+- `global.anthropic.claude-*` profiles resolve to a `foundation-model` ARN with an **empty
+  region** (`arn:aws:bedrock:::foundation-model/...`), which a region-scoped statement never
+  matches.
+- After allowing the empty region, `jp.anthropic.claude-*` profiles were denied on a
+  `foundation-model` ARN in a *different* region (`ap-northeast-3`). The routing target can
+  change per call, so enumerating regions does not work.
+
+**Fix**: wildcard the region of the `foundation-model` resource and scope by model ID instead;
+keep the `inference-profile` resource limited to the stack's region. **Confirmed** by the
+AccessDenied messages, which print the exact resource ARN that was denied, and by
+`aws bedrock list-inference-profiles` showing the underlying models per profile.
+
 ## CDK's `AutoScalingGroup#healthCheck` and L2 property lag behind CloudFormation
 
 Newer CloudFormation properties (like `AvailabilityZoneImpairmentPolicy`, or the

@@ -211,6 +211,10 @@ function aggregate(results) {
   return { overallRiskLevel, results };
 }
 
+function isBlocked(overallRiskLevel, threshold) {
+  return RISK_LEVELS.indexOf(overallRiskLevel) >= RISK_LEVELS.indexOf(threshold);
+}
+
 function formatNotificationMessage(report, { project, env, threshold }) {
   const lines = [
     `Project: ${project ?? 'unknown'}`,
@@ -373,7 +377,7 @@ async function main() {
   }
   console.log(`Overall risk level: ${report.overallRiskLevel.toUpperCase()} (threshold: ${threshold.toUpperCase()})`);
 
-  const blocked = RISK_LEVELS.indexOf(report.overallRiskLevel) >= RISK_LEVELS.indexOf(threshold);
+  const blocked = isBlocked(report.overallRiskLevel, threshold);
 
   const notificationEnabled = process.env.REVIEW_NOTIFICATION_ENABLED === 'true';
   if (notificationEnabled) {
@@ -417,7 +421,23 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Agentic review failed:', err);
-  process.exitCode = 1;
-});
+// Run only when executed directly (npm run review), so unit tests can import the helpers.
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('Agentic review failed:', err);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  RISK_LEVELS,
+  readDiff,
+  buildPrompt,
+  extractJson,
+  reviewPerspective,
+  aggregate,
+  isBlocked,
+  buildMetricData,
+  formatNotificationMessage,
+  PERSPECTIVES_BY_LANGUAGE,
+};
