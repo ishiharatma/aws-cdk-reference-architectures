@@ -178,3 +178,92 @@ convenience property, or with the L2 property already marked deprecated in favor
 not-yet-released replacement. Check `node_modules/aws-cdk-lib/<service>/lib/*.generated.d.ts`
 for the L1 property before assuming something isn't supported — access it via
 `<l2construct>.node.defaultChild as Cfn<Type>` and set the property directly.
+
+## CloudTrail with a customer managed KMS key needs an explicit key-policy grant
+
+`cloudtrail.Trail` automatically adds the bucket-policy statements CloudTrail needs
+for an existing bucket (`AWSCloudTrailAclCheck`, `AWSCloudTrailWrite`), **but it does
+not touch the KMS key policy** when `encryptionKey` is a customer managed key created
+outside the construct. Deploying fails with:
+
+```
+Invalid request provided: Insufficient permissions to access S3 bucket <bucket> or
+KMS key <key-arn>. (Service: CloudTrail, Status Code: 400, ...)
+```
+
+**Fix**: grant the key policy explicitly — `kms:GenerateDataKey*` for
+`cloudtrail.amazonaws.com`, scoped with a `kms:EncryptionContext:aws:cloudtrail:arn`
+condition (`StringLike` against `arn:<partition>:cloudtrail:*:<account>:trail/*`), plus
+`kms:DescribeKey`. This matches [AWS's documented CloudTrail KMS key policy
+requirements](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-kms-key-policy-for-cloudtrail.html).
+**Confirmed** via a real `security-baseline` deploy: the `CfnTrail` resource failed
+with the exact error above until the two key-policy statements were added, after which
+the trail reached `CREATE_COMPLETE` and `aws cloudtrail get-trail-status` showed
+`IsLogging: true`.
+
+## `AWS::Config::ConfigurationRecorder` / `AWS::Config::DeliveryChannel` cannot be created with native CloudFormation resources — use `AwsCustomResource`
+
+CloudFormation's own resource handler for `AWS::Config::ConfigurationRecorder` calls
+`StartConfigurationRecorder` internally as part of its create-time stabilization check
+— but that call needs a delivery channel to already exist
+(`NoAvailableDeliveryChannelException: Delivery channel is not available to start
+configuration recorder` otherwise). Meanwhile `AWS::Config::DeliveryChannel`'s own
+`PutDeliveryChannel` call needs the recorder to already exist
+(`NoAvailableConfigurationRecorderException: Configuration recorder is not available
+to put delivery channel` otherwise). **Neither declaration order of the two native L1
+resources satisfies both requirements** — whichever is created second fails outright,
+and whichever is created first eventually fails with
+`Resource of type 'AWS::Config::ConfigurationRecorder' ... did not stabilize`
+(`HandlerErrorCode: NotStabilized`), because its own internal `StartConfigurationRecorder`
+call can never succeed without the (not-yet-created) channel. This is a genuine,
+deterministic circular dependency in the AWS resource model, not an eventual-consistency
+fluke or an account-specific issue — **reproduced identically in two unrelated AWS
+accounts**, confirmed via CloudTrail showing the exact sequence
+`PutConfigurationRecorder` (succeeds) → `StartConfigurationRecorder`
+(`NoAvailableDeliveryChannelException`) → the recorder getting torn down by
+CloudFormation's own rollback before the next stabilization check, which is why a
+plain `aws configservice describe-configuration-recorders` run manually right after
+a successful `PutConfigurationRecorder` finds the recorder just fine — the native
+resource type's *own* internal auto-start call is what's broken, not basic read-after-write
+consistency.
+
+**Fix**: skip the native `CfnConfigurationRecorder` / `CfnDeliveryChannel` L1 resources
+entirely. Use three `AwsCustomResource` instances (`aws-cdk-lib/custom-resources`) that
+call the SDK directly, in the only order that actually works:
+`putConfigurationRecorder` → `putDeliveryChannel` → `startConfigurationRecorder`
+(`node.addDependency` chained in that order). On delete, also give the
+`startConfigurationRecorder` custom resource an `onDelete` that calls
+`stopConfigurationRecorder` — deleting the delivery channel while the recorder is still
+recording fails with `Failed to delete last specified delivery channel ... because
+there is a running configuration recorder`, and because CloudFormation deletes in
+reverse dependency order, a stop-on-delete on the *last*-created resource runs before
+the channel's own delete automatically. See
+`infrastructure/workspaces/security-baseline/lib/constructs/config-construct.ts` for
+the full implementation, including the IAM policy (`config:Put/Delete/Start/Stop*`
+actions have no resource-level ARNs to scope to, so `Resource: '*'` is correct and
+needs a CDK Nag `AwsSolutions-IAM5` suppression with that reasoning) and the
+`iam:PassRole` grant the custom resource's Lambda needs for the recorder role.
+**Confirmed** end-to-end on a real deploy: `aws configservice
+describe-configuration-recorder-status` showed `"recording": true, "lastStatus":
+"SUCCESS"` after the stack reached `CREATE_COMPLETE`, and `cdk destroy` tore every
+Config resource down cleanly afterward.
+
+## A managed Config rule can require an input parameter the identifier alone doesn't hint at
+
+`config.ManagedRule` with just `identifier: ManagedRuleIdentifiers.ACCESS_KEYS_ROTATED`
+synths fine and passes CDK Nag, but fails to deploy with:
+
+```
+The required parameter [maxAccessKeyAge] is not present in the inputParameters
+(Service: Config, Status Code: 400, ...)
+```
+
+Nothing in the CDK type signature or the rule's identifier name signals that this
+specific managed rule requires an `inputParameters` entry — most AWS managed rules in
+a typical baseline set (`S3_BUCKET_PUBLIC_READ_PROHIBITED`, `CLOUD_TRAIL_ENABLED`,
+`ROOT_ACCOUNT_MFA_ENABLED`, etc.) need none, so the trap is easy to miss by analogy.
+**Fix**: pass `inputParameters: { maxAccessKeyAge: '90' }` (or whatever rotation window
+is appropriate). **Confirmed** by the exact `InvalidRequest` /
+`HandlerErrorCode: InvalidRequest` deploy failure on a real stack, which only surfaces
+at deploy time — `cdk synth` and unit tests asserting `Source.SourceIdentifier` alone
+do not catch a missing required `InputParameters` field.

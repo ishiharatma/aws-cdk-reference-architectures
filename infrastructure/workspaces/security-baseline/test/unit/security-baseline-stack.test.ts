@@ -89,13 +89,48 @@ describe('SecurityBaselineStack', () => {
     test('the trail log group uses the configured retention', () => {
       template.hasResourceProperties('AWS::Logs::LogGroup', { RetentionInDays: 90 });
     });
+
+    test('the key policy lets CloudTrail encrypt log files and describe the key', () => {
+      template.hasResourceProperties('AWS::KMS::Key', {
+        KeyPolicy: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Sid: 'AllowCloudTrailToEncryptLogs',
+              Principal: { Service: 'cloudtrail.amazonaws.com' },
+              Action: 'kms:GenerateDataKey*',
+              Condition: { StringLike: { 'kms:EncryptionContext:aws:cloudtrail:arn': Match.anyValue() } },
+            }),
+            Match.objectLike({
+              Sid: 'AllowCloudTrailToDescribeKey',
+              Principal: { Service: 'cloudtrail.amazonaws.com' },
+              Action: 'kms:DescribeKey',
+            }),
+          ]),
+        },
+      });
+    });
   });
 
   describe('AWS Config', () => {
-    test('one recorder for all supported resource types, including global ones', () => {
-      template.resourceCountIs('AWS::Config::ConfigurationRecorder', 1);
-      template.hasResourceProperties('AWS::Config::ConfigurationRecorder', {
-        RecordingGroup: { AllSupported: true, IncludeGlobalResourceTypes: true },
+    // The recorder, delivery channel and start-recording call are AwsCustomResource direct SDK calls
+    // (Custom::Config*), not the native CfnConfigurationRecorder/CfnDeliveryChannel resources: see the
+    // comment in ConfigConstruct for why the native resources can never stabilize.
+    test('the recorder is created for all supported resource types, including global ones', () => {
+      template.resourceCountIs('Custom::ConfigConfigurationRecorder', 1);
+      // The role ARN is a CFN intrinsic, so the Create payload is an Fn::Join of string fragments
+      // rather than a single literal JSON string; match the fragments instead of the whole document.
+      template.hasResourceProperties('Custom::ConfigConfigurationRecorder', {
+        Create: {
+          'Fn::Join': [
+            '',
+            Match.arrayWith([
+              Match.stringLikeRegexp(
+                '"service":"ConfigService","action":"putConfigurationRecorder".*"name":"test-test-secbase-recorder"'
+              ),
+              Match.stringLikeRegexp('"allSupported":true,"includeGlobalResourceTypes":true'),
+            ]),
+          ],
+        },
       });
     });
 
@@ -116,9 +151,45 @@ describe('SecurityBaselineStack', () => {
     });
 
     test('the delivery channel writes to the archive under the config prefix', () => {
-      template.hasResourceProperties('AWS::Config::DeliveryChannel', {
-        S3KeyPrefix: 'config',
-        ConfigSnapshotDeliveryProperties: { DeliveryFrequency: 'TwentyFour_Hours' },
+      template.resourceCountIs('Custom::ConfigDeliveryChannel', 1);
+      // The bucket name is a CFN intrinsic, so the Create payload is an Fn::Join of string fragments
+      // rather than a single literal JSON string; match the fragments instead of the whole document.
+      template.hasResourceProperties('Custom::ConfigDeliveryChannel', {
+        Create: {
+          'Fn::Join': [
+            '',
+            Match.arrayWith([
+              Match.stringLikeRegexp(
+                '"service":"ConfigService","action":"putDeliveryChannel".*"name":"test-test-secbase-channel"'
+              ),
+            ]),
+          ],
+        },
+      });
+      template.hasResourceProperties('Custom::ConfigDeliveryChannel', {
+        Create: {
+          'Fn::Join': [
+            '',
+            Match.arrayWith([
+              Match.stringLikeRegexp(
+                '"s3KeyPrefix":"config","configSnapshotDeliveryProperties":\\{"deliveryFrequency":"TwentyFour_Hours"\\}'
+              ),
+            ]),
+          ],
+        },
+      });
+    });
+
+    test('recording is started once the recorder and channel exist', () => {
+      template.resourceCountIs('Custom::ConfigStartRecording', 1);
+      template.hasResourceProperties('Custom::ConfigStartRecording', {
+        Create: Match.serializedJson(
+          Match.objectLike({
+            service: 'ConfigService',
+            action: 'startConfigurationRecorder',
+            parameters: { ConfigurationRecorderName: 'test-test-secbase-recorder' },
+          })
+        ),
       });
     });
 
@@ -155,19 +226,32 @@ describe('SecurityBaselineStack', () => {
       });
     });
 
-    test('rules and the delivery channel are created after the recorder', () => {
-      const recorderId = Object.keys(
-        template.findResources('AWS::Config::ConfigurationRecorder')
-      )[0];
-      const dependsOn = (r: any): string[] => [r.DependsOn ?? []].flat();
-      Object.values(template.findResources('AWS::Config::ConfigRule')).forEach((rule: any) => {
-        expect(dependsOn(rule)).toContain(recorderId);
+    test('ACCESS_KEYS_ROTATED has its required maxAccessKeyAge parameter', () => {
+      // AWS Config rejects this rule's creation outright ("required parameter [maxAccessKeyAge] is
+      // not present") without it; every other managed rule here needs no input parameters.
+      template.hasResourceProperties('AWS::Config::ConfigRule', {
+        Source: { SourceIdentifier: 'ACCESS_KEYS_ROTATED' },
+        InputParameters: { maxAccessKeyAge: '90' },
       });
-      Object.values(template.findResources('AWS::Config::DeliveryChannel')).forEach(
-        (channel: any) => {
-          expect(dependsOn(channel)).toContain(recorderId);
-        }
-      );
+    });
+
+    test('recorder, channel, start-recording and the managed rules are created in that order', () => {
+      const dependsOn = (r: any): string[] => [r.DependsOn ?? []].flat();
+      const recorderId = Object.keys(
+        template.findResources('Custom::ConfigConfigurationRecorder')
+      )[0];
+      const channelId = Object.keys(template.findResources('Custom::ConfigDeliveryChannel'))[0];
+      const startId = Object.keys(template.findResources('Custom::ConfigStartRecording'))[0];
+
+      const channel = template.findResources('Custom::ConfigDeliveryChannel')[channelId];
+      expect(dependsOn(channel)).toContain(recorderId);
+
+      const start = template.findResources('Custom::ConfigStartRecording')[startId];
+      expect(dependsOn(start)).toContain(channelId);
+
+      Object.values(template.findResources('AWS::Config::ConfigRule')).forEach((rule: any) => {
+        expect(dependsOn(rule)).toContain(startId);
+      });
     });
   });
 
@@ -259,11 +343,11 @@ describe('SecurityBaselineStack', () => {
       t.hasResourceProperties('AWS::SecurityHub::Standard', { StandardsArn: extra });
     });
 
-    test('the hub is created after the Config recorder, GuardDuty and Access Analyzer', () => {
+    test('the hub is created after Config has started recording, GuardDuty and Access Analyzer', () => {
       const hub: any = Object.values(template.findResources('AWS::SecurityHub::Hub'))[0];
       const deps: string[] = [hub.DependsOn ?? []].flat();
       [
-        'AWS::Config::ConfigurationRecorder',
+        'Custom::ConfigStartRecording',
         'AWS::GuardDuty::Detector',
         'AWS::AccessAnalyzer::Analyzer',
       ].forEach((type) => {

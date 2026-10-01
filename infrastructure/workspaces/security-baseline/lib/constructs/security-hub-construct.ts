@@ -1,12 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import * as config from 'aws-cdk-lib/aws-config';
 import * as securityhub from 'aws-cdk-lib/aws-securityhub';
 import { Construct } from 'constructs';
 
 /** Properties for {@link SecurityHubConstruct}. */
 export interface SecurityHubConstructProps {
-  /** Config recorder; Security Hub controls evaluate Config data, so the hub is created after it. */
-  readonly configRecorder: config.CfnConfigurationRecorder;
+  /** Ready once Config is recording; Security Hub controls evaluate Config data, so the hub is created after it. */
+  readonly configRecorder: Construct;
   /** Extra standard ARNs to subscribe to besides AWS Foundational Security Best Practices. */
   readonly additionalStandardArns: string[];
 }

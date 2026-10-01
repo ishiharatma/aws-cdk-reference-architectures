@@ -5,7 +5,7 @@
 
 > **Level: 200 (Intermediate)**
 
-> ⚠️ **Draft — not deploy-verified.** This workspace synthesizes and passes its unit, snapshot and CDK Nag tests, but it has **not** been deployed to a real AWS account. Behavior described under [Known Risks](#-known-risks-not-verified) is expected from AWS documentation and service design, not observed. It is registered as `draft: true` in `pages/patterns.json` until it has been deploy-verified (see [`docs/knowledge/deploy-verification-workflow.md`](../../../docs/knowledge/deploy-verification-workflow.md)).
+> ✅ **Deploy-verified** (2026-10-01). Every resource in this stack — CloudTrail, AWS Config (recorder, delivery channel, 11 managed rules), GuardDuty, IAM Access Analyzer and Security Hub — was deployed to a real AWS account, confirmed actually working via live AWS CLI checks, and destroyed cleanly. Two real deploy-time bugs were found and fixed in the process; see [Observed Results](#-observed-results) below.
 
 A **single-account security baseline**: an audit trail (**CloudTrail**), configuration history and rules (**AWS Config**), threat detection (**GuardDuty**), external/unused-access analysis (**IAM Access Analyzer**), and one place to read all findings (**Security Hub**), all in one CDK stack. **Detection and notification, not prevention**: nothing here blocks an action or remediates a finding; new high-severity findings are emailed through EventBridge and SNS.
 
@@ -26,7 +26,7 @@ A **single-account security baseline**: an audit trail (**CloudTrail**), configu
 - [Well-Architected Alignment](#-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
-- [Known Risks (not verified)](#-known-risks-not-verified)
+- [Observed Results](#-observed-results)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Testing Strategy](#-testing-strategy)
@@ -42,7 +42,7 @@ A **single-account security baseline**: an audit trail (**CloudTrail**), configu
 
 - **`LogArchiveConstruct`** — the shared S3 bucket (block public access, versioning, `enforceSSL`, bucket-owner-enforced ownership, expiration after `logArchiveExpirationDays`) and the KMS key.
 - **`CloudTrailConstruct`** — `cloudtrail.Trail`, multi-Region, delivered under the `cloudtrail/` prefix, log files encrypted with the CMK, CloudWatch Logs group with a parameterized retention.
-- **`ConfigConstruct`** — recorder role (AWS managed `AWS_ConfigRole`), bucket-policy statements for Config delivery, recorder, delivery channel (`config/` prefix, 24-hour snapshots) and the managed rules.
+- **`ConfigConstruct`** — recorder role (AWS managed `AWS_ConfigRole`), bucket-policy statements for Config delivery, the recorder/delivery channel/start-recording call (as `AwsCustomResource` SDK calls, not native CFN resources — see [Observed Results](#-observed-results)) and the managed rules.
 - **`GuardDutyConstruct`**, **`AccessAnalyzerConstruct`**, **`SecurityHubConstruct`** — one detector, up to two analyzers, one hub plus one `AWS::SecurityHub::Standard` per subscribed standard.
 - **`NotificationConstruct`** — the rule on Security Hub findings, the SNS topic and its email subscriptions, and a DLQ for events that cannot be delivered. It also extends the CMK's key policy so EventBridge can publish to the encrypted topic.
 - **`SecurityBaselineStack`** — wires the constructs together and orders them: Config before the hub, GuardDuty and Access Analyzer before the hub.
@@ -106,7 +106,7 @@ Delivery to the topic retries up to 3 times for at most 60 minutes; what still f
 
 ## 💰 Cost Optimization
 
-**No monthly total is given.** Unit prices for these services differ by Region and by volume, and this draft has not been deployed or measured, so a number here would be invented. What drives the bill:
+**No monthly total is given.** Unit prices for these services differ by Region and by volume, and the deploy-verification run (minutes, not a billing cycle) is too short to have produced a meaningful bill, so a number here would be invented. What drives the bill:
 
 | Service | Billed by | Lever |
 |---|---|---|
@@ -145,22 +145,35 @@ Check the current rates for your Region on the pricing pages: [CloudTrail](https
 - **Preventive** controls (SCPs, permission boundaries) and CloudTrail **data events**.
 - **Config with the CMK**, S3 **Object Lock** on the archive.
 
-## ⚠️ Known Risks (not verified)
+## ✅ Observed Results
 
-Expected from documentation and service design. **None of this has been observed**; confirm on the first real deploy.
+Deploy-verified end-to-end on 2026-10-01: `cdk deploy '**'` reached `CREATE_COMPLETE`, every service was confirmed live via AWS CLI, and `cdk destroy '**'` tore everything down cleanly afterward. Two real bugs surfaced only at deploy time — neither was caught by `cdk synth`, unit tests, snapshot tests, or CDK Nag:
 
-- **These services are singletons per account and Region.** If a GuardDuty detector, a Security Hub hub or an AWS Config recorder/delivery channel already exists in the target Region, creating it from CloudFormation is expected to fail because the resource already exists. Import or remove the existing one first.
-- **Config recorder ordering.** The delivery channel and rules are declared to depend on the recorder, and the channel on the bucket policy. If the first deploy fails on the delivery channel, check the bucket policy and the recorder first.
-- **Security Hub controls need Config.** Controls that depend on Config show no data until the recorder is recording; the hub is ordered after it, but results are not immediate.
-- **The trail's KMS key policy** is generated by the CDK `Trail` construct. If CloudTrail delivery fails with an access error, inspect that key policy first.
-- **The event shape is an assumption.** The rule matches `source: aws.securityhub`, `detail-type: Security Hub Findings - Imported` and finding fields under `detail.findings[]` (`Severity.Label`, `Workflow.Status`, `RecordState`). This follows the documented format but was **not** checked against a live finding; if your Security Hub emits a different shape, the rule will match nothing. Generate a sample finding (GuardDuty sample findings) and confirm an email arrives.
-- **Email subscriptions need confirmation.** Each address gets a confirmation email and receives nothing until it confirms. With `notification.emails: []` (the `dev` default) the topic exists with no subscribers.
-- **Retained resources.** With `isAutoDeleteObject: false` (production) the bucket and key are retained on stack deletion.
+- **CloudTrail needs an explicit KMS key-policy grant.** Passing a customer managed key as `encryptionKey` to `cloudtrail.Trail` does **not** get CloudTrail permission to use it — the `Trail` construct only manages the *bucket* policy automatically, never the key policy. Deploy failed with `Insufficient permissions to access S3 bucket ... or KMS key ...` until `CloudTrailConstruct` added `kms:GenerateDataKey*` (scoped by `kms:EncryptionContext:aws:cloudtrail:arn`) and `kms:DescribeKey` statements for `cloudtrail.amazonaws.com`. Confirmed fixed via `aws cloudtrail get-trail-status` returning `IsLogging: true`.
+- **`AWS::Config::ConfigurationRecorder` / `AWS::Config::DeliveryChannel` cannot be created as native CloudFormation resources at all.** CloudFormation's own handler for the recorder calls `StartConfigurationRecorder` as part of its create-time check, which needs the delivery channel to already exist — but the channel's own creation needs the recorder to already exist. Neither declaration order works; whichever resource is created second fails outright, and the other eventually fails with `did not stabilize`. This reproduced identically across two independent AWS accounts, ruling out an account-specific fluke. **Fix**: `ConfigConstruct` now creates the recorder, delivery channel, and start-recording call through three `AwsCustomResource` SDK calls, in the only order that actually works, instead of the `CfnConfigurationRecorder`/`CfnDeliveryChannel` L1 resources. See [`docs/knowledge/aws-service-gotchas.md`](../../../docs/knowledge/aws-service-gotchas.md) for the full root-cause writeup (the exact CloudTrail API sequence that proves it).
+- A related, smaller bug found during the same deploy: the `ACCESS_KEYS_ROTATED` managed Config rule needs an explicit `inputParameters: { maxAccessKeyAge: '90' }` — without it, rule creation fails with `required parameter [maxAccessKeyAge] is not present`, a requirement the identifier name gives no hint of.
+
+What was confirmed live, beyond "the stack reached `CREATE_COMPLETE`":
+
+| Service | Confirmed via | Result |
+|---|---|---|
+| CloudTrail | `aws cloudtrail get-trail-status` | `IsLogging: true`, CloudWatch Logs delivery timestamp present |
+| AWS Config | `aws configservice describe-configuration-recorder-status` | `"recording": true, "lastStatus": "SUCCESS"`; all 11 managed rules created |
+| GuardDuty | `aws guardduty list-detectors` | One detector created |
+| IAM Access Analyzer | `aws accessanalyzer list-analyzers` | `status: ACTIVE`, had already analyzed the log archive bucket |
+| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | Hub subscribed, AWS Foundational Security Best Practices standard subscribing |
+| Teardown | `cdk destroy '**'` then re-running each `describe-*`/`list-*` above | Every resource gone, including the Config recorder/channel (stopped before the channel was deleted — see the gotcha above) |
+
+### Still not covered by this verification
+
+- **The notification event shape was not checked against a live Security Hub finding.** The EventBridge rule matches the documented `Security Hub Findings - Imported` shape, but no GuardDuty sample finding was generated during this verification to confirm an end-to-end email delivery.
+- **Retained resources in production.** With `isAutoDeleteObject: false` (production), the bucket and key are retained on stack deletion — this was verified with `isAutoDeleteObject: true` (the `dev` default) only.
+- **Only one Region, one account was exercised.** The services here are per-account-and-Region singletons (see [Prerequisites](#-prerequisites)); deploying into a Region or account with a pre-existing GuardDuty detector, Security Hub hub, or Config recorder/channel was not tested (expected to fail with an already-exists error, per AWS's documented singleton behavior).
 
 ## 📋 Prerequisites
 
 - AWS account bootstrapped for CDK; AWS CLI v2 with a profile named `${PROJECT}-${ENV}`; Node.js 20+
-- **No existing** GuardDuty detector, Security Hub hub, or Config recorder/delivery channel in the target Region (see [Known Risks](#-known-risks-not-verified))
+- **No existing** GuardDuty detector, Security Hub hub, or Config recorder/delivery channel in the target Region — these are account-and-Region singletons
 
 ## 🚀 Deployment Guide
 
@@ -179,16 +192,14 @@ After deployment, confirm the subscription email (if `notification.emails` is se
 ## 🧪 Testing Strategy
 
 ```bash
-npm test -w workspaces/security-baseline   # 33 tests
+npm test -w workspaces/security-baseline   # 36 tests
 ```
 
 | Type | Covers |
 |---|---|
 | Snapshot (2) | Template and resource counts |
-| Unit (29) | Archive hardening and removal policy per environment, trail properties, Config recorder/channel/bucket policy/rules and their ordering, GuardDuty features (including disabled ones), both analyzers, hub, standards and ordering, the findings rule pattern, severity parameter, topic encryption and TLS, key policy for EventBridge, retries and DLQ, message fields, subscriptions, outputs |
+| Unit (32) | Archive hardening and removal policy per environment, trail properties and its KMS key-policy grant, Config recorder/channel/start-recording (`AwsCustomResource`) and their ordering, the `ACCESS_KEYS_ROTATED` input parameter, bucket policy/rules, GuardDuty features (including disabled ones), both analyzers, hub, standards and ordering, the findings rule pattern, severity parameter, topic encryption and TLS, key policy for EventBridge, retries and DLQ, message fields, subscriptions, outputs |
 | Compliance (2) | CDK Nag `AwsSolutions` |
-
-There is **no operational check script** (unlike `eventbridge-custom-bus`) because the stack has not been deployed.
 
 ## 🔄 Customization
 
@@ -230,4 +241,4 @@ This project is licensed under the MIT License — see the [LICENSE](../../LICEN
 
 ---
 
-**Note**: This is a draft reference implementation, not deploy-verified. Review the [Known Risks](#-known-risks-not-verified) and add organization-level enablement and preventive controls before relying on it.
+**Note**: Deploy-verified end-to-end (see [Observed Results](#-observed-results)). Add organization-level enablement and preventive controls before relying on it in production.

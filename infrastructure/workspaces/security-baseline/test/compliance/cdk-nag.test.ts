@@ -84,4 +84,32 @@ function applySuppressions(stack: SecurityBaselineStack): void {
       },
     ]
   );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `/${stack.node.id}/AWS679f53fac002430cb0da5b7982bd2287/ServiceRole/Resource`,
+    [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          "This is the CDK-provided shared Lambda used by every AwsCustomResource in the stack (Config recorder/channel/start-recording, see ConfigConstruct); AWSLambdaBasicExecutionRole is CDK's own default for it and only grants CloudWatch Logs write access.",
+        appliesTo: [
+          'Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+        ],
+      },
+    ]
+  );
+  [
+    'Config/Recorder/CustomResourcePolicy/Resource',
+    'Config/DeliveryChannel/CustomResourcePolicy/Resource',
+    'Config/StartRecording/CustomResourcePolicy/Resource',
+  ].forEach((path) => {
+    NagSuppressions.addResourceSuppressionsByPath(stack, `/${stack.node.id}/${path}`, [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason:
+          'PutConfigurationRecorder/PutDeliveryChannel/StartConfigurationRecorder are account-and-Region singleton Config APIs with no resource-level ARNs to scope to; see the comment in ConfigConstruct for why these are AwsCustomResource SDK calls instead of the native (structurally broken) CfnConfigurationRecorder/CfnDeliveryChannel resources.',
+        appliesTo: ['Resource::*'],
+      },
+    ]);
+  });
 }

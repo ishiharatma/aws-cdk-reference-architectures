@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -36,6 +37,31 @@ export class CloudTrailConstruct extends Construct {
    */
   constructor(scope: Construct, id: string, props: CloudTrailConstructProps) {
     super(scope, id);
+
+    // The CDK Trail construct manages the bucket policy automatically, but not the KMS key policy: with a
+    // customer managed key, CloudTrail needs an explicit grant to encrypt log files and describe the key, or
+    // delivery fails with "Insufficient permissions to access S3 bucket ... or KMS key".
+    props.key.addToResourcePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowCloudTrailToEncryptLogs',
+        principals: [new iam.ServicePrincipal('cloudtrail.amazonaws.com')],
+        actions: ['kms:GenerateDataKey*'],
+        resources: ['*'],
+        conditions: {
+          StringLike: {
+            'kms:EncryptionContext:aws:cloudtrail:arn': `arn:${cdk.Aws.PARTITION}:cloudtrail:*:${cdk.Aws.ACCOUNT_ID}:trail/*`,
+          },
+        },
+      })
+    );
+    props.key.addToResourcePolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowCloudTrailToDescribeKey',
+        principals: [new iam.ServicePrincipal('cloudtrail.amazonaws.com')],
+        actions: ['kms:DescribeKey'],
+        resources: ['*'],
+      })
+    );
 
     this.trail = new cloudtrail.Trail(this, 'Resource', {
       trailName: props.trailName,
