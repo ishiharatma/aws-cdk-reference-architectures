@@ -43,6 +43,58 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
   },
   "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
     "AccessAnalyzerExternalAccessA986A651": {
       "Properties": {
         "AnalyzerName": "TestProject-test-secbase-external-access",
@@ -159,38 +211,187 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
-    "ConfigDeliveryChannel51D44D28": {
+    "ConfigDeliveryChannel2F66167A": {
+      "DeletionPolicy": "Delete",
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigDeliveryChannelCustomResourcePolicyC7B8F78A",
+        "ConfigRecorderCustomResourcePolicy85B133A4",
+        "ConfigRecorder06CC5DC8",
         "LogArchiveBucketAutoDeleteObjectsCustomResource8F647390",
         "LogArchiveBucketPolicyA8D97FF8",
         "LogArchiveBucket6951A440",
       ],
       "Properties": {
-        "ConfigSnapshotDeliveryProperties": {
-          "DeliveryFrequency": "TwentyFour_Hours",
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"ConfigService","action":"putDeliveryChannel","parameters":{"DeliveryChannel":{"name":"TestProject-test-secbase-channel","s3BucketName":"",
+              {
+                "Ref": "LogArchiveBucket6951A440",
+              },
+              "","s3KeyPrefix":"config","configSnapshotDeliveryProperties":{"deliveryFrequency":"TwentyFour_Hours"}}},"physicalResourceId":{"id":"TestProject-test-secbase-channel"}}",
+            ],
+          ],
         },
-        "S3BucketName": {
-          "Ref": "LogArchiveBucket6951A440",
-        },
-        "S3KeyPrefix": "config",
-      },
-      "Type": "AWS::Config::DeliveryChannel",
-    },
-    "ConfigRecorder49EDB580": {
-      "Properties": {
-        "RecordingGroup": {
-          "AllSupported": true,
-          "IncludeGlobalResourceTypes": true,
-        },
-        "RoleARN": {
+        "Delete": "{"service":"ConfigService","action":"deleteDeliveryChannel","parameters":{"DeliveryChannelName":"TestProject-test-secbase-channel"}}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
           "Fn::GetAtt": [
-            "ConfigRecorderRole427F71C6",
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
             "Arn",
           ],
         },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"ConfigService","action":"putDeliveryChannel","parameters":{"DeliveryChannel":{"name":"TestProject-test-secbase-channel","s3BucketName":"",
+              {
+                "Ref": "LogArchiveBucket6951A440",
+              },
+              "","s3KeyPrefix":"config","configSnapshotDeliveryProperties":{"deliveryFrequency":"TwentyFour_Hours"}}},"physicalResourceId":{"id":"TestProject-test-secbase-channel"}}",
+            ],
+          ],
+        },
       },
-      "Type": "AWS::Config::ConfigurationRecorder",
+      "Type": "Custom::ConfigDeliveryChannel",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ConfigDeliveryChannelCustomResourcePolicyC7B8F78A": {
+      "DependsOn": [
+        "ConfigRecorderCustomResourcePolicy85B133A4",
+        "ConfigRecorder06CC5DC8",
+        "LogArchiveBucketAutoDeleteObjectsCustomResource8F647390",
+        "LogArchiveBucketPolicyA8D97FF8",
+        "LogArchiveBucket6951A440",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "config:PutConfigurationRecorder",
+                "config:DeleteConfigurationRecorder",
+                "config:StartConfigurationRecorder",
+                "config:StopConfigurationRecorder",
+                "config:PutDeliveryChannel",
+                "config:DeleteDeliveryChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ConfigRecorderRole427F71C6",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ConfigDeliveryChannelCustomResourcePolicyC7B8F78A",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ConfigRecorder06CC5DC8": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "ConfigRecorderCustomResourcePolicy85B133A4",
+        "ConfigRecorderRole427F71C6",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"ConfigService","action":"putConfigurationRecorder","parameters":{"ConfigurationRecorder":{"name":"TestProject-test-secbase-recorder","roleARN":"",
+              {
+                "Fn::GetAtt": [
+                  "ConfigRecorderRole427F71C6",
+                  "Arn",
+                ],
+              },
+              "","recordingGroup":{"allSupported":true,"includeGlobalResourceTypes":true}}},"physicalResourceId":{"id":"TestProject-test-secbase-recorder"}}",
+            ],
+          ],
+        },
+        "Delete": "{"service":"ConfigService","action":"deleteConfigurationRecorder","parameters":{"ConfigurationRecorderName":"TestProject-test-secbase-recorder"}}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+        "Update": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"ConfigService","action":"putConfigurationRecorder","parameters":{"ConfigurationRecorder":{"name":"TestProject-test-secbase-recorder","roleARN":"",
+              {
+                "Fn::GetAtt": [
+                  "ConfigRecorderRole427F71C6",
+                  "Arn",
+                ],
+              },
+              "","recordingGroup":{"allSupported":true,"includeGlobalResourceTypes":true}}},"physicalResourceId":{"id":"TestProject-test-secbase-recorder"}}",
+            ],
+          ],
+        },
+      },
+      "Type": "Custom::ConfigConfigurationRecorder",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ConfigRecorderCustomResourcePolicy85B133A4": {
+      "DependsOn": [
+        "ConfigRecorderRole427F71C6",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "config:PutConfigurationRecorder",
+                "config:DeleteConfigurationRecorder",
+                "config:StartConfigurationRecorder",
+                "config:StopConfigurationRecorder",
+                "config:PutDeliveryChannel",
+                "config:DeleteDeliveryChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ConfigRecorderRole427F71C6",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ConfigRecorderCustomResourcePolicy85B133A4",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "ConfigRecorderRole427F71C6": {
       "Properties": {
@@ -226,9 +427,13 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleACCESSKEYSROTATEDBA88DADB": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
+        "InputParameters": {
+          "maxAccessKeyAge": "90",
+        },
         "Source": {
           "Owner": "AWS",
           "SourceIdentifier": "ACCESS_KEYS_ROTATED",
@@ -238,7 +443,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleCLOUDTRAILENABLED93F0890B": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -250,7 +456,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleENCRYPTEDVOLUMES9A61AE45": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -262,7 +469,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleIAMROOTACCESSKEYCHECKFCC11D8C": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -274,7 +482,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleIAMUSERNOPOLICIESCHECK5ABAF918": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -286,7 +495,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleINCOMINGSSHDISABLED1C7AC568": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -298,7 +508,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleRDSSTORAGEENCRYPTEDA1B9F64A": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -310,7 +521,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleROOTACCOUNTMFAENABLEDC9067280": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -322,7 +534,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleS3BUCKETLEVELPUBLICACCESSPROHIBITEDC34DCC08": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -334,7 +547,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleS3BUCKETPUBLICREADPROHIBITED4F9FEA27": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -346,7 +560,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
     },
     "ConfigRuleS3BUCKETSSLREQUESTSONLY491AC2AF": {
       "DependsOn": [
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
       ],
       "Properties": {
         "Source": {
@@ -355,6 +570,69 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
         },
       },
       "Type": "AWS::Config::ConfigRule",
+    },
+    "ConfigStartRecordingCustomResourcePolicy31E521D8": {
+      "DependsOn": [
+        "ConfigDeliveryChannelCustomResourcePolicyC7B8F78A",
+        "ConfigDeliveryChannel2F66167A",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "config:PutConfigurationRecorder",
+                "config:DeleteConfigurationRecorder",
+                "config:StartConfigurationRecorder",
+                "config:StopConfigurationRecorder",
+                "config:PutDeliveryChannel",
+                "config:DeleteDeliveryChannel",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ConfigRecorderRole427F71C6",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ConfigStartRecordingD93EF496": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "ConfigDeliveryChannelCustomResourcePolicyC7B8F78A",
+        "ConfigDeliveryChannel2F66167A",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+      ],
+      "Properties": {
+        "Create": "{"service":"ConfigService","action":"startConfigurationRecorder","parameters":{"ConfigurationRecorderName":"TestProject-test-secbase-recorder"},"physicalResourceId":{"id":"TestProject-test-secbase-recorder-started"}}",
+        "Delete": "{"service":"ConfigService","action":"stopConfigurationRecorder","parameters":{"ConfigurationRecorderName":"TestProject-test-secbase-recorder"}}",
+        "InstallLatestAwsSdk": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::ConfigStartRecording",
+      "UpdateReplacePolicy": "Delete",
     },
     "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
       "DependsOn": [
@@ -711,6 +989,44 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
               "Resource": "*",
             },
             {
+              "Action": "kms:GenerateDataKey*",
+              "Condition": {
+                "StringLike": {
+                  "kms:EncryptionContext:aws:cloudtrail:arn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudtrail:*:",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":trail/*",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com",
+              },
+              "Resource": "*",
+              "Sid": "AllowCloudTrailToEncryptLogs",
+            },
+            {
+              "Action": "kms:DescribeKey",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com",
+              },
+              "Resource": "*",
+              "Sid": "AllowCloudTrailToDescribeKey",
+            },
+            {
               "Action": [
                 "kms:Decrypt",
                 "kms:GenerateDataKey*",
@@ -945,7 +1261,8 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
       "DependsOn": [
         "AccessAnalyzerExternalAccessA986A651",
         "AccessAnalyzerUnusedAccess2850ED18",
-        "ConfigRecorder49EDB580",
+        "ConfigStartRecordingCustomResourcePolicy31E521D8",
+        "ConfigStartRecordingD93EF496",
         "GuardDuty32B27AAC",
       ],
       "Properties": {
@@ -1014,14 +1331,12 @@ exports[`Stack Snapshot Tests Resource types and counts 1`] = `
   "AWS::AccessAnalyzer::Analyzer": 2,
   "AWS::CloudTrail::Trail": 1,
   "AWS::Config::ConfigRule": 11,
-  "AWS::Config::ConfigurationRecorder": 1,
-  "AWS::Config::DeliveryChannel": 1,
   "AWS::Events::Rule": 1,
   "AWS::GuardDuty::Detector": 1,
-  "AWS::IAM::Policy": 1,
-  "AWS::IAM::Role": 3,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 4,
   "AWS::KMS::Key": 1,
-  "AWS::Lambda::Function": 1,
+  "AWS::Lambda::Function": 2,
   "AWS::Logs::LogGroup": 1,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
@@ -1032,6 +1347,9 @@ exports[`Stack Snapshot Tests Resource types and counts 1`] = `
   "AWS::SQS::QueuePolicy": 1,
   "AWS::SecurityHub::Hub": 1,
   "AWS::SecurityHub::Standard": 1,
+  "Custom::ConfigConfigurationRecorder": 1,
+  "Custom::ConfigDeliveryChannel": 1,
+  "Custom::ConfigStartRecording": 1,
   "Custom::S3AutoDeleteObjects": 1,
 }
 `;

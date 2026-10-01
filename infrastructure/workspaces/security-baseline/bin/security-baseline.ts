@@ -4,7 +4,7 @@ import { pascalCase } from 'change-case-commonjs';
 import { Environment } from '@common/parameters/environments';
 import { params } from 'parameters/environments';
 import { validateDeployment } from '@common/helpers/validate-deployment';
-import 'parameters'; // registers dev-params into `params` as a side effect
+import 'parameters/index'; // registers dev-params into `params` as a side effect (bare 'parameters' fails to resolve under tsx at runtime)
 
 import { SecurityBaselineStage } from 'lib/stages/security-baseline-stage';
 

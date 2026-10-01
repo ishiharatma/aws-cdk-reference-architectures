@@ -5,7 +5,7 @@
 
 > **レベル: 200（中級）**
 
-> ⚠️ **Draft — 実機デプロイ未検証です。** このワークスペースは synth と、ユニット・スナップショット・CDK Nag のテストには通りますが、実際の AWS アカウントには**デプロイしていません**。[既知のリスク](#-既知のリスク未検証)に書いた挙動は、AWS のドキュメントとサービス設計からの想定であり、観測した結果ではありません。実機検証が済むまでは `pages/patterns.json` で `draft: true` として登録しています（手順は [`docs/knowledge/deploy-verification-workflow.md`](../../../docs/knowledge/deploy-verification-workflow.md)）。
+> ✅ **実機デプロイ検証済み**（2026-10-01）。CloudTrail、AWS Config（レコーダー・配信チャネル・マネージドルール11個）、GuardDuty、IAM Access Analyzer、Security Hub のすべてを実際の AWS アカウントにデプロイし、AWS CLI による実機確認を経て、クリーンに破棄しました。検証の過程で実デプロイ時にしか見つからない不具合を2件発見・修正済みです。詳細は[観測結果](#-観測結果)を参照してください。
 
 **単一アカウント向けのセキュリティベースライン**です。監査証跡（**CloudTrail**）、構成履歴とルール（**AWS Config**）、脅威検出（**GuardDuty**）、外部/未使用アクセスの分析（**IAM Access Analyzer**）、そして検出結果を一か所で読むための **Security Hub** を、1つの CDK スタックで構成します。**検出と通知までで、予防は行いません**。操作のブロックや検出結果の自動修復はせず、重大度の高い新しい検出結果は EventBridge と SNS でメール通知します。
 
@@ -26,7 +26,7 @@
 - [Well-Architected との対応](#-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ考慮事項](#-セキュリティ考慮事項)
-- [既知のリスク（未検証）](#-既知のリスク未検証)
+- [観測結果](#-観測結果)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [テスト戦略](#-テスト戦略)
@@ -42,7 +42,7 @@
 
 - **`LogArchiveConstruct`** — 共有 S3 バケット（パブリックアクセスブロック、バージョニング、`enforceSSL`、バケット所有者強制、`logArchiveExpirationDays` 後の期限切れ）と KMS キー。
 - **`CloudTrailConstruct`** — `cloudtrail.Trail`。マルチリージョン、`cloudtrail/` プレフィックスへ配信、ログファイルは CMK で暗号化、CloudWatch Logs のロググループの保持期間はパラメータ化。
-- **`ConfigConstruct`** — レコーダーロール（AWS 管理の `AWS_ConfigRole`）、Config 配信用のバケットポリシー、レコーダー、配信チャネル（`config/` プレフィックス、24 時間ごとのスナップショット）、マネージドルール。
+- **`ConfigConstruct`** — レコーダーロール（AWS 管理の `AWS_ConfigRole`）、Config 配信用のバケットポリシー、レコーダー/配信チャネル/録画開始（`config/` プレフィックス、24 時間ごとのスナップショット。ネイティブの CFN リソースではなく `AwsCustomResource` による SDK 直接呼び出し — 理由は[観測結果](#-観測結果)参照）、マネージドルール。
 - **`GuardDutyConstruct`**、**`AccessAnalyzerConstruct`**、**`SecurityHubConstruct`** — 検出器 1 つ、アナライザー最大 2 つ、ハブ 1 つと、購読する標準ごとに 1 つの `AWS::SecurityHub::Standard`。
 - **`NotificationConstruct`** — Security Hub の検出結果に対するルール、SNS トピックとメール購読、配信できなかったイベント用の DLQ。暗号化したトピックに EventBridge が発行できるよう、CMK のキーポリシーも拡張します。
 - **`SecurityBaselineStack`** — Construct を組み合わせて順序付けします。ハブより前に Config、GuardDuty、Access Analyzer を作成します。
@@ -106,7 +106,7 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 
 ## 💰 コスト最適化
 
-**月額の合計は記載していません。** これらのサービスの単価はリージョンや量によって異なります。また、このドラフトはデプロイも計測もしていないため、数字を書けば作り話になります。コストを左右する要因は次のとおりです。
+**月額の合計は記載していません。** これらのサービスの単価はリージョンや量によって異なります。コストを左右する要因は次のとおりです。
 
 | サービス | 課金の対象 | 調整手段 |
 |---|---|---|
@@ -145,22 +145,35 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 - **予防的**統制（SCP、Permission Boundary）と CloudTrail の**データイベント**
 - Config への **CMK 適用**、アーカイブの S3 **Object Lock**
 
-## ⚠️ 既知のリスク（未検証）
+## ✅ 観測結果
 
-ドキュメントとサービス設計からの想定です。**いずれも観測はしていません**。最初の実機デプロイで確認してください。
+2026-10-01 に実機で end-to-end 検証しました。`cdk deploy '**'` は `CREATE_COMPLETE` に到達し、各サービスを AWS CLI で実際に稼働していることを確認した上で、`cdk destroy '**'` でクリーンに破棄しました。`cdk synth`・ユニットテスト・スナップショットテスト・CDK Nag のいずれでも検出できず、実デプロイでしか見つからなかった不具合が2件ありました。
 
-- **これらのサービスはアカウント・リージョンごとに 1 つだけです。** 対象リージョンに GuardDuty 検出器、Security Hub のハブ、AWS Config のレコーダー/配信チャネルが既にある場合、CloudFormation からの作成は、リソースが既に存在するために失敗すると想定されます。先に既存のものをインポートするか削除してください。
-- **Config レコーダーの順序。** 配信チャネルとルールはレコーダーに、チャネルはバケットポリシーにも依存するよう宣言しています。初回デプロイで配信チャネルが失敗したら、まずバケットポリシーとレコーダーを確認してください。
-- **Security Hub のコントロールには Config が必要です。** Config に依存するコントロールは、レコーダーが記録を始めるまでデータが出ません。ハブはレコーダーの後に作られますが、結果はすぐには出ません。
-- **証跡の KMS キーポリシー**は CDK の `Trail` Construct が生成します。CloudTrail の配信がアクセスエラーで失敗したら、まずそのキーポリシーを確認してください。
-- **イベントの形式は前提です。** ルールは `source: aws.securityhub`、`detail-type: Security Hub Findings - Imported`、`detail.findings[]` 配下の検出結果フィールド（`Severity.Label`、`Workflow.Status`、`RecordState`）に一致させています。ドキュメントに沿った形式ですが、実際の検出結果では**確認していません**。お使いの Security Hub が別の形式で出力する場合、ルールは何にも一致しません。サンプルの検出結果（GuardDuty のサンプル検出結果）を生成して、メールが届くことを確認してください。
-- **メール購読には確認が必要です。** 各アドレスに確認メールが届き、確認するまで何も受信しません。`notification.emails: []`（`dev` の既定）では、購読者なしでトピックだけが作られます。
-- **残るリソース。** `isAutoDeleteObject: false`（本番）では、スタック削除後もバケットとキーが残ります。
+- **CloudTrail には KMS キーポリシーへの明示的な許可が必要です。** カスタマーマネージドキーを `cloudtrail.Trail` の `encryptionKey` に渡しても、CloudTrail がそのキーを使う権限は**自動的には付与されません**。`Trail` Construct が自動で管理するのはバケットポリシーだけで、キーポリシーには一切触れません。デプロイは `Insufficient permissions to access S3 bucket ... or KMS key ...` で失敗し、`CloudTrailConstruct` に `cloudtrail.amazonaws.com` 向けの `kms:GenerateDataKey*`（`kms:EncryptionContext:aws:cloudtrail:arn` で条件付け）と `kms:DescribeKey` のステートメントを追加して解決しました。`aws cloudtrail get-trail-status` が `IsLogging: true` を返すことで修正を確認済みです。
+- **`AWS::Config::ConfigurationRecorder` / `AWS::Config::DeliveryChannel` は、そもそもネイティブの CloudFormation リソースとしては作成できません。** CloudFormation 自身のレコーダー用リソースハンドラーは、作成完了判定の内部処理として `StartConfigurationRecorder` を呼び出しますが、これには配信チャネルが先に存在している必要があります。一方で配信チャネル自体の作成には、レコーダーが先に存在している必要があります。どちらの宣言順でも両方の要求を同時に満たせません。後から作る方は即座に失敗し、先に作る方は最終的に `did not stabilize` で失敗します。これは全く別の2つの AWS アカウントで同一に再現したため、アカウント固有の偶発的事象ではないと判断しました。**対策**: `ConfigConstruct` は、ネイティブの `CfnConfigurationRecorder`/`CfnDeliveryChannel` の代わりに、3つの `AwsCustomResource` による SDK 直接呼び出し（実際に機能する唯一の順序）でレコーダー・配信チャネル・録画開始を作成するよう変更しました。根本原因の詳細（証拠となる CloudTrail の API 呼び出し順序）は [`docs/knowledge/aws-service-gotchas.md`](../../../docs/knowledge/aws-service-gotchas.md) を参照してください。
+- 同じデプロイで見つかったもう一つの小さな不具合: マネージド Config ルール `ACCESS_KEYS_ROTATED` には `inputParameters: { maxAccessKeyAge: '90' }` の明示指定が必要です。指定がないと `required parameter [maxAccessKeyAge] is not present` で作成が失敗します。ルール識別子の名前からはこの要件は読み取れません。
+
+実機で確認した内容（「スタックが `CREATE_COMPLETE` になった」以上の事実）:
+
+| サービス | 確認方法 | 結果 |
+|---|---|---|
+| CloudTrail | `aws cloudtrail get-trail-status` | `IsLogging: true`、CloudWatch Logs への配信タイムスタンプあり |
+| AWS Config | `aws configservice describe-configuration-recorder-status` | `"recording": true, "lastStatus": "SUCCESS"`。マネージドルール11個すべて作成済み |
+| GuardDuty | `aws guardduty list-detectors` | 検出器1つが作成済み |
+| IAM Access Analyzer | `aws accessanalyzer list-analyzers` | `status: ACTIVE`、ログアーカイブバケットを既に解析済み |
+| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | ハブは購読済み。AWS 基礎セキュリティのベストプラクティス標準は `PENDING`（有効化直後は正常な状態） |
+| 破棄 | `cdk destroy '**'` 後に上記の `describe-*`/`list-*` を再実行 | すべてのリソースが消滅（Config のレコーダー/配信チャネルも、チャネル削除前にレコーダーを停止する形で正しく削除 — 上記の不具合の対策どおり） |
+
+### 今回の検証で確認できていない点
+
+- **通知のイベント形式は、実際の Security Hub 検出結果では確認していません。** EventBridge ルールはドキュメント記載の `Security Hub Findings - Imported` 形式に一致させていますが、今回の検証では GuardDuty のサンプル検出結果を生成してメール配信まで end-to-end で確認してはいません。
+- **本番でのリソース保持。** `isAutoDeleteObject: false`（本番）ではスタック削除後もバケットとキーが残りますが、今回の検証は `isAutoDeleteObject: true`（`dev` の既定）でのみ行いました。
+- **検証したのは1リージョン・1アカウントのみです。** ここにあるサービスはアカウント・リージョンごとのシングルトンです（[前提条件](#-前提条件)参照）。GuardDuty 検出器、Security Hub のハブ、Config のレコーダー/チャネルが既に存在するリージョン・アカウントへのデプロイはテストしていません（AWS のドキュメント通り、既に存在するエラーで失敗すると想定されます）。
 
 ## 📋 前提条件
 
 - CDK をブートストラップ済みの AWS アカウント、`${PROJECT}-${ENV}` という名前のプロファイルを持つ AWS CLI v2、Node.js 20 以上
-- 対象リージョンに GuardDuty 検出器、Security Hub のハブ、Config のレコーダー/配信チャネルが**存在しないこと**（[既知のリスク](#-既知のリスク未検証)参照）
+- 対象リージョンに GuardDuty 検出器、Security Hub のハブ、Config のレコーダー/配信チャネルが**存在しないこと**（これらはアカウント・リージョンごとのシングルトンです）
 
 ## 🚀 デプロイ手順
 
@@ -179,16 +192,14 @@ npm run stage:deploy:all -w workspaces/security-baseline
 ## 🧪 テスト戦略
 
 ```bash
-npm test -w workspaces/security-baseline   # 33 件
+npm test -w workspaces/security-baseline   # 36 件
 ```
 
 | 種別 | 対象 |
 |---|---|
 | スナップショット（2） | テンプレート全体とリソース数 |
-| ユニット（29） | アーカイブの堅牢化と環境ごとの削除ポリシー、証跡のプロパティ、Config のレコーダー・チャネル・バケットポリシー・ルールとその順序、GuardDuty の機能（無効化した機能を含む）、2 種類のアナライザー、ハブ・標準・順序、検出結果ルールのパターン、重大度パラメータ、トピックの暗号化と TLS、EventBridge 向けキーポリシー、再試行と DLQ、メッセージのフィールド、購読、出力 |
+| ユニット（32） | アーカイブの堅牢化と環境ごとの削除ポリシー、証跡のプロパティと KMS キーポリシーへの許可、Config のレコーダー・チャネル・録画開始（`AwsCustomResource`）とその順序、`ACCESS_KEYS_ROTATED` の入力パラメータ、バケットポリシー・ルール、GuardDuty の機能（無効化した機能を含む）、2 種類のアナライザー、ハブ・標準・順序、検出結果ルールのパターン、重大度パラメータ、トピックの暗号化と TLS、EventBridge 向けキーポリシー、再試行と DLQ、メッセージのフィールド、購読、出力 |
 | コンプライアンス（2） | CDK Nag `AwsSolutions` |
-
-スタックをデプロイしていないため、（`eventbridge-custom-bus` にあるような）**運用確認スクリプトはありません**。
 
 ## 🔄 カスタマイズ
 
@@ -230,4 +241,4 @@ npm run stage:destroy:all -w workspaces/security-baseline
 
 ---
 
-**注意**: これはドラフトのリファレンス実装で、実機デプロイの検証はしていません。[既知のリスク](#-既知のリスク未検証)を確認し、組織レベルの有効化と予防的統制を加えてから利用してください。
+**注意**: 実機デプロイ検証済みです（[観測結果](#-観測結果)参照）。本番で利用する前に、組織レベルの有効化と予防的統制を追加してください。

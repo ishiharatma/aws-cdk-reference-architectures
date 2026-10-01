@@ -62,7 +62,7 @@ export class SecurityBaselineStack extends cdk.Stack {
       isAutoDeleteObject,
     });
 
-    const configService = new ConfigConstruct(this, 'Config', { bucket: archive.bucket });
+    const configService = new ConfigConstruct(this, 'Config', { namePrefix, bucket: archive.bucket });
 
     // ---------------------------------------------------------------------------------------------
     // Detection and aggregation
@@ -76,7 +76,7 @@ export class SecurityBaselineStack extends cdk.Stack {
     });
 
     const securityHub = new SecurityHubConstruct(this, 'SecurityHub', {
-      configRecorder: configService.recorder,
+      configRecorder: configService.recorderReady,
       additionalStandardArns: params.additionalSecurityHubStandardArns,
     });
     // Enable producers before the hub so their first findings are accepted.

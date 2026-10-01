@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 27 Sep 2026 16:39:06 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 01 Oct 2026 09:31:41 GMT</lastBuildDate>
+    <item>
+      <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</guid>
+      <pubDate>Thu, 01 Oct 2026 12:00:00 GMT</pubDate>
+      <description>A single-account, detection-only security baseline in one CDK stack: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices, with new high-severity findings emailed through EventBridge and SNS. Deploy-verified end-to-end; the Config recorder/delivery channel are created via AwsCustomResource to work around a CloudFormation circular-dependency limitation.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Security</category>
+      <category>CloudTrail</category>
+      <category>Config</category>
+      <category>GuardDuty</category>
+      <category>Access Analyzer</category>
+      <category>Security Hub</category>
+    </item>
     <item>
       <title>Serverless Codex App Server on AWS Lambda MicroVMs</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/lambda-microvms-codex-appserver</link>
