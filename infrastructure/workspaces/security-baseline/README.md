@@ -106,7 +106,7 @@ Delivery to the topic retries up to 3 times for at most 60 minutes; what still f
 
 ## 💰 Cost Optimization
 
-**No monthly total is given.** Unit prices for these services differ by Region and by volume, and the deploy-verification run (minutes, not a billing cycle) is too short to have produced a meaningful bill, so a number here would be invented. What drives the bill:
+**No monthly total is given.** Unit prices for these services differ by Region and by volume. What drives the cost:
 
 | Service | Billed by | Lever |
 |---|---|---|
@@ -161,7 +161,7 @@ What was confirmed live, beyond "the stack reached `CREATE_COMPLETE`":
 | AWS Config | `aws configservice describe-configuration-recorder-status` | `"recording": true, "lastStatus": "SUCCESS"`; all 11 managed rules created |
 | GuardDuty | `aws guardduty list-detectors` | One detector created |
 | IAM Access Analyzer | `aws accessanalyzer list-analyzers` | `status: ACTIVE`, had already analyzed the log archive bucket |
-| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | Hub subscribed, AWS Foundational Security Best Practices standard subscribing |
+| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | Hub subscribed; AWS Foundational Security Best Practices standard in `PENDING` (normal right after enabling) |
 | Teardown | `cdk destroy '**'` then re-running each `describe-*`/`list-*` above | Every resource gone, including the Config recorder/channel (stopped before the channel was deleted — see the gotcha above) |
 
 ### Still not covered by this verification

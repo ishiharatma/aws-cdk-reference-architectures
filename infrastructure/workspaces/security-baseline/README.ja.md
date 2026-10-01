@@ -106,7 +106,7 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 
 ## 💰 コスト最適化
 
-**月額の合計は記載していません。** これらのサービスの単価はリージョンや量によって異なり、また今回の実機検証（数分間のみで、課金サイクル1回分には満たない）では意味のある金額は得られていないため、数字を書けば作り話になります。コストを左右する要因は次のとおりです。
+**月額の合計は記載していません。** これらのサービスの単価はリージョンや量によって異なります。コストを左右する要因は次のとおりです。
 
 | サービス | 課金の対象 | 調整手段 |
 |---|---|---|
@@ -161,7 +161,7 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 | AWS Config | `aws configservice describe-configuration-recorder-status` | `"recording": true, "lastStatus": "SUCCESS"`。マネージドルール11個すべて作成済み |
 | GuardDuty | `aws guardduty list-detectors` | 検出器1つが作成済み |
 | IAM Access Analyzer | `aws accessanalyzer list-analyzers` | `status: ACTIVE`、ログアーカイブバケットを既に解析済み |
-| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | ハブが購読済み、AWS 基礎セキュリティのベストプラクティス標準を購読中 |
+| Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | ハブは購読済み。AWS 基礎セキュリティのベストプラクティス標準は `PENDING`（有効化直後は正常な状態） |
 | 破棄 | `cdk destroy '**'` 後に上記の `describe-*`/`list-*` を再実行 | すべてのリソースが消滅（Config のレコーダー/配信チャネルも、チャネル削除前にレコーダーを停止する形で正しく削除 — 上記の不具合の対策どおり） |
 
 ### 今回の検証で確認できていない点
