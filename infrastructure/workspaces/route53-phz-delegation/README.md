@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A parent private hosted zone (`system.example.com`) delegates two subdomains (`dev.system.example.com`,
 `stg.system.example.com`) to two other VPCs, using the June 2025 **Route 53 Resolver DNS delegation** feature:
@@ -14,16 +14,16 @@ Gateway.
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#architecture-overview)
-- [Design Decisions & Best Practices](#design-decisions--best-practices)
-- [Cost Optimization](#cost-optimization)
-- [Security Considerations](#security-considerations)
-- [Prerequisites](#prerequisites)
-- [Deployment Guide](#deployment-guide)
-- [Testing Strategy](#testing-strategy)
-- [Customization](#customization)
-- [Troubleshooting](#troubleshooting)
-- [References](#references)
+- [Architecture Overview](#️-architecture-overview)
+- [Design Decisions & Best Practices](#-design-decisions--best-practices)
+- [Cost Optimization](#-cost-optimization)
+- [Security Considerations](#-security-considerations)
+- [Prerequisites](#-prerequisites)
+- [Deployment Guide](#-deployment-guide)
+- [Testing Strategy](#-testing-strategy)
+- [Customization](#️-customization)
+- [Troubleshooting](#-troubleshooting)
+- [References](#-references)
 
 ## 🏗️ Architecture Overview
 

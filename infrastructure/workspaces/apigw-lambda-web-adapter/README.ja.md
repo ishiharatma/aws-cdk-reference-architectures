@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (中級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 Todos REST API を、**標準的な Express.js の HTTP サーバー**を動かす **1 つの** Lambda 関数で提供します。[AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) レイヤーがランタイムの前段に入り、API Gateway のプロキシイベントを `http://localhost:8080` への本物の HTTP リクエストに変換し、その HTTP レスポンスを Lambda の結果に戻します。アプリケーションコードには **`handler(event, context)` が存在せず**、AWS Lambda の型も出てきません。Fargate で `docker run` する場合やローカルで `node` する場合とまったく同じ `app` です。
 
@@ -17,18 +17,18 @@ Todos REST API を、**標準的な Express.js の HTTP サーバー**を動か�
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [Lambda Web Adapter の仕組み](#-lambda-web-adapter-の仕組み)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [パターン比較](#-パターン比較)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティに関する考慮事項](#-セキュリティに関する考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [使い方](#使い方)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -39,12 +39,12 @@ Todos REST API を、**標準的な Express.js の HTTP サーバー**を動か�
 
 ### 主要コンポーネント
 
-- **Amazon API Gateway (REST API)** — 単一の貪欲プロキシリソース `ANY /{proxy+}`（`LambdaRestApi` の `proxy: true`）。ルーティング・検証・メソッド単位設定はなく、すべてのリクエストが `AWS_PROXY` イベントになります。
-- **AWS Lambda (`WebAdapterHandler`)** — Node.js 22 / ARM64 の関数 1 つ。バンドルされるコード（`src/index.ts`）は実質 `app.listen(8080)` を呼ぶだけ。エクスポートされた `handler` は決して呼ばれないプレースホルダーです。
-- **Lambda Web Adapter レイヤー** — `arn:aws:lambda:<region>:753240598075:layer:LambdaAdapterLayerArm64:24` を `LayerVersion.fromLayerVersionArn` で参照。`AWS_LAMBDA_EXEC_WRAPPER=/opt/bootstrap` と組み合わさり、通常の Node ハンドラーループを、イベントをローカル HTTP サーバーへプロキシするループに置き換えます。
-- **Express アプリ (`src/app.ts`, `src/routes/todos.ts`)** — ふつうの Express：`express.json()` のボディパース、`GET /health` の readiness ルート、5 つの CRUD ハンドラーを持つ `/todos` ルーター。AWS 固有のコードはありません。
-- **Amazon DynamoDB (`TodosTable`)** — オンデマンド、パーティションキー `todoId`、SSE（AWS マネージドキー）、PITR 有効。関数ロールへ `grantReadWriteData` を 1 回。
-- **可観測性** — 関数専用ロググループ（保持 1 週間）+ API Gateway アクセスログ（JSON・標準フィールド）+ ステージの `INFO` メソッドログ。
+- **Amazon API Gateway (REST API)**。単一の貪欲プロキシリソース `ANY /{proxy+}`（`LambdaRestApi` の `proxy: true`）。ルーティング・検証・メソッド単位設定はなく、すべてのリクエストが `AWS_PROXY` イベントになります。
+- **AWS Lambda (`WebAdapterHandler`)**。Node.js 22 / ARM64 の関数 1 つ。バンドルされるコード（`src/index.ts`）は実質 `app.listen(8080)` を呼ぶだけ。エクスポートされた `handler` は決して呼ばれないプレースホルダーです。
+- **Lambda Web Adapter レイヤー**。`arn:aws:lambda:<region>:753240598075:layer:LambdaAdapterLayerArm64:24` を `LayerVersion.fromLayerVersionArn` で参照。`AWS_LAMBDA_EXEC_WRAPPER=/opt/bootstrap` と組み合わさり、通常の Node ハンドラーループを、イベントをローカル HTTP サーバーへプロキシするループに置き換えます。
+- **Express アプリ (`src/app.ts`, `src/routes/todos.ts`)**。ふつうの Express：`express.json()` のボディパース、`GET /health` の readiness ルート、5 つの CRUD ハンドラーを持つ `/todos` ルーター。AWS 固有のコードはありません。
+- **Amazon DynamoDB (`TodosTable`)**。オンデマンド、パーティションキー `todoId`、SSE（AWS マネージドキー）、PITR 有効。関数ロールへ `grantReadWriteData` を 1 回。
+- **可観測性**。関数専用ロググループ（保持 1 週間）+ API Gateway アクセスログ（JSON・標準フィールド）+ ステージの `INFO` メソッドログ。
 
 ### アダプターを配線する環境変数
 
@@ -75,13 +75,13 @@ API Gateway ──AWS_PROXY イベント──▶ Lambda サンドボックス
 **判断**: ふつうの Express アプリをパッケージし、イベントモデルの橋渡しは Lambda Web Adapter に任せる（`hono/aws-lambda`（[`apigw-lambdalith`](../apigw-lambdalith/)）や手書きの `handler(event)` ではなく）。
 
 **根拠**:
-- ✅ **アプリケーションコードに AWS への結合がゼロ** — `@types/aws-lambda` も `APIGatewayProxyEvent` もない。同じイメージが Lambda・App Runner・ECS/Fargate・ノート PC 上の `node` で**ビルドの分岐なし**に動く。
-- ✅ **リフト & シフト** — 既存の Express/Fastify/Koa/Next.js サービスは、エントリポイントを書き直すのではなく、レイヤー 1 つと環境変数 3 つを足すだけで Lambda に移る。
-- ✅ **馴染みのあるローカル開発** — `npm start` が実際の本番コードパス（実ポート上の実サーバー）であり、エミュレーターではない。
+- ✅ **アプリケーションコードに AWS への結合がゼロ**。`@types/aws-lambda` も `APIGatewayProxyEvent` もない。同じイメージが Lambda・App Runner・ECS/Fargate・ノート PC 上の `node` で**ビルドの分岐なし**に動く。
+- ✅ **リフト & シフト**。既存の Express/Fastify/Koa/Next.js サービスは、エントリポイントを書き直すのではなく、レイヤー 1 つと環境変数 3 つを足すだけで Lambda に移る。
+- ✅ **馴染みのあるローカル開発**。`npm start` が実際の本番コードパス（実ポート上の実サーバー）であり、エミュレーターではない。
 - ✅ フレームワークのエコシステム（ミドルウェア・ルーター・エラーハンドラー）がそのまま動く。
 
 **トレードオフ**:
-- ❌ **3 パターン中もっとも大きいコールドスタート** — バンドルは約 1 MB（Express + 依存）で、最初のレスポンスの前にアダプターがサーバー起動と readiness チェックを終える必要がある。レイテンシ重視なら SnapStart（Node 22）やプロビジョンド同時実行で緩和する。
+- ❌ **3 パターン中もっとも大きいコールドスタート**。バンドルは約 1 MB（Express + 依存）で、最初のレスポンスの前にアダプターがサーバー起動と readiness チェックを終える必要がある。レイテンシ重視なら SnapStart（Node 22）やプロビジョンド同時実行で緩和する。
 - ❌ 可動部（レイヤー）が 1 つ増え、そのバージョンを追う必要がある。レイヤー ARN はリージョンとアーキテクチャ固有。
 - ❌ IAM が粗く、デプロイの影響範囲も粗い（Lambdalith と同じく 1 ロール・1 デプロイ単位）。
 - ❌ ストリーミングレスポンスには Lambda レスポンスストリーミングと対応するアダプターモードが必要。素のバッファ統合は 6 MB が上限。
@@ -122,7 +122,7 @@ Lambdalith と同一：`ANY /{proxy+}` 1 つ、`cloudWatchRole: true`、ステ�
 |--------|----------------------|-------------------|-------------------------------|
 | Lambda 関数の数 | ルートごとに 1（5 個） | 1 個 | **1 個** |
 | ルーティング担当 | API Gateway | Hono（プロセス内） | **Express（プロセス内）** |
-| アプリ ↔ AWS の結合 | ハンドラーごとに `APIGatewayProxyEvent` | `hono/aws-lambda` のエントリファイル | **なし — 素の Express** |
+| アプリ ↔ AWS の結合 | ハンドラーごとに `APIGatewayProxyEvent` | `hono/aws-lambda` のエントリファイル | **なし。素の Express** |
 | API Gateway の形 | 明示的なリソース + メソッド | `ANY /{proxy+}` | **`ANY /{proxy+}`** |
 | IAM の粒度 | ルート単位 | 1 ロール = 和集合 | **1 ロール = 和集合** |
 | コールドスタートの重さ | 最軽量（極小バンドル） | 軽量（小バンドル） | **最重量（サーバー + レイヤー + readiness）** |
@@ -172,27 +172,27 @@ CloudWatch Logs:        約 2 GB                                 ≈ $1.50
 
 ### このパターン固有のコスト観点
 
-1. **アダプター自体は無料** — 計測されるサービスではなくレイヤー。コストは他の単一関数 API と同じで、違いはコールドスタート時の課金時間がわずかに長いことだけ。
-2. **コールドスタートの時間** — バンドルが大きく readiness ポーリングがある分、コールド呼び出しの課金時間が数十 ms 増える。低ボリュームでは誤差。高ボリュームではプロビジョンド同時実行で、平坦な時間課金と引き換えに予測可能なレイテンシを得る。
-3. **ARM64 / Graviton** と **`PAY_PER_REQUEST` DynamoDB** — 兄弟パターンと同じレバー。
+1. **アダプター自体は無料**。計測されるサービスではなくレイヤー。コストは他の単一関数 API と同じで、違いはコールドスタート時の課金時間がわずかに長いことだけ。
+2. **コールドスタートの時間**。バンドルが大きく readiness ポーリングがある分、コールド呼び出しの課金時間が数十 ms 増える。低ボリュームでは誤差。高ボリュームではプロビジョンド同時実行で、平坦な時間課金と引き換えに予測可能なレイテンシを得る。
+3. **ARM64 / Graviton** と **`PAY_PER_REQUEST` DynamoDB**。兄弟パターンと同じレバー。
 
 ## 🔒 セキュリティに関する考慮事項
 
 ### 実装済み
 
-- ✅ **最小権限 IAM** — カスタムステートメントは 1 つ、`TodosTable` への `grantReadWriteData` のみ。`cdk-nag` は `table/index/*` リソースと `AWSLambdaBasicExecutionRole` を指摘しますが、いずれも [`test/compliance/cdk-nag.test.ts`](test/compliance/cdk-nag.test.ts) で理由付きで抑制。
-- ✅ **保管時の暗号化** — DynamoDB SSE + PITR。
-- ✅ **転送時の TLS** — HTTPS のみの `execute-api` エンドポイント。
+- ✅ **最小権限 IAM**。カスタムステートメントは 1 つ、`TodosTable` への `grantReadWriteData` のみ。`cdk-nag` は `table/index/*` リソースと `AWSLambdaBasicExecutionRole` を指摘しますが、いずれも [`test/compliance/cdk-nag.test.ts`](test/compliance/cdk-nag.test.ts) で理由付きで抑制。
+- ✅ **保管時の暗号化**。DynamoDB SSE + PITR。
+- ✅ **転送時の TLS**。HTTPS のみの `execute-api` エンドポイント。
 - ✅ ステージの**アクセスログ + 実行ログ**。
-- ✅ **信頼できるレイヤー提供元** — レイヤーは AWS 所有アカウント `753240598075` が公開し、特定バージョンに固定。
+- ✅ **信頼できるレイヤー提供元**。レイヤーは AWS 所有アカウント `753240598075` が公開し、特定バージョンに固定。
 
 ### 意図的に対象外（環境ごとに追加）
 
 コンプライアンステストで抑制しています。**本番 API にそのままコピーしないでください。**
 
-- **認可**（`AwsSolutions-APIG4` / `COG4`）— `LambdaRestApi` の `defaultMethodOptions` でオーソライザーを追加するか、Express ミドルウェアでベアラートークンを検証する。
-- **WAF**（`AwsSolutions-APIG3`）— `wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
-- **リクエスト検証**（`AwsSolutions-APIG2`）— `proxy: true` では API Gateway モデルがないため、Express（`zod`、`express-validator` など）で検証する。
+- **認可**（`AwsSolutions-APIG4` / `COG4`）。`LambdaRestApi` の `defaultMethodOptions` でオーソライザーを追加するか、Express ミドルウェアでベアラートークンを検証する。
+- **WAF**（`AwsSolutions-APIG3`）。`wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
+- **リクエスト検証**（`AwsSolutions-APIG2`）。`proxy: true` では API Gateway モデルがないため、Express（`zod`、`express-validator` など）で検証する。
 
 ### CDK Nag
 
@@ -205,7 +205,7 @@ npm run test:compliance -w workspaces/apigw-lambda-web-adapter
 - API Gateway・Lambda・DynamoDB・IAM・CloudWatch Logs の権限を持つ AWS アカウント
 - `${PROJECT}-${ENV}`（例: `apigw-lambda-web-adapter-dev`）という名前のプロファイルで構成した AWS CLI v2.x
 - Node.js 20.x 以降、AWS CDK 2.x
-- **Docker は不要** — `NodejsFunction` はローカルの `esbuild` でバンドルし、アダプターはデプロイ時にレイヤーとして取り込まれます
+- **Docker は不要**。`NodejsFunction` はローカルの `esbuild` でバンドルし、アダプターはデプロイ時にレイヤーとして取り込まれます
 
 ## 🚀 デプロイ手順
 
@@ -309,7 +309,7 @@ const webAdapterHandler = new lambdaNodejs.NodejsFunction(this, 'WebAdapterHandl
 1. `PORT` 環境変数が `app.listen()` と一致しているか（どちらも `8080`）。
 2. `AWS_LAMBDA_EXEC_WRAPPER=/opt/bootstrap` が設定されているか（スタックでは設定済み）。これがないとレイヤーは無効になり、プレースホルダーの `handler` が実行される。
 3. レイヤー ARN のリージョン/アーキテクチャが関数と一致しているか（`Arm64` ↔ `ARM_64`）。
-4. 関数のロググループ — Express 起動時の例外（不正な import など）はそこに出る。
+4. 関数のロググループ。Express 起動時の例外（不正な import など）はそこに出る。
 
 ### アイドル後の最初のリクエストが遅く、その後は速い
 
@@ -344,9 +344,9 @@ npm run destroy:all -w workspaces/apigw-lambda-web-adapter
 - [aws-lambda-nodejs モジュール](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
 
 ### 関連アーキテクチャ
-- [apigw-lambdalith](../apigw-lambdalith/) — 同じ API をプロセス内ルーティングだが Lambda ネイティブなアダプター（Hono）で実装。コールドスタートが小さい
-- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/) — 同じ API をルートごとに 1 関数で実装
-- [apigw-s3-stub](../apigw-s3-stub/) — Lambda を一切使わない API Gateway REST API
+- [apigw-lambdalith](../apigw-lambdalith/)。同じ API をプロセス内ルーティングだが Lambda ネイティブなアダプター（Hono）で実装。コールドスタートが小さい
+- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/)。同じ API をルートごとに 1 関数で実装
+- [apigw-s3-stub](../apigw-s3-stub/)。Lambda を一切使わない API Gateway REST API
 
 ## 📄 ライセンス
 

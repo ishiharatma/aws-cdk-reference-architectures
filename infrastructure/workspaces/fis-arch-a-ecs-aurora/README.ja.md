@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20ALB%20%7C%20ECS%20Fargate%20%7C%20Aurora%20PostgreSQL-orange?style=flat-square)
 
 ## はじめに
@@ -13,15 +13,28 @@
 
 | シナリオ | 注入する障害 | 実行時間 | 検証内容 |
 | -------- | ------------ | -------- | -------- |
-| **A-1** Aurora DB フェイルオーバー | `aws:rds:failover-db-cluster` — Writer→Reader プロモーション | 効果 約30秒 | 接続プールの再接続、リトライロジック、RDS 再接続動作 |
-| **A-2** ECS 全タスク停止 | `aws:ecs:stop-task` — 実行中の全タスクを停止 | 単発 | ALB ターゲットのドレイン、CloudFront フォールバック、ECS 自己修復速度 |
-| **A-3** ECS→DB ネットワーク遮断 | `aws:ecs:task-network-blackhole-port` — TCP 5432 **送信**をブロック | 5分 | クエリタイムアウト設定、サーキットブレーカー、DB 到達不能時の縮退運転 |
-| **A-4** ALB→ECS ネットワーク遮断 | `aws:ecs:task-network-blackhole-port` — TCP 80 **受信**をブロック | 5分 | ALB 異常ホスト検出、CloudFront の S3 フォールバック、ECS タスク置換による回復 |
+| **A-1** Aurora DB フェイルオーバー | `aws:rds:failover-db-cluster`。Writer→Reader プロモーション | 効果 約30秒 | 接続プールの再接続、リトライロジック、RDS 再接続動作 |
+| **A-2** ECS 全タスク停止 | `aws:ecs:stop-task`。実行中の全タスクを停止 | 単発 | ALB ターゲットのドレイン、CloudFront フォールバック、ECS 自己修復速度 |
+| **A-3** ECS→DB ネットワーク遮断 | `aws:ecs:task-network-blackhole-port`。TCP 5432 **送信**をブロック | 5分 | クエリタイムアウト設定、サーキットブレーカー、DB 到達不能時の縮退運転 |
+| **A-4** ALB→ECS ネットワーク遮断 | `aws:ecs:task-network-blackhole-port`。TCP 80 **受信**をブロック | 5分 | ALB 異常ホスト検出、CloudFront の S3 フォールバック、ECS タスク置換による回復 |
 
 全 4 テンプレートは、ALB ターゲット 5xx が 1 分間に 50 件を超えると実験を停止する CloudWatch Alarm 停止条件を共有します。
 
 > ### ⚠️ `aws:ecs:task-*` アクションはそのままでは使えない
-> A-3 / A-4 は、タスク定義への **`amazon-ssm-agent` サイドカーコンテナ**、`enableFaultInjection: true`、`pidMode: task`、そして **ECS Exec の無効化**が必須です。以前のバージョンは存在しないアクション ID `aws:ecs:network-blackhole-port` を使い、ECS Exec に依存していました — どちらも誤りです。[FIS SSM サイドカー](#fis-ssm-サイドカーa-3--a-4)を参照。
+> A-3 / A-4 は、タスク定義への **`amazon-ssm-agent` サイドカーコンテナ**、`enableFaultInjection: true`、`pidMode: task`、そして **ECS Exec の無効化**が必須です。以前のバージョンは存在しないアクション ID `aws:ecs:network-blackhole-port` を使い、ECS Exec に依存していました。どちらも誤りです。[FIS SSM サイドカー](#fis-ssm-サイドカーa-3--a-4)を参照。
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構成](#プロジェクトディレクトリ構成)
+- [デプロイ手順](#デプロイ手順)
+- [テスト](#テスト)
+- [コスト見積り](#コスト見積り)
+- [セキュリティに関する考慮事項](#セキュリティに関する考慮事項)
+- [クリーンアップ](#クリーンアップ)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
@@ -174,9 +187,9 @@ PROJECT=<project> ENV=dev npm run stage:deploy:all -w workspaces/fis-arch-a-ecs-
 ```
 
 依存順:
-1. `<project>-dev-base` — VPC + Aurora クラスター（約10分。Aurora が最も時間がかかる）
-2. `<project>-dev-app` — ECS Fargate + SSM サイドカー + Internal ALB + CloudFront（約8分。CloudFront ディストリビューション + VPC オリジン）
-3. `<project>-dev-fis` — FIS テンプレート + IAM + アラーム（約1分）
+1. `<project>-dev-base`。VPC + Aurora クラスター（約10分。Aurora が最も時間がかかる）
+2. `<project>-dev-app`。ECS Fargate + SSM サイドカー + Internal ALB + CloudFront（約8分。CloudFront ディストリビューション + VPC オリジン）
+3. `<project>-dev-fis`。FIS テンプレート + IAM + アラーム（約1分）
 
 > このワークスペースは一部の固定リソース名（Aurora シークレット `…-aurora-secret`、
 > `…-fis-role` ロール）を**アーキテクチャ C** と共有します。同一アカウント + リージョンに
@@ -240,7 +253,7 @@ npm run test:snapshot:update -w workspaces/fis-arch-a-ecs-aurora   # 意図的�
 | テストスイート | ファイル | アサーション |
 | -------------- | -------- | ------------ |
 | スナップショット | `test/snapshot/snapshot.test.ts` | 3 スタックの完全な CFn スナップショット、Aurora Writer+Reader、タスク定義に SSM サイドカー + `EnableFaultInjection` + `PidMode: task`、ALB が internal、ちょうど 4 つの FIS テンプレート、全テンプレートに停止条件 |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 未抑制の指摘なし |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック。未抑制の指摘なし |
 
 ## コスト見積り
 
@@ -270,16 +283,16 @@ npm run test:snapshot:update -w workspaces/fis-arch-a-ecs-aurora   # 意図的�
 | **1 サイクル合計** | | **≈ $2** | **≈ $2.5** |
 
 **このドキュメントの以前のバージョンからの訂正:** FIS は**無料ではありません**。**アクション分あたり
-$0.10**（両リージョン同一）で課金されます。定常コストも過小評価でした — 常時稼働の Aurora ACU ×2 と
+$0.10**（両リージョン同一）で課金されます。定常コストも過小評価でした。常時稼働の Aurora ACU ×2 と
 NAT Gateway が支配的で、月 ~$180 (us-east-1) / ~$270 (東京) です。
 
 ## セキュリティに関する考慮事項
 
-- **ALB は internal** — インターネット非公開。CloudFront VPC Origin が唯一の入口。
-- **FIS 実験ロール — 最小権限**: Aurora ARN への `rds:FailoverDBCluster`、クラスターにスコープした `ecs:StopTask`/`DescribeTasks`/`ListTasks`、ECS タスクアクション用の `ssm:SendCommand`/`ListCommands`/`CancelCommand`、停止条件アラーム 1 個への `cloudwatch:DescribeAlarms`、CloudWatch Logs 配信アクション。
-- **SSM マネージドインスタンスロール — 最小権限**: `AmazonSSMManagedInstanceCore` + `ssm:DeleteActivation` / `ssm:DeregisterManagedInstance` のみ（シャットダウン時の自己登録解除）。タスクロールの `iam:PassRole` はこのロールの ARN にスコープ。
-- **ECS Exec 無効** — `ssmmessages:*` の面を完全に排除。SSM 経路はサイドカーのみで、`SIGTERM` で自己登録解除する。
-- **停止条件は必須** — 全テンプレートが ALB-5xx アラーム停止条件を持つ。
+- **ALB は internal**。インターネット非公開。CloudFront VPC Origin が唯一の入口。
+- **FIS 実験ロール。最小権限**: Aurora ARN への `rds:FailoverDBCluster`、クラスターにスコープした `ecs:StopTask`/`DescribeTasks`/`ListTasks`、ECS タスクアクション用の `ssm:SendCommand`/`ListCommands`/`CancelCommand`、停止条件アラーム 1 個への `cloudwatch:DescribeAlarms`、CloudWatch Logs 配信アクション。
+- **SSM マネージドインスタンスロール。最小権限**: `AmazonSSMManagedInstanceCore` + `ssm:DeleteActivation` / `ssm:DeregisterManagedInstance` のみ（シャットダウン時の自己登録解除）。タスクロールの `iam:PassRole` はこのロールの ARN にスコープ。
+- **ECS Exec 無効**。`ssmmessages:*` の面を完全に排除。SSM 経路はサイドカーのみで、`SIGTERM` で自己登録解除する。
+- **停止条件は必須**。全テンプレートが ALB-5xx アラーム停止条件を持つ。
 
 ## クリーンアップ
 
@@ -296,10 +309,10 @@ PROJECT=<project> ENV=dev npm run stage:destroy:all -w workspaces/fis-arch-a-ecs
 
 コンテナ 3 層 Web スタックに対する FIS カオスエンジニアリング:
 
-- **A-1** — Aurora Writer→Reader フェイルオーバー: アプリは再接続するか？
-- **A-2** — ECS 全タスク停止: ALB はドレインし ECS は十分速く自己修復するか？
-- **A-3** — DB 送信経路を遮断: クエリタイムアウトとサーキットブレーカーは正しいか？
-- **A-4** — タスクへの受信を遮断: ALB は異常ホストを検出し CloudFront はフォールバックするか？
+- **A-1**。Aurora Writer→Reader フェイルオーバー: アプリは再接続するか？
+- **A-2**。ECS 全タスク停止: ALB はドレインし ECS は十分速く自己修復するか？
+- **A-3**。DB 送信経路を遮断: クエリタイムアウトとサーキットブレーカーは正しいか？
+- **A-4**。タスクへの受信を遮断: ALB は異常ホストを検出し CloudFront はフォールバックするか？
 
 重い作業は A-3/A-4 です。`aws:ecs:task-*` は専用の SSM サイドカー、`enableFaultInjection`、
 `pidMode: task`、そして ECS Exec **無効**を必要とします。スタックの稼働コストは月 ~$180〜270、

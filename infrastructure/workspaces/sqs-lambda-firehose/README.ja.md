@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 ## はじめに
 
@@ -23,6 +23,19 @@
 | 信頼性 | DLQとバッチ失敗レポートで堅牢なエラー処理 |
 | コスト効率 | サーバーレスで使用分のみ課金 |
 | 運用負荷軽減 | マネージドサービスでインフラ管理を最小化 |
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構造](#プロジェクトディレクトリ構造)
+- [実装のポイント](#実装のポイント)
+- [CloudWatch監視](#cloudwatch監視)
+- [デプロイ & 動作確認](#デプロイ--動作確認)
+- [ベストプラクティスまとめ](#ベストプラクティスまとめ)
+- [料金目安](#料金目安)
+- [まとめ](#まとめ)
+- [参考リンク](#参考リンク)
 
 ## アーキテクチャ概要
 

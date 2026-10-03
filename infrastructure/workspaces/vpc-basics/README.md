@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-green?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-VPC-purple?style=flat-square)
 
 ## Introduction
@@ -17,6 +17,23 @@ This architecture demonstrates:
 - Implementation of VPC Endpoints (Gateway/Interface)
 - Secure SSH access via EC2 Instance Connect Endpoint
 - Mutual security group references and avoiding circular dependencies
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [Pattern 1: Understanding CDK Default VPC](#pattern-1-understanding-cdk-default-vpc)
+- [Pattern 2: Custom VPC Creation](#pattern-2-custom-vpc-creation)
+- [VPC Flow Logs Implementation](#vpc-flow-logs-implementation)
+- [VPC Endpoints](#vpc-endpoints)
+- [EC2 Instance Connect Endpoint](#ec2-instance-connect-endpoint)
+- [CloudFormation Output Example](#cloudformation-output-example)
+- [Deploy and Validate](#deploy-and-validate)
+- [Best Practices](#best-practices)
+- [Cost Estimate](#cost-estimate)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

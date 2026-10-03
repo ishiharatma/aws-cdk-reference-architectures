@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20API%20Gateway%20%7C%20Lambda%20%7C%20DynamoDB-orange?style=flat-square)
 
 ## はじめに
@@ -22,6 +22,23 @@
 
 > ### ⚠️ なぜ DynamoDB 障害を直接注入しないのか？
 > 以前のバージョンでは `aws:fis:inject-api-internal-error` / `aws:fis:inject-api-throttle-error` を `service: dynamodb` で使い、さらに架空の `aws:lambda:put-function-concurrent-executions` アクションを使っていました。**どちらもデプロイ時に失敗します。** `aws:fis:inject-api-*` は `dynamodb` を `service` の値としてサポートしておらず（API が *"The service parameter value is not supported for the action"* で拒否）、Lambda の予約済み同時実行数を設定する FIS アクションは存在しません。このサーバーレス経路に障害を注入できる唯一の方法が `aws:lambda:function` アクション群で、現在の B-1〜B-4 はこれを使っています。詳細は[実装のポイント](#6-得られた知見)を参照。
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構成](#プロジェクトディレクトリ構成)
+- [データフロー](#データフロー)
+- [主要コンポーネントと設計ポイント](#主要コンポーネントと設計ポイント)
+- [実装のポイント](#実装のポイント)
+- [デプロイ手順](#デプロイ手順)
+- [テスト](#テスト)
+- [コスト見積り](#コスト見積り)
+- [セキュリティに関する考慮事項](#セキュリティに関する考慮事項)
+- [トラブルシューティング](#トラブルシューティング)
+- [クリーンアップ](#クリーンアップ)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
@@ -59,7 +76,7 @@ B-4  aws:lambda:invocation-http-integration-response  statusCode=500, contentTyp
 
 | 特徴 | 利点 |
 | ---- | ---- |
-| VPC 不要 | 完全サーバーレス — NAT Gateway なし、サブネット設計なし、VPC の時間課金なし |
+| VPC 不要 | 完全サーバーレス。NAT Gateway なし、サブネット設計なし、VPC の時間課金なし |
 | `aws:lambda:function` アクション | FIS が Lambda 拡張を通じて関数の呼び出しに障害を注入。ハンドラコードは無変更 |
 | `preventExecution` の切り替え（B-1 と B-3） | 同じアクションで「即時停止（ハンドラ未実行）」と「作業後エラー（副作用は確定済み）」の両方をモデル化 |
 | HTTP 統合レスポンスの上書き（B-4） | Lambda クラッシュとは異なる「整形された 500」を統合から返し、API GW / CloudFront のエラーマッピングを検証 |
@@ -143,12 +160,12 @@ DynamoDB テーブル  (パーティションキー: id、POST 時にハンド�
 | DynamoDB テーブル | PAY_PER_REQUEST 課金。アイドル時コストゼロ。実験中のコスト最小化のため PITR は無効 |
 | Lambda 関数 | Python 3.13、256 MB、29 秒タイムアウト（API GW の 30 秒制限より 1 秒下）。FIS 拡張レイヤー + `AWS_LAMBDA_EXEC_WRAPPER=/opt/aws-fis/bootstrap`、`AWS_FIS_CONFIGURATION_LOCATION=arn:aws:s3:::<bucket>/FisConfigs/`、`AWS_FIS_POLL_MAX_WAIT_MILLISECONDS=2000` を付与 |
 | FIS 拡張レイヤー | リージョンごとにパブリック SSM パラメータ `/aws/service/fis/lambda-extension/AWS-FIS-extension-x86_64/1.x.x` から解決（x86_64 は Lambda のデフォルトアーキテクチャに一致） |
-| FIS 設定バケット | `<project>-<env>-b-fis-config-<account>` — S3 管理暗号化、パブリックアクセス全ブロック、1 日のライフサイクル失効、リージョンごとに 1 つ。FIS が障害設定を書き込み、拡張が読み取る |
+| FIS 設定バケット | `<project>-<env>-b-fis-config-<account>`。S3 管理暗号化、パブリックアクセス全ブロック、1 日のライフサイクル失効、リージョンごとに 1 つ。FIS が障害設定を書き込み、拡張が読み取る |
 | API Gateway HTTP API | デフォルトステージ、`$default` キャッチオールルート、アクセスログを CloudWatch Logs へ、オーソライザーなし（公開デモ） |
 | CloudFront ディストリビューション | `CACHING_DISABLED` キャッシュポリシー、`ALL_VIEWER_EXCEPT_HOST_HEADER` オリジンリクエストポリシー |
 | FIS IAM ロール | `<bucket>/FisConfigs/*` への `s3:PutObject`/`s3:DeleteObject`、`*` への `lambda:GetFunction` と `tag:GetResources`、停止条件アラームへの `cloudwatch:DescribeAlarms`、CloudWatch Logs 配信権限 |
-| CloudWatch 停止アラーム | `LambdaErrors >= 100`（1 分）— 4 テンプレート共通 |
-| FIS ロググループ | `/fis/<project>-<env>-b` — 保持 1 か月、スタック削除時に自動削除 |
+| CloudWatch 停止アラーム | `LambdaErrors >= 100`（1 分）。4 テンプレート共通 |
+| FIS ロググループ | `/fis/<project>-<env>-b`。保持 1 か月、スタック削除時に自動削除 |
 
 ## 実装のポイント
 
@@ -186,7 +203,7 @@ this.apiFunction.addToRolePolicy(new iam.PolicyStatement({
 
 S3 バケットは FIS と拡張の通信チャネルです。FIS のロールはプレフィックスへの `s3:PutObject`/`s3:DeleteObject` を、関数のロールは `s3:GetObject`/`s3:ListBucket` を持ちます。
 
-### 3. B-1 と B-3 — `preventExecution` は 2 つの異なる障害をモデル化する
+### 3. B-1 と B-3：`preventExecution` は 2 つの異なる障害をモデル化する
 
 ```typescript
 // B-1: 即時失敗 — ハンドラは実行されず副作用なし、全リクエストの 100%
@@ -196,7 +213,7 @@ parameters: { duration: 'PT5M', invocationPercentage: '100', preventExecution: '
 parameters: { duration: 'PT5M', invocationPercentage: '50',  preventExecution: 'false' }
 ```
 
-B-1 は「API が完全にダウンしたときフロントエンドはきれいに劣化するか？」に答えます。B-3 はより難しい「DynamoDB への書き込みは成功したがクライアントには 500 が見えてリトライした場合、二重書き込みしないか？」— つまり冪等性テストです。
+B-1 は「API が完全にダウンしたときフロントエンドはきれいに劣化するか？」に答えます。B-3 はより難しい「DynamoDB への書き込みは成功したがクライアントには 500 が見えてリトライした場合、二重書き込みしないか？」。つまり冪等性テストです。
 
 ### 4. B-2 のレイテンシと B-4 の統合レスポンス上書き
 
@@ -221,7 +238,7 @@ B-4 は B-1 と*形*が異なります。B-1 は Lambda エラー（API Gateway 
 
 - **`aws fis list-actions` が真実の情報源。** 元の設計は存在しない `aws:lambda:put-function-concurrent-executions` を使っており、CloudFormation は `Invalid actionId ... Status Code: 404` で失敗しました。テンプレートを書く前に、対象リージョンの `aws fis list-actions` でアクション ID を必ず確認すること。
 - **`aws:fis:inject-api-*` のサービス許可リストは短い。** `service: dynamodb` は即座に拒否されます。現時点でこれらのアクションが実用的なのは少数のサービス（EC2 など）だけで、「任意の AWS API を失敗させる」汎用ツールでは**ありません**。
-- **拡張はポーリングする — ランプアップを見込む。** ヘルスチェックやダッシュボードは `start-experiment` 後、障害が完全反映されるまで ~60 秒の許容が必要で、B-3 のような部分割合はさらに収束に時間がかかります。
+- **拡張はポーリングする。ランプアップを見込む。** ヘルスチェックやダッシュボードは `start-experiment` 後、障害が完全反映されるまで ~60 秒の許容が必要で、B-3 のような部分割合はさらに収束に時間がかかります。
 - **`preventExecution=true` では `AWS_FIS_POLL_MAX_WAIT_MILLISECONDS` が重要。** これがないと、ランプアップ中の最初の数リクエストが、拡張が設定を取得する前にすり抜けます。ドキュメント推奨値は 2000 ms です。
 - **S3 設定バケットはリージョンごとに 1 つ。** 実験を開始するリージョンにバケットが存在する必要があり、複数の実験・アカウントで共有できます。
 - **レスポンスストリーミングは非互換。** FIS Lambda 拡張は障害が無効でもストリーミングを抑制します。本構成では問題なし（バッファされた JSON レスポンス）。
@@ -259,9 +276,9 @@ PROJECT=<project> ENV=dev npm run stage:deploy:all -w workspaces/fis-arch-b-apig
 ```
 
 依存順に 3 スタックをデプロイします。
-1. `<project>-dev-b-base` — DynamoDB テーブル
-2. `<project>-dev-b-app` — Lambda + FIS 拡張レイヤー + API GW + CloudFront + FIS 設定バケット
-3. `<project>-dev-b-fis` — FIS テンプレート + IAM + アラーム
+1. `<project>-dev-b-base`。DynamoDB テーブル
+2. `<project>-dev-b-app`。Lambda + FIS 拡張レイヤー + API GW + CloudFront + FIS 設定バケット
+3. `<project>-dev-b-fis`。FIS テンプレート + IAM + アラーム
 
 ### 5. API のスモークテスト
 
@@ -305,7 +322,7 @@ while true; do curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' https://$
 | **B-3** | 約 2.5 分のランプアップ後、**約 50% のリクエストが 500**。残りは正常実行（書き込み確定） | 約 20 秒でクリーン |
 | **B-4** | 約 60 秒のランプアップ後、API / CloudFront が **空ボディの 500**。ハンドラ未実行 | 数秒後に 200 |
 
-停止条件アラーム（`LambdaErrors >= 100/分`）はどの実行でも発火しませんでした — デモのリクエストレートが 100/分を大きく下回るためです。自動停止経路を試すにはリクエストレートを上げるか閾値を下げてください。
+停止条件アラーム（`LambdaErrors >= 100/分`）はどの実行でも発火しませんでした。デモのリクエストレートが 100/分を大きく下回るためです。自動停止経路を試すにはリクエストレートを上げるか閾値を下げてください。
 
 ## テスト
 
@@ -324,7 +341,7 @@ npm run test:snapshot:update -w workspaces/fis-arch-b-apigw-lambda
 | テストスイート | ファイル | アサーション |
 | -------------- | -------- | ------------ |
 | スナップショット | `test/snapshot/snapshot.test.ts` | 3 スタックの完全な CFn テンプレートスナップショット、DynamoDB PAY_PER_REQUEST、FIS 拡張レイヤー付き Python 3.13 Lambda、CloudFront / API GW の数、ちょうど 4 つの FIS テンプレート、全テンプレートに停止条件 |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 未抑制の指摘なし |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック。未抑制の指摘なし |
 
 ## コスト見積り
 
@@ -363,8 +380,8 @@ FIS `ActionMinute` $0.10（両リージョン） · Lambda / DynamoDB / API GW �
 
 ## セキュリティに関する考慮事項
 
-- **Lambda 実行ロール — 最小権限**: 特定テーブルへの `dynamodb:GetItem/PutItem/DeleteItem/Scan`（`table.grantReadWriteData()` 経由）、加えて拡張のために設定バケットの `FisConfigs/` プレフィックスに限定した `s3:GetObject`/`s3:ListBucket`。
-- **FIS ロール — 最小権限**: `<bucket>/FisConfigs/*` に限定した `s3:PutObject`/`s3:DeleteObject`、`lambda:GetFunction` と `tag:GetResources`（ターゲット解決）、停止条件アラーム 1 個への `cloudwatch:DescribeAlarms`、CloudWatch Logs 配信アクション。`lambda:UpdateFunctionConfiguration` なし、DynamoDB アクセスなし。
+- **Lambda 実行ロール。最小権限**: 特定テーブルへの `dynamodb:GetItem/PutItem/DeleteItem/Scan`（`table.grantReadWriteData()` 経由）、加えて拡張のために設定バケットの `FisConfigs/` プレフィックスに限定した `s3:GetObject`/`s3:ListBucket`。
+- **FIS ロール。最小権限**: `<bucket>/FisConfigs/*` に限定した `s3:PutObject`/`s3:DeleteObject`、`lambda:GetFunction` と `tag:GetResources`（ターゲット解決）、停止条件アラーム 1 個への `cloudwatch:DescribeAlarms`、CloudWatch Logs 配信アクション。`lambda:UpdateFunctionConfiguration` なし、DynamoDB アクセスなし。
 - **FIS 設定バケット**: パブリックアクセス全ブロック、S3 管理暗号化、TLS 強制、1 日でオブジェクト失効（古い障害設定を残さない）。
 - **VPC 露出なし**: VPC・サブネット・セキュリティグループなし。唯一の接点は CloudFront / API GW のパブリックエンドポイントで、公開デモ API として妥当。プロダクションではルートに Cognito または IAM オーソライザーを追加。
 - **停止条件は必須**: 全テンプレートが Lambda エラーアラーム停止条件を持ち、最大ブラスト半径を制限。
@@ -377,7 +394,7 @@ FIS `ActionMinute` $0.10（両リージョン） · Lambda / DynamoDB / API GW �
 | FIS テンプレート作成が `Invalid actionId ... 404` で失敗 | そのリージョンに存在しないアクション ID | `aws fis list-actions` で確認 |
 | FIS テンプレート作成が `The service parameter value is not supported for the action` で失敗 | `aws:fis:inject-api-*` にサポート外の `service`（例: `dynamodb`） | 代わりに `aws:lambda:function` アクションを使う（本ワークスペースの方式） |
 | 実験は動くが API がエラーを返さない | 関数に FIS 拡張レイヤー / 環境変数がない、または S3 設定バケットに到達できない | レイヤー + `AWS_LAMBDA_EXEC_WRAPPER` + `AWS_FIS_CONFIGURATION_LOCATION` を確認。関数ログの `AWS FIS EXTENSION` 行を確認 |
-| エラーが出るまで約 1 分かかる | 想定どおり — 拡張の slow-poll ランプアップ | ~60 秒待つ。部分割合シナリオは 2〜3 分見込む |
+| エラーが出るまで約 1 分かかる | 想定どおり。拡張の slow-poll ランプアップ | ~60 秒待つ。部分割合シナリオは 2〜3 分見込む |
 | 実験がすぐ停止する | 停止条件アラームが既に `ALARM` | `aws cloudwatch set-alarm-state --alarm-name <name> --state-value OK --state-reason reset` |
 
 ## クリーンアップ
@@ -392,10 +409,10 @@ PROJECT=<project> ENV=dev npm run stage:destroy:all -w workspaces/fis-arch-b-api
 
 本ワークスペースは、`aws:lambda:function` アクション群と AWS FIS Lambda 拡張を使った、サーバーレス CRUD API に対する FIS カオスエンジニアリングを示します。
 
-- **B-1** — 即時の完全停止（ハンドラ未実行）: フロントエンドはきれいに劣化するか？
-- **B-2** — +10 秒の呼び出しレイテンシ: タイムアウト予算とレイテンシアラームは正しいか？
-- **B-3** — 実行後 50% 失敗: クライアントリトライ下で書き込み経路は冪等か？
-- **B-4** — 合成 500 統合レスポンス: API GW / CloudFront のエラーマッピングは機能するか？
+- **B-1**。即時の完全停止（ハンドラ未実行）: フロントエンドはきれいに劣化するか？
+- **B-2**。+10 秒の呼び出しレイテンシ: タイムアウト予算とレイテンシアラームは正しいか？
+- **B-3**。実行後 50% 失敗: クライアントリトライ下で書き込み経路は冪等か？
+- **B-4**。合成 500 統合レスポンス: API GW / CloudFront のエラーマッピングは機能するか？
 
 サーバーレス構成なので定常コストは月 ~$0.10、4 実験のフルテストサイクルは約 **$2**（大半が FIS のアクション分課金）です。
 

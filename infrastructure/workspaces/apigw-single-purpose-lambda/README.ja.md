@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (中級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 **すべての API Gateway メソッドを、それぞれ専用の Lambda 関数**が処理する Todos REST API です。ルーティングは API Gateway が行い（`addResource`/`addMethod`）、各関数は `list`・`create`・`get`・`update`・`delete` のうちちょうど 1 つだけを、専用の IAM ロール・専用のロググループ・専用のバンドル・そして**最小権限**の DynamoDB 権限（`GET` は読み取り専用、`POST`/`DELETE` は書き込み専用）で実行します。
 
@@ -17,17 +17,17 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [パターン比較](#-パターン比較)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティに関する考慮事項](#-セキュリティに関する考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [使い方](#使い方)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -38,12 +38,12 @@
 
 ### 主要コンポーネント
 
-- **Amazon API Gateway (REST API)** — `RestApi` + `addResource`/`addMethod` で組んだ明示的なリソースとメソッド：
+- **Amazon API Gateway (REST API)**。`RestApi` + `addResource`/`addMethod` で組んだ明示的なリソースとメソッド：
   - `/todos` → `GET`（一覧）、`POST`（作成）
   - `/todos/{todoId}` → `GET`（取得）、`PUT`（更新）、`DELETE`（削除）
   - 各メソッドは**別々の**関数への `LambdaIntegration`（`AWS_PROXY`）。
-- **5 つの AWS Lambda 関数** — `list-todos`・`create-todo`・`get-todo`・`update-todo`・`delete-todo`。すべて Node.js 22 / ARM64、それぞれ自分の `src/handlers/<name>.ts` からビルドされ、それぞれ**専用の CloudWatch ロググループ**（保持 1 週間）を持ちます。スタック内の小さな `makeHandler` ファクトリが生成します。
-- **Amazon DynamoDB (`TodosTable`)** — オンデマンド（`PAY_PER_REQUEST`）、パーティションキー `todoId`、SSE（AWS マネージドキー）、PITR 有効。
+- **5 つの AWS Lambda 関数**。`list-todos`・`create-todo`・`get-todo`・`update-todo`・`delete-todo`。すべて Node.js 22 / ARM64、それぞれ自分の `src/handlers/<name>.ts` からビルドされ、それぞれ**専用の CloudWatch ロググループ**（保持 1 週間）を持ちます。スタック内の小さな `makeHandler` ファクトリが生成します。
+- **Amazon DynamoDB (`TodosTable`)**。オンデマンド（`PAY_PER_REQUEST`）、パーティションキー `todoId`、SSE（AWS マネージドキー）、PITR 有効。
 - **関数ごとの最小権限**：
   | 関数 | 権限付与 | 実効的な DynamoDB アクション |
   |----------|-------|----------------------------|
@@ -52,7 +52,7 @@
   | `create-todo` | `grantWriteData` | `PutItem`・`UpdateItem`・`DeleteItem`・`BatchWrite…`（読み取り不可） |
   | `delete-todo` | `grantWriteData` | 書き込み専用 |
   | `update-todo` | `grantReadWriteData` | 読み取り + 書き込み（条件付き更新を行うため） |
-- **可観測性** — 5 つの関数ロググループ + 1 つの API Gateway アクセスログ用グループ。ステージにアクセスログ（JSON・標準フィールド）と `INFO` メソッドログ。
+- **可観測性**。5 つの関数ロググループ + 1 つの API Gateway アクセスログ用グループ。ステージにアクセスログ（JSON・標準フィールド）と `INFO` メソッドログ。
 
 ### アーキテクチャ特性
 
@@ -71,17 +71,17 @@
 **判断**: 単一関数の内部でルーティングする（[`apigw-lambdalith`](../apigw-lambdalith/) と対照的）のではなく、各メソッドを専用の Lambda に割り当てる。
 
 **根拠**:
-- ✅ **最小権限が自然** — `list` ロールは書き込み権限を持たず、`create` ロールは読み取り権限を持たない。あとで絞り込むのを「忘れる」余地がない。
-- ✅ **すべてが独立** — メモリ・タイムアウト・予約済み/プロビジョンド同時実行・環境変数・ランタイム、そして*デプロイ*までルート単位。ホットな `GET /todos` を `DELETE` に触れずにチューニング・スケールできる。
-- ✅ **影響範囲が小さい** — 不正なデプロイや poison ペイロードは 1 エンドポイントに影響し、他は稼働し続ける。
-- ✅ **極小のコールドスタート** — 各成果物は DynamoDB コマンドをちょうど 1 つだけバンドルするため、コールドな `get-todo` はほとんど何も初期化しない。
-- ✅ **所有が明確** — 大きな組織では `team-a/create-todo` と `team-b/list-todos` を別々に所有・アラーム・リリースできる。
+- ✅ **最小権限が自然**。`list` ロールは書き込み権限を持たず、`create` ロールは読み取り権限を持たない。あとで絞り込むのを「忘れる」余地がない。
+- ✅ **すべてが独立**。メモリ・タイムアウト・予約済み/プロビジョンド同時実行・環境変数・ランタイム、そして*デプロイ*までルート単位。ホットな `GET /todos` を `DELETE` に触れずにチューニング・スケールできる。
+- ✅ **影響範囲が小さい**。不正なデプロイや poison ペイロードは 1 エンドポイントに影響し、他は稼働し続ける。
+- ✅ **極小のコールドスタート**。各成果物は DynamoDB コマンドをちょうど 1 つだけバンドルするため、コールドな `get-todo` はほとんど何も初期化しない。
+- ✅ **所有が明確**。大きな組織では `team-a/create-todo` と `team-b/list-todos` を別々に所有・アラーム・リリースできる。
 
 **トレードオフ**:
-- ❌ **インフラが増える** — ルートごとに約 6 つの CloudFormation リソース。本テンプレートは約 35 リソース（Lambdalith は約 15）。
-- ❌ **共有コードに本気のパッケージングが必要** — ここでは DynamoDB クライアントヘルパーがバンドルごとに重複している。これより大きなものは Lambda レイヤーか社内 npm パッケージにしたい。
-- ❌ **ダッシュボード/アラームが増える** — 5 関数分のメトリクス。複合アラームが欲しくなる。
-- ❌ **ルーティングが CDK にある** — `PATCH /todos/{id}/complete` の追加はアプリコードだけでなくインフラ変更（`addMethod` + 新関数）。
+- ❌ **インフラが増える**。ルートごとに約 6 つの CloudFormation リソース。本テンプレートは約 35 リソース（Lambdalith は約 15）。
+- ❌ **共有コードに本気のパッケージングが必要**。ここでは DynamoDB クライアントヘルパーがバンドルごとに重複している。これより大きなものは Lambda レイヤーか社内 npm パッケージにしたい。
+- ❌ **ダッシュボード/アラームが増える**。5 関数分のメトリクス。複合アラームが欲しくなる。
+- ❌ **ルーティングが CDK にある**。`PATCH /todos/{id}/complete` の追加はアプリコードだけでなくインフラ変更（`addMethod` + 新関数）。
 
 ### 2. 関数ごとの最小権限
 
@@ -193,32 +193,32 @@ CloudWatch Logs:        6 グループ合計で約 2 GB                 ≈ $1.5
 
 ### このパターン固有のコスト観点
 
-1. **リクエストコストは他の 2 パターンと同一** — API Gateway と Lambda は関数の数に関係なくリクエスト単位で課金される。
-2. **固定オーバーヘッドがやや多い** — 5 つのロググループと 5 関数分の CloudWatch メトリクス。金額は誤差だが、見る対象は増える。
-3. **ルート単位で適正サイズに** — `delete-todo` は小さい `memorySize` に、大きくするのはプロファイリングで効果が確認できた箇所だけに。Lambdalith ではこれができない。
-4. **ARM64 / Graviton** と **`PAY_PER_REQUEST` DynamoDB** — 兄弟パターンと同じレバー。
+1. **リクエストコストは他の 2 パターンと同一**。API Gateway と Lambda は関数の数に関係なくリクエスト単位で課金される。
+2. **固定オーバーヘッドがやや多い**。5 つのロググループと 5 関数分の CloudWatch メトリクス。金額は誤差だが、見る対象は増える。
+3. **ルート単位で適正サイズに**。`delete-todo` は小さい `memorySize` に、大きくするのはプロファイリングで効果が確認できた箇所だけに。Lambdalith ではこれができない。
+4. **ARM64 / Graviton** と **`PAY_PER_REQUEST` DynamoDB**。兄弟パターンと同じレバー。
 
 ## 🔒 セキュリティに関する考慮事項
 
 ### 実装済み
 
-- ✅ **関数ごとの最小権限 IAM** — 読み取りルートは `grantReadData`、書き込みルートは `grantWriteData`、両方を得るのは `update-todo` のみ。ユニットテストで検証。
-- ✅ **保管時の暗号化** — DynamoDB SSE + PITR。
-- ✅ **転送時の TLS** — HTTPS のみの `execute-api` エンドポイント。
-- ✅ **関数ごとのログ分離** — それぞれ 1 つのロググループ、保持期間付き。
+- ✅ **関数ごとの最小権限 IAM**。読み取りルートは `grantReadData`、書き込みルートは `grantWriteData`、両方を得るのは `update-todo` のみ。ユニットテストで検証。
+- ✅ **保管時の暗号化**。DynamoDB SSE + PITR。
+- ✅ **転送時の TLS**。HTTPS のみの `execute-api` エンドポイント。
+- ✅ **関数ごとのログ分離**。それぞれ 1 つのロググループ、保持期間付き。
 - ✅ ステージの**アクセスログ + 実行ログ**。
 
 ### 意図的に対象外（環境ごとに追加）
 
 コンプライアンステストで抑制しています。**本番 API にそのままコピーしないでください。**
 
-- **認可**（`AwsSolutions-APIG4` / `COG4`）— メソッドごとにオーソライザーを付けるか、`RestApi` の `defaultMethodOptions` で 1 つの既定オーソライザーを付ける：
+- **認可**（`AwsSolutions-APIG4` / `COG4`）。メソッドごとにオーソライザーを付けるか、`RestApi` の `defaultMethodOptions` で 1 つの既定オーソライザーを付ける：
   ```typescript
   const auth = new apigateway.TokenAuthorizer(this, 'Auth', { handler: authFn });
   todosResource.addMethod('GET', integration, { authorizer: auth });
   ```
-- **WAF**（`AwsSolutions-APIG3`）— `wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
-- **リクエスト検証**（`AwsSolutions-APIG2`）— ここでは API Gateway モデル + メソッドごとの `RequestValidator` を追加できる（明示的メソッドの利点）。または各ハンドラーで検証する。
+- **WAF**（`AwsSolutions-APIG3`）。`wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
+- **リクエスト検証**（`AwsSolutions-APIG2`）。ここでは API Gateway モデル + メソッドごとの `RequestValidator` を追加できる（明示的メソッドの利点）。または各ハンドラーで検証する。
 
 ### CDK Nag
 
@@ -231,7 +231,7 @@ npm run test:compliance -w workspaces/apigw-single-purpose-lambda
 - API Gateway・Lambda・DynamoDB・IAM・CloudWatch Logs の権限を持つ AWS アカウント
 - `${PROJECT}-${ENV}`（例: `apigw-single-purpose-lambda-dev`）という名前のプロファイルで構成した AWS CLI v2.x
 - Node.js 20.x 以降、AWS CDK 2.x
-- **Docker は不要** — `NodejsFunction` はローカルの `esbuild` でバンドルします
+- **Docker は不要**。`NodejsFunction` はローカルの `esbuild` でバンドルします
 
 ## 🚀 デプロイ手順
 
@@ -356,7 +356,7 @@ npm run destroy:all -w workspaces/apigw-single-purpose-lambda
 
 ### AWS ドキュメント
 - [API Gateway で Lambda プロキシ統合をセットアップする](https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html)
-- [大規模なサーバーレスアプリケーションを構成するためのベストプラクティス](https://aws.amazon.com/jp/blogs/compute/best-practices-for-organizing-larger-serverless-applications/) — single-purpose と Lambdalith
+- [大規模なサーバーレスアプリケーションを構成するためのベストプラクティス](https://aws.amazon.com/jp/blogs/compute/best-practices-for-organizing-larger-serverless-applications/)。single-purpose と Lambdalith
 - [関数に DynamoDB へのアクセスを付与する（`grant*Data`）](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_dynamodb.Table.html#grantwbrreadwbrdatagrantee)
 
 ### AWS CDK
@@ -364,9 +364,9 @@ npm run destroy:all -w workspaces/apigw-single-purpose-lambda
 - [aws-lambda-nodejs モジュール](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
 
 ### 関連アーキテクチャ
-- [apigw-lambdalith](../apigw-lambdalith/) — 同じ API を、プロセス内ルーティングの 1 関数で実装
-- [apigw-lambda-web-adapter](../apigw-lambda-web-adapter/) — 同じ API を、Lambda Web Adapter の背後の Express サーバーとして実装
-- [apigw-s3-stub](../apigw-s3-stub/) — Lambda を一切使わない API Gateway REST API
+- [apigw-lambdalith](../apigw-lambdalith/)。同じ API を、プロセス内ルーティングの 1 関数で実装
+- [apigw-lambda-web-adapter](../apigw-lambda-web-adapter/)。同じ API を、Lambda Web Adapter の背後の Express サーバーとして実装
+- [apigw-s3-stub](../apigw-s3-stub/)。Lambda を一切使わない API Gateway REST API
 
 ## 📄 ライセンス
 

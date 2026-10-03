@@ -2,20 +2,20 @@
 
 *他の言語で読む(Read this in other languages):* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (上級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 「WAF Web ACL が何をブロックしたか（および Count モードで運用中のルールなら何をブロックしたはずか）」を日次でダイジェストするという同一の運用課題を、**CloudWatch Logs Insights**（パターン1）と **Amazon Athena**（パターン2）という異なる2つの方式で独立実装したリファレンスアーキテクチャです。両パターンにログを供給するためにスタンドアロンのサンプル WAF を作成しますが、各レポートスタックは既に運用中の WAF のログを対象にすることもできます。
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ考慮事項](#-セキュリティ考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイガイド](#-デプロイガイド)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [参考資料](#-参考資料)
 
@@ -48,9 +48,9 @@
 
 ### 主要コンポーネント
 
-- **スタック1 — `WafLogReportingSampleWafStack`** – ログを生成するためだけに作成する REGIONAL スコープの WAFv2 Web ACL。ALB / API Gateway / CloudFront のいずれにもアタッチしません。AWS マネージドルールグループを **Count** モードで1つ、**Block** モードで1つ、さらにレートベースの **Block** ルールを1つ組み合わせており、両レポートスタックが常に COUNT・BLOCK 両方のアクティビティを参照できます。
-- **スタック2 — `WafLogReportingCwLogsReportStack`**（パターン1） – WAF ロググループに対して CloudWatch Logs Insights クエリを複数回実行し、整形したダイジェストを SNS に発行するスケジュール実行 Lambda。ロググループ以外の追加インフラは不要です。
-- **スタック3 — `WafLogReportingAthenaReportStack`**（パターン2） – S3 上の WAF ログに対して構築した Glue Data Catalog テーブル（Athena パーティション射影、クローラー不要）に SQL を実行し、同じ形式のダイジェストを SNS に発行するスケジュール実行 Lambda。
+- **スタック1。`WafLogReportingSampleWafStack`** – ログを生成するためだけに作成する REGIONAL スコープの WAFv2 Web ACL。ALB / API Gateway / CloudFront のいずれにもアタッチしません。AWS マネージドルールグループを **Count** モードで1つ、**Block** モードで1つ、さらにレートベースの **Block** ルールを1つ組み合わせており、両レポートスタックが常に COUNT・BLOCK 両方のアクティビティを参照できます。
+- **スタック2。`WafLogReportingCwLogsReportStack`**（パターン1） – WAF ロググループに対して CloudWatch Logs Insights クエリを複数回実行し、整形したダイジェストを SNS に発行するスケジュール実行 Lambda。ロググループ以外の追加インフラは不要です。
+- **スタック3。`WafLogReportingAthenaReportStack`**（パターン2） – S3 上の WAF ログに対して構築した Glue Data Catalog テーブル（Athena パーティション射影、クローラー不要）に SQL を実行し、同じ形式のダイジェストを SNS に発行するスケジュール実行 Lambda。
 - **レポート Lambda** – Python 製で、バイリンガル（`en`/`ja`）のテキストレポートを生成します。総リクエスト数、Action 別内訳、ブロックルール／送信元IP／国／URI の Top-N、Count モードルールマッチの Top-N（Block昇格候補）、前日比の異常検知フラグを含みます。
 
 ### アーキテクチャ特性
@@ -191,11 +191,11 @@
 
 ### コスト最適化戦略
 
-1. **Glue クローラーではなくパーティション射影** — クローラーの継続コストがゼロで、新しいデータも即座にクエリ可能（[設計判断5](#5-glueクローラーではなくathenaパーティション射影)を参照）
-2. **Athenaクエリ結果のライフサイクル失効設定**（`athenaReport.queryResultsExpirationDays`、デフォルトDev 7日 / Prod 30日） — クエリ結果用S3バケットのストレージコストを制限
-3. **レポートLambda自身のロググループの保持期間を短く設定**（デフォルト`ONE_MONTH`） — WAFロググループ自体は実際の監査・保持要件に応じてサイジングしてください。（パターン1では）これがCloudWatch Logsのストレージコストに直接影響します
-4. **ログ量が多くパターン1のCloudWatch Logs取り込みコストが問題になる場合はパターン2を優先** — 上記の本番規模比較を参照
-5. **NAT Gateway / VPCなし** — どのLambdaもプライベートネットワークアクセスを必要としないためVPC外で実行
+1. **Glue クローラーではなくパーティション射影**。クローラーの継続コストがゼロで、新しいデータも即座にクエリ可能（[設計判断5](#5-glue-クローラーではなく-athena-パーティション射影)を参照）
+2. **Athenaクエリ結果のライフサイクル失効設定**（`athenaReport.queryResultsExpirationDays`、デフォルトDev 7日 / Prod 30日）。クエリ結果用S3バケットのストレージコストを制限
+3. **レポートLambda自身のロググループの保持期間を短く設定**（デフォルト`ONE_MONTH`）。WAFロググループ自体は実際の監査・保持要件に応じてサイジングしてください。（パターン1では）これがCloudWatch Logsのストレージコストに直接影響します
+4. **ログ量が多くパターン1のCloudWatch Logs取り込みコストが問題になる場合はパターン2を優先**。上記の本番規模比較を参照
+5. **NAT Gateway / VPCなし**。どのLambdaもプライベートネットワークアクセスを必要としないためVPC外で実行
 
 ## 🔒 セキュリティ考慮事項
 
@@ -259,7 +259,7 @@ export NOTIFICATION_EMAIL_CWLOGS="you@example.com"
 export NOTIFICATION_EMAIL_ATHENA="you@example.com"
 ```
 
-`bin/waf-log-reporting.ts` は、いずれかのプレースホルダーアドレスがまだ使われている場合、synth時に警告を出力します。既存のWAFを対象にする方法は[カスタマイズ](#-カスタマイズ)を参照してください。
+`bin/waf-log-reporting.ts` は、いずれかのプレースホルダーアドレスがまだ使われている場合、synth時に警告を出力します。既存のWAFを対象にする方法は[カスタマイズ](#️-カスタマイズ)を参照してください。
 
 ### 3. デプロイ
 
@@ -431,7 +431,7 @@ sampleWaf: {
 - [CDK Best Practices](https://docs.aws.amazon.com/cdk/v2/guide/best-practices.html)
 
 ### 関連オープンソース
-- **Accompanist** — AWS WAF のログ解析を支援するオープンソースのコマンドラインツール。本レポートをよりリッチな、オフラインCLIベースの形にする場合の参考になります（未検証のURLを掲載しないため、リンクはしていません。直接検索してご確認ください）
+- **Accompanist**。AWS WAF のログ解析を支援するオープンソースのコマンドラインツール。本レポートをよりリッチな、オフラインCLIベースの形にする場合の参考になります（未検証のURLを掲載しないため、リンクはしていません。直接検索してご確認ください）
 
 ### 関連アーキテクチャ
 - [sns-basic](../sns-basic/) – このパターンのパターン1が土台とするシンプルな「CloudWatch Logs → Lambda → SNS」チェーン、およびパターン2のFirehose代替と比較できる直接Lambda書き込みパターン

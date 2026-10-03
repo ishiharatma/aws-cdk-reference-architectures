@@ -2,32 +2,46 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 ## はじめに
 
 このプロジェクトは、AWS CDKを使用してAWSコストに関するアラートを実装するリファレンス実装です。古典的なCloudWatch請求アラームから、Step Functionsによるスケジュール実行型のチャットネイティブなコストダイジェストまで、5つのFinOpsアラートパターンを5つの独立したCDKスタックとして実装しています。
 
-- **パターンA** — AWS Budgets のコストしきい値 → SNS → メール（Stack 1）
-- **パターンB** — AWS Cost Anomaly Detection → SNS → メール（Stack 2）
-- **パターンC** — Budgets と異常検出を1つのSNSトピックに統合し、任意でAWS Chatbot経由でSlackに配信（Stack 3）
-- **パターンD** — 古典的なCloudWatch `EstimatedCharges` 請求アラーム → SNS → メール（Stack 4）
-- **パターンE** — Step Functionsによるスケジュール実行型のコストダイジェストを、AWS Chatbot経由でSlackおよび/またはMicrosoft Teamsに投稿（Stack 5）
+- **パターンA**。AWS Budgets のコストしきい値 → SNS → メール（Stack 1）
+- **パターンB**。AWS Cost Anomaly Detection → SNS → メール（Stack 2）
+- **パターンC**。Budgets と異常検出を1つのSNSトピックに統合し、任意でAWS Chatbot経由でSlackに配信（Stack 3）
+- **パターンD**。古典的なCloudWatch `EstimatedCharges` 請求アラーム → SNS → メール（Stack 4）
+- **パターンE**。Step Functionsによるスケジュール実行型のコストダイジェストを、AWS Chatbot経由でSlackおよび/またはMicrosoft Teamsに投稿（Stack 5）
 
 ### なぜ5パターンなのか
 
 | 特徴 | A（Budgets） | B（異常検出） | C（統合） | D（請求アラーム） | E（コストダイジェスト） |
 | ---- | ------------- | -------------- | --------- | ------------------ | ------------------------- |
-| トリガー | リアクティブ——あらかじめ定義した**既知のしきい値** | リアクティブ——過去の傾向から**逸脱した**支出（ML） | 両方、リアクティブ | リアクティブ——単一の累積支出しきい値 | プロアクティブ——スケジュール（発火にしきい値は不要） |
+| トリガー | リアクティブ（あらかじめ定義した**既知のしきい値** | リアクティブ）過去の傾向から**逸脱した**支出（ML） | 両方、リアクティブ | リアクティブ（単一の累積支出しきい値 | プロアクティブ）スケジュール（発火にしきい値は不要） |
 | 向いている用途 | 「このアカウントは月$Xを超えさせない」 | 「予算内でも普段と違う動きがあれば気づきたい」 | 両リアクティブシグナルを1つのアラートチャネルに集約 | Cost Explorerに依存しない最も古い安全網 | 「今週いくら使ったか、サービス別に教えてほしい」 |
 | セットアップの複雑さ | 低 | 低 | 中（トピックポリシーを共有） | 低（ただしus-east-1固定） | 高（Step Functions + Scheduler + Chatbot） |
 | 配信 | SNS + メール | SNS + メール | SNS + メール + 任意でSlack | SNS + メール | SNS + メール + 任意でSlack/Teams |
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構造](#プロジェクトディレクトリ構造)
+- [実装のポイント](#実装のポイント)
+- [主要コンポーネントと設計ポイント](#主要コンポーネントと設計ポイント)
+- [デプロイと動作確認](#デプロイと動作確認)
+- [テストの実行](#テストの実行)
+- [ベストプラクティスまとめ](#ベストプラクティスまとめ)
+- [料金試算](#料金試算)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
 ![overview](overview.drawio.svg)
 
-### パターンA — AWS Budgets（Stack 1）
+### パターンA：AWS Budgets（Stack 1）
 
 ```text
 CfnBudget（アカウント全体、月次）  ─┐
@@ -43,7 +57,7 @@ CfnBudget（サービスフィルタ）      ─┴─→ SNSトピック（budg
 
 各予算は `{ type: 'ACTUAL' | 'FORECASTED', thresholdPercent }` の配列で通知ルールを設定でき、デフォルトは予測100%以上・実コスト80%以上・実コスト100%以上です（詳細は下記「実装のポイント」の「1. 動的な予算通知ルール」を参照）。
 
-### パターンB — AWS Cost Anomaly Detection（Stack 2）
+### パターンB：AWS Cost Anomaly Detection（Stack 2）
 
 ```text
 CfnAnomalyMonitor（DIMENSIONAL、SERVICE）
@@ -55,7 +69,7 @@ CfnAnomalyMonitor（DIMENSIONAL、SERVICE）
 
 > **SNS配信には `frequency: IMMEDIATE` が必須です。** AWS Cost Anomaly DetectionでSNSサブスクライバーがサポートされるのは `IMMEDIATE` サブスクリプションのみで、`DAILY`/`WEEKLY` はメール専用です。メールでの日次サマリーも併用したい場合は、同じモニターを参照する2つ目の `CfnAnomalySubscription`（frequency: `DAILY`、`EMAIL` サブスクライバー）を追加してください。
 
-### パターンC — 統合アラート（Slackは任意）（Stack 3）
+### パターンC：統合アラート（Slackは任意）（Stack 3）
 
 ```text
 CfnBudget                                              ─┐
@@ -70,13 +84,13 @@ CfnAnomalySubscription（Stack 2のモニターにアタッチ）    ─┴─�
 > > "You can create one AWS services managed monitor plus one additional AWS managed monitor (linked account, cost allocation tag, or cost category) per management account."
 > > "AWS managed monitors for linked accounts, cost allocation tags, and cost categories can only be created in management accounts."
 > > （訳: 「AWS servicesの管理型モニターを1つ、さらに管理アカウントごとにもう1つだけ（linked account／cost allocation tag／cost categoryのいずれか）追加のAWS管理型モニターを作成できます」「linked account／cost allocation tag／cost category用のAWS管理型モニターは管理アカウントでしか作成できません」）
-> > — [Extending AWS managed monitors in AWS Cost Anomaly Detection](https://aws.amazon.com/blogs/aws-cloud-financial-management/extending-aws-managed-monitors-in-cost-anomaly-detection/)（AWS Cloud Financial Managementブログ）
+> >。[Extending AWS managed monitors in AWS Cost Anomaly Detection](https://aws.amazon.com/blogs/aws-cloud-financial-management/extending-aws-managed-monitors-in-cost-anomaly-detection/)（AWS Cloud Financial Managementブログ）
 >
-> Stack 2が既にアカウント内で唯一の`SERVICE`次元モニターを作成しています。もしStack 3が自分でも`SERVICE`モニターを作成しようとすると、Stack 2デプロイ後は`HandlerErrorCode: AlreadyExists`で必ず失敗します（実際にこのリファレンスアーキテクチャをデプロイして確認済みです）。次元を`LINKED_ACCOUNT`などに変えても綺麗には回避できません——それらのAWS管理型モニターはAWS Organizationsの**管理アカウント**でしか作成できず、多くの検証用アカウントはそれに該当しないためです。代わりに、Stack 3はStack 2のモニターARNをprops（`anomalyMonitorArn`）として受け取り、そこに*追加の*`CfnAnomalySubscription`をアタッチします——1つのモニターに複数のサブスクリプションを紐づけるのは元々AWSがサポートしている構成であり、苦肉の回避策ではありません。Stage側でStack 2をStack 3より先にインスタンス化し、`anomalyStack.monitorArn`を渡すことで、CDKが実際のCloudFormationクロススタックexport/importに変換してくれます。
+> Stack 2が既にアカウント内で唯一の`SERVICE`次元モニターを作成しています。もしStack 3が自分でも`SERVICE`モニターを作成しようとすると、Stack 2デプロイ後は`HandlerErrorCode: AlreadyExists`で必ず失敗します（実際にこのリファレンスアーキテクチャをデプロイして確認済みです）。次元を`LINKED_ACCOUNT`などに変えても綺麗には回避できません（それらのAWS管理型モニターはAWS Organizationsの**管理アカウント**でしか作成できず、多くの検証用アカウントはそれに該当しないためです。代わりに、Stack 3はStack 2のモニターARNをprops（`anomalyMonitorArn`）として受け取り、そこに*追加の*`CfnAnomalySubscription`をアタッチします）1つのモニターに複数のサブスクリプションを紐づけるのは元々AWSがサポートしている構成であり、苦肉の回避策ではありません。Stage側でStack 2をStack 3より先にインスタンス化し、`anomalyStack.monitorArn`を渡すことで、CDKが実際のCloudFormationクロススタックexport/importに変換してくれます。
 >
-> **Stack 2とStack 3を両方デプロイすると、条件を満たす異常はすべて2回通知されます**——Stack 2のサブスクリプション経由（→メール）と、Stack 3のサブスクリプション経由（→メール＋任意でSlack）の両方が、同じモニターを見ているためです。`params.anomalyDetection.unifiedEscalation`（`parameters/dev-params.ts`を参照）でStack 3のサブスクリプションにより厳しいしきい値を設定できるので、Stack 2のベースのサブスクリプションより大きな異常だけが統合/Slackチャンネルに届くようにできます——これは「1つのモニターが複数の重大度でサブスクリプションにデータを流せる」ことを示すためのものであり、**両方のしきい値を満たす異常についての重複自体はなくなりません**。実運用ではStack 2かStack 3の**どちらか一方**を異常検出用に使ってください。
+> **Stack 2とStack 3を両方デプロイすると、条件を満たす異常はすべて2回通知されます**（Stack 2のサブスクリプション経由（→メール）と、Stack 3のサブスクリプション経由（→メール＋任意でSlack）の両方が、同じモニターを見ているためです。`params.anomalyDetection.unifiedEscalation`（`parameters/dev-params.ts`を参照）でStack 3のサブスクリプションにより厳しいしきい値を設定できるので、Stack 2のベースのサブスクリプションより大きな異常だけが統合/Slackチャンネルに届くようにできます）これは「1つのモニターが複数の重大度でサブスクリプションにデータを流せる」ことを示すためのものであり、**両方のしきい値を満たす異常についての重複自体はなくなりません**。実運用ではStack 2かStack 3の**どちらか一方**を異常検出用に使ってください。
 
-### パターンD — 古典的なCloudWatch請求アラーム（Stack 4）
+### パターンD：古典的なCloudWatch請求アラーム（Stack 4）
 
 ```text
 CloudWatchアラーム（AWS/Billing EstimatedCharges） → SNSトピック（cloudwatch.amazonaws.com がPublish可） → メール
@@ -84,10 +98,10 @@ CloudWatchアラーム（AWS/Billing EstimatedCharges） → SNSトピック（c
 
 最も古いAWSコストアラート機構で、網羅性のため、およびCost Explorerに依存しないフォールバックとして含めています。このスタックが自動設定**できない**、アカウントレベルの前提条件が2つあります。
 
-1. **「請求アラートを受け取る」** をBillingの環境設定で一度だけ手動で有効化する必要があります——このアカウント設定にはCloudFormation/CDKリソースが存在せず、有効化しないと `EstimatedCharges` データはそもそも発行されません。
+1. **「請求アラートを受け取る」** をBillingの環境設定で一度だけ手動で有効化する必要があります。このアカウント設定にはCloudFormation/CDKリソースが存在せず、有効化しないと `EstimatedCharges` データはそもそも発行されません。
 2. `AWS/Billing` メトリクスは**必ずus-east-1でのみ発行されます**。デフォルトリージョンに関係なく、このスタックの `env.region` はStage内で他の4スタックとは独立して `us-east-1` に固定しています。
 
-### パターンE — Slack/Microsoft Teamsへのスケジュール実行型コストダイジェスト（Stack 5）
+### パターンE：Slack/Microsoft Teamsへのスケジュール実行型コストダイジェスト（Stack 5）
 
 ```text
 EventBridge Scheduler（cron）
@@ -99,7 +113,7 @@ EventBridge Scheduler（cron）
   → SNSトピック → AWS Chatbot → SlackおよびMicrosoft Teams（どちらか一方または両方）
 ```
 
-パターンA〜Dが「しきい値超過を教えて」というリアクティブなプルであるのに対し、これはスケジュールに基づく**プロアクティブなプッシュ**です——「使った金額を教えて」。もともとMicrosoft Teamsを対象に手書きされたCloudFormationテンプレートを元にしており、このCDK版では `params.notification.{slack,teams}` のどちらが設定されているかだけでSlack・Teams・両方のいずれにも対応します。
+パターンA〜Dが「しきい値超過を教えて」というリアクティブなプルであるのに対し、これはスケジュールに基づく**プロアクティブなプッシュ**です。「使った金額を教えて」。もともとMicrosoft Teamsを対象に手書きされたCloudFormationテンプレートを元にしており、このCDK版では `params.notification.{slack,teams}` のどちらが設定されているかだけでSlack・Teams・両方のいずれにも対応します。
 
 ---
 
@@ -110,7 +124,7 @@ EventBridge Scheduler（cron）
 - AWS CDK CLI（`npm install -g aws-cdk`）
 - TypeScriptの基本知識
 - [AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) と [Cost Anomaly Detection](https://docs.aws.amazon.com/cost-management/latest/userguide/manage-ad.html) が有効なAWSアカウント（Cost Explorerを一度は有効化しておく必要があります）
-- （Stack 4）Billingの環境設定（アカウント設定）で「請求アラートを受け取る」を一度有効化しておくこと——詳細は上記「パターンD」を参照
+- （Stack 4）Billingの環境設定（アカウント設定）で「請求アラートを受け取る」を一度有効化しておくこと、詳細は上記「パターンD」を参照
 - （任意、Stack 3/5のSlack配信を使う場合）[AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html) で認可済みのSlackワークスペース
 - （任意、Stack 5のTeams配信を使う場合）[AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/teams-setup.html) で認可済みのMicrosoft Teamsチーム
 
@@ -149,7 +163,7 @@ budgets-cost-anomaly-detection/
 │       └── budgets-cost-anomaly-detection.test.ts  # 詳細なアサーションテスト
 ```
 
-このパターンでは、リポジトリ全体で（このワークスペースに限らず）再利用可能な7つのコンストラクトを `infrastructure/common/constructs/cost/` にも追加しています——詳細は下記「実装のポイント」の「5. 再利用可能なコストコンストラクト」を参照。
+このパターンでは、リポジトリ全体で（このワークスペースに限らず）再利用可能な7つのコンストラクトを `infrastructure/common/constructs/cost/` にも追加しています。詳細は下記「実装のポイント」の「5. 再利用可能なコストコンストラクト」を参照。
 
 ```text
 common/
@@ -208,7 +222,7 @@ const notificationsWithSubscribers = notificationRules.map((rule) => ({
 
 ### 2. SNSトピックポリシーは省略できない
 
-AWS BudgetsとAWS Cost Anomaly Detectionはどちらも、IAMロールの引き受けではなく**サービスプリンシパル**としてSNSにPublishします。CloudWatchアラームアクションも同様の明示的な許可が必要です。これがないと通知は黙って失敗します——予算/サブスクリプション/アラームの設定は正しく見えても、何も届きません。共有の `CostAlertTopic` コンストラクトが、この3種類の許可をすべてブール値フラグの背後に集約しています。
+AWS BudgetsとAWS Cost Anomaly Detectionはどちらも、IAMロールの引き受けではなく**サービスプリンシパル**としてSNSにPublishします。CloudWatchアラームアクションも同様の明示的な許可が必要です。これがないと通知は黙って失敗します。予算/サブスクリプション/アラームの設定は正しく見えても、何も届きません。共有の `CostAlertTopic` コンストラクトが、この3種類の許可をすべてブール値フラグの背後に集約しています。
 
 ```typescript
 // common/constructs/cost/cost-alert-topic.ts（簡略化）
@@ -226,7 +240,7 @@ if (props.allowCostAnomalyDetectionPublish) { /* costalerts.amazonaws.com、Sour
 if (props.allowCloudWatchAlarmPublish) { topic.grantPublish(new iam.ServicePrincipal('cloudwatch.amazonaws.com')); }
 ```
 
-Cost Anomaly Detection側のステートメントは `aws:SourceAccount` の条件だけで十分です——AWS公式のサンプルでもこのサービスには `SourceArn` のスコープ指定はありません。また、CloudWatchの `cloudwatch-actions.SnsAction` は、他のアラームアクションで期待するような自動許可を**行いません**。そのため、パターンDでは明示的な `allowCloudWatchAlarmPublish` フラグが必要です。
+Cost Anomaly Detection側のステートメントは `aws:SourceAccount` の条件だけで十分です。AWS公式のサンプルでもこのサービスには `SourceArn` のスコープ指定はありません。また、CloudWatchの `cloudwatch-actions.SnsAction` は、他のアラームアクションで期待するような自動許可を**行いません**。そのため、パターンDでは明示的な `allowCloudWatchAlarmPublish` フラグが必要です。
 
 > **これらのトピックにカスタマー管理のKMSキーを追加しないでください。** BudgetsとCost Anomaly Detectionのトラブルシューティングドキュメントには、トピックの暗号化が通知の黙った失敗の典型的な原因として明記されています。サービスプリンシパル側にもキーポリシーで `kms:GenerateDataKey*`/`kms:Decrypt` の許可が必要になるためです。これらのトピックはデフォルト（保管時暗号化なし）のSNS設定のままにし、代わりに `enforceSSL: true` で転送時の暗号化を強制しています（根拠は `test/compliance/cdk-nag.test.ts` の cdk-nag 抑制コメントを参照）。
 
@@ -257,7 +271,7 @@ thresholdExpression: JSON.stringify({
 
 ### 4. AWS Chatbotのガードレールポリシーのデフォルトは `AdministratorAccess`（SlackもTeamsも）
 
-`SlackChannelConfigurationProps.guardrailPolicies` と `CfnMicrosoftTeamsChannelConfigurationProps.guardrailPolicies` はどちらも、未指定のままだとAWS管理の `AdministratorAccess` ポリシーがデフォルトで適用されます。**空配列は安全な代替になりません**——CDKのsynthは空のリストプロパティを合成後のCloudFormationテンプレートから完全に取り除いてしまうため、API上ではプロパティ未設定の扱いとなり、結局 `AdministratorAccess` のデフォルトが適用されてしまいます。
+`SlackChannelConfigurationProps.guardrailPolicies` と `CfnMicrosoftTeamsChannelConfigurationProps.guardrailPolicies` はどちらも、未指定のままだとAWS管理の `AdministratorAccess` ポリシーがデフォルトで適用されます。**空配列は安全な代替になりません**。CDKのsynthは空のリストプロパティを合成後のCloudFormationテンプレートから完全に取り除いてしまうため、API上ではプロパティ未設定の扱いとなり、結局 `AdministratorAccess` のデフォルトが適用されてしまいます。
 
 `SafeSlackChannelConfiguration` と `SafeMicrosoftTeamsChannelConfiguration`（`common/constructs/cost/`）は、チャット配信が必要なすべてのスタックに対してこのギャップを一度だけ塞ぎ、呼び出し元が明示的にガードレールを指定しない場合は `ReadOnlyAccess` を代わりに適用します。
 
@@ -268,7 +282,7 @@ guardrailPolicies:
         : [iam.ManagedPolicy.fromAwsManagedPolicyName('ReadOnlyAccess')],
 ```
 
-Microsoft TeamsにはCDKのL2コンストラクトが一切存在しません——`SafeMicrosoftTeamsChannelConfiguration` は、AWS公式のサンプルChatbotポリシーが使用する最小権限の「通知専用」IAMロール（`cloudwatch:Describe*`/`Get*`/`List*` のみ）も自動生成するため、呼び出し側で手動で組み立て直す必要がありません。
+Microsoft TeamsにはCDKのL2コンストラクトが一切存在しません。`SafeMicrosoftTeamsChannelConfiguration` は、AWS公式のサンプルChatbotポリシーが使用する最小権限の「通知専用」IAMロール（`cloudwatch:Describe*`/`Get*`/`List*` のみ）も自動生成するため、呼び出し側で手動で組み立て直す必要がありません。
 
 ### 5. 再利用可能なコストコンストラクト（`common/constructs/cost/`）
 
@@ -282,9 +296,9 @@ Microsoft TeamsにはCDKのL2コンストラクトが一切存在しません—
 | `BillingAlarm` | `AWS/Billing EstimatedCharges` のCloudWatchアラーム | Stack 4 |
 | `SafeSlackChannelConfiguration` | 安全なガードレールデフォルトを持つ `chatbot.SlackChannelConfiguration` | Stack 3, Stack 5 |
 | `SafeMicrosoftTeamsChannelConfiguration` | 最小権限ロール + 安全なガードレールデフォルトを持つ `chatbot.CfnMicrosoftTeamsChannelConfiguration` | Stack 5 |
-| `CostDigest` | Stack 5のパターンまるごと: EventBridge Scheduler → JSONata Step Functions（`GetCostAndUsage` → `PublishCostDigest`） → SNS → 任意でSlack/Teams | まだ未接続——下記の注記を参照 |
+| `CostDigest` | Stack 5のパターンまるごと: EventBridge Scheduler → JSONata Step Functions（`GetCostAndUsage` → `PublishCostDigest`） → SNS → 任意でSlack/Teams | まだ未接続。下記の注記を参照 |
 
-`CostDigest` はStack 5のパターン全体（スケジューラ、ステートマシン、トピック、任意のChatbot配信）を、少数のプレーンなprops（`project`、`environment`、スケジュール/しきい値/言語、`emails`、任意の`slack`/`teams`）の背後にまとめており、このワークスペースの`EnvParams`型に依存せずに他のワークスペースからも再利用できます。**このワークスペースのStack 5は、依然として自前のインライン実装を使っています**（`CostDigest`を呼び出す形にはまだリファクタリングしていません）——まずは独立した再利用可能な部品としてコンストラクトを追加した段階で、両者の実装は機能的には同一（同じリソース構成、同じロケール対応のメッセージビルダー）ですが、現状は別々のコードとして保守されています。
+`CostDigest` はStack 5のパターン全体（スケジューラ、ステートマシン、トピック、任意のChatbot配信）を、少数のプレーンなprops（`project`、`environment`、スケジュール/しきい値/言語、`emails`、任意の`slack`/`teams`）の背後にまとめており、このワークスペースの`EnvParams`型に依存せずに他のワークスペースからも再利用できます。**このワークスペースのStack 5は、依然として自前のインライン実装を使っています**（`CostDigest`を呼び出す形にはまだリファクタリングしていません）。まずは独立した再利用可能な部品としてコンストラクトを追加した段階で、両者の実装は機能的には同一（同じリソース構成、同じロケール対応のメッセージビルダー）ですが、現状は別々のコードとして保守されています。
 
 ### 6. コストダイジェストのJSONataステートマシン（Stack 5）
 
@@ -317,7 +331,7 @@ new sfn.StateMachine(this, 'CostDigestStateMachine', {
 });
 ```
 
-> **知っておく価値のあるJS文字列エスケープの落とし穴。** description メッセージは、`"\n"` のようなJSONata文字列リテラルを連結して、レンダリングされるチャットメッセージに改行を強制しています。これをTypeScriptのテンプレートリテラルでそのまま `\n` と書くと、*JavaScript* がそのエスケープを即座に解釈してしまい——JS文字列内に実際の改行文字が生成されます。ただしこれはJSONシリアライズを経由して2文字の `\n` に戻るため、たまたま動作します。実際に静かに壊れるのは正規表現 `\s*`（`$replace(/^(AWS|Amazon)\s*/, "")` 内）のケースです。`\s` はJavaScriptの文字列エスケープとして認識**されない**ため、テンプレートリテラル内の裸の `\s` はJSエンジンによってバックスラッシュが静かに落とされ、単なる `s` になってしまいます——結果として正規表現が `s*` になり、サービス名のクリーンアップが静かに壊れます。`\\s` と書くことで、JS文字列内にリテラルなバックスラッシュが残り、JSONの往復を経てもJSONataの正規表現パーサーに正しく届きます。この2つの紛らわしいエスケープは、JSONata仕様を読むだけでなく、テストを書く前に実際に合成された `cdk synth` の出力を検査することで発見しました。
+> **知っておく価値のあるJS文字列エスケープの落とし穴。** description メッセージは、`"\n"` のようなJSONata文字列リテラルを連結して、レンダリングされるチャットメッセージに改行を強制しています。これをTypeScriptのテンプレートリテラルでそのまま `\n` と書くと、*JavaScript* がそのエスケープを即座に解釈してしまい（JS文字列内に実際の改行文字が生成されます。ただしこれはJSONシリアライズを経由して2文字の `\n` に戻るため、たまたま動作します。実際に静かに壊れるのは正規表現 `\s*`（`$replace(/^(AWS|Amazon)\s*/, "")` 内）のケースです。`\s` はJavaScriptの文字列エスケープとして認識**されない**ため、テンプレートリテラル内の裸の `\s` はJSエンジンによってバックスラッシュが静かに落とされ、単なる `s` になってしまいます）結果として正規表現が `s*` になり、サービス名のクリーンアップが静かに壊れます。`\\s` と書くことで、JS文字列内にリテラルなバックスラッシュが残り、JSONの往復を経てもJSONataの正規表現パーサーに正しく届きます。この2つの紛らわしいエスケープは、JSONata仕様を読むだけでなく、テストを書く前に実際に合成された `cdk synth` の出力を検査することで発見しました。
 
 title/descriptionのJSONata式は、1回きりのインライン記述ではなく、2つの言語別ビルダー関数（`buildCostDigestTitleExpression`/`buildCostDigestDescriptionExpression`）から生成しています。どちらの言語でメッセージを組み立てるかは `params.costDigest.locale`（`'ja' | 'en'`、デフォルト `'ja'`）で切り替えられます。
 
@@ -329,7 +343,7 @@ costDigest: {
 },
 ```
 
-`EventBridge Scheduler` の `StepFunctionsStartExecution` ターゲット（`aws-scheduler-targets`）は、スケジューラ自身の実行ロールを自動生成・自動付与します——このパターンの元になったCloudFormationテンプレートとは異なり、`states:StartExecution` のIAMステートメントを手動で書く必要はありません。
+`EventBridge Scheduler` の `StepFunctionsStartExecution` ターゲット（`aws-scheduler-targets`）は、スケジューラ自身の実行ロールを自動生成・自動付与します。このパターンの元になったCloudFormationテンプレートとは異なり、`states:StartExecution` のIAMステートメントを手動で書く必要はありません。
 
 ---
 
@@ -339,7 +353,7 @@ costDigest: {
 | -------------- | ------------ |
 | **SNSトピック** | `enforceSSL: true`。CMKは使用しない（理由は上記）。`CostAlertTopic` 経由でスタックごとに1つのトピックを構築 |
 | **CfnBudget** | `budgetType: COST`、`timeUnit: MONTHLY`。通知ルールは `BudgetNotificationRule[]` パラメータで駆動 |
-| **CfnAnomalyMonitor** | デフォルトで `monitorType: DIMENSIONAL`、`monitorDimension: SERVICE`（サービス単位の異常検出）。Stack 2のみが作成——AWSはアカウントあたり`SERVICE`モニターを1つしか許可しない |
+| **CfnAnomalyMonitor** | デフォルトで `monitorType: DIMENSIONAL`、`monitorDimension: SERVICE`（サービス単位の異常検出）。Stack 2のみが作成。AWSはアカウントあたり`SERVICE`モニターを1つしか許可しない |
 | **CfnAnomalySubscription** | `frequency: IMMEDIATE`（SNS配信に必須）。`thresholdExpression` は割合としきい値をANDで結合。Stack 3は新規モニターを作らず、Stack 2のモニターに2つ目のサブスクリプションをアタッチする |
 | **SlackChannelConfiguration（Stack 3, 5、任意）** | `params.notification.slack` 設定時のみ作成。`SafeSlackChannelConfiguration` によりガードレールは `ReadOnlyAccess` に固定し、`AdministratorAccess` デフォルトに任せない |
 | **MicrosoftTeamsChannelConfiguration（Stack 5、任意）** | `params.notification.teams` 設定時のみ作成。`SafeMicrosoftTeamsChannelConfiguration` により最小権限の通知専用ロール + `ReadOnlyAccess` ガードレール |
@@ -489,9 +503,9 @@ npm run test:compliance -w budgets-cost-anomaly-detection
 1. **パターンA（Budgets）**: 既知の固定コスト上限に最適。SNSトピックポリシーを明示しないと通知が黙って失敗する。通知しきい値は自然にデータ駆動で設計できる。
 2. **パターンB（異常検出）**: 予算内であっても想定外の支出を検知したい場合に最適。SNS配信には `IMMEDIATE` 頻度が必須で、異常検出の `thresholdExpression` は型付きのCDKプロパティではなく手組みのJSON文字列である。
 3. **パターンC（統合）**: シグナルごとに別々のトピックを管理するより、1つのアラートチャネルに集約する方が運用上現実的。ただしStack 2が存在する状態では自分専用の異常検出モニターは持てない（AWSがアカウント・次元ごとにAWS管理型モニターを1つに制限しているため）ので、実際のクロススタック参照でStack 2のモニターに追加サブスクリプションをアタッチする。
-4. **パターンD（請求アラーム）**: 最もシンプルな安全網だが、CDKでは表現できない2つのアカウントレベルの罠がある——「請求アラートを受け取る」の手動での一度きりの有効化と、厳格な `us-east-1` リージョン要件。
+4. **パターンD（請求アラーム）**: 最もシンプルな安全網だが、CDKでは表現できない2つのアカウントレベルの罠がある。「請求アラートを受け取る」の手動での一度きりの有効化と、厳格な `us-east-1` リージョン要件。
 5. **パターンE（コストダイジェスト）**: プロアクティブでスケジュールされたダイジェストは、他の4つのリアクティブ/しきい値型パターンをうまく補完する。`sfn.CustomState` で直接ASL/JSONataを書くことでLambdaを完全に回避できるが、JS → JSON → JSONataの境界をまたぐ文字列エスケープには注意が必要。
-6. **AWS Chatbotの `AdministratorAccess` ガードレールデフォルト**はSlackとMicrosoft Teamsの両方の設定に適用され、空配列を渡してもそれを無効化できない（CDKがsynth出力から空リストを除去してしまうため）——常に明示的で最小権限のガードレールポリシーを固定すること。
+6. **AWS Chatbotの `AdministratorAccess` ガードレールデフォルト**はSlackとMicrosoft Teamsの両方の設定に適用され、空配列を渡してもそれを無効化できない（CDKがsynth出力から空リストを除去してしまうため）。常に明示的で最小権限のガードレールポリシーを固定すること。
 7. スタック間で繰り返される配線（トピックポリシー、ガードレールの安全性、Budget/異常検出のリソース形状）は、スタックごとにコピー&ペーストするのではなく、一度 `common/constructs/cost/` のコンストラクトとして切り出す価値がある。
 
 ---

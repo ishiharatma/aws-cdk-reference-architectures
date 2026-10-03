@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-CloudFront%20%7C%20S3%20%7C%20WAF-orange?style=flat-square)
 
 ## はじめに
@@ -26,6 +26,21 @@
 | クロスリージョンWAFスタック | Web ACLと、それが必要とするIPセット/ロギングリソースは、us-east-1に固定されたスタックへ分離し、そのARNを`crossRegionReferences: true`経由でメインスタックへ渡す — 別リージョンにデプロイされたディストリビューションと組み合わせてCLOUDFRONTスコープのWAFv2リソースが必要な場合に再利用できるパターン |
 | 本物の障害を隠さないSPA向けエラーマッピング | `403`/`404`(オブジェクト未存在・非公開アクセス拒否)はSPAの`index.html`へ書き換える一方、`500`〜`504`(オリジン/エッジの本物のエラー)は元のステータスコードを維持し、生のエラー本文の代わりに専用のわかりやすいページを表示する |
 | `approvalTopicArn`的な単一フラグでの切り替え | `enableWaf`と`geoRestrictionCountries`はそれぞれ単一の任意パラメータ — 省略すれば対応するリソース/制限自体が作成されない |
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [データフロー](#データフロー)
+- [実装のポイント](#実装のポイント)
+- [デプロイガイド](#デプロイガイド)
+- [使用方法](#使用方法)
+- [テスト](#テスト)
+- [カスタマイズ](#カスタマイズ)
+- [コスト最適化](#コスト最適化)
+- [セキュリティの考慮事項](#セキュリティの考慮事項)
+- [トラブルシューティング](#トラブルシューティング)
+- [クリーンアップ](#クリーンアップ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 

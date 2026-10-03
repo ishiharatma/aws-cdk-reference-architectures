@@ -2,20 +2,20 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 Amazon ECR Cross-Region Replication (CRR) from Tokyo (`ap-northeast-1`) to Osaka (`ap-northeast-3`). By default, CRR auto-creates the destination repository on first replicated push — and an auto-created repository has **no lifecycle policy**, so images accumulate there forever. This pattern avoids that trap by pre-creating both repositories independently, each with its own lifecycle policy, then enabling registry-wide replication in Tokyo that targets the repository Osaka already owns.
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [References](#-references)
 

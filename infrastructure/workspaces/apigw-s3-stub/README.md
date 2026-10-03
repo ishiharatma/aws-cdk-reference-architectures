@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 200 (Intermediate)**
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 A mock/stub HTTP API built entirely from an Amazon API Gateway REST API wired directly to Amazon S3 via an **AWS Service integration** -- no Lambda function anywhere in the request path. Every HTTP method reads a canned JSON file from S3 (`s3:GetObject`); extending the API is just dropping a new file into the bucket, no redeploy required. Useful as a lightweight fake backend for frontend development, contract testing, or demos where a full backend isn't ready yet.
 
@@ -11,7 +11,7 @@ Based on the pattern described in [「API Gateway + S3でとりあえず動くAP
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
@@ -19,7 +19,7 @@ Based on the pattern described in [「API Gateway + S3でとりあえず動くAP
 - [Deployment Guide](#-deployment-guide)
 - [Usage](#usage)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)

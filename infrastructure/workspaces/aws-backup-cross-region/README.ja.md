@@ -2,20 +2,20 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (上級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 東京リージョン(`ap-northeast-1`)の**EC2インスタンス・RDSデータベース・S3バケット・CloudFormationスタック全体**を、リソースタイプ別に選択条件を分けることなく**単一のタグベースBackup Selection**でまとめて保護し、すべての復旧ポイントを大阪リージョン(`ap-northeast-3`)の事前作成済みセカンダリVaultへコピーする、単一のAWS Backup Planパターン。
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティに関する考慮事項](#-セキュリティに関する考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイガイド](#-デプロイガイド)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [参考資料](#-参考資料)
 
@@ -69,12 +69,12 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 **決定**: `AwsBackupCrrTokyoStack`が宣言する`BackupSelection`は`backup.BackupResource.fromTag(backupTagKey, backupTagValue)`を使った1つのみ。EC2・RDS・S3・CloudFormation用に個別のSelectionは作らない。
 
 **根拠**:
-- ✅ AWS Backupのタグベース選択はリソースタイプを問わない — マッチするタグを持つアカウント/リージョン内の**あらゆる**サポート対象リソースタイプを自動的に検出する。1つのSelectionで実際に4種類すべてをカバーできる。
+- ✅ AWS Backupのタグベース選択はリソースタイプを問わない。マッチするタグを持つアカウント/リージョン内の**あらゆる**サポート対象リソースタイプを自動的に検出する。1つのSelectionで実際に4種類すべてをカバーできる。
 - ✅ Backup Planへの新規リソース追加は1行の変更(`Tags.of(resource).add('Backup', 'true')`)で済み、Backup Plan/Selection側のCDK変更は一切不要。
-- ✅ このパターンの核となる価値 — 無関係な複数スタック(`SampleAppStack`と`AwsBackupCrrTokyoStack`)や複数リソースタイプにまたがる、単一の中央集権的Backup Plan — を体現している。
+- ✅ このパターンの核となる価値。無関係な複数スタック(`SampleAppStack`と`AwsBackupCrrTokyoStack`)や複数リソースタイプにまたがる、単一の中央集権的Backup Plan。を体現している。
 
 **トレードオフ**:
-- ❌ タグベース選択は粒度が粗い — リージョン内で`Backup=true`が付いていれば、無関係な理由で追加されたリソースも含まれてしまう。ARNベースの選択であればこのトレードオフを精度側に振れる。
+- ❌ タグベース選択は粒度が粗い。リージョン内で`Backup=true`が付いていれば、無関係な理由で追加されたリソースも含まれてしまう。ARNベースの選択であればこのトレードオフを精度側に振れる。
 - ❌ タグ付けを忘れたリソースは静かにバックアップ対象から除外される。CDK側に「本来含めるべきリソースが未タグである」ことを検知するガードは存在しない。
 
 ### 2. クロスリージョンのCDK参照ではなく、決定的なコピー先Vault ARNを構築する
@@ -94,18 +94,18 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 **決定**: プライマリ(東京)Vaultの復旧ポイントは35日で失効し、セカンダリ(大阪)Vaultへのコピーは90日保持する。それぞれ`primaryRetentionDays`/`copyRetentionDays`として独立して設定可能。
 
 **根拠**:
-- ✅ コピー先のライフサイクルがコピー元と一致する必要はないことを示している — 実務でもよくある要件(DRリージョンのみコンプライアンス上長期保持が必要、あるいは検知に時間がかかるインシデントに備えてDRリージョンだけ意図的に深い履歴を持たせる、など)。
+- ✅ コピー先のライフサイクルがコピー元と一致する必要はないことを示している。実務でもよくある要件(DRリージョンのみコンプライアンス上長期保持が必要、あるいは検知に時間がかかるインシデントに備えてDRリージョンだけ意図的に深い履歴を持たせる、など)。
 - ✅ コストと保持ポリシーをリージョンごとに独立してチューニングできる。
 
 **トレードオフ**:
-- ❌ 大阪側の保持期間が長い分、時間の経過とともに東京より多くの復旧ポイント(=より多くのストレージコスト)が蓄積する — [コスト最適化](#-コスト最適化)を参照。
+- ❌ 大阪側の保持期間が長い分、時間の経過とともに東京より多くの復旧ポイント(=より多くのストレージコスト)が蓄積する。[コスト最適化](#-コスト最適化)を参照。
 
 ### 4. コピーアクションによる自動作成に任せず、セカンダリVaultを事前作成する
 
 **決定**: `AwsBackupCrrOsakaStack`が専用のKMSキー付きで大阪Vaultを明示的に作成し、`AwsBackupCrrTokyoStack`より先にデプロイされる。
 
 **根拠**:
-- ✅ コピーアクションによって自動作成されたVaultはAWS Backupのデフォルト(AWS所有)暗号化キーを使用し、カスタマーマネージドKMSキーにはならない — 事前作成することで、レプリカ側にも独自のローテーション対応CMKを持たせられる。
+- ✅ コピーアクションによって自動作成されたVaultはAWS Backupのデフォルト(AWS所有)暗号化キーを使用し、カスタマーマネージドKMSキーにはならない。事前作成することで、レプリカ側にも独自のローテーション対応CMKを持たせられる。
 - ✅ 同一アカウント内のクロスリージョンコピーには、コピー先Vaultへの**Vaultアクセス(リソースベース)ポリシーは不要**(クロス**アカウント**コピーの場合のみ必要)。これにより大阪スタックを最小限に保てる。
 
 **トレードオフ**:
@@ -118,7 +118,7 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 | **運用上の優秀性** | 両Vaultスタックが`CfnOutput`(`VaultArnOutput`)を出力し検証を容易化。タグ1つで新規リソースをBackup Planに追加できる。`check-backup-status.sh`によりVault・Plan・Selection・直近ジョブ状況をスクリプトでエンドツーエンド検証できる |
 | **セキュリティ** | 両Vaultともローテーション有効なKMSキーで暗号化。AWS BackupのIAMロールはAWS自身のマネージドサービスロールポリシーのみ使用(カスタムワイルドカード権限なし)。RDSストレージも暗号化 |
 | **信頼性** | クロスリージョンにコピーされる日次バックアップが東京リージョン全体の障害から保護。`tokyoStack.addDependency(osakaStack)`によりVault作成と最初のコピージョブの間の競合状態を排除 |
-| **パフォーマンス効率** | AWS Backupのオーケストレーション・スケジューリング・クロスリージョンコピーはすべてフルマネージド — カスタムのポーリング/オーケストレーション用コンピュートは不要 |
+| **パフォーマンス効率** | AWS Backupのオーケストレーション・スケジューリング・クロスリージョンコピーはすべてフルマネージド。カスタムのポーリング/オーケストレーション用コンピュートは不要 |
 | **コスト最適化** | Vaultごとに独立した保持期間(プライマリ35日/セカンダリ90日)により、リージョンごとにストレージ増加を個別に抑制。[コスト最適化](#-コスト最適化)を参照 |
 | **持続可能性** | サンプルワークロード自体(バックアップ対象を用意するためのEC2/RDS)以外にアイドルコンピュートは存在しない。AWS Backupのスケジューリングはマネージド基盤上で実行される |
 
@@ -141,13 +141,13 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 合計(AWS Backup Vault/コピーのみ):                             ~$9-10/月
 ```
 
-*数値はあくまで概算・目安です。AWS Backupのストレージ/コピー料金はリージョンやリソースタイプによって異なり、時間とともに変動します。必ず[AWS Pricing Calculator](https://calculator.aws/)で最新料金をご確認ください。このデモの合計コストはサンプルのEC2/RDS/NAT Gatewayワークロードが支配的です — 実際の導入では、AWS Backupは既に稼働中のワークロードに追加する形になるため、実質的な追加コストは上記のバックアップストレージ/コピー分のみです。*
+*数値はあくまで概算・目安です。AWS Backupのストレージ/コピー料金はリージョンやリソースタイプによって異なり、時間とともに変動します。必ず[AWS Pricing Calculator](https://calculator.aws/)で最新料金をご確認ください。このデモの合計コストはサンプルのEC2/RDS/NAT Gatewayワークロードが支配的です。実際の導入では、AWS Backupは既に稼働中のワークロードに追加する形になるため、実質的な追加コストは上記のバックアップストレージ/コピー分のみです。*
 
 ### コスト最適化戦略
 
-1. **参照頻度が低いリージョンほど保持期間を短く** — 本パターンでは、運用上「本番」として頻繁にリストアが参照されるであろう東京を短め(35日)に、DRリージョンで復元速度よりも履歴の深さが重要になる大阪を長め(90日)に設定している。
-2. **タグベース選択で過剰バックアップを回避** — `Backup=true`タグを明示的に付けたリソースのみが対象となり、アカウント全体/サービス全体を対象とするバックアップポリシーのように「意図せず」バックアップされることがない。
-3. **`moveToColdStorageAfter`**(本リファレンスでは未使用だが`BackupPlanRule`で利用可能) — 大阪のような長期保持Vaultでは、古い復旧ポイントをコールドストレージへ移行することでさらにコストを削減できる。自身の保持ポリシーに合わせて検討すること。
+1. **参照頻度が低いリージョンほど保持期間を短く**。本パターンでは、運用上「本番」として頻繁にリストアが参照されるであろう東京を短め(35日)に、DRリージョンで復元速度よりも履歴の深さが重要になる大阪を長め(90日)に設定している。
+2. **タグベース選択で過剰バックアップを回避**。`Backup=true`タグを明示的に付けたリソースのみが対象となり、アカウント全体/サービス全体を対象とするバックアップポリシーのように「意図せず」バックアップされることがない。
+3. **`moveToColdStorageAfter`**(本リファレンスでは未使用だが`BackupPlanRule`で利用可能)。大阪のような長期保持Vaultでは、古い復旧ポイントをコールドストレージへ移行することでさらにコストを削減できる。自身の保持ポリシーに合わせて検討すること。
 
 ## 🔒 セキュリティに関する考慮事項
 
@@ -158,15 +158,15 @@ Stack 3 — AwsBackupCrrTokyoStack (ap-northeast-1、Stack 1に依存)
 ### 実装済みのセキュリティベストプラクティス
 
 - ✅ 両Backup Vaultとも、専用のローテーション有効なKMSキー(AWS所有のデフォルトキーではない)で暗号化。
-- ✅ AWS BackupのIAMロールはAWS自身のマネージドポリシー(`AWSBackupServiceRolePolicyForBackup`、`AWSBackupServiceRolePolicyForRestores`)のみを使用 — カスタムのワイルドカード権限は追加していない。
+- ✅ AWS BackupのIAMロールはAWS自身のマネージドポリシー(`AWSBackupServiceRolePolicyForBackup`、`AWSBackupServiceRolePolicyForRestores`)のみを使用。カスタムのワイルドカード権限は追加していない。
 - ✅ RDSストレージは保存時暗号化(`storageEncrypted: true`)。認証情報はSecrets Manager生成のパスワードを使用し、ハードコードは一切なし。
 - ✅ EC2インスタンスはIMDSv2を必須化し、暗号化EBSボリュームを使用、SSM Session Manager経由でのみアクセス可能。
 - ✅ サンプルワークロードのVPCに対してVPC Flow LogsをCloudWatch Logsへ有効化。
-- ✅ 同一アカウント内のクロスリージョンコピーにはVaultアクセス(リソースベース)ポリシーが不要 — ポリシーサーフェスが小さいほどレビューすべき範囲も小さくて済む。
+- ✅ 同一アカウント内のクロスリージョンコピーにはVaultアクセス(リソースベース)ポリシーが不要。ポリシーサーフェスが小さいほどレビューすべき範囲も小さくて済む。
 
 ### CDK Nag準拠
 
-3つのスタックすべてが`cdk-nag`の`AwsSolutionsChecks`をパスしており、サプレッションはサンプルワークロードに関するもの(バックアップ構成自体ではない)のみを明記している — スタックを破棄可能に保つための削除保護の意図的な無効化、デモコストを抑えるためのRDSシングルAZ、MySQLのデフォルトポート、そして代替手段のないAWSマネージドなBackupサービスロールポリシー、の4点。各サプレッションの正確な理由は`test/compliance/cdk-nag.test.ts`を参照。
+3つのスタックすべてが`cdk-nag`の`AwsSolutionsChecks`をパスしており、サプレッションはサンプルワークロードに関するもの(バックアップ構成自体ではない)のみを明記している。スタックを破棄可能に保つための削除保護の意図的な無効化、デモコストを抑えるためのRDSシングルAZ、MySQLのデフォルトポート、そして代替手段のないAWSマネージドなBackupサービスロールポリシー、の4点。各サプレッションの正確な理由は`test/compliance/cdk-nag.test.ts`を参照。
 
 ```bash
 npm run test:compliance -w workspaces/aws-backup-cross-region
@@ -184,9 +184,9 @@ npm run test:compliance -w workspaces/aws-backup-cross-region
 ### 必要なIAM権限
 
 デプロイを実行するユーザー/ロールには、以下の作成・管理権限が必要です:
-- AWS Backup(Vault、Backup Plan、Backup Selection)— `ap-northeast-1`と`ap-northeast-3`の両方
-- EC2(VPC、インスタンス、セキュリティグループ)、RDS、S3、SSM Parameter Store、KMS、IAM(ロール/ポリシーアタッチ)— `ap-northeast-1`
-- CloudFormation(スタックデプロイ)— 両リージョン
+- AWS Backup(Vault、Backup Plan、Backup Selection)。`ap-northeast-1`と`ap-northeast-3`の両方
+- EC2(VPC、インスタンス、セキュリティグループ)、RDS、S3、SSM Parameter Store、KMS、IAM(ロール/ポリシーアタッチ)。`ap-northeast-1`
+- CloudFormation(スタックデプロイ)。両リージョン
 
 ## 🚀 デプロイガイド
 
@@ -210,7 +210,7 @@ npm run bootstrap -w workspaces/aws-backup-cross-region   # 初回のみ、ア�
 npm run deploy:all -w workspaces/aws-backup-cross-region
 ```
 
-CDKは`AwsBackupCrrOsakaStack`を`AwsBackupCrrTokyoStack`より先にデプロイします([設計判断4](#4-コピーアクションによる自動作成に任せず セカンダリvaultを事前作成する)を参照)。`SampleAppStack`はどちらとも順序依存関係を持ちません。
+CDKは`AwsBackupCrrOsakaStack`を`AwsBackupCrrTokyoStack`より先にデプロイします([設計判断4](#4-コピーアクションによる自動作成に任せずセカンダリvaultを事前作成する)を参照)。`SampleAppStack`はどちらとも順序依存関係を持ちません。
 
 ### 4. デプロイの確認
 
@@ -335,28 +335,28 @@ cdk.Tags.of(myResource).add('DataClassification', 'critical');
 **症状**: `AWS::Backup::BackupPlan`の作成/更新が、大阪Vault ARNの参照で失敗する。
 
 **解決策**:
-1. `AwsBackupCrrOsakaStack`が先に正常にデプロイされているか確認する — `AwsBackupCrossRegionStage`は`tokyoStack.addDependency(osakaStack)`を宣言しているが、大阪側のデプロイが部分的に失敗/ロールバックしているとVaultが存在しないままになりうる。
-2. スタック間でVault名が一致しているか確認する — `AwsBackupCrrOsakaStack.vaultName`と`AwsBackupCrrTokyoStack`内で構築されるARNはどちらも`${project}-${environment}-backup-osaka`という同じ命名規約から導出される([設計判断2](#2-クロスリージョンのcdk参照ではなく-決定的なコピー先vault-arnを構築する)を参照)。デプロイ間で`PROJECT_NAME`/`ENV`が食い違うとこれが崩れる。
+1. `AwsBackupCrrOsakaStack`が先に正常にデプロイされているか確認する。`AwsBackupCrossRegionStage`は`tokyoStack.addDependency(osakaStack)`を宣言しているが、大阪側のデプロイが部分的に失敗/ロールバックしているとVaultが存在しないままになりうる。
+2. スタック間でVault名が一致しているか確認する。`AwsBackupCrrOsakaStack.vaultName`と`AwsBackupCrrTokyoStack`内で構築されるARNはどちらも`${project}-${environment}-backup-osaka`という同じ命名規約から導出される([設計判断2](#2-クロスリージョンのcdk参照ではなく決定的なコピー先vault-arnを構築する)を参照)。デプロイ間で`PROJECT_NAME`/`ENV`が食い違うとこれが崩れる。
 
 ### 問題: タグを付けたリソースがバックアップに現れない
 
 **症状**: `aws backup list-recovery-points-by-backup-vault`に期待するリソースが含まれない。
 
 **解決策**:
-1. まず`./check-backup-status.sh --project <project> --env <env>`を実行する — Plan/Selectionの状態と直近ジョブの結果を1回でまとめて確認できる。
+1. まず`./check-backup-status.sh --project <project> --env <env>`を実行する。Plan/Selectionの状態と直近ジョブの結果を1回でまとめて確認できる。
 2. タグのキー/値が`parameters/dev-params.ts`の`backupTagKey`/`backupTagValue`と完全に一致しているか確認する(大文字小文字を区別)。
-3. リソースがBackup Planと**同じリージョン**(`ap-northeast-1`)にあるか確認する — Backup Selectionは自身と同じリージョンのリソースしか検出しない。
-4. リソースタイプがAWS Backupのサポート対象か確認する — [AWS Backupのリソース別機能対応表](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html)を参照。
-5. 最初のバックアップは次のスケジュール実行(`scheduleExpression`)まで走らない — 早く確認したい場合はオンデマンドのバックアップジョブ(`aws backup start-backup-job`)を実行する。
+3. リソースがBackup Planと**同じリージョン**(`ap-northeast-1`)にあるか確認する。Backup Selectionは自身と同じリージョンのリソースしか検出しない。
+4. リソースタイプがAWS Backupのサポート対象か確認する。[AWS Backupのリソース別機能対応表](https://docs.aws.amazon.com/aws-backup/latest/devguide/backup-feature-availability.html)を参照。
+5. 最初のバックアップは次のスケジュール実行(`scheduleExpression`)まで走らない。早く確認したい場合はオンデマンドのバックアップジョブ(`aws backup start-backup-job`)を実行する。
 
 ### 問題: 大阪Vaultに復旧ポイントが現れない
 
 **症状**: 東京Vaultには復旧ポイントがあるが、大阪の`list-recovery-points-by-backup-vault`は空。
 
 **解決策**:
-1. `./check-backup-status.sh --project <project> --env <env>` を実行する — 「Recent copy jobs」セクションでコピージョブの状態が直接わかる。
-2. コピージョブはプライマリのバックアップジョブが完了した**後**に実行される(並行ではない) — `aws backup list-copy-jobs --region ap-northeast-1`でステータスを確認する。
-3. Backup Selectionに渡しているIAMロール(`AWSBackupServiceRolePolicyForBackup`)がアタッチされたままか確認する — CDKの外で手動でデタッチすると、次の`cdk deploy`まで静かにコピージョブが失敗し続ける。
+1. `./check-backup-status.sh --project <project> --env <env>` を実行する。「Recent copy jobs」セクションでコピージョブの状態が直接わかる。
+2. コピージョブはプライマリのバックアップジョブが完了した**後**に実行される(並行ではない)。`aws backup list-copy-jobs --region ap-northeast-1`でステータスを確認する。
+3. Backup Selectionに渡しているIAMロール(`AWSBackupServiceRolePolicyForBackup`)がアタッチされたままか確認する。CDKの外で手動でデタッチすると、次の`cdk deploy`まで静かにコピージョブが失敗し続ける。
 
 ## 📚 参考資料
 

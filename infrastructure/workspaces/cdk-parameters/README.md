@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-100-blue?style=flat-square)
+![Level 100](https://img.shields.io/badge/Level-100-green?style=flat-square)
 
 ## Introduction
 
@@ -22,6 +22,19 @@ In this architecture, you can explore the following implementations:
 3. Configuration Visibility: Make it clear what values are being used
 4. Ease of Change: Change configurations without modifying code
 5. Type Safety: Leverage TypeScript's type system for safe configuration management
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Pattern 1: Defining Parameters in TypeScript Files](#pattern-1-defining-parameters-in-typescript-files)
+- [Pattern 2: Defining Parameters in cdk.json](#pattern-2-defining-parameters-in-cdkjson)
+- [Which Approach Should You Choose?](#which-approach-should-you-choose)
+- [Test Implementation](#test-implementation)
+- [Deployment and Cleanup](#deployment-and-cleanup)
+- [Summary](#summary)
+- [Reference Resources](#reference-resources)
 
 ## Architecture Overview
 

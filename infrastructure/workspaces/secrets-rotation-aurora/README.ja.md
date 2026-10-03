@@ -3,29 +3,29 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 **Aurora PostgreSQL(Serverless v2)** の認証情報を **AWS Secrets Manager のマネージドローテーション(hosted rotation)** で自動ローテーションします。AWS が提供する 2 つの戦略を使い分けます。
 
 | シークレット | 戦略 | 理由 |
 |---|---|---|
-| **マスター**(`dbadmin`) | **単一ユーザー** — ユーザー自身がパスワードを変更 | 管理者ユーザーは複製できない(複製に管理者権限が必要なため) |
-| **アプリケーション**(`appuser`) | **交互ユーザー** — `appuser` ↔ `appuser_clone` | 常に片方のユーザーが有効なので、直前の認証情報を保持するコンシューマーも動き続ける |
+| **マスター**(`dbadmin`) | **単一ユーザー**。ユーザー自身がパスワードを変更 | 管理者ユーザーは複製できない(複製に管理者権限が必要なため) |
+| **アプリケーション**(`appuser`) | **交互ユーザー**。`appuser` ↔ `appuser_clone` | 常に片方のユーザーが有効なので、直前の認証情報を保持するコンシューマーも動き続ける |
 
 すべて **NAT ゲートウェイのない分離サブネット**で動作し、hosted rotation の関数は VPC インターフェイスエンドポイント経由で Secrets Manager API に到達します。サンプルのコンシューマーは **RDS Data API** を使うので、パスワードを保持せず、データベースへのネットワーク経路も不要です。
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ](#-セキュリティ)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [動作確認スクリプト](#-動作確認スクリプト)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -36,12 +36,12 @@
 
 ### 主要コンポーネント
 
-- **VPC** — 2 AZ、プライベート分離サブネットのみ、NAT ゲートウェイなし、REJECT のフローログ。ローテーション関数用の **Secrets Manager インターフェイスエンドポイント**(プライベート DNS)。
-- **Aurora PostgreSQL 16 Serverless v2** — ライターのみ、暗号化、IAM 認証有効、**Data API 有効**、バックアップ保持 1 日(dev 以外は 7 日)、dev 以外は削除保護。
-- **マスターシークレット**(`<project>-<env>-rot/master`)— `dbadmin` 用に生成してクラスターにアタッチ。30 日ごとの**単一ユーザーの hosted rotation**。
-- **アプリケーションシークレット**(`<project>-<env>-rot/app`)— `appuser` 用の `DatabaseSecret`。JSON にマスターシークレットの ARN(`masterarn`)を持ち、30 日ごとの**マルチユーザー(交互)の hosted rotation**。
-- **Hosted rotation** — Secrets Manager が管理するローテーション関数(`createSecret` / `setSecret` / `testSecret` / `finishSecret`)。コードの記述もパッチ適用も不要です。分離サブネット内で専用のセキュリティグループ(エンドポイントへの 443 とデータベースへの 5432 のみ)で動作します。
-- **`whoami` Lambda**(Node.js 24 / ARM64、VPC の**外**)— アプリケーションシークレットで Data API 経由の `SELECT current_user` を実行します。IAM はクラスターへの `rds-data:ExecuteStatement` と、その 1 つのシークレットへの `secretsmanager:GetSecretValue` のみ。
+- **VPC**。2 AZ、プライベート分離サブネットのみ、NAT ゲートウェイなし、REJECT のフローログ。ローテーション関数用の **Secrets Manager インターフェイスエンドポイント**(プライベート DNS)。
+- **Aurora PostgreSQL 16 Serverless v2**。ライターのみ、暗号化、IAM 認証有効、**Data API 有効**、バックアップ保持 1 日(dev 以外は 7 日)、dev 以外は削除保護。
+- **マスターシークレット**(`<project>-<env>-rot/master`)。`dbadmin` 用に生成してクラスターにアタッチ。30 日ごとの**単一ユーザーの hosted rotation**。
+- **アプリケーションシークレット**(`<project>-<env>-rot/app`)。`appuser` 用の `DatabaseSecret`。JSON にマスターシークレットの ARN(`masterarn`)を持ち、30 日ごとの**マルチユーザー(交互)の hosted rotation**。
+- **Hosted rotation**。Secrets Manager が管理するローテーション関数(`createSecret` / `setSecret` / `testSecret` / `finishSecret`)。コードの記述もパッチ適用も不要です。分離サブネット内で専用のセキュリティグループ(エンドポイントへの 443 とデータベースへの 5432 のみ)で動作します。
+- **`whoami` Lambda**(Node.js 24 / ARM64、VPC の**外**)。アプリケーションシークレットで Data API 経由の `SELECT current_user` を実行します。IAM はクラスターへの `rds-data:ExecuteStatement` と、その 1 つのシークレットへの `secretsmanager:GetSecretValue` のみ。
 
 ### アーキテクチャの特性
 
@@ -80,7 +80,7 @@ Data API は認証情報の解決を代行してくれますが、**数分間キ
 
 ### 7. `cdk destroy` の後はシークレットを強制削除する
 
-CloudFormation はシークレットを、名前を**予約**する復旧期間付きで削除するため、同じスタックの再デプロイは期間が終わるまで失敗します。`test-rotation.sh --destroy` はスタック削除後に 2 つのシークレットを強制削除します(本番では行わないこと — 復旧期間は安全網です)。
+CloudFormation はシークレットを、名前を**予約**する復旧期間付きで削除するため、同じスタックの再デプロイは期間が終わるまで失敗します。`test-rotation.sh --destroy` はスタック削除後に 2 つのシークレットを強制削除します(本番では行わないこと、復旧期間は安全網です)。
 
 ### 8. 環境別パラメータ
 
@@ -112,7 +112,7 @@ Hosted rotation:       2 関数、ローテーションの各ステップで 1 �
 ≈ 稼働中は月 $70〜100。検証実行(数時間)なら数ドル程度。
 ```
 
-レバー: Aurora Serverless v2 は auto-pause による 0 ACU までのスケールに対応(再開時のレイテンシが増える)、dev では単一 AZ のエンドポイントでエンドポイント料金が半分になる、**使い終わったらスタックを削除**(`--destroy`)— データベースとエンドポイントは時間課金です。
+レバー: Aurora Serverless v2 は auto-pause による 0 ACU までのスケールに対応(再開時のレイテンシが増える)、dev では単一 AZ のエンドポイントでエンドポイント料金が半分になる、**使い終わったらスタックを削除**(`--destroy`)。データベースとエンドポイントは時間課金です。
 
 ## 🔒 セキュリティ
 
@@ -228,9 +228,9 @@ RDS Data API はシークレットを数分キャッシュします(実測 2〜4
 - [Secrets Manager の VPC エンドポイント](https://docs.aws.amazon.com/secretsmanager/latest/userguide/vpc-endpoint-overview.html)
 
 ### 関連アーキテクチャ
-- [alb-keycloak-auth](../alb-keycloak-auth/) — アプリケーションの背後の Aurora Serverless(生成したシークレットの認証情報)
-- [fis-arch-a-ecs-aurora](../fis-arch-a-ecs-aurora/) — ECS + Aurora
-- [cognito-apigw-auth](../cognito-apigw-auth/) — API のためのマネージドな ID
+- [alb-keycloak-auth](../alb-keycloak-auth/)。アプリケーションの背後の Aurora Serverless(生成したシークレットの認証情報)
+- [fis-arch-a-ecs-aurora](../fis-arch-a-ecs-aurora/)。ECS + Aurora
+- [cognito-apigw-auth](../cognito-apigw-auth/)。API のためのマネージドな ID
 
 ## 📄 ライセンス
 

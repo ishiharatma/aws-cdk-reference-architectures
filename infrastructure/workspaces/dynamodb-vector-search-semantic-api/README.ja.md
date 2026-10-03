@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 **Amazon DynamoDB のネイティブベクトル検索**で作る、意味ベースのセマンティック検索 API です。OpenSearch も別のベクトルデータベースも使いません。ドキュメントは 1 つのオンデマンド DynamoDB テーブルに保存し、**DynamoDB Streams → Lambda → Amazon Bedrock(Titan Text Embeddings V2)** が埋め込みベクトルを同じ項目へ書き戻します。テーブルに宣言した**ベクトルインデックス**が `SearchVectors` に応答するので、たとえば「*関数が、しばらく使っていない後の初回だけ遅い*」という質問で **"Reducing Lambda cold starts"** がヒットします。キーワードは一致していなくても、また日本語のクエリで英語のドキュメントを検索しても動作します。
 
@@ -11,9 +11,9 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ](#-セキュリティ)
 - [前提条件](#-前提条件)
@@ -21,7 +21,7 @@
 - [使い方](#使い方)
 - [動作確認スクリプト](#-動作確認スクリプト)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -32,7 +32,7 @@
 
 ### 主要コンポーネント
 
-- **Amazon DynamoDB(`documents` テーブル)** — オンデマンド(ベクトルインデックスの必須条件)、パーティションキー `docId`、SSE、ポイントインタイムリカバリ、ストリーム `NEW_IMAGE`。次のベクトルインデックスを持ちます。
+- **Amazon DynamoDB(`documents` テーブル)**。オンデマンド(ベクトルインデックスの必須条件)、パーティションキー `docId`、SSE、ポイントインタイムリカバリ、ストリーム `NEW_IMAGE`。次のベクトルインデックスを持ちます。
 
   | ベクトルインデックスの設定 | 値 | 理由 |
   |---|---|---|
@@ -51,9 +51,9 @@
   | `embed` | DynamoDB Streams | Titan V2 → `UpdateItem SET embedding, embeddedAt` | `dynamodb:UpdateItem`、モデル ARN への `bedrock:InvokeModel`、ストリーム読み取り |
   | `search` | `GET /search?q=&k=&category=` | クエリを埋め込み、`SearchVectors` を実行 | **インデックス ARN** への `dynamodb:SearchVectors`、モデル ARN への `bedrock:InvokeModel` |
 
-- **Amazon Bedrock — Titan Text Embeddings V2**(`amazon.titan-embed-text-v2:0`、`normalize: true`)
-- **イベントソースマッピング** — `TRIM_HORIZON`、バッチ 5、`ReportBatchItemFailures`、エラー時のバッチ分割、リトライ 3 回、**SQS DLQ** と **CloudWatch アラーム**(1 件以上)
-- **Amazon API Gateway(REST)** — 全メソッドで API キー必須+使用量プラン(レート/バースト/日次クォータ)、リクエストバリデータ 1 つ(ボディモデル+必須クエリパラメータ)、アクセスログ
+- **Amazon Bedrock。Titan Text Embeddings V2**(`amazon.titan-embed-text-v2:0`、`normalize: true`)
+- **イベントソースマッピング**。`TRIM_HORIZON`、バッチ 5、`ReportBatchItemFailures`、エラー時のバッチ分割、リトライ 3 回、**SQS DLQ** と **CloudWatch アラーム**(1 件以上)
+- **Amazon API Gateway(REST)**。全メソッドで API キー必須+使用量プラン(レート/バースト/日次クォータ)、リクエストバリデータ 1 つ(ボディモデル+必須クエリパラメータ)、アクセスログ
 
 ### アーキテクチャの特性
 
@@ -164,20 +164,20 @@ CloudWatch Logs:         1 GB 未満                                          �
 
 ### コストレバー
 
-1. **次元数** — 256 と 1024 では、1 操作あたりのベクトルバイト数が 4 倍違います。選ぶ前に自分のデータで再現率を確認してください。
-2. **Projection** — 射影する属性が増えるほどインデックスサイズと書き込みコストが増えます。API が返す属性だけを射影します。
-3. **使用量プランのクォータ** — `apiDailyQuota` により、API キーが漏えいしても Bedrock 費用に上限がかかります。
-4. **クエリ埋め込みのキャッシュ** — 同じクエリが繰り返される場合は Bedrock 呼び出しを省略できます。
+1. **次元数**。256 と 1024 では、1 操作あたりのベクトルバイト数が 4 倍違います。選ぶ前に自分のデータで再現率を確認してください。
+2. **Projection**。射影する属性が増えるほどインデックスサイズと書き込みコストが増えます。API が返す属性だけを射影します。
+3. **使用量プランのクォータ**。`apiDailyQuota` により、API キーが漏えいしても Bedrock 費用に上限がかかります。
+4. **クエリ埋め込みのキャッシュ**。同じクエリが繰り返される場合は Bedrock 呼び出しを省略できます。
 
 ## 🔒 セキュリティ
 
 ### 実装済み
 
-- ✅ **関数ごとの最小権限 IAM** — `SearchVectors` はインデックス ARN、`InvokeModel` は 1 つのモデル ARN のみ(ユニットテストで検証)
-- ✅ **保存時の暗号化** — DynamoDB SSE(AWS マネージドキー)、DLQ は SQS マネージド SSE、PITR
-- ✅ **TLS** — HTTPS のみの API エンドポイント、DLQ ポリシーで TLS を強制
-- ✅ **入力検証** — API Gateway のモデルと必須 `q`、ハンドラー側でも長さ・`k` の範囲・`category` のパターンを再検証
-- ✅ **不正利用・費用の抑制** — API キー+使用量プランのスロットルと日次クォータ
+- ✅ **関数ごとの最小権限 IAM**。`SearchVectors` はインデックス ARN、`InvokeModel` は 1 つのモデル ARN のみ(ユニットテストで検証)
+- ✅ **保存時の暗号化**。DynamoDB SSE(AWS マネージドキー)、DLQ は SQS マネージド SSE、PITR
+- ✅ **TLS**。HTTPS のみの API エンドポイント、DLQ ポリシーで TLS を強制
+- ✅ **入力検証**。API Gateway のモデルと必須 `q`、ハンドラー側でも長さ・`k` の範囲・`category` のパターンを再検証
+- ✅ **不正利用・費用の抑制**。API キー+使用量プランのスロットルと日次クォータ
 
 ### 意図的に対象外(環境ごとに追加)
 
@@ -262,7 +262,7 @@ npm run test:compliance   -w workspaces/dynamodb-vector-search-semantic-api   # 
 |---|---|
 | スナップショット(2) | テンプレート全体+リソース数(Lambda アセットのハッシュは正規化) |
 | ユニット(15) | テーブル/ベクトルインデックスのプロパティ、`AttributeDefinitions`、IAM アクションの厳密な集合、ストリームフィルタのパターン、DLQ+アラーム、API キー/バリデータ/使用量プラン、出力 |
-| コンプライアンス(2) | CDK Nag `AwsSolutions` — 抑制されていない警告/エラーなし |
+| コンプライアンス(2) | CDK Nag `AwsSolutions`。抑制されていない警告/エラーなし |
 | 運用確認 | デプロイ済みスタックに対する `test-semantic-search.sh` |
 
 ## ⚙️ カスタマイズ
@@ -309,15 +309,15 @@ npm run stage:destroy:all -w workspaces/dynamodb-vector-search-semantic-api
 ## 📚 参考資料
 
 ### AWS ドキュメント
-- [Amazon DynamoDB のベクトル検索](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/) — `CreateTable --vector-indexes`、`SearchVectors`
+- [Amazon DynamoDB のベクトル検索](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/)。`CreateTable --vector-indexes`、`SearchVectors`
 - [Amazon Titan Text Embeddings V2](https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html)
-- [Lambda のイベントフィルタリング(DynamoDB Streams)](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb-filtering.html) — `exists` はリーフノードのみ
+- [Lambda のイベントフィルタリング(DynamoDB Streams)](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb-filtering.html)。`exists` はリーフノードのみ
 - [バッチアイテム失敗のレポート](https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-batchfailurereporting.html)
 
 ### 関連アーキテクチャ
-- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/) — ルートごとに 1 つの Lambda。同じ API Gateway + DynamoDB の構成
-- [sqs-lambda-firehose](../sqs-lambda-firehose/) — DLQ 付きのイベント駆動 Lambda パイプライン
-- [ecspresso-bedrock-review](../ecspresso-bedrock-review/) — Bedrock 連携の別ワークスペース
+- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/)。ルートごとに 1 つの Lambda。同じ API Gateway + DynamoDB の構成
+- [sqs-lambda-firehose](../sqs-lambda-firehose/)。DLQ 付きのイベント駆動 Lambda パイプライン
+- [ecspresso-bedrock-review](../ecspresso-bedrock-review/)。Bedrock 連携の別ワークスペース
 
 ## 📄 ライセンス
 

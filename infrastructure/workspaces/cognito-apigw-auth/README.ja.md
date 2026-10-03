@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 **Amazon Cognito** で REST API を保護する方法です。人(と機械)を認証する user pool、トークンと OAuth **スコープ**を検証する API Gateway の **Cognito オーソライザー**、そして Lambda にしかできない **グループ所属**と**ユーザーごとのデータ所有権**の強制で構成します。ALB の背後でセルフホストする [`alb-keycloak-auth`](../alb-keycloak-auth/)(Keycloak)に対する、マネージドサービス版です。
 
@@ -16,16 +16,16 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ](#-セキュリティ)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [動作確認スクリプト](#-動作確認スクリプト)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -36,14 +36,14 @@
 
 ### 主要コンポーネント
 
-- **Cognito user pool** — 管理者作成ユーザーのみ(`selfSignUpEnabled: false`)、メールでサインイン、12 文字以上のパスワード、**任意の TOTP のみの MFA**(SMS なし)、メールのみのリカバリ、dev 以外は削除保護。グループは `admin` と `member`。
-- **リソースサーバー `notes`** — スコープ `notes/read` と `notes/write` を定義。
-- **Web クライアント**(パブリック、シークレットなし)— ホスト UI に対する認可コード + **PKCE**。SRP は常に有効、`USER_PASSWORD_AUTH` は `enablePasswordAuthFlow` が true(dev)のときのみ。`preventUserExistenceErrors`、トークン失効、アクセス/ID トークン 60 分、リフレッシュトークン 30 日。
-- **マシンクライアント**(シークレットあり)— `client_credentials`、`notes/read` のみ。
-- **ホストドメイン** — `/login` と `/oauth2/token` を提供。
-- **API Gateway(REST)** — `CognitoUserPoolsAuthorizer`、メソッドごとのスコープ、`POST /notes` 用のリクエストバリデータと JSON スキーマモデル、ステージのスロットリング、アクセスログ。
-- **Lambda ×3**(Node.js 24 / ARM64)— `me`、`admin`、`notes`。DynamoDB に到達できるのは `notes` のみ(`PutItem`、`Query`)。
-- **DynamoDB `notes`** — パーティションキーはトークンの `sub`。呼び出し元は自分のパーティションにしか触れません。
+- **Cognito user pool**。管理者作成ユーザーのみ(`selfSignUpEnabled: false`)、メールでサインイン、12 文字以上のパスワード、**任意の TOTP のみの MFA**(SMS なし)、メールのみのリカバリ、dev 以外は削除保護。グループは `admin` と `member`。
+- **リソースサーバー `notes`**。スコープ `notes/read` と `notes/write` を定義。
+- **Web クライアント**(パブリック、シークレットなし)。ホスト UI に対する認可コード + **PKCE**。SRP は常に有効、`USER_PASSWORD_AUTH` は `enablePasswordAuthFlow` が true(dev)のときのみ。`preventUserExistenceErrors`、トークン失効、アクセス/ID トークン 60 分、リフレッシュトークン 30 日。
+- **マシンクライアント**(シークレットあり)。`client_credentials`、`notes/read` のみ。
+- **ホストドメイン**。`/login` と `/oauth2/token` を提供。
+- **API Gateway(REST)**。`CognitoUserPoolsAuthorizer`、メソッドごとのスコープ、`POST /notes` 用のリクエストバリデータと JSON スキーマモデル、ステージのスロットリング、アクセスログ。
+- **Lambda ×3**(Node.js 24 / ARM64)。`me`、`admin`、`notes`。DynamoDB に到達できるのは `notes` のみ(`PutItem`、`Query`)。
+- **DynamoDB `notes`**。パーティションキーはトークンの `sub`。呼び出し元は自分のパーティションにしか触れません。
 
 ## 🎯 設計判断とベストプラクティス
 
@@ -51,7 +51,7 @@
 
 オーソライザーは、不正なトークンやスコープ不足を **Lambda が動く前に**拒否します(実行コストなし)。グループ所属とデータ所有権はアプリの文脈が必要なので関数が強制しますが、それは**オーソライザーが検証済みのクレーム**に対してだけです。関数自身が JWT を解析・検証することはありません。
 
-### 2. ID トークンとアクセストークン — 定番の 401
+### 2. ID トークンとアクセストークン：定番の 401
 
 `authorizationScopes` を**指定しない**とオーソライザーは **ID トークン**を、指定すると **アクセストークン**を期待します(スコープはアクセストークンにしか存在しないため)。種類を間違えると `401 Unauthorized` になります。「このユーザーは誰か」のエンドポイント(`/me`、`/admin`)は ID トークン、リソースのエンドポイント(`/notes`)はアクセストークンを使います。確認スクリプトは 4 通りの組み合わせをすべて検証します。
 
@@ -228,9 +228,9 @@ npm run stage:destroy:all -w workspaces/cognito-apigw-auth   # または ./test-
 - [DynamoDB の予約語](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 
 ### 関連アーキテクチャ
-- [alb-keycloak-auth](../alb-keycloak-auth/) — セルフホストの代替(ALB の背後の ECS + Aurora 上の Keycloak)
-- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/) — 認証なしの同じ API Gateway + DynamoDB 構成
-- [dynamodb-vector-search-semantic-api](../dynamodb-vector-search-semantic-api/) — API キーで保護した API
+- [alb-keycloak-auth](../alb-keycloak-auth/)。セルフホストの代替(ALB の背後の ECS + Aurora 上の Keycloak)
+- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/)。認証なしの同じ API Gateway + DynamoDB 構成
+- [dynamodb-vector-search-semantic-api](../dynamodb-vector-search-semantic-api/)。API キーで保護した API
 
 ## 📄 ライセンス
 

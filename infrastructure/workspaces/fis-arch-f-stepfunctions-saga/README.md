@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20Step%20Functions%20%7C%20Lambda%20%7C%20DynamoDB-orange?style=flat-square)
 
 ## Introduction
@@ -27,6 +27,24 @@ All three experiments share a CloudWatch Alarm stop condition on the state machi
 
 > ### ⚠️ `aws:lambda:put-function-concurrent-executions` does not exist
 > An earlier version of this workspace tried to zero out each forward Lambda's reserved concurrency via `aws:lambda:put-function-concurrent-executions`. **That action ID does not exist** — `aws fis list-actions` confirms Lambda-targeted FIS actions are limited to the `aws:lambda:function` family. CloudFormation failed FIS template creation outright with `Invalid actionId ... 404`. This was independently the same mistake made in [`fis-arch-d-sqs-lambda`](../fis-arch-d-sqs-lambda/)'s original design — the same intuitive-but-wrong action name, hit twice in unrelated architectures.
+
+## 📑 Table of Contents
+
+- [Why the Lambda extension instead of targeting Step Functions directly](#why-the-lambda-extension-instead-of-targeting-step-functions-directly)
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [State Transition Diagram (detail)](#state-transition-diagram-detail)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Why the Lambda extension instead of targeting Step Functions directly
 

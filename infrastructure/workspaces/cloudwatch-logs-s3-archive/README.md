@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 ## Introduction
 
@@ -24,6 +24,20 @@ This architecture demonstrates the following implementations:
 | Output format | Raw CWL JSON lines, GZIP | Raw CWL format | Custom JSON (fully controllable) |
 | Operational simplicity | High (managed Firehose) | High (managed Export API) | Low (Lambda code to maintain) |
 | Custom transform | Limited (Firehose data transformation) | None | Full control in Lambda |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Implementation Highlights](#implementation-highlights)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Deployment & Verification](#deployment--verification)
+- [Running Tests](#running-tests)
+- [Best Practices Summary](#best-practices-summary)
+- [Cost Estimation](#cost-estimation)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

@@ -2,20 +2,20 @@
 
 *他の言語で読む(Read this in other languages):* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (上級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 東京リージョン（`ap-northeast-1`）から大阪リージョン（`ap-northeast-3`）への Amazon ECR クロスリージョンレプリケーション（CRR）です。CRR はデフォルトでは、最初にレプリケーションされたプッシュ時にレプリケーション先リポジトリを自動作成しますが、自動作成されたリポジトリには**ライフサイクルポリシーが設定されません**。そのため、放置するとレプリケーション先にイメージが際限なく蓄積してしまいます。このパターンでは、両方のリポジトリをそれぞれ独立したライフサイクルポリシー付きで事前作成し、その上で東京側にレジストリ全体のレプリケーション設定を有効化することで、この落とし穴を回避します。
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ考慮事項](#-セキュリティ考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイガイド](#-デプロイガイド)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [参考資料](#-参考資料)
 
@@ -72,7 +72,7 @@ docker push  ──►  東京のリポジトリ  ──[非同期レプリケ�
 
 ### 2. クロスリージョンのCDK参照ではなく、決定的なリポジトリ命名
 
-**決定**: 両スタックとも、大阪のリポジトリ名/ARNを `CfnOutput` / `Fn::ImportValue` / `crossRegionReferences` で東京スタックに渡すのではなく、それぞれの `EcrConfig` から独立して同一のリポジトリ名 — `${project}-${environment}-${repositoryNameSuffix}` — を導出します。
+**決定**: 両スタックとも、大阪のリポジトリ名/ARNを `CfnOutput` / `Fn::ImportValue` / `crossRegionReferences` で東京スタックに渡すのではなく、それぞれの `EcrConfig` から独立して同一のリポジトリ名。`${project}-${environment}-${repositoryNameSuffix}`。を導出します。
 
 **根拠**:
 - ✅ `AWS::ECR::ReplicationConfiguration` はリポジトリを ARN やCDK参照ではなく**名前**（`repositoryFilters` / `PREFIX_MATCH`）でマッチングします。実際に必要なのは単純な決定的文字列だけです
@@ -142,9 +142,9 @@ docker push  ──►  東京のリポジトリ  ──[非同期レプリケ�
 
 ### コスト最適化戦略
 
-1. **レプリカ側で独立したよりリーンなライフサイクルポリシーを設定** — このパターンの核心そのものです。大阪の `maxImageCount: 10` / `untaggedDurationDays: 7` は、東京の `maxImageCount: 30` / `untaggedDurationDays: 14` よりもはるかに積極的に削除します。DR/セカンダリリージョンのレプリカは、通常ソースと同じ深さの履歴を必要としないためです
-2. **正確なリポジトリ名にスコープした `PREFIX_MATCH`** — 同じアカウント/リージョンに後から追加されるかもしれない無関係な他のリポジトリを誤ってレプリケーションしてしまうことを防ぎます
-3. **Enhanced スキャン（Amazon Inspectorベース、イメージごとに課金）ではなく Basic（無料）イメージスキャン** — このリファレンスパターンには十分です。より深いCVEカバレッジが実際に必要な場合のみEnhanced スキャンに切り替えてください
+1. **レプリカ側で独立したよりリーンなライフサイクルポリシーを設定**。このパターンの核心そのものです。大阪の `maxImageCount: 10` / `untaggedDurationDays: 7` は、東京の `maxImageCount: 30` / `untaggedDurationDays: 14` よりもはるかに積極的に削除します。DR/セカンダリリージョンのレプリカは、通常ソースと同じ深さの履歴を必要としないためです
+2. **正確なリポジトリ名にスコープした `PREFIX_MATCH`**。同じアカウント/リージョンに後から追加されるかもしれない無関係な他のリポジトリを誤ってレプリケーションしてしまうことを防ぎます
+3. **Enhanced スキャン（Amazon Inspectorベース、イメージごとに課金）ではなく Basic（無料）イメージスキャン**。このリファレンスパターンには十分です。より深いCVEカバレッジが実際に必要な場合のみEnhanced スキャンに切り替えてください
 
 ## 🔒 セキュリティ考慮事項
 
@@ -333,7 +333,7 @@ ecrCrr: {
 **症状**: アカウント/リージョン内に既に存在するため `AWS::ECR::ReplicationConfiguration` の作成が失敗する。
 
 **解決策**:
-1. `AWS::ECR::ReplicationConfiguration` はアカウント/リージョンごとのシングルトンです（[設計判断3](#3-prefix_matchでスコープした、レジストリ全体で1つのレプリケーションルール)を参照）。`aws ecr describe-registry --region ap-northeast-1` で既存のものを確認し、2つ目を宣言する代わりにそれをインポート/改修するか、既存設定の `rules` 配列にこのパターンのルールを追加してください
+1. `AWS::ECR::ReplicationConfiguration` はアカウント/リージョンごとのシングルトンです（[設計判断3](#3-prefix_match-でスコープしたレジストリ全体で1つのレプリケーションルール)を参照）。`aws ecr describe-registry --region ap-northeast-1` で既存のものを確認し、2つ目を宣言する代わりにそれをインポート/改修するか、既存設定の `rules` 配列にこのパターンのルールを追加してください
 
 ## 📚 参考資料
 

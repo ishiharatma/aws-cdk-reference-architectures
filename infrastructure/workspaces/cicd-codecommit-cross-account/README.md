@@ -41,6 +41,18 @@ This architecture demonstrates:
 | Explicit event forwarding | CodeCommit events never leave the dev account on their own — `RepositoryStack` forwards each branch's push events to the matching account's own default event bus, where a plain EventBridge rule starts that account's pipeline |
 | Fixed-name IAM roles | The Source-action role (dev account) and each account's pipeline role are both named deterministically, so the trust relationship between them is a plain ARN string — no cross-account CloudFormation exports needed |
 
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Design Decisions & Best Practices](#design-decisions--best-practices)
+- [Prerequisites](#prerequisites)
+- [Deployment Guide](#deployment-guide)
+- [Testing Strategy](#testing-strategy)
+- [Security Considerations](#security-considerations)
+- [Customization](#customization)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
+
 ## Architecture Overview
 
 ![Architecture Overview](overview.drawio.svg)

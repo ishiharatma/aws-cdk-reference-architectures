@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20ALB%20%7C%20EC2%20ASG%20%7C%20Aurora%20PostgreSQL-orange?style=flat-square)
 
 ## はじめに
@@ -17,6 +17,23 @@
 | **C-4** EC2→DB ネットワークブラックホール | 全インスタンスから TCP ポート 5432 の送信をブロック | 5 分 | クエリタイムアウト設定、サーキットブレーカー動作、DB 喪失時の ALB ヘルスチェック |
 
 全実験テンプレートは CloudWatch Alarm の停止条件を共有します。ALB 5xx エラー数が 1 分間に 50 件以上になると実験が自動停止し、障害の影響範囲を制限します。
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトのディレクトリ構成](#プロジェクトのディレクトリ構成)
+- [データフロー](#データフロー)
+- [主要コンポーネントと設計のポイント](#主要コンポーネントと設計のポイント)
+- [実装のポイント](#実装のポイント)
+- [デプロイガイド](#デプロイガイド)
+- [テスト](#テスト)
+- [コスト見積もり](#コスト見積もり)
+- [セキュリティ上の考慮事項](#セキュリティ上の考慮事項)
+- [トラブルシューティング](#トラブルシューティング)
+- [クリーンアップ](#クリーンアップ)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
@@ -130,8 +147,8 @@ Aurora PostgreSQL Serverless v2
 | Internal ALB | CloudFront VPC Origin 受信 (マネージドプレフィックスリスト); HTTP/80; ターゲット登録解除遅延 30 秒 |
 | CloudFront Distribution | VPC Origin（プライマリ）→ S3（502/503/504 フォールバック）; CACHING_DISABLED; REDIRECT_TO_HTTPS |
 | FIS IAM ロール | タグ条件付き `ec2:TerminateInstances`; タグ付きインスタンス + FIS ドキュメントへの `ssm:SendCommand`; クラスター ARN 指定の `rds:FailoverDBCluster`; CloudWatch Logs 配信 |
-| 停止条件 | ALB `TARGET_5XX_COUNT >= 50` / 1 分間 — 4 つの実験テンプレートすべてで共有 |
-| FIS ログ グループ | `/fis/{project}-{env}` — 保持期間 1 ヶ月、スタック削除時に自動削除 |
+| 停止条件 | ALB `TARGET_5XX_COUNT >= 50` / 1 分間。4 つの実験テンプレートすべてで共有 |
+| FIS ログ グループ | `/fis/{project}-{env}`。保持期間 1 ヶ月、スタック削除時に自動削除 |
 
 ## 実装のポイント
 
@@ -266,9 +283,9 @@ PROJECT=fis-chaos-c ENV=dev npm run stage:deploy:all
 ```
 
 依存関係の順番で 3 つのスタックがデプロイされます。
-1. `fis-chaos-c-dev-c-base` — VPC + Aurora PostgreSQL Serverless v2
-2. `fis-chaos-c-dev-c-app` — EC2 ASG + Internal ALB + CloudFront
-3. `fis-chaos-c-dev-c-fis` — FIS テンプレート + IAM + アラーム
+1. `fis-chaos-c-dev-c-base`。VPC + Aurora PostgreSQL Serverless v2
+2. `fis-chaos-c-dev-c-app`。EC2 ASG + Internal ALB + CloudFront
+3. `fis-chaos-c-dev-c-fis`。FIS テンプレート + IAM + アラーム
 
 > **アーキテクチャ A との名前衝突**: 本ワークスペースと `fis-arch-a-ecs-aurora` は
 > どちらも `<project>-<env>-aurora-secret` という Aurora シークレットと
@@ -314,7 +331,7 @@ watch -n5 "aws fis get-experiment --id $EXP --query 'experiment.state'"
 | シナリオ | 起きたこと | 備考 |
 | -------- | ---------- | ---- |
 | **C-1** | FIS が 2 台中 1 台を終了 → ASG が *"an instance was taken out of service … EC2 health check indicating it has been terminated"* を記録し約2秒後に代替を起動。CloudFront は約90秒間 S3 フォールバックオリジンから `404`、新インスタンスが ALB ヘルスチェックを通過後 200 に回復 | ASG 自己修復 + Origin Group フォールバックを確認 |
-| **C-2** | `AWSFIS-Run-CPU-Stress` が `CPUUtilization` を約16% → **100%** に上げ、5分間維持。CloudFront は 200 維持（静的 nginx ページは CPU バウンドでない）。ASG は 2 のまま — 本ワークスペースには**スケールアウトポリシーが未定義**のため「CPU 負荷でのスケールアウト」は実際には検証されない。検証するには `scaleOnCpuUtilization` ターゲット追跡ポリシーを追加する | |
+| **C-2** | `AWSFIS-Run-CPU-Stress` が `CPUUtilization` を約16% → **100%** に上げ、5分間維持。CloudFront は 200 維持（静的 nginx ページは CPU バウンドでない）。ASG は 2 のまま。本ワークスペースには**スケールアウトポリシーが未定義**のため「CPU 負荷でのスケールアウト」は実際には検証されない。検証するには `scaleOnCpuUtilization` ターゲット追跡ポリシーを追加する | |
 | **C-3** | `describe-events` に *"Started cross AZ failover to … reader1"*。実験は約45秒で完了。CloudFront は 200 維持（nginx デモは再接続対象の DB 接続を持たない） | |
 | **C-4** | `AWSFIS-Run-Network-Blackhole-Port` が**両方**のインスタンスで実行（2/2 成功）、TCP 5432 送信を 5 分間ブロック。ワークロード影響なし（nginx は DB 接続を張らない） | SSM 送信ブラックホール経路をエンドツーエンドで確認 |
 
@@ -344,7 +361,7 @@ npm run test:snapshot:update --workspace=fis-arch-c-ec2-asg-rds
 | テストスイート | ファイル | アサーション |
 | -------------- | -------- | ------------ |
 | スナップショット | `test/snapshot/snapshot.test.ts` | 3 スタック全体の CloudFormation テンプレートスナップショット; Aurora ストレージ暗号化; VPC 存在確認; ASG 存在確認; ALB が internal であること; CloudFront ディストリビューション数; FIS テンプレートがちょうど 4 本; 全テンプレートに停止条件あり |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 未抑制の警告・エラーがないこと（6 テストケース） |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック。未抑制の警告・エラーがないこと（6 テストケース） |
 
 ## コスト見積もり
 
@@ -375,19 +392,19 @@ NAT Gateway はアイドル時でも時間課金されます。実験終了後�
 | NAT + ALB + EBS | 上記アイドルレートで約2h | ~$0.15 | ~$0.20 |
 | **1 サイクル合計** | | **≈ $2** | **≈ $2.3** |
 
-**このドキュメントの以前のバージョンからの訂正:** FIS は**無料ではありません** — **アクション分あたり
+**このドキュメントの以前のバージョンからの訂正:** FIS は**無料ではありません**。**アクション分あたり
 $0.10**（両リージョン同一）で課金されます。5 分・単一アクションの実験は約 $0.50、C-1〜C-4 を 1 回ずつ
 実行すると約 $1.50〜2.00 です。定常コスト（月 ~$177 us-east-1 / ~$265 東京）は EC2 ではなく、
 常時稼働の Aurora ACU ×2 と NAT Gateway が支配的です。
 
 ## セキュリティ上の考慮事項
 
-- **IMDSv2 必須** (`requireImdsv2: true`) — メタデータサービス経由の SSRF 攻撃を防止
-- **EBS ルートボリューム暗号化** (gp3) — AwsSolutions-EC26 を満たす
-- **ALB 受信を CloudFront マネージドプレフィックスリストに制限** — CloudFront をバイパスした直接 VPC 内アクセスを防止
-- **FIS IAM ロールをタグ条件でスコープ** — `ec2:TerminateInstances` と `ssm:SendCommand` を `fis-target: app-instance` タグを持つインスタンスのみに制限
-- **Aurora を Isolated サブネットに配置** — インターネットへのルートなし。VPC 内からポート 5432 でのみアクセス可能
-- **停止条件は必須** — 全 FIS テンプレートに ALB 5xx アラーム停止条件を含む
+- **IMDSv2 必須** (`requireImdsv2: true`)。メタデータサービス経由の SSRF 攻撃を防止
+- **EBS ルートボリューム暗号化** (gp3)。AwsSolutions-EC26 を満たす
+- **ALB 受信を CloudFront マネージドプレフィックスリストに制限**。CloudFront をバイパスした直接 VPC 内アクセスを防止
+- **FIS IAM ロールをタグ条件でスコープ**。`ec2:TerminateInstances` と `ssm:SendCommand` を `fis-target: app-instance` タグを持つインスタンスのみに制限
+- **Aurora を Isolated サブネットに配置**。インターネットへのルートなし。VPC 内からポート 5432 でのみアクセス可能
+- **停止条件は必須**。全 FIS テンプレートに ALB 5xx アラーム停止条件を含む
 
 ## トラブルシューティング
 
@@ -411,7 +428,7 @@ PROJECT=fis-chaos-c ENV=dev npm run stage:destroy:all
 
 本ワークスペースは、クラシックな 3 層 EC2 アーキテクチャ上でのFIS カオスエンジニアリングをデモします。4 つのシナリオは各層の異なる障害モードを網羅しています。
 
-- **C-1**: インスタンスが突然半数終了された場合に ASG が自己修復することを検証 — ALB の登録解除速度と CloudFront の S3 フォールバックを確認
+- **C-1**: インスタンスが突然半数終了された場合に ASG が自己修復することを検証。ALB の登録解除速度と CloudFront の S3 フォールバックを確認
 - **C-2**: 持続的な CPU 負荷下で ASG スケールアウトポリシーが発動し、新規インスタンスが SLO ウィンドウ内に ALB ヘルスチェックをパスすることを検証
 - **C-3**: Aurora のライター→リーダー昇格（約 30 秒）の間に EC2 アプリケーションのコネクションプールが正常に再接続することを検証
 - **C-4**: データベースがネットワーク層で到達不能になった場合に、クエリタイムアウトとサーキットブレーカーの設定が ALB ヘルスチェックのハングアップを防ぐことを検証
