@@ -5,7 +5,23 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 03 Oct 2026 01:42:01 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 03 Oct 2026 01:46:00 GMT</lastBuildDate>
+    <item>
+      <title>FIS Chaos: RDS Multi-AZ DB Instance vs. Multi-AZ DB Cluster (PostgreSQL)</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-i-rds-multiaz</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/fis-arch-i-rds-multiaz</guid>
+      <pubDate>Fri, 02 Oct 2026 12:00:00 GMT</pubDate>
+      <description>Three AWS FIS chaos experiment templates comparing the two plain-RDS Multi-AZ topologies: forced failover of a Multi-AZ DB instance (aws:rds:reboot-db-instances, forceFailover=true), failover of a Multi-AZ DB cluster (aws:rds:failover-db-cluster), and a no-failover reboot as the control group. A VPC probe Lambda opens a new PostgreSQL connection per second to both endpoints and reports client-visible outage windows and server-IP changes. Deploy-verified: ~13-14 s for both failovers, 7 s for the plain reboot on idle small DBs.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>FIS</category>
+      <category>Chaos Engineering</category>
+      <category>RDS</category>
+      <category>PostgreSQL</category>
+      <category>Multi-AZ</category>
+      <category>Failover</category>
+      <category>Lambda</category>
+    </item>
     <item>
       <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</link>
