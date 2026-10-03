@@ -1,0 +1,799 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "HealthCheckId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrimaryHealthCheck",
+          "HealthCheckId",
+        ],
+      },
+    },
+    "HostedZoneId": {
+      "Value": {
+        "Ref": "ZoneA5DE4B68",
+      },
+    },
+    "PrimaryFunctionName": {
+      "Value": {
+        "Ref": "PrimaryFunction0DA4AB35",
+      },
+    },
+    "PrimaryUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrimaryFunctionFunctionUrl2C5EE65E",
+          "FunctionUrl",
+        ],
+      },
+    },
+    "RecordName": {
+      "Value": "app.failover.internal",
+    },
+    "ResolverFunctionName": {
+      "Value": {
+        "Ref": "ResolverFunctionDF18862C",
+      },
+    },
+    "SecondaryUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SecondaryFunctionFunctionUrlD0458890",
+          "FunctionUrl",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "Vpc8378EB38",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PrimaryFunction0DA4AB35": {
+      "DependsOn": [
+        "PrimaryFunctionServiceRoleCEE48A43",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const body = JSON.stringify({ role: process.env.ROLE, path });
+  if (path === '/health' && process.env.FAIL === 'true') {
+    return { statusCode: 503, headers: { 'content-type': 'application/json' }, body };
+  }
+  return { statusCode: 200, headers: { 'content-type': 'application/json' }, body };
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "ROLE": "primary",
+          },
+        },
+        "FunctionName": "TestProject-test-failover-primary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PrimaryLogGroup91EE5359",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PrimaryFunctionServiceRoleCEE48A43",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 3,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PrimaryFunctionFunctionUrl2C5EE65E": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "PrimaryFunction0DA4AB35",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "PrimaryFunctionServiceRoleCEE48A43": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PrimaryFunctioninvokefunction8F4A7DE3": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PrimaryFunction0DA4AB35",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PrimaryFunctioninvokefunctionurl032D1CD4": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PrimaryFunction0DA4AB35",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PrimaryHealthCheck": {
+      "Properties": {
+        "HealthCheckConfig": {
+          "EnableSNI": true,
+          "FailureThreshold": 2,
+          "FullyQualifiedDomainName": {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "PrimaryFunctionFunctionUrl2C5EE65E",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          "Port": 443,
+          "RequestInterval": 10,
+          "ResourcePath": "/health",
+          "Type": "HTTPS",
+        },
+        "HealthCheckTags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-failover-primary",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HealthCheck",
+    },
+    "PrimaryLogGroup91EE5359": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PrimaryRecord": {
+      "Properties": {
+        "Failover": "PRIMARY",
+        "HealthCheckId": {
+          "Fn::GetAtt": [
+            "PrimaryHealthCheck",
+            "HealthCheckId",
+          ],
+        },
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "app.failover.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "PrimaryFunctionFunctionUrl2C5EE65E",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "primary",
+        "TTL": "10",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "ResolverFunctionDF18862C": {
+      "DependsOn": [
+        "ResolverFunctionServiceRole6567C1D4",
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const dns = require('dns').promises;
+exports.handler = async () => {
+  const cname = await dns.resolveCname(process.env.RECORD_NAME);
+  return { record: process.env.RECORD_NAME, cname };
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "RECORD_NAME": "app.failover.internal",
+          },
+        },
+        "FunctionName": "TestProject-test-failover-resolver",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ResolverLogGroup085F5A99",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ResolverFunctionServiceRole6567C1D4",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "ResolverFunctionSecurityGroupB59F867A",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VpcisolatedSubnet1SubnetE62B1B9B",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ResolverFunctionSecurityGroupB59F867A": {
+      "DependsOn": [
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "GroupDescription": "Automatic security group for Lambda Function Route53FailoverHealthCheckResolverFunction7D6D808D",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "ResolverFunctionServiceRole6567C1D4": {
+      "DependsOn": [
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ResolverLogGroup085F5A99": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SecondaryFunction963A8B77": {
+      "DependsOn": [
+        "SecondaryFunctionServiceRole59349E7E",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const body = JSON.stringify({ role: process.env.ROLE, path });
+  if (path === '/health' && process.env.FAIL === 'true') {
+    return { statusCode: 503, headers: { 'content-type': 'application/json' }, body };
+  }
+  return { statusCode: 200, headers: { 'content-type': 'application/json' }, body };
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "ROLE": "secondary",
+          },
+        },
+        "FunctionName": "TestProject-test-failover-secondary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SecondaryLogGroup89856500",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "SecondaryFunctionServiceRole59349E7E",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 3,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SecondaryFunctionFunctionUrlD0458890": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "SecondaryFunction963A8B77",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "SecondaryFunctionServiceRole59349E7E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SecondaryFunctioninvokefunctionB493EDCA": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SecondaryFunction963A8B77",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SecondaryFunctioninvokefunctionurl50739CE7": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SecondaryFunction963A8B77",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "SecondaryLogGroup89856500": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SecondaryRecord": {
+      "Properties": {
+        "Failover": "SECONDARY",
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "app.failover.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "SecondaryFunctionFunctionUrlD0458890",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "secondary",
+        "TTL": "10",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.30.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Route53FailoverHealthCheck/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcRestrictDefaultSecurityGroupCustomResourceC73DA2BE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcisolatedSubnet1RouteTableAssociationD259E31A": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcisolatedSubnet1RouteTableE442650B",
+        },
+        "SubnetId": {
+          "Ref": "VpcisolatedSubnet1SubnetE62B1B9B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcisolatedSubnet1RouteTableE442650B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Route53FailoverHealthCheck/Vpc/isolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcisolatedSubnet1SubnetE62B1B9B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.30.0.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Route53FailoverHealthCheck/Vpc/isolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ZoneA5DE4B68": {
+      "Properties": {
+        "Name": "failover.internal.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "Vpc8378EB38",
+            },
+            "VPCRegion": "ap-northeast-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::RouteTable": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 1,
+  "AWS::EC2::SubnetRouteTableAssociation": 1,
+  "AWS::EC2::VPC": 1,
+  "AWS::IAM::Role": 4,
+  "AWS::Lambda::Function": 4,
+  "AWS::Lambda::Permission": 4,
+  "AWS::Lambda::Url": 2,
+  "AWS::Logs::LogGroup": 3,
+  "AWS::Route53::HealthCheck": 1,
+  "AWS::Route53::HostedZone": 1,
+  "AWS::Route53::RecordSet": 2,
+  "Custom::VpcRestrictDefaultSG": 1,
+}
+`;

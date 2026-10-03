@@ -5,7 +5,21 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 03 Oct 2026 15:49:09 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 03 Oct 2026 16:42:04 GMT</lastBuildDate>
+    <item>
+      <title>Route 53 Failover Routing with Health Checks</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-failover-health-check</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-failover-health-check</guid>
+      <pubDate>Sat, 03 Oct 2026 12:00:00 GMT</pubDate>
+      <description>DNS failover in its basic form: a PRIMARY record guarded by a Route 53 health check and a SECONDARY record that takes over when it fails, with two Lambda function URLs as endpoints and no domain or load balancer needed. A resolver Lambda inside the VPC resolves the private-zone record, and a check script breaks the primary and measures the switch. Deploy-verified: failover in 29 s and failback in 18 s with a 10 s interval, threshold 2 and TTL 10 s.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Route 53</category>
+      <category>Health Check</category>
+      <category>Failover</category>
+      <category>DR</category>
+      <category>Lambda</category>
+    </item>
     <item>
       <title>API Gateway REST API to a Private ALB over a VPC Link (ECS Fargate)</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/apigw-vpclink-private-alb</link>
