@@ -1,5 +1,17 @@
 [
   {
+    "id": "apigw-vpclink-private-alb",
+    "title": "API Gateway REST API to a Private ALB over a VPC Link (ECS Fargate)",
+    "description": "Publish a private ECS Fargate service only through API Gateway: a REST API with API key, usage plan and throttling reaches an internal ALB through a VPC link v2 with no NLB in between. The ALB's security group accepts the VPC link only, so the API key cannot be bypassed. Deploy-verified end to end with a check script: 403 without a key, 200 through the VPC link, load spread across tasks, ALB unreachable from outside, 429 under burst.",
+    "image": "apigw-vpclink-private-alb/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "API Gateway", "VPC Link", "ALB", "ECS", "Fargate", "Usage Plan", "Security"],
+    "link": "apigw-vpclink-private-alb",
+    "difficulty": "intermediate",
+    "level": 300,
+    "date": "2026-10-03",
+    "articles": {}
+  },
+  {
     "id": "secrets-rotation-aurora",
     "title": "Secrets Manager Rotation for Aurora (Single-User and Alternating Users)",
     "description": "Automatic credential rotation for Aurora PostgreSQL Serverless v2 with Secrets Manager hosted rotation: single-user rotation for the master secret and alternating-user rotation for the application secret, in isolated subnets with a Secrets Manager interface endpoint instead of a NAT gateway. A Data API consumer never holds a password; an end-to-end script runs real rotations and proves the new credentials work with zero failed queries.",
