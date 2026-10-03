@@ -1,11 +1,11 @@
 #!/bin/bash
-# Usage: ./run-scenario.sh <I-1|I-2|I-3> [--project drillexercises] [--env dev] [--profile <p>] [--region <r>]
+# Usage: ./run-scenario.sh <I-1|I-2|I-3> --project <project> [--env dev] [--profile <p>] [--region <r>]
 # Starts the failover probe Lambda, waits for it to settle, starts the FIS experiment
 # for the scenario, then prints the probe's measured outage windows.
 set -euo pipefail
 
 SCENARIO="${1:?scenario required (I-1|I-2|I-3)}"; shift || true
-PROJECT=drillexercises; ENV_NAME=dev; PROFILE=""; REGION=ap-northeast-1
+PROJECT=""; ENV_NAME=dev; PROFILE=""; REGION=ap-northeast-1
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) PROJECT="$2"; shift 2;;
@@ -15,6 +15,7 @@ while [ $# -gt 0 ]; do
     *) echo "unknown arg $1"; exit 1;;
   esac
 done
+[ -n "$PROJECT" ] || { echo "--project is required"; exit 1; }
 AWS=(aws --region "$REGION"); [ -n "$PROFILE" ] && AWS+=(--profile "$PROFILE")
 
 DURATION=${PROBE_SECONDS:-420}   # total probe time
