@@ -1,5 +1,17 @@
 [
   {
+    "id": "route53-failover-health-check",
+    "title": "Route 53 Failover Routing with Health Checks",
+    "description": "DNS failover in its basic form: a PRIMARY record guarded by a Route 53 health check and a SECONDARY record that takes over when it fails, with two Lambda function URLs as endpoints and no domain or load balancer needed. A resolver Lambda inside the VPC resolves the private-zone record, and a check script breaks the primary and measures the switch. Deploy-verified: failover in 29 s and failback in 18 s with a 10 s interval, threshold 2 and TTL 10 s.",
+    "image": "route53-failover-health-check/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Route 53", "Health Check", "Failover", "DR", "Lambda"],
+    "link": "route53-failover-health-check",
+    "difficulty": "beginner",
+    "level": 200,
+    "date": "2026-10-03",
+    "articles": {}
+  },
+  {
     "id": "apigw-vpclink-private-alb",
     "title": "API Gateway REST API to a Private ALB over a VPC Link (ECS Fargate)",
     "description": "Publish a private ECS Fargate service only through API Gateway: a REST API with API key, usage plan and throttling reaches an internal ALB through a VPC link v2 with no NLB in between. The ALB's security group accepts the VPC link only, so the API key cannot be bypassed. Deploy-verified end to end with a check script: 403 without a key, 200 through the VPC link, load spread across tasks, ALB unreachable from outside, 429 under burst.",

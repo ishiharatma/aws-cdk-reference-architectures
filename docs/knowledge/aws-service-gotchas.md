@@ -285,3 +285,12 @@ is appropriate). **Confirmed** by the exact `InvalidRequest` /
 `HandlerErrorCode: InvalidRequest` deploy failure on a real stack, which only surfaces
 at deploy time — `cdk synth` and unit tests asserting `Source.SourceIdentifier` alone
 do not catch a missing required `InputParameters` field.
+
+## Route 53: `test-dns-answer` rejects private hosted zones
+
+Verified while deploy-verifying `route53-failover-health-check` (ap-northeast-1, October 2026).
+`aws route53 test-dns-answer` on a private hosted zone fails with `InvalidInput: Cannot send DNS
+query to a Private Hosted Zone`. To test a failover record in a private zone, resolve it from
+inside the associated VPC (for example a Lambda in an isolated subnet calling `dns.resolveCname`).
+Route 53 health checkers still run outside the VPC, so a health check needs a publicly reachable endpoint.
+Measured with a 10 s interval, threshold 2 and TTL 10 s: failover 29 s, failback 18 s.
