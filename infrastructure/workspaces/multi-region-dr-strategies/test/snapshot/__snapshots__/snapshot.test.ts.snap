@@ -1,0 +1,2720 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests Complete CloudFormation template snapshot: TestProject-test-dr-primary 1`] = `
+{
+  "Description": "TestProject multi-region DR: primary region for test",
+  "Outputs": {
+    "AAFunctionName": {
+      "Value": {
+        "Ref": "AAAppFunctionEF7D437F",
+      },
+    },
+    "AAUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "AAAppFunctionFunctionUrl674C4264",
+          "FunctionUrl",
+        ],
+      },
+    },
+    "BNRFunctionName": {
+      "Value": {
+        "Ref": "BNRAppFunction8D5A7068",
+      },
+    },
+    "BNRUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "BNRAppFunctionFunctionUrl5546D2B8",
+          "FunctionUrl",
+        ],
+      },
+    },
+    "BackupPlanId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PlanDAF4E53A",
+          "BackupPlanId",
+        ],
+      },
+    },
+    "BackupRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "BackupRoleF43CFD90",
+          "Arn",
+        ],
+      },
+    },
+    "BnrTableArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "BnrTable6EAADF10",
+          "Arn",
+        ],
+      },
+    },
+    "PLFunctionName": {
+      "Value": {
+        "Ref": "PLAppFunction5E2701AF",
+      },
+    },
+    "PLUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PLAppFunctionFunctionUrl4683215B",
+          "FunctionUrl",
+        ],
+      },
+    },
+    "PrimaryVaultName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Vault23237E5B",
+          "BackupVaultName",
+        ],
+      },
+    },
+    "ResolverFunctionName": {
+      "Value": {
+        "Ref": "ResolverFunctionDF18862C",
+      },
+    },
+    "WSFunctionName": {
+      "Value": {
+        "Ref": "WSAppFunction93339167",
+      },
+    },
+    "WSUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WSAppFunctionFunctionUrl9084DD4C",
+          "FunctionUrl",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AAAppFunctionEF7D437F": {
+      "DependsOn": [
+        "AAAppFunctionServiceRoleDefaultPolicyC21DF66A",
+        "AAAppFunctionServiceRole51864125",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "aa",
+            "TABLE_NAME": "TestProject-test-dr-aa-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-aa-primary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "AAAppLogGroupA1D45D73",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "AAAppFunctionServiceRole51864125",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AAAppFunctionFunctionUrl674C4264": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "AAAppFunctionEF7D437F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "AAAppFunctionServiceRole51864125": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "AAAppFunctionServiceRoleDefaultPolicyC21DF66A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-1:123456789012:table/TestProject-test-dr-aa-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AAAppFunctionServiceRoleDefaultPolicyC21DF66A",
+        "Roles": [
+          {
+            "Ref": "AAAppFunctionServiceRole51864125",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "AAAppFunctioninvokefunction39E0EE55": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AAAppFunctionEF7D437F",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "AAAppFunctioninvokefunctionurl9BC83414": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AAAppFunctionEF7D437F",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "AAAppLogGroupA1D45D73": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AATable9D719270": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "Replicas": [
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-3",
+          },
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-1",
+          },
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES",
+        },
+        "TableName": "TestProject-test-dr-aa-orders",
+      },
+      "Type": "AWS::DynamoDB::GlobalTable",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AaDrCheck": {
+      "Properties": {
+        "HealthCheckConfig": {
+          "EnableSNI": true,
+          "FailureThreshold": 2,
+          "FullyQualifiedDomainName": {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "ExportsReader8B249524",
+                              "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttActiveActiveFunctionFunctionUrl31143C0EFunctionUrl14EDA7FB",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          "Port": 443,
+          "RequestInterval": 10,
+          "ResourcePath": "/health",
+          "Type": "HTTPS",
+        },
+        "HealthCheckTags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-dr-aa-dr",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HealthCheck",
+    },
+    "AaDrRecord": {
+      "Properties": {
+        "HealthCheckId": {
+          "Fn::GetAtt": [
+            "AaDrCheck",
+            "HealthCheckId",
+          ],
+        },
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "aa.dr.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "ExportsReader8B249524",
+                              "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttActiveActiveFunctionFunctionUrl31143C0EFunctionUrl14EDA7FB",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "dr",
+        "TTL": "10",
+        "Type": "CNAME",
+        "Weight": 50,
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "AaPrimaryCheck": {
+      "Properties": {
+        "HealthCheckConfig": {
+          "EnableSNI": true,
+          "FailureThreshold": 2,
+          "FullyQualifiedDomainName": {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "AAAppFunctionFunctionUrl674C4264",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          "Port": 443,
+          "RequestInterval": 10,
+          "ResourcePath": "/health",
+          "Type": "HTTPS",
+        },
+        "HealthCheckTags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-dr-aa-primary",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HealthCheck",
+    },
+    "AaPrimaryRecord": {
+      "Properties": {
+        "HealthCheckId": {
+          "Fn::GetAtt": [
+            "AaPrimaryCheck",
+            "HealthCheckId",
+          ],
+        },
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "aa.dr.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "AAAppFunctionFunctionUrl674C4264",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "primary",
+        "TTL": "10",
+        "Type": "CNAME",
+        "Weight": 50,
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "BNRAppFunction8D5A7068": {
+      "DependsOn": [
+        "BNRAppFunctionServiceRoleDefaultPolicyF3FF879E",
+        "BNRAppFunctionServiceRoleFEE82A45",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "bnr",
+            "TABLE_NAME": "TestProject-test-dr-bnr-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-bnr-primary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "BNRAppLogGroup670E9F5F",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "BNRAppFunctionServiceRoleFEE82A45",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "BNRAppFunctionFunctionUrl5546D2B8": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "BNRAppFunction8D5A7068",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "BNRAppFunctionServiceRoleDefaultPolicyF3FF879E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-1:123456789012:table/TestProject-test-dr-bnr-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "BNRAppFunctionServiceRoleDefaultPolicyF3FF879E",
+        "Roles": [
+          {
+            "Ref": "BNRAppFunctionServiceRoleFEE82A45",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "BNRAppFunctionServiceRoleFEE82A45": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BNRAppFunctioninvokefunction0F07B2D3": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "BNRAppFunction8D5A7068",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BNRAppFunctioninvokefunctionurlB4F21E99": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "BNRAppFunction8D5A7068",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BNRAppLogGroup670E9F5F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "BackupRoleF43CFD90": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "backup.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "TestProject-test-dr-bnr-backup-role",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BnrTable6EAADF10": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "TableName": "TestProject-test-dr-bnr-orders",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CustomCrossRegionExportReaderCustomResourceProviderHandler46647B68": {
+      "DependsOn": [
+        "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "f8b7112ff78fd0b6fab4c6b048fc1da9945198135db9a1e6b1d5cb4599d5a3d2.zip",
+        },
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCrossRegionExportReaderCustomResourceProviderRole10531BBD": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ssm:AddTagsToResource",
+                    "ssm:RemoveTagsFromResource",
+                    "ssm:GetParameters",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":ssm:ap-northeast-1:123456789012:parameter/cdk/exports/TestProject-test-dr-primary/*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "Vpc8378EB38",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ExportsReader8B249524": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "ReaderProps": {
+          "imports": {
+            "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttActiveActiveFunctionFunctionUrl31143C0EFunctionUrl14EDA7FB": "{{resolve:ssm:/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttActiveActiveFunctionFunctionUrl31143C0EFunctionUrl14EDA7FB}}",
+            "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttWarmStandbyFunctionFunctionUrl55D9455BFunctionUrl674D7343": "{{resolve:ssm:/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttWarmStandbyFunctionFunctionUrl55D9455BFunctionUrl674D7343}}",
+          },
+          "prefix": "TestProject-test-dr-primary",
+          "region": "ap-northeast-1",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCrossRegionExportReaderCustomResourceProviderHandler46647B68",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::CrossRegionExportReader",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PLAppFunction5E2701AF": {
+      "DependsOn": [
+        "PLAppFunctionServiceRoleDefaultPolicyA3EBC32B",
+        "PLAppFunctionServiceRole6DB34FAB",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "pl",
+            "TABLE_NAME": "TestProject-test-dr-pl-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-pl-primary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PLAppLogGroup949B5942",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PLAppFunctionServiceRole6DB34FAB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PLAppFunctionFunctionUrl4683215B": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "PLAppFunction5E2701AF",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "PLAppFunctionServiceRole6DB34FAB": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PLAppFunctionServiceRoleDefaultPolicyA3EBC32B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-1:123456789012:table/TestProject-test-dr-pl-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PLAppFunctionServiceRoleDefaultPolicyA3EBC32B",
+        "Roles": [
+          {
+            "Ref": "PLAppFunctionServiceRole6DB34FAB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PLAppFunctioninvokefunctionA8301098": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PLAppFunction5E2701AF",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PLAppFunctioninvokefunctionurl40370CA3": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PLAppFunction5E2701AF",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PLAppLogGroup949B5942": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PLTable133B1628": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "Replicas": [
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-3",
+          },
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-1",
+          },
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES",
+        },
+        "TableName": "TestProject-test-dr-pl-orders",
+      },
+      "Type": "AWS::DynamoDB::GlobalTable",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PlanBnrTable03A54C2D": {
+      "Properties": {
+        "BackupPlanId": {
+          "Fn::GetAtt": [
+            "PlanDAF4E53A",
+            "BackupPlanId",
+          ],
+        },
+        "BackupSelection": {
+          "IamRoleArn": {
+            "Fn::GetAtt": [
+              "BackupRoleF43CFD90",
+              "Arn",
+            ],
+          },
+          "Resources": [
+            {
+              "Fn::GetAtt": [
+                "BnrTable6EAADF10",
+                "Arn",
+              ],
+            },
+          ],
+          "SelectionName": "BnrTable",
+        },
+      },
+      "Type": "AWS::Backup::BackupSelection",
+    },
+    "PlanDAF4E53A": {
+      "Properties": {
+        "BackupPlan": {
+          "BackupPlanName": "TestProject-test-dr-bnr-plan",
+          "BackupPlanRule": [
+            {
+              "CopyActions": [
+                {
+                  "DestinationBackupVaultArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":backup:ap-northeast-3:123456789012:backup-vault:TestProject-test-dr-bnr-dr",
+                      ],
+                    ],
+                  },
+                  "Lifecycle": {
+                    "DeleteAfterDays": 1,
+                  },
+                },
+              ],
+              "Lifecycle": {
+                "DeleteAfterDays": 1,
+              },
+              "RuleName": "DailyBackupWithCopy",
+              "ScheduleExpression": "cron(0 18 * * ? *)",
+              "TargetBackupVault": {
+                "Fn::GetAtt": [
+                  "Vault23237E5B",
+                  "BackupVaultName",
+                ],
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupPlan",
+    },
+    "ResolverFunctionDF18862C": {
+      "DependsOn": [
+        "ResolverFunctionServiceRole6567C1D4",
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const dns = require('dns').promises;
+exports.handler = async (event) => {
+  const cname = await dns.resolveCname(event.name);
+  return { name: event.name, cname };
+};
+",
+        },
+        "FunctionName": "TestProject-test-dr-resolver",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ResolverLogGroup085F5A99",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ResolverFunctionServiceRole6567C1D4",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "ResolverFunctionSecurityGroupB59F867A",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VpcisolatedSubnet1SubnetE62B1B9B",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ResolverFunctionSecurityGroupB59F867A": {
+      "DependsOn": [
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "GroupDescription": "Automatic security group for Lambda Function StageTestProjectDrPrimaryResolverFunctionDCCD2765",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "ResolverFunctionServiceRole6567C1D4": {
+      "DependsOn": [
+        "VpcisolatedSubnet1RouteTableAssociationD259E31A",
+        "ZoneA5DE4B68",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ResolverLogGroup085F5A99": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Vault23237E5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BackupVaultName": "TestProject-test-dr-bnr-primary",
+        "EncryptionKeyArn": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupVault",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKey6B75F33E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "KMS key for the TestProject-test-dr primary backup vault",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKeyAlias6C40A5EE": {
+      "Properties": {
+        "AliasName": "alias/TestProject-test-dr-bnr-primary",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.40.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Stage/TestProjectDrPrimary/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcRestrictDefaultSecurityGroupCustomResourceC73DA2BE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcisolatedSubnet1RouteTableAssociationD259E31A": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcisolatedSubnet1RouteTableE442650B",
+        },
+        "SubnetId": {
+          "Ref": "VpcisolatedSubnet1SubnetE62B1B9B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcisolatedSubnet1RouteTableE442650B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Stage/TestProjectDrPrimary/Vpc/isolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcisolatedSubnet1SubnetE62B1B9B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.40.0.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "isolated",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Stage/TestProjectDrPrimary/Vpc/isolatedSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "WSAppFunction93339167": {
+      "DependsOn": [
+        "WSAppFunctionServiceRoleDefaultPolicyA8DB6B69",
+        "WSAppFunctionServiceRoleA1419B80",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "ws",
+            "TABLE_NAME": "TestProject-test-dr-ws-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-ws-primary",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WSAppLogGroup5AAE5DD6",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "WSAppFunctionServiceRoleA1419B80",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WSAppFunctionFunctionUrl9084DD4C": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "WSAppFunction93339167",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "WSAppFunctionServiceRoleA1419B80": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WSAppFunctionServiceRoleDefaultPolicyA8DB6B69": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-1:123456789012:table/TestProject-test-dr-ws-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WSAppFunctionServiceRoleDefaultPolicyA8DB6B69",
+        "Roles": [
+          {
+            "Ref": "WSAppFunctionServiceRoleA1419B80",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WSAppFunctioninvokefunctionE1118529": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WSAppFunction93339167",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WSAppFunctioninvokefunctionurlE170A379": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WSAppFunction93339167",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WSAppLogGroup5AAE5DD6": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WSTable5EBE2816": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "Replicas": [
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-3",
+          },
+          {
+            "PointInTimeRecoverySpecification": {
+              "PointInTimeRecoveryEnabled": true,
+            },
+            "Region": "ap-northeast-1",
+          },
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES",
+        },
+        "TableName": "TestProject-test-dr-ws-orders",
+      },
+      "Type": "AWS::DynamoDB::GlobalTable",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WsPrimaryCheck": {
+      "Properties": {
+        "HealthCheckConfig": {
+          "EnableSNI": true,
+          "FailureThreshold": 2,
+          "FullyQualifiedDomainName": {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "WSAppFunctionFunctionUrl9084DD4C",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          "Port": 443,
+          "RequestInterval": 10,
+          "ResourcePath": "/health",
+          "Type": "HTTPS",
+        },
+        "HealthCheckTags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-dr-ws-primary",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HealthCheck",
+    },
+    "WsPrimaryRecord": {
+      "Properties": {
+        "Failover": "PRIMARY",
+        "HealthCheckId": {
+          "Fn::GetAtt": [
+            "WsPrimaryCheck",
+            "HealthCheckId",
+          ],
+        },
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "ws.dr.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "WSAppFunctionFunctionUrl9084DD4C",
+                              "FunctionUrl",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "primary",
+        "TTL": "10",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "WsSecondaryRecord": {
+      "Properties": {
+        "Failover": "SECONDARY",
+        "HostedZoneId": {
+          "Ref": "ZoneA5DE4B68",
+        },
+        "Name": "ws.dr.internal",
+        "ResourceRecords": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Fn::Split": [
+                  "/",
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "//",
+                          {
+                            "Fn::GetAtt": [
+                              "ExportsReader8B249524",
+                              "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttWarmStandbyFunctionFunctionUrl55D9455BFunctionUrl674D7343",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        "SetIdentifier": "secondary",
+        "TTL": "10",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "ZoneA5DE4B68": {
+      "Properties": {
+        "Name": "dr.internal.",
+        "VPCs": [
+          {
+            "VPCId": {
+              "Ref": "Vpc8378EB38",
+            },
+            "VPCRegion": "ap-northeast-1",
+          },
+        ],
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Complete CloudFormation template snapshot: TestProject-test-dr-recovery 1`] = `
+{
+  "Description": "TestProject multi-region DR: pilot light recovery compute for test",
+  "Outputs": {
+    "PilotLightUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PilotLightFunctionFunctionUrl581E62DF",
+          "FunctionUrl",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "PilotLightFunctionE314E837": {
+      "DependsOn": [
+        "PilotLightFunctionServiceRoleDefaultPolicy0A8F15EC",
+        "PilotLightFunctionServiceRole014D1A5D",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "pl",
+            "TABLE_NAME": "TestProject-test-dr-pl-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-pl",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PilotLightLogGroup4CF73FBA",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PilotLightFunctionServiceRole014D1A5D",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PilotLightFunctionFunctionUrl581E62DF": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "PilotLightFunctionE314E837",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "PilotLightFunctionServiceRole014D1A5D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PilotLightFunctionServiceRoleDefaultPolicy0A8F15EC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-3:123456789012:table/TestProject-test-dr-pl-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PilotLightFunctionServiceRoleDefaultPolicy0A8F15EC",
+        "Roles": [
+          {
+            "Ref": "PilotLightFunctionServiceRole014D1A5D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PilotLightFunctioninvokefunction9EFEEE23": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PilotLightFunctionE314E837",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PilotLightFunctioninvokefunctionurlED0CF0AE": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PilotLightFunctionE314E837",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PilotLightLogGroup4CF73FBA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Complete CloudFormation template snapshot: TestProject-test-dr-secondary 1`] = `
+{
+  "Description": "TestProject multi-region DR: DR region for test",
+  "Outputs": {
+    "ActiveActiveFunctionName": {
+      "Value": {
+        "Ref": "ActiveActiveFunctionE5C79BAF",
+      },
+    },
+    "ActiveActiveUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ActiveActiveFunctionFunctionUrl31143C0E",
+          "FunctionUrl",
+        ],
+      },
+    },
+    "DrVaultName": {
+      "Value": "TestProject-test-dr-bnr-dr",
+    },
+    "WarmStandbyFunctionName": {
+      "Value": {
+        "Ref": "WarmStandbyFunction9889483E",
+      },
+    },
+    "WarmStandbyUrl": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WarmStandbyFunctionFunctionUrl55D9455B",
+          "FunctionUrl",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ActiveActiveFunctionE5C79BAF": {
+      "DependsOn": [
+        "ActiveActiveFunctionServiceRoleDefaultPolicy206E559F",
+        "ActiveActiveFunctionServiceRoleEEF0FC42",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "aa",
+            "TABLE_NAME": "TestProject-test-dr-aa-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-aa",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ActiveActiveLogGroup94809A0A",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ActiveActiveFunctionServiceRoleEEF0FC42",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ActiveActiveFunctionFunctionUrl31143C0E": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "ActiveActiveFunctionE5C79BAF",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "ActiveActiveFunctionServiceRoleDefaultPolicy206E559F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-3:123456789012:table/TestProject-test-dr-aa-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ActiveActiveFunctionServiceRoleDefaultPolicy206E559F",
+        "Roles": [
+          {
+            "Ref": "ActiveActiveFunctionServiceRoleEEF0FC42",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ActiveActiveFunctionServiceRoleEEF0FC42": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ActiveActiveFunctioninvokefunction080B18F3": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ActiveActiveFunctionE5C79BAF",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ActiveActiveFunctioninvokefunctionurlA2E7CB55": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ActiveActiveFunctionE5C79BAF",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "ActiveActiveLogGroup94809A0A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CustomCrossRegionExportWriterCustomResourceProviderHandlerD8786E8A": {
+      "DependsOn": [
+        "CustomCrossRegionExportWriterCustomResourceProviderRoleC951B1E1",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-3",
+          "S3Key": "08b23c75a1fe108c9fbd7896f6d7a668289c804be7852d611aecf2a0b501279f.zip",
+        },
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCrossRegionExportWriterCustomResourceProviderRoleC951B1E1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCrossRegionExportWriterCustomResourceProviderRoleC951B1E1": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ssm:DeleteParameters",
+                    "ssm:ListTagsForResource",
+                    "ssm:GetParameters",
+                    "ssm:PutParameter",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ssm:ap-northeast-1:123456789012:parameter/cdk/exports/*",
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ExportsWriterapnortheast12334E1B81D43DF3F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCrossRegionExportWriterCustomResourceProviderHandlerD8786E8A",
+            "Arn",
+          ],
+        },
+        "WriterProps": {
+          "exports": {
+            "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttActiveActiveFunctionFunctionUrl31143C0EFunctionUrl14EDA7FB": {
+              "Fn::GetAtt": [
+                "ActiveActiveFunctionFunctionUrl31143C0E",
+                "FunctionUrl",
+              ],
+            },
+            "/cdk/exports/TestProject-test-dr-primary/TestProjecttestdrsecondaryapnortheast3FnGetAttWarmStandbyFunctionFunctionUrl55D9455BFunctionUrl674D7343": {
+              "Fn::GetAtt": [
+                "WarmStandbyFunctionFunctionUrl55D9455B",
+                "FunctionUrl",
+              ],
+            },
+          },
+          "region": "ap-northeast-1",
+        },
+      },
+      "Type": "Custom::CrossRegionExportWriter",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Vault23237E5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BackupVaultName": "TestProject-test-dr-bnr-dr",
+        "EncryptionKeyArn": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Backup::BackupVault",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKey6B75F33E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "KMS key for the TestProject-test-dr disaster recovery backup vault",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VaultKeyAlias6C40A5EE": {
+      "Properties": {
+        "AliasName": "alias/TestProject-test-dr-bnr-dr",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "VaultKey6B75F33E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+    "WarmStandbyFunction9889483E": {
+      "DependsOn": [
+        "WarmStandbyFunctionServiceRoleDefaultPolicy0DEDD97F",
+        "WarmStandbyFunctionServiceRoleBACB2EC8",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "ZipFile": "
+const { DynamoDBClient, PutItemCommand, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+const ddb = new DynamoDBClient({});
+const json = (statusCode, body) => ({ statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+exports.handler = async (event) => {
+  const path = event.rawPath || '/';
+  const method = event.requestContext.http.method;
+  const base = { strategy: process.env.STRATEGY, region: process.env.AWS_REGION };
+  if (path === '/health') return process.env.FAIL === 'true' ? json(503, { ...base, healthy: false }) : json(200, { ...base, healthy: true });
+  if (method === 'POST' && path === '/orders') {
+    const id = JSON.parse(event.body || '{}').id || crypto.randomUUID();
+    const ts = Date.now();
+    await ddb.send(new PutItemCommand({ TableName: process.env.TABLE_NAME, Item: { id: { S: id }, ts: { N: String(ts) } } }));
+    return json(200, { ...base, id, ts });
+  }
+  if (method === 'GET' && path.startsWith('/orders/')) {
+    const id = decodeURIComponent(path.slice('/orders/'.length));
+    const res = await ddb.send(new GetItemCommand({ TableName: process.env.TABLE_NAME, Key: { id: { S: id } } }));
+    return res.Item ? json(200, { ...base, id, ts: Number(res.Item.ts.N) }) : json(404, { ...base, id, found: false });
+  }
+  return json(200, { ...base, table: process.env.TABLE_NAME });
+};
+",
+        },
+        "Environment": {
+          "Variables": {
+            "FAIL": "false",
+            "STRATEGY": "ws",
+            "TABLE_NAME": "TestProject-test-dr-ws-orders",
+          },
+        },
+        "FunctionName": "TestProject-test-dr-ws",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WarmStandbyLogGroup71322087",
+          },
+        },
+        "ReservedConcurrentExecutions": 0,
+        "Role": {
+          "Fn::GetAtt": [
+            "WarmStandbyFunctionServiceRoleBACB2EC8",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 5,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WarmStandbyFunctionFunctionUrl55D9455B": {
+      "Properties": {
+        "AuthType": "NONE",
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "WarmStandbyFunction9889483E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Url",
+    },
+    "WarmStandbyFunctionServiceRoleBACB2EC8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WarmStandbyFunctionServiceRoleDefaultPolicy0DEDD97F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:GetItem",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":dynamodb:ap-northeast-3:123456789012:table/TestProject-test-dr-ws-orders",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WarmStandbyFunctionServiceRoleDefaultPolicy0DEDD97F",
+        "Roles": [
+          {
+            "Ref": "WarmStandbyFunctionServiceRoleBACB2EC8",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WarmStandbyFunctioninvokefunction5CDCE612": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WarmStandbyFunction9889483E",
+            "Arn",
+          ],
+        },
+        "InvokedViaFunctionUrl": true,
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WarmStandbyFunctioninvokefunctionurlD81BD463": {
+      "Properties": {
+        "Action": "lambda:InvokeFunctionUrl",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WarmStandbyFunction9889483E",
+            "Arn",
+          ],
+        },
+        "FunctionUrlAuthType": "NONE",
+        "Principal": "*",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WarmStandbyLogGroup71322087": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests Resource types and counts per stack 1`] = `
+{
+  "TestProject-test-dr-primary": {
+    "AWS::Backup::BackupPlan": 1,
+    "AWS::Backup::BackupSelection": 1,
+    "AWS::Backup::BackupVault": 1,
+    "AWS::DynamoDB::GlobalTable": 3,
+    "AWS::DynamoDB::Table": 1,
+    "AWS::EC2::RouteTable": 1,
+    "AWS::EC2::SecurityGroup": 1,
+    "AWS::EC2::Subnet": 1,
+    "AWS::EC2::SubnetRouteTableAssociation": 1,
+    "AWS::EC2::VPC": 1,
+    "AWS::IAM::Policy": 4,
+    "AWS::IAM::Role": 8,
+    "AWS::KMS::Alias": 1,
+    "AWS::KMS::Key": 1,
+    "AWS::Lambda::Function": 7,
+    "AWS::Lambda::Permission": 8,
+    "AWS::Lambda::Url": 4,
+    "AWS::Logs::LogGroup": 5,
+    "AWS::Route53::HealthCheck": 3,
+    "AWS::Route53::HostedZone": 1,
+    "AWS::Route53::RecordSet": 4,
+    "Custom::CrossRegionExportReader": 1,
+    "Custom::VpcRestrictDefaultSG": 1,
+  },
+  "TestProject-test-dr-recovery": {
+    "AWS::IAM::Policy": 1,
+    "AWS::IAM::Role": 1,
+    "AWS::Lambda::Function": 1,
+    "AWS::Lambda::Permission": 2,
+    "AWS::Lambda::Url": 1,
+    "AWS::Logs::LogGroup": 1,
+  },
+  "TestProject-test-dr-secondary": {
+    "AWS::Backup::BackupVault": 1,
+    "AWS::IAM::Policy": 2,
+    "AWS::IAM::Role": 3,
+    "AWS::KMS::Alias": 1,
+    "AWS::KMS::Key": 1,
+    "AWS::Lambda::Function": 3,
+    "AWS::Lambda::Permission": 4,
+    "AWS::Lambda::Url": 2,
+    "AWS::Logs::LogGroup": 2,
+    "Custom::CrossRegionExportWriter": 1,
+  },
+}
+`;
