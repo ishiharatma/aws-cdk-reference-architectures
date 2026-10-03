@@ -168,6 +168,18 @@
     "articles": {}
   },
   {
+    "id": "fis-arch-i-rds-multiaz",
+    "title": "FIS Chaos: RDS Multi-AZ DB Instance vs. Multi-AZ DB Cluster (PostgreSQL)",
+    "description": "Three AWS FIS chaos experiment templates comparing the two plain-RDS Multi-AZ topologies: forced failover of a Multi-AZ DB instance (aws:rds:reboot-db-instances, forceFailover=true), failover of a Multi-AZ DB cluster (aws:rds:failover-db-cluster), and a no-failover reboot as the control group. A VPC probe Lambda opens a new PostgreSQL connection per second to both endpoints and reports client-visible outage windows and server-IP changes. Deploy-verified: ~13-14 s for both failovers, 7 s for the plain reboot on idle small DBs.",
+    "image": "fis-arch-i-rds-multiaz/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "FIS", "Chaos Engineering", "RDS", "PostgreSQL", "Multi-AZ", "Failover", "Lambda"],
+    "link": "fis-arch-i-rds-multiaz",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-02",
+    "articles": {}
+  },
+  {
     "id": "apigw-single-purpose-lambda",
     "title": "API Gateway + Single-Purpose Lambda",
     "description": "A Todos REST API where every API Gateway method is backed by its own narrowly-scoped Lambda function, each with an independent IAM role, log group, bundle, and least-privilege DynamoDB grant (read-only for GET, write-only for POST/DELETE). One of three companion workspaces comparing API Gateway + Lambda integration styles against the same API.",

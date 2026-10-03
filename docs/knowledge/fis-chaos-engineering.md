@@ -114,6 +114,33 @@ still-partitioned AZ. Deliberately routing capacity to the healthy AZ during a r
 event requires [ARC zonal shift](aws-service-gotchas.md#arc-zonal-shift-on-auto-scaling),
 not just "wait for Auto Scaling to fix it."
 
+## RDS Multi-AZ DB instance vs. Multi-AZ DB cluster (non-Aurora)
+
+(`fis-arch-i-rds-multiaz`, deploy-verified 2026-10-02, `ap-northeast-1`, PostgreSQL 17.9)
+
+- **FIS actions differ by topology.** Multi-AZ DB *instance*: `aws:rds:reboot-db-instances`
+  with parameter `forceFailover: 'true'` (target type `aws:rds:db`). Multi-AZ DB *cluster*:
+  `aws:rds:failover-db-cluster` (target type `aws:rds:cluster`, cluster ARN). IAM:
+  `rds:RebootDBInstance` / `rds:FailoverDBCluster` + the matching `Describe*`.
+- **Measured client-visible downtime** (new connection per second, 1 s timeout, idle small DBs, n=1
+  each): instance forced failover 14 s, cluster failover 13 s, instance reboot *without* failover
+  7 s. Server IP behind the endpoint changed after both failovers and not after the plain
+  reboot. The numbers are far below the commonly cited 60-120 s; they are not a guarantee.
+- **`CfnDBCluster` (L1) defaults `Port` to 3306 even for `engine: 'postgres'`.** The cluster
+  then silently refuses 5432 (client sees connect timeouts) and the port **cannot be modified**
+  on a Multi-AZ DB cluster ("You can't modify the port for a Multi-AZ DB cluster") - the failed
+  update leaves the stack in `UPDATE_ROLLBACK_FAILED`; delete and recreate. Always set `port`.
+- A Multi-AZ DB cluster needs a subnet group spanning **3 AZs**; `dbClusterInstanceClass` is
+  what selects the Multi-AZ DB cluster topology. Supported classes are limited (`db.m5d`,
+  `db.m6gd`, `db.r*d` ...); check `describe-orderable-db-instance-options` (`SupportsClusters`).
+- gp3 Multi-AZ DB cluster below 400 GiB: do not set `Iops` ("You can't specify IOPS or storage
+  throughput for engine postgres and a storage size less than 400"); the 3000 IOPS baseline applies.
+- Capacity errors are real and sometimes transient: `db.t4g.micro` Multi-AZ + gp3 was rejected
+  ("not two Availability Zones with sufficient capacity"; `db.t4g.small` worked), and a Multi-AZ
+  DB cluster create once failed with "aren't enough Availability Zones" and succeeded unchanged on retry.
+- Probe error signatures: during the instance failover the client saw connect *timeouts*;
+  during cluster failover and plain reboot it saw `ECONNREFUSED` (node up, postgres not yet accepting).
+
 ## FIS pricing
 
 FIS is **not free**. It bills **$0.10 per action-minute**, consistently across regions
