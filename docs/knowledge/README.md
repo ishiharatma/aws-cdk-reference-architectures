@@ -37,6 +37,7 @@ checked `aws fis list-actions`).
 - [secrets-manager-aurora-rotation.md](secrets-manager-aurora-rotation.md) — Aurora + Secrets Manager rotation: Data API caches secrets for minutes, alternating users flip the username, role must exist first, endpoint instead of NAT, force-delete secrets on teardown
 - [amplify-hosting.md](amplify-hosting.md) — Amplify Hosting: `StartDeployment` with an `s3://` sourceUrl needs a bucket policy (not just IAM grants), why that's often unreachable for a CDK-asset zip, and the presigned-URL fix that avoids it entirely
 - [lambda-microvms.md](lambda-microvms.md) — AWS Lambda MicroVMs: lifecycle hooks live under `/aws/lambda-microvms/runtime/v1/<hook-name>` (not bare paths), IAM actions are `lambda:*` not `lambda-microvms:*`, `PassNetworkConnector` needed for both custom and AWS-managed connectors, build-time hooks run under the build role not the execution role
+- [lambda-web-functions.md](lambda-web-functions.md) — AWS Lambda Web Functions: boto3-only, experimental and internal-use-only as of 2026-10-03; API surface and open questions to check at GA
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory
