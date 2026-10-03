@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300（上級）**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 親プライベートホストゾーン（`system.example.com`）が、2つのサブドメイン（`dev.system.example.com`、
 `stg.system.example.com`）を別々のVPCへ委任する構成です。2025年6月に追加された **Route 53 Resolver DNS委任**
@@ -14,16 +14,16 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#アーキテクチャ概要)
-- [設計判断とベストプラクティス](#設計判断とベストプラクティス)
-- [コスト最適化](#コスト最適化)
-- [セキュリティ考慮事項](#セキュリティ考慮事項)
-- [前提条件](#前提条件)
-- [デプロイガイド](#デプロイガイド)
-- [テスト戦略](#テスト戦略)
-- [カスタマイズ](#カスタマイズ)
-- [トラブルシューティング](#トラブルシューティング)
-- [参考資料](#参考資料)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
+- [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
+- [コスト最適化](#-コスト最適化)
+- [セキュリティ考慮事項](#-セキュリティ考慮事項)
+- [前提条件](#-前提条件)
+- [デプロイガイド](#-デプロイガイド)
+- [テスト戦略](#-テスト戦略)
+- [カスタマイズ](#️-カスタマイズ)
+- [トラブルシューティング](#-トラブルシューティング)
+- [参考資料](#-参考資料)
 
 ## 🏗️ アーキテクチャ概要
 
@@ -269,7 +269,7 @@ dig @127.0.0.1 app.dev.system.example.com +short
 
 | 症状 | 想定される原因 | 対処 |
 |---------|--------------|-----|
-| `dig app.dev.system.example.com` が応答を返さない（エラーもタイムアウトもなく空） | `DELEGATE` ルールの `DelegationRecord` が*子*ゾーン名になっている（正しくは*親*ゾーン名） | `DelegationRecord` にはNS＋グルーレコードが実際に存在するゾーン(ここでは `system.example.com`)を指定する必要がある。委任先の子ゾーン名ではない。[設計判断1](#1-親→子の経路には-forward-ではなく-delegate-ルール)を参照。`aws route53resolver get-resolver-rule --resolver-rule-id <id>` でデプロイ済みの値を確認できる。 |
+| `dig app.dev.system.example.com` が応答を返さない（エラーもタイムアウトもなく空） | `DELEGATE` ルールの `DelegationRecord` が*子*ゾーン名になっている（正しくは*親*ゾーン名） | `DelegationRecord` にはNS＋グルーレコードが実際に存在するゾーン(ここでは `system.example.com`)を指定する必要がある。委任先の子ゾーン名ではない。[設計判断1](#1-親子の経路には-forward-ではなく-delegate-ルール)を参照。`aws route53resolver get-resolver-rule --resolver-rule-id <id>` でデプロイ済みの値を確認できる。 |
 | HubVpcのテストインスタンスから `dig app.dev.system.example.com` がタイムアウトする | `DELEGATE` ルールがまだ関連付けられていない、またはTransit Gatewayアタッチメントがまだ `pending` | `aws route53resolver list-resolver-rule-associations`、`aws ec2 describe-transit-gateway-attachments` を確認。 |
 | BIND9が `system.example.com` は解決できるが `dev.system.example.com` は解決できない | HubVpcの通常インバウンドエンドポイントのSGがOnPremVpcのCIDRを許可していない、または `DELEGATE` ルール/グルーレコードが欠けている | `HubInboundEndpoint` のセキュリティグループと、合成済みテンプレート内の `DevNsRecord`/`DevNsGlueRecord*` を確認。 |
 | CloudFormation ValidateがResolverエンドポイントの `Name` について警告を出す | `[a-zA-Z0-9\-_ ]` 以外の文字が含まれている | `ResolverEndpointConstruct` はスラッシュを既にサニタイズ済み。`project`/`environment` に他の記号を含めた場合は調整する。 |

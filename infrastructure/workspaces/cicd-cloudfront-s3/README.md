@@ -25,6 +25,19 @@ This architecture demonstrates:
 | Environment-gated approval | Setting `approvalTopicArn` in an environment's parameters is the only thing needed to insert a Manual Approval stage and wire up SNS pipeline notifications — no code branching per environment |
 | CDK Nag from day one | `AwsSolutionsChecks` runs in `test/compliance/cdk-nag.test.ts`; every wildcard/managed-policy finding is suppressed at the specific resource path with a written justification |
 
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Design Decisions & Best Practices](#design-decisions--best-practices)
+- [Cost Optimization](#cost-optimization)
+- [Security Considerations](#security-considerations)
+- [Prerequisites](#prerequisites)
+- [Deployment Guide](#deployment-guide)
+- [Testing Strategy](#testing-strategy)
+- [Customization](#customization)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
+
 ## Architecture Overview
 
 ![Architecture Overview](overview.drawio.svg)

@@ -41,6 +41,22 @@ deploy`.
   `buildspec-deploy.yml` living inside the sample app
   (`backend/ecspresso-bedrock-review-app/`), one per pipeline stage
 
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Where to find the review result](#where-to-find-the-review-result)
+- [Measuring the review's effect over time](#measuring-the-reviews-effect-over-time)
+- [Why `ecspresso verify` / `ecspresso deploy` are not run](#why-ecspresso-verify--ecspresso-deploy-are-not-run)
+- [desiredCount vs. Application Auto Scaling](#desiredcount-vs-application-auto-scaling)
+- [Trivy findings → Security Hub (ASFF), gated by an env var](#trivy-findings--security-hub-asff-gated-by-an-env-var)
+- [Switching the Bedrock review model](#switching-the-bedrock-review-model)
+- [Prerequisites](#prerequisites)
+- [Deployment Guide](#deployment-guide)
+- [Testing Strategy](#testing-strategy)
+- [Security Considerations](#security-considerations)
+- [Customization](#customization)
+- [References](#references)
+
 ## Architecture Overview
 
 ```text

@@ -2,7 +2,23 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Pattern 1: Understanding CDK Default User](#pattern-1-understanding-cdk-default-user)
+- [Pattern 2A: User with Hardcoded Password (⚠️ Not Recommended)](#pattern-2a-user-with-hardcoded-password-️-not-recommended)
+- [Pattern 2B: User with Secrets Manager (✅ Recommended)](#pattern-2b-user-with-secrets-manager--recommended)
+- [Pattern 3: Managed Policies vs Inline Policies](#pattern-3-managed-policies-vs-inline-policies)
+- [Pattern 4: Group-Based Permission Management](#pattern-4-group-based-permission-management)
+- [Pattern 5: Switch Role with MFA (Advanced)](#pattern-5-switch-role-with-mfa-advanced)
+- [Deploy and Verify](#deploy-and-verify)
+- [Best Practices](#best-practices)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

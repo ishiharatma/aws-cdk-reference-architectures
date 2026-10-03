@@ -2,20 +2,20 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 200 (Intermediate)**
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 A single Amazon SNS topic fanned out to every commonly-used subscription protocol (Email, SQS, Lambda, HTTPS via API Gateway, Amazon Data Firehose), plus a second "CloudWatch Logs → Lambda → SNS → Lambda" chain that shows SNS used as a lightweight internal alerting hop. All Lambda functions are Python with structured JSON logging at INFO level.
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [References](#-references)
 

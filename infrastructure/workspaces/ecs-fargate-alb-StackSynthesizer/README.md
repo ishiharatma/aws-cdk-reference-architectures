@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 ## Introduction
 
@@ -29,6 +29,22 @@ This architecture demonstrates the following implementations:
 | Cost Optimization | Fargate Spot + scheduled start/stop + NAT Instance |
 | HTTPS Ready | Integrated ACM certificate support |
 | Observability | Built-in OpenTelemetry/X-Ray support |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

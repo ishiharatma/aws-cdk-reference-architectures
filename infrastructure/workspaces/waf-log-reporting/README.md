@@ -2,20 +2,20 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 Two independent, self-contained implementations of the same operational need — a daily digest of what a WAF Web ACL blocked (and, for rules still running in Count mode, would have blocked) — built two different ways: **CloudWatch Logs Insights** (Pattern 1) and **Amazon Athena** (Pattern 2). A standalone sample Web ACL generates realistic logs for both, but each report stack can instead be pointed at an existing WAF's logs already running in your account.
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [References](#-references)
 
@@ -259,7 +259,7 @@ export NOTIFICATION_EMAIL_CWLOGS="you@example.com"
 export NOTIFICATION_EMAIL_ATHENA="you@example.com"
 ```
 
-`bin/waf-log-reporting.ts` prints a warning at synth time if either placeholder address is still in use. To point either report at an existing WAF instead of the sample Web ACL, see [Customization](#-customization).
+`bin/waf-log-reporting.ts` prints a warning at synth time if either placeholder address is still in use. To point either report at an existing WAF instead of the sample Web ACL, see [Customization](#️-customization).
 
 ### 3. Deploy
 

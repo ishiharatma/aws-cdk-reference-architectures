@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 300 (中級)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 Todos REST API を **1 つの** Lambda 関数だけで提供します。API Gateway は薄い `{proxy+}` パススルーに徹し、ルーティング（`GET`/`POST /todos`、`GET`/`PUT`/`DELETE /todos/{todoId}`）はすべて関数の**内部**で [Hono](https://hono.dev/) と `hono/aws-lambda` アダプターが行います。API 全体が単一のデプロイ単位です。
 
@@ -17,17 +17,17 @@ Todos REST API を **1 つの** Lambda 関数だけで提供します。API Gate
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [パターン比較](#-パターン比較)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティに関する考慮事項](#-セキュリティに関する考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [使い方](#使い方)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -38,11 +38,11 @@ Todos REST API を **1 つの** Lambda 関数だけで提供します。API Gate
 
 ### 主要コンポーネント
 
-- **Amazon API Gateway (REST API)** — `LambdaRestApi`（`proxy: true`）が作る単一の貪欲プロキシリソース `ANY /{proxy+}`（および `ANY /`）。API Gateway はルーティング・リクエスト検証・メソッド単位の設定を**一切行わず**、すべてのリクエストを `AWS_PROXY` イベントとしてそのまま関数へ転送します。
-- **AWS Lambda (`LambdalithHandler`)** — Node.js 22 / ARM64 の関数 1 つ。エントリポイント（`src/lambda.ts`）は実質 3 行で、`export const handler = handle(app)`（`app` は Hono インスタンス）。`hono/aws-lambda` が API Gateway プロキシイベントを `Request` に変換し、Hono のルーターを実行し、`Response` を戻します。
-- **Hono ルーター (`src/routes/todos.ts`)** — 実際の API 面。`app.route('/todos', todosRouter)` で 5 つのハンドラーをマウントします。ふつうのフレームワークコードであり、同じ `app` オブジェクトは `@hono/node-server` 経由でローカルの Node でも動きます（`npm start`）。
-- **Amazon DynamoDB (`TodosTable`)** — オンデマンド（`PAY_PER_REQUEST`）、パーティションキー `todoId`、AWS マネージドキーによる SSE、ポイントインタイムリカバリ（PITR）有効。単一の関数ロールへ `grantReadWriteData` を 1 回。
-- **可観測性** — 関数専用の CloudWatch ロググループ（明示的な `logGroup`、保持 1 週間）に加え、API Gateway の**アクセスログ**（JSON・標準フィールド）とステージの `INFO` メソッドログ。
+- **Amazon API Gateway (REST API)**。`LambdaRestApi`（`proxy: true`）が作る単一の貪欲プロキシリソース `ANY /{proxy+}`（および `ANY /`）。API Gateway はルーティング・リクエスト検証・メソッド単位の設定を**一切行わず**、すべてのリクエストを `AWS_PROXY` イベントとしてそのまま関数へ転送します。
+- **AWS Lambda (`LambdalithHandler`)**。Node.js 22 / ARM64 の関数 1 つ。エントリポイント（`src/lambda.ts`）は実質 3 行で、`export const handler = handle(app)`（`app` は Hono インスタンス）。`hono/aws-lambda` が API Gateway プロキシイベントを `Request` に変換し、Hono のルーターを実行し、`Response` を戻します。
+- **Hono ルーター (`src/routes/todos.ts`)**。実際の API 面。`app.route('/todos', todosRouter)` で 5 つのハンドラーをマウントします。ふつうのフレームワークコードであり、同じ `app` オブジェクトは `@hono/node-server` 経由でローカルの Node でも動きます（`npm start`）。
+- **Amazon DynamoDB (`TodosTable`)**。オンデマンド（`PAY_PER_REQUEST`）、パーティションキー `todoId`、AWS マネージドキーによる SSE、ポイントインタイムリカバリ（PITR）有効。単一の関数ロールへ `grantReadWriteData` を 1 回。
+- **可観測性**。関数専用の CloudWatch ロググループ（明示的な `logGroup`、保持 1 週間）に加え、API Gateway の**アクセスログ**（JSON・標準フィールド）とステージの `INFO` メソッドログ。
 
 ### アーキテクチャ特性
 
@@ -67,8 +67,8 @@ Todos REST API を **1 つの** Lambda 関数だけで提供します。API Gate
 - ✅ ウォームに保つコールドスタート面が少ない。3 ルートに当たるバーストでも 1 関数が温まる
 
 **トレードオフ**:
-- ❌ IAM が粗い — 単一ロールが全ルート権限の和集合になる（本 API は DynamoDB しか使わないため影響は小さいが、S3・SES・SQS も触る API ならそれらすべてを全ルートに付与することになる）
-- ❌ デプロイの影響範囲が粗い — 不正なデプロイは 1 エンドポイントではなく API 全体を落とす
+- ❌ IAM が粗い。単一ロールが全ルート権限の和集合になる（本 API は DynamoDB しか使わないため影響は小さいが、S3・SES・SQS も触る API ならそれらすべてを全ルートに付与することになる）
+- ❌ デプロイの影響範囲が粗い。不正なデプロイは 1 エンドポイントではなく API 全体を落とす
 - ❌ ルートごとに異なりうるワークロードに対して、関数レベルのつまみ（メモリ・タイムアウト・予約済み同時実行）が 1 式しかない
 - ❌ Lambda 固有の接着剤（`hono/aws-lambda`）。[設計判断 3](#3-なぜ-hono-か) を参照
 
@@ -104,9 +104,9 @@ const api = new apigateway.LambdaRestApi(this, 'TodosApi', {
 **判断**: [Hono](https://hono.dev/) を `hono/aws-lambda` 経由で使う。
 
 **根拠**:
-- ✅ 依存が非常に小さく、リフレクション/デコレータ不使用、ルーターが高速 — 単一バンドルを素のハンドラーに近いサイズに保ち、Lambdalith のコールドスタートを single-purpose 版に近づける
-- ✅ AWS Lambda・Node・Bun・Deno・Cloudflare Workers への一級アダプターがある — *エントリファイル*は移植不可でも `app` は移植可能
-- ✅ Web 標準の `Request`/`Response` — 同じハンドラーを `app.request('/todos')` で AWS 型なしにユニットテストできる
+- ✅ 依存が非常に小さく、リフレクション/デコレータ不使用、ルーターが高速。単一バンドルを素のハンドラーに近いサイズに保ち、Lambdalith のコールドスタートを single-purpose 版に近づける
+- ✅ AWS Lambda・Node・Bun・Deno・Cloudflare Workers への一級アダプターがある。*エントリファイル*は移植不可でも `app` は移植可能
+- ✅ Web 標準の `Request`/`Response`。同じハンドラーを `app.request('/todos')` で AWS 型なしにユニットテストできる
 
 **代替案**: `@codegenie/serverless-express` / `aws-serverless-express`（Express をラップ。これはレイヤーを除けば [`apigw-lambda-web-adapter`](../apigw-lambda-web-adapter/) のアプローチ）、AWS Lambda Powertools のイベントハンドラー、`itty-router`、または極小 API 向けに `event.resource`/`event.httpMethod` を `switch` する手書き実装。
 
@@ -181,24 +181,24 @@ CloudWatch Logs:        約 2 GB                                 ≈ $1.50
 
 ### このパターン固有のコスト観点
 
-1. **固定オーバーヘッドは 1 関数分** — ロググループ 1 つ、CloudWatch メトリクス 1 式、（任意の）プロビジョンド同時実行の課金も 1 つ分。低トラフィックの API では 3 パターン中もっとも**運用コストが安い**。
-2. **ARM64 / Graviton** — 同じコードで x86 より GB 秒あたり約 20% 安い。
-3. **`PAY_PER_REQUEST` DynamoDB** — アイドル時は無料。トラフィックが安定・予測可能になってからプロビジョンド + オートスケーリングへ。
+1. **固定オーバーヘッドは 1 関数分**。ロググループ 1 つ、CloudWatch メトリクス 1 式、（任意の）プロビジョンド同時実行の課金も 1 つ分。低トラフィックの API では 3 パターン中もっとも**運用コストが安い**。
+2. **ARM64 / Graviton**。同じコードで x86 より GB 秒あたり約 20% 安い。
+3. **`PAY_PER_REQUEST` DynamoDB**。アイドル時は無料。トラフィックが安定・予測可能になってからプロビジョンド + オートスケーリングへ。
 
 ## 🔒 セキュリティに関する考慮事項
 
 ### 実装済み
 
-- ✅ **最小権限 IAM** — 関数ロールのカスタムステートメントはちょうど 1 つ、`TodosTable` への `grantReadWriteData` のみ。（`grant*Data` が必ず追加する `table/index/*` リソースと `AWSLambdaBasicExecutionRole` マネージドポリシーを `cdk-nag` が指摘しますが、いずれも [`test/compliance/cdk-nag.test.ts`](test/compliance/cdk-nag.test.ts) で理由付きで抑制しています。）
-- ✅ **保管時の暗号化** — DynamoDB SSE（AWS マネージドキー）+ PITR。
-- ✅ **転送時の TLS** — API Gateway `execute-api` エンドポイントは HTTPS のみ。
-- ✅ **アクセスログ** — 標準フィールドの JSON アクセスログ + ステージの `INFO` 実行ログ。
+- ✅ **最小権限 IAM**。関数ロールのカスタムステートメントはちょうど 1 つ、`TodosTable` への `grantReadWriteData` のみ。（`grant*Data` が必ず追加する `table/index/*` リソースと `AWSLambdaBasicExecutionRole` マネージドポリシーを `cdk-nag` が指摘しますが、いずれも [`test/compliance/cdk-nag.test.ts`](test/compliance/cdk-nag.test.ts) で理由付きで抑制しています。）
+- ✅ **保管時の暗号化**。DynamoDB SSE（AWS マネージドキー）+ PITR。
+- ✅ **転送時の TLS**。API Gateway `execute-api` エンドポイントは HTTPS のみ。
+- ✅ **アクセスログ**。標準フィールドの JSON アクセスログ + ステージの `INFO` 実行ログ。
 
 ### 意図的に対象外（環境ごとに追加）
 
 本リファレンスは*統合スタイル*の分離に集中しているため、以下は組み込んでおらず、コンプライアンステストで抑制しています。これらの抑制を本番 API にそのままコピーしないでください。
 
-- **認可**（`AwsSolutions-APIG4` / `COG4`）— プロキシメソッドにオーソライザーを追加：
+- **認可**（`AwsSolutions-APIG4` / `COG4`）。プロキシメソッドにオーソライザーを追加：
   ```typescript
   const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'Auth', { cognitoUserPools: [pool] });
   const api = new apigateway.LambdaRestApi(this, 'TodosApi', {
@@ -207,8 +207,8 @@ CloudWatch Logs:        約 2 GB                                 ≈ $1.50
   });
   ```
   あるいは Hono ミドルウェア（`hono/jwt`）で JWT を検証する。
-- **WAF**（`AwsSolutions-APIG3`）— `wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
-- **リクエスト検証**（`AwsSolutions-APIG2`）— `proxy: true` では API Gateway モデルがないため、Hono ミドルウェア（例: `@hono/zod-validator`）で検証する。
+- **WAF**（`AwsSolutions-APIG3`）。`wafv2.CfnWebACLAssociation` をステージ ARN に関連付ける。
+- **リクエスト検証**（`AwsSolutions-APIG2`）。`proxy: true` では API Gateway モデルがないため、Hono ミドルウェア（例: `@hono/zod-validator`）で検証する。
 
 ### CDK Nag
 
@@ -221,7 +221,7 @@ npm run test:compliance -w workspaces/apigw-lambdalith
 - API Gateway・Lambda・DynamoDB・IAM・CloudWatch Logs の権限を持つ AWS アカウント
 - `${PROJECT}-${ENV}`（例: `apigw-lambdalith-dev`）という名前のプロファイルで構成した AWS CLI v2.x
 - Node.js 20.x 以降、AWS CDK 2.x
-- **Docker は不要** — `NodejsFunction` はローカルの `esbuild` でバンドルします
+- **Docker は不要**。`NodejsFunction` はローカルの `esbuild` でバンドルします
 
 ## 🚀 デプロイ手順
 
@@ -367,9 +367,9 @@ npm run destroy:all -w workspaces/apigw-lambdalith
 - [aws-lambda-nodejs モジュール](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
 
 ### 関連アーキテクチャ
-- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/) — 同じ API をルートごとに 1 関数で実装
-- [apigw-lambda-web-adapter](../apigw-lambda-web-adapter/) — 同じ API を Lambda Web Adapter の背後の Express サーバーとして実装
-- [apigw-s3-stub](../apigw-s3-stub/) — Lambda を一切使わない API Gateway REST API（S3 サービス統合を直接利用）
+- [apigw-single-purpose-lambda](../apigw-single-purpose-lambda/)。同じ API をルートごとに 1 関数で実装
+- [apigw-lambda-web-adapter](../apigw-lambda-web-adapter/)。同じ API を Lambda Web Adapter の背後の Express サーバーとして実装
+- [apigw-s3-stub](../apigw-s3-stub/)。Lambda を一切使わない API Gateway REST API（S3 サービス統合を直接利用）
 
 ## 📄 ライセンス
 

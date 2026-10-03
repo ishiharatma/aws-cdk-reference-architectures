@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 ## Introduction
 
@@ -23,6 +23,19 @@ This architecture demonstrates the following implementations:
 | Reliability | Robust error handling with DLQ and batch failure reporting |
 | Cost Efficiency | Serverless with pay-per-use pricing |
 | Reduced Ops | Minimize infrastructure management with managed services |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Implementation Highlights](#implementation-highlights)
+- [CloudWatch Monitoring](#cloudwatch-monitoring)
+- [Deployment & Verification](#deployment--verification)
+- [Best Practices Summary](#best-practices-summary)
+- [Cost Estimation](#cost-estimation)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-100-blue?style=flat-square)
+![Level 100](https://img.shields.io/badge/Level-100-green?style=flat-square)
 
 ## はじめに
 
@@ -22,6 +22,19 @@
 3. 設定の可視性: どのような値が使われているかを明確に
 4. 変更の容易さ: コードを変更せずに設定だけを変更可能
 5. 型安全性: TypeScriptの型システムを活用した安全な設定管理
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構造](#プロジェクトディレクトリ構造)
+- [パターン1: TypeScriptファイルでパラメータを定義する](#パターン1-typescriptファイルでパラメータを定義する)
+- [パターン2: cdk.jsonでパラメータを定義する](#パターン2-cdkjsonでパラメータを定義する)
+- [どちらのアプローチを選ぶべきか?](#どちらのアプローチを選ぶべきか)
+- [テストの実装](#テストの実装)
+- [デプロイとクリーンアップ](#デプロイとクリーンアップ)
+- [まとめ](#まとめ)
+- [参考リソース](#参考リソース)
 
 ## アーキテクチャ概要
 

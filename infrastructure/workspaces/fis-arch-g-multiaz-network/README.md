@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20NLB%20%7C%20EC2%20ASG%20%7C%20Aurora%20PostgreSQL%20%7C%20VPC-orange?style=flat-square)
 
 ## Introduction
@@ -19,6 +19,23 @@ The centerpiece is `aws:network:disrupt-connectivity` — **the only FIS-native 
 | **G-4** AZ-scoped EC2 Termination | `aws:ec2:terminate-instances`, `PERCENT(50)` on tagged instances | Instant | ASG self-healing; NLB target deregistration/re-registration speed |
 
 All experiments share a CloudWatch Alarm stop condition on the NLB target group's `UnHealthyHostCount` — an NLB has no per-request HTTP status-code metrics the way an ALB does, so unhealthy-host count is the safety signal available at this layer.
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Data Flow](#data-flow)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

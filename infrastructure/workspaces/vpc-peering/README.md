@@ -2,7 +2,22 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Architecture Overview](#architecture-overview-1)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Cross-Account Reference Challenges in CDK](#cross-account-reference-challenges-in-cdk)
+- [Solutions](#solutions)
+- [VPC Peering Within Same Account](#vpc-peering-within-same-account)
+- [Cross-Account VPC Peering](#cross-account-vpc-peering)
+- [VPC Peering DNS Resolution Options Automation (Custom Resource Implementation Example)](#vpc-peering-dns-resolution-options-automation-custom-resource-implementation-example)
+- [Deployment and Cleanup](#deployment-and-cleanup)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

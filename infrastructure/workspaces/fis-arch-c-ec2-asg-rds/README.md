@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20ALB%20%7C%20EC2%20ASG%20%7C%20Aurora%20PostgreSQL-orange?style=flat-square)
 
 ## Introduction
@@ -19,6 +19,23 @@ Four FIS experiment templates inject distinct failure modes at the infrastructur
 | **C-4** EC2→DB Network Blackhole | Blocks TCP egress on port 5432 from all instances | 5 min | Query-timeout config, circuit-breaker activation, ALB health-check during DB loss |
 
 All experiments share a CloudWatch Alarm stop condition that automatically halts the experiment if ALB 5xx errors exceed 50 per minute, limiting blast radius.
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Data Flow](#data-flow)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

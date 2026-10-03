@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 Single-account, single-region take on the **AWS Networking Workshop** Transit Gateway lab
 ([Multi-VPC → Transit Gateway](https://catalog.workshops.aws/workshops/e4953d7d-f92f-4521-89a5-0002765de750/en-US/foundational/multivpc/transit-gw)).
@@ -15,20 +15,20 @@ across all six pillars.
 > (automatic association + propagation) and adds a `10.0.0.0/8` aggregate route in VPC B and VPC C. This workspace
 > instead creates **one explicitly managed TGW route table** and adds **specific `/16` routes** in every VPC. Both
 > approaches work; this workspace trades a few extra CloudFormation resources for routing that shows up in
-> `cdk diff` and is simpler to segment later. The reasoning is under [Design Decisions](#design-decisions--best-practices).
+> `cdk diff` and is simpler to segment later. The reasoning is under [Design Decisions](#-design-decisions--best-practices).
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#architecture-overview)
-- [Design Decisions & Best Practices](#design-decisions--best-practices)
-- [Cost Optimization](#cost-optimization)
-- [Security Considerations](#security-considerations)
-- [Prerequisites](#prerequisites)
-- [Deployment Guide](#deployment-guide)
-- [Testing Strategy](#testing-strategy)
-- [Customization](#customization)
-- [Troubleshooting](#troubleshooting)
-- [References](#references)
+- [Architecture Overview](#️-architecture-overview)
+- [Design Decisions & Best Practices](#-design-decisions--best-practices)
+- [Cost Optimization](#-cost-optimization)
+- [Security Considerations](#-security-considerations)
+- [Prerequisites](#-prerequisites)
+- [Deployment Guide](#-deployment-guide)
+- [Testing Strategy](#-testing-strategy)
+- [Customization](#-customization)
+- [Troubleshooting](#-troubleshooting)
+- [References](#-references)
 
 ## 🏗️ Architecture Overview
 
@@ -124,7 +124,7 @@ is acceptable because the SG is the second gate, not the first.
 **Why**: the instance needs outbound HTTPS to reach the SSM endpoints (for Session Manager) and the point of the
 stack is to *watch packets cross the TGW*, not to model a production workload. A NAT Gateway per VPC would add
 ~$0.045/hr × 3 for no teaching value. Production workloads belong in private subnets behind NAT or with VPC
-endpoints — see [Customization](#customization).
+endpoints — see [Customization](#-customization).
 
 ### 5. `TransitGatewayConstruct` lives in `@common`
 
@@ -223,7 +223,7 @@ ping <VpcC instance private IP>     # 10.2.x.x  → succeeds across the TGW
 ```
 
 Both pings succeed once the attachments are `available` and the route tables have converged (usually < 1 min after
-`deploy` completes). If a ping hangs, jump to [Troubleshooting](#troubleshooting).
+`deploy` completes). If a ping hangs, jump to [Troubleshooting](#-troubleshooting).
 
 ## 🔧 Customization
 

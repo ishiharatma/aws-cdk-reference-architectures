@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 ## はじめに
 
@@ -24,6 +24,20 @@
 | 出力フォーマット | CWL生JSONライン、GZIP圧縮 | CWL生フォーマット | カスタムJSON（完全制御可能） |
 | 運用のシンプルさ | 高（マネージドFirehose） | 高（マネージドExport API） | 低（Lambdaコードの保守が必要） |
 | カスタム変換 | 限定的（Firehoseデータ変換） | なし | Lambda内で完全制御可能 |
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構造](#プロジェクトディレクトリ構造)
+- [実装のポイント](#実装のポイント)
+- [主要コンポーネントと設計ポイント](#主要コンポーネントと設計ポイント)
+- [デプロイと動作確認](#デプロイと動作確認)
+- [テストの実行](#テストの実行)
+- [ベストプラクティスまとめ](#ベストプラクティスまとめ)
+- [コスト試算](#コスト試算)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 

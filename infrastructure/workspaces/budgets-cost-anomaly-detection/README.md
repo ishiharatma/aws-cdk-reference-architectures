@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 ## Introduction
 
@@ -22,6 +22,20 @@ This project is a reference implementation that uses the AWS CDK to alert on AWS
 | Good for | "Don't let this account exceed $X/month" | "Something unusual is happening, even if under budget" | One alert channel for both reactive signals | The oldest, zero-Cost-Explorer-dependency safety net | "Just tell me what we spent this week, service by service" |
 | Setup complexity | Low | Low | Medium (shared topic policy) | Low (but forced to us-east-1) | High (Step Functions + Scheduler + Chatbot) |
 | Delivery | SNS + Email | SNS + Email | SNS + Email + optional Slack | SNS + Email | SNS + Email + optional Slack/Teams |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Implementation Highlights](#implementation-highlights)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Deployment & Verification](#deployment--verification)
+- [Running Tests](#running-tests)
+- [Best Practices Summary](#best-practices-summary)
+- [Cost Estimation](#cost-estimation)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

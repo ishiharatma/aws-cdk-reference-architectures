@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20ALB%20%7C%20ECS%20Fargate%20%7C%20Aurora%20PostgreSQL-orange?style=flat-square)
 
 ## Introduction
@@ -22,6 +22,19 @@ All four share a CloudWatch Alarm stop condition that halts the experiment if th
 
 > ### ⚠️ The `aws:ecs:task-*` actions are not plug-and-play
 > A-3 and A-4 require an **`amazon-ssm-agent` sidecar container** in the task definition, `enableFaultInjection: true`, `pidMode: task`, and ECS Exec **disabled**. An earlier version used the non-existent action ID `aws:ecs:network-blackhole-port` and relied on ECS Exec — both are wrong. See [The FIS SSM sidecar](#the-fis-ssm-sidecar-a-3--a-4).
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A **self-mutating CDK Pipeline** built with `aws-cdk-lib/pipelines`: the pipeline's own definition lives in the repository it builds from, so a commit that changes the pipeline (add a stage, add a step) is picked up by the pipeline itself — nobody runs `cdk deploy` on the pipeline again after the first time.
 
@@ -17,16 +17,16 @@ This is the counterpart of [`cicd-codecommit-cross-account`](../cicd-codecommit-
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
-- [Well-Architected Alignment](#-well-architected-alignment)
+- [Well-Architected Alignment](#️-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Operational Check Script](#-operational-check-script)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)
@@ -68,7 +68,7 @@ cdk-pipelines-self-mutating/
 | Pipeline ownership | the pipeline updates itself | one manual `cdk deploy`, then everything is a commit |
 | Environments | Dev → (approval) → Prod | promotion gate is a pipeline step, not a person running a command |
 | Quality gate | `tsc` + unit tests + CDK Nag run before anything deploys | a commit that breaks a test never reaches `UpdatePipeline` or Dev |
-| Accounts | single account (Dev and Prod are separate stacks) | verifiable in one account; see [Customization](#-customization) for multi-account |
+| Accounts | single account (Dev and Prod are separate stacks) | verifiable in one account; see [Customization](#️-customization) for multi-account |
 | Assets stage | absent | CDK Pipelines adds an `Assets` stage only when a stack has file/Docker assets (the Lambda here is inline) |
 
 ## 🎯 Design Decisions & Best Practices

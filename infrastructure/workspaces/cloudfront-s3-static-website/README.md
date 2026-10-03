@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-CloudFront%20%7C%20S3%20%7C%20WAF-orange?style=flat-square)
 
 ## Introduction
@@ -26,6 +26,21 @@ This architecture demonstrates:
 | Cross-region WAF stack | The Web ACL, and the IP-set/logging resources it needs, are isolated into a stack forced into `us-east-1`, with its ARN handed to the main stack via `crossRegionReferences: true` — the pattern to reuse whenever a CLOUDFRONT-scoped WAFv2 resource is needed alongside a distribution deployed elsewhere |
 | SPA-friendly error mapping, without hiding real failures | `403`/`404` (missing object / no public access) are rewritten to the SPA's `index.html`; `500`–`504` (real origin/edge errors) keep their status code and get a distinct friendly page instead of a raw error body |
 | `approvalTopicArn`-style single-flag toggles | `enableWaf` and `geoRestrictionCountries` are each a single optional parameter — omit them and the corresponding resource/restriction simply isn't created |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Data Flow](#data-flow)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Cost Optimization](#cost-optimization)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [References](#references)
 
 ## Architecture Overview
 

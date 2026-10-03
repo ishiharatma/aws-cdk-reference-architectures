@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 注文ドメイン向けの **Amazon EventBridge カスタムイベントバス**です。プロデューサーは事実(`OrderPlaced`、`PaymentFailed` など)を発行し、**ルールが誰が反応するかを決めます**。数値・プレフィックス・`anything-but` のコンテンツベースのイベントパターン、4 種類のターゲット、回数と期間を制限したリトライ + デッドレターキュー、バスのログ、そして**リプレイできるアーカイブ**を備えます。コンシューマーの追加はルールの追加であり、プロデューサーの変更は不要です。
 
@@ -16,16 +16,16 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ](#-セキュリティ)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [動作確認スクリプト](#-動作確認スクリプト)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -36,11 +36,11 @@
 
 ### 主要コンポーネント
 
-- **カスタムイベントバス** `orders` — `logConfig`(`INFO`、`FULL` の詳細)**と**、そのログを実際に書き出す CloudWatch Logs のデリバリー(`DeliverySource` → `DeliveryDestination` → `Delivery`)。
-- **アーカイブ** — `app.orders` のすべてのイベント(保持期間はパラメータ)。リプレイの元になります。
-- **4 つのルール**(上表)— いずれも `source: app.orders` でも絞り込みます。
-- **ターゲット**共通の配信ポリシー — `maxEventAge` と `retryAttempts` はパラメータ。それでも失敗したものは **ターゲット DLQ**(SQS、SSE、TLS のみ、保持 14 日)へ送られ、CloudWatch アラームが付きます。
-- **`processor` Lambda**(Node.js 24 / ARM64)— EU の注文を `orderId` + `eventId` をキーに DynamoDB へ書き込み。権限は `PutItem` のみ。
+- **カスタムイベントバス** `orders`。`logConfig`(`INFO`、`FULL` の詳細)**と**、そのログを実際に書き出す CloudWatch Logs のデリバリー(`DeliverySource` → `DeliveryDestination` → `Delivery`)。
+- **アーカイブ**。`app.orders` のすべてのイベント(保持期間はパラメータ)。リプレイの元になります。
+- **4 つのルール**(上表)。いずれも `source: app.orders` でも絞り込みます。
+- **ターゲット**共通の配信ポリシー。`maxEventAge` と `retryAttempts` はパラメータ。それでも失敗したものは **ターゲット DLQ**(SQS、SSE、TLS のみ、保持 14 日)へ送られ、CloudWatch アラームが付きます。
+- **`processor` Lambda**(Node.js 24 / ARM64)。EU の注文を `orderId` + `eventId` をキーに DynamoDB へ書き込み。権限は `PutItem` のみ。
 - **キュー** `high-value` と `payment-failed`(SSE-SQS、TLS のみ)。
 
 ## 🎯 設計判断とベストプラクティス
@@ -59,9 +59,9 @@
 
 ### 4. エッジで実際に仕事をするパターン
 
-- **numeric** `[">=", 1000]` — Lambda なしで業務上の金額でルーティング。
-- **prefix** `eu-` — リージョンで振り分け。
-- **anything-but** — 顧客自身が原因のものを除く支払い失敗を通知。しきい値はパラメータで、ユニットテストが出力されるパターンを検証します。
+- **numeric** `[">=", 1000]`。Lambda なしで業務上の金額でルーティング。
+- **prefix** `eu-`。リージョンで振り分け。
+- **anything-but**。顧客自身が原因のものを除く支払い失敗を通知。しきい値はパラメータで、ユニットテストが出力されるパターンを検証します。
 
 すべてを配信してコードで捨てるより、バスで絞る方が安く、パターンは隠れた `if` ではなく見えるインフラになります。
 
@@ -241,9 +241,9 @@ npm run stage:destroy:all -w workspaces/eventbridge-custom-bus   # または ./t
 - [ターゲットのデッドレターキューとリトライポリシー](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html)
 
 ### 関連アーキテクチャ
-- [sqs-lambda-firehose](../sqs-lambda-firehose/) — キューベースのイベントパイプライン
-- [sns-basic](../sns-basic/) — SNS による pub/sub ファンアウト
-- [budgets-cost-anomaly-detection](../budgets-cost-anomaly-detection/) — EventBridge 駆動の通知
+- [sqs-lambda-firehose](../sqs-lambda-firehose/)。キューベースのイベントパイプライン
+- [sns-basic](../sns-basic/)。SNS による pub/sub ファンアウト
+- [budgets-cost-anomaly-detection](../budgets-cost-anomaly-detection/)。EventBridge 駆動の通知
 
 ## 📄 ライセンス
 

@@ -2,14 +2,14 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20SQS%20%7C%20Lambda%20%7C%20DynamoDB-orange?style=flat-square)
 
 ## はじめに
 
 本プロジェクトは、**SQS + Lambda イベント駆動コンシューマー**アーキテクチャに対する AWS Fault Injection Simulator (FIS) を用いたカオスエンジニアリングのリファレンス実装です。Producer Lambda（Function URL 経由）がデモ用の負荷を受け付けて SQS メインキューへメッセージを送信し、Consumer Lambda が SQS イベントソースマッピング経由でキューを処理して DynamoDB に処理済みレコードを書き込みます。処理に失敗したメッセージは、複数回の受信後にデッドレターキュー (DLQ) へ再配送されます。
 
-3 つの FIS 実験テンプレートは、AWS FIS Lambda拡張を経由した`aws:lambda:function`アクションファミリー——[アーキテクチャB](../fis-arch-b-apigw-lambda)がサーバーレスAPIに対して使用したのと同じメカニズム——でConsumer Lambdaに障害を注入します。
+3 つの FIS 実験テンプレートは、AWS FIS Lambda拡張を経由した`aws:lambda:function`アクションファミリー（[アーキテクチャB](../fis-arch-b-apigw-lambda)がサーバーレスAPIに対して使用したのと同じメカニズム）でConsumer Lambdaに障害を注入します。
 
 | シナリオ | 注入する障害 | 実行時間 | 検証内容 |
 | -------- | ------------ | -------- | -------- |
@@ -20,7 +20,24 @@
 全実験テンプレートは CloudWatch Alarm の停止条件を共有します。SQS メインキューの可視メッセージ数が 1000 件を超えると実験が自動停止し、無制限なバックログ増加を防ぎます。
 
 > ### ⚠️ `aws:lambda:put-function-concurrent-executions`は存在しない
-> 本ワークスペースの以前のバージョンは、Consumer Lambdaの予約同時実行数を`aws:lambda:put-function-concurrent-executions`でゼロにしようとしていました。**このアクションIDは実在しません**——`aws fis list-actions`により、Lambdaを対象とするFISアクションは`aws:lambda:function`ファミリー（`invocation-error`、`invocation-add-delay`、`invocation-http-integration-response`）に限られることが確認できます。CloudFormationはFISテンプレート作成時に`Invalid actionId ... 404`で即座に失敗しました。修正後、実機でエンドツーエンドの検証を実施済みです——[観測結果](#観測結果ap-northeast-1)を参照。
+> 本ワークスペースの以前のバージョンは、Consumer Lambdaの予約同時実行数を`aws:lambda:put-function-concurrent-executions`でゼロにしようとしていました。**このアクションIDは実在しません**（`aws fis list-actions`により、Lambdaを対象とするFISアクションは`aws:lambda:function`ファミリー（`invocation-error`、`invocation-add-delay`、`invocation-http-integration-response`）に限られることが確認できます。CloudFormationはFISテンプレート作成時に`Invalid actionId ... 404`で即座に失敗しました。修正後、実機でエンドツーエンドの検証を実施済みです）[観測結果](#観測結果ap-northeast-1)を参照。
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトのディレクトリ構成](#プロジェクトのディレクトリ構成)
+- [データフロー](#データフロー)
+- [コンポーネントと設計ポイント](#コンポーネントと設計ポイント)
+- [実装ハイライト](#実装ハイライト)
+- [デプロイ手順](#デプロイ手順)
+- [テスト](#テスト)
+- [コスト見積もり](#コスト見積もり)
+- [セキュリティ上の考慮事項](#セキュリティ上の考慮事項)
+- [トラブルシューティング](#トラブルシューティング)
+- [クリーンアップ](#クリーンアップ)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
@@ -56,12 +73,12 @@ D-3  aws:lambda:invocation-add-delay   startupDelayMilliseconds=20000, 100%, PT1
 
 | 特徴 | 効果 |
 | ---- | ---- |
-| VPC 不要 | 完全サーバーレス — NAT Gateway・サブネット設計・VPC 時間課金なし |
+| VPC 不要 | 完全サーバーレス。NAT Gateway・サブネット設計・VPC 時間課金なし |
 | `aws:lambda:function`アクション | FISはFIS Lambda拡張を通じて関数呼び出しに障害を注入する。ハンドラーコードは変更されない |
 | D-1 と D-2 の時間差設計 | 5 分（キュー再配信の範囲内で回復可能）vs. 20 分（確実に DLQ へメッセージを誘発）。同じ障害を 2 つの被害範囲で検証 |
 | D-3 は遅延、ゼロではない | 20秒の起動遅延（ハードエラーではない）により、「遅いが生きている」というより現実的なコンシューマー状態を検証。完全停止テストだけでは見逃す |
 | 共有の停止条件 | 1 つの CloudWatch Alarm（SQS バックログ ≥ 1000 可視メッセージ）が 3 つの実験すべてを自動停止 |
-| Function URL のプロデューサー | デモ負荷を投入するためだけに API Gateway は不要 — IAM 署名済み POST 1 回で十分 |
+| Function URL のプロデューサー | デモ負荷を投入するためだけに API Gateway は不要。IAM 署名済み POST 1 回で十分 |
 
 ## 前提条件
 
@@ -132,12 +149,12 @@ SQS メインキュー ── 3回の受信失敗/未処理後 ──► DLQ（1
 
 ### FIS 注入ポイント
 
-`aws:lambda:function`アクションは、Consumer Lambdaにレイヤーとしてアタッチされた**AWS FIS Lambda拡張**を通じて障害を注入します。実験が開始されると、FISはアクティブな障害設定をS3プレフィックスに書き込み、拡張がそれをポーリングして呼び出しの前後で障害を適用します——ハンドラーコード自体は一切変更されません。
+`aws:lambda:function`アクションは、Consumer Lambdaにレイヤーとしてアタッチされた**AWS FIS Lambda拡張**を通じて障害を注入します。実験が開始されると、FISはアクティブな障害設定をS3プレフィックスに書き込み、拡張がそれをポーリングして呼び出しの前後で障害を適用します。ハンドラーコード自体は一切変更されません。
 
-- **D-1 / D-2**（`invocation-error`、`preventExecution=true`）: すべての呼び出しがハンドラー実行*前*に失敗します。SQS自身の再試行/バックオフ動作により、可視性タイムアウト経過後にメッセージが再配信され続けます——予約同時実行数をゼロにすることで当初得ようとしていた「コンシューマーが全く動かない」効果と機能的に同じことを、実在するアクションを通じて実現しています。
-- **D-3**（`invocation-add-delay`、`startupDelayMilliseconds=20000`）: ハンドラーは実行され、書き込みもコミットされますが、すべての呼び出しが20秒遅くなります——関数の30秒タイムアウトには十分収まり、バッチの実際のDynamoDB書き込みには約10秒残ります。
+- **D-1 / D-2**（`invocation-error`、`preventExecution=true`）: すべての呼び出しがハンドラー実行*前*に失敗します。SQS自身の再試行/バックオフ動作により、可視性タイムアウト経過後にメッセージが再配信され続けます。予約同時実行数をゼロにすることで当初得ようとしていた「コンシューマーが全く動かない」効果と機能的に同じことを、実在するアクションを通じて実現しています。
+- **D-3**（`invocation-add-delay`、`startupDelayMilliseconds=20000`）: ハンドラーは実行され、書き込みもコミットされますが、すべての呼び出しが20秒遅くなります。関数の30秒タイムアウトには十分収まり、バッチの実際のDynamoDB書き込みには約10秒残ります。
 
-拡張はプッシュ型ではなくポーリング型であるため、すべての呼び出しに障害が反映されるまで最大約60秒のランプアップ、アクション終了後は約20秒のランプダウンを見込んでください——アーキテクチャBで文書化されているのと同じ挙動です。
+拡張はプッシュ型ではなくポーリング型であるため、すべての呼び出しに障害が反映されるまで最大約60秒のランプアップ、アクション終了後は約20秒のランプダウンを見込んでください。アーキテクチャBで文書化されているのと同じ挙動です。
 
 ## コンポーネントと設計ポイント
 
@@ -145,13 +162,13 @@ SQS メインキュー ── 3回の受信失敗/未処理後 ──► DLQ（1
 | -------------- | ------------ |
 | DynamoDB テーブル | PAY_PER_REQUEST で未使用時のコストはゼロ。PITR は実験コスト削減のため無効 |
 | SQS メインキュー | `visibilityTimeout=60秒`、`retentionPeriod=4日`、`enforceSSL=true`、`maxReceiveCount=3` でDLQへリダイレクト |
-| SQS デッドレターキュー | `retentionPeriod=14日`、`enforceSSL=true` — リダイレブチェーンの終端であり、意図的に自身のDLQを持たない |
+| SQS デッドレターキュー | `retentionPeriod=14日`、`enforceSSL=true`。リダイレブチェーンの終端であり、意図的に自身のDLQを持たない |
 | Consumer Lambda | Python 3.13、256 MB、タイムアウト 30 秒。FIS拡張レイヤー + `AWS_LAMBDA_EXEC_WRAPPER=/opt/aws-fis/bootstrap`、`AWS_FIS_CONFIGURATION_LOCATION=arn:aws:s3:::<bucket>/FisConfigs/`、`AWS_FIS_POLL_MAX_WAIT_MILLISECONDS=2000`を保持。SQS イベントソースは `batchSize=5`、`reportBatchItemFailures=true` |
 | Producer Lambda | Python 3.13、128 MB、タイムアウト 10 秒。Function URL は `AuthType: AWS_IAM`（非公開）。FIS拡張なし（障害対象になることはない） |
-| FIS設定バケット | `<project>-<env>-d-fis-config-<account>` — S3マネージド暗号化、パブリックアクセス完全ブロック、1日でライフサイクル失効 |
+| FIS設定バケット | `<project>-<env>-d-fis-config-<account>`。S3マネージド暗号化、パブリックアクセス完全ブロック、1日でライフサイクル失効 |
 | FIS IAM ロール | `<bucket>/FisConfigs/*`への`s3:PutObject`/`s3:DeleteObject`、`*`への`lambda:GetFunction`と`tag:GetResources`、停止条件アラームへの `cloudwatch:DescribeAlarms` |
-| CloudWatch 停止アラーム | メインキューの `ApproximateNumberOfMessagesVisible >= 1000` — 3 テンプレートで共有 |
-| FIS ログ グループ | `/fis/{project}-{env}-d` — 30 日保持、スタック削除時に自動削除 |
+| CloudWatch 停止アラーム | メインキューの `ApproximateNumberOfMessagesVisible >= 1000`。3 テンプレートで共有 |
+| FIS ログ グループ | `/fis/{project}-{env}-d`。30 日保持、スタック削除時に自動削除 |
 
 ## 実装ハイライト
 
@@ -306,9 +323,9 @@ PROJECT=<project> ENV=dev npm run stage:deploy:all -w workspaces/fis-arch-d-sqs-
 ```
 
 依存関係の順序でスタックがデプロイされます:
-1. `<project>-dev-d-base` — DynamoDB テーブル + SQS メインキュー + DLQ
-2. `<project>-dev-d-app` — Consumer Lambda（+ FIS拡張レイヤー）+ Producer Lambda + FIS設定バケット
-3. `<project>-dev-d-fis` — FIS テンプレート + IAM + アラーム
+1. `<project>-dev-d-base`。DynamoDB テーブル + SQS メインキュー + DLQ
+2. `<project>-dev-d-app`。Consumer Lambda（+ FIS拡張レイヤー）+ Producer Lambda + FIS設定バケット
+3. `<project>-dev-d-fis`。FIS テンプレート + IAM + アラーム
 
 ### 5. デモ負荷の投入
 
@@ -334,9 +351,9 @@ AWS FIS コンソールで `D-1`、`D-2`、`D-3` のいずれかの実験テン�
 
 | シナリオ | 結果 |
 | -------- | ---- |
-| **D-1** | 実験開始から約90秒後、FIS拡張のログに`found active faults`が出現。以降のconsumer呼び出しはハンドラーを実行せずに返る（`modifying the function response`）。`ApproximateNumberOfMessagesNotVisible`は実験時間中1で推移——「受信失敗→可視性タイムアウト→再配信」のサイクル。障害解除後（`no active faults found`、`persisting environment reset save file`）、バックログはクリーンに解消 |
+| **D-1** | 実験開始から約90秒後、FIS拡張のログに`found active faults`が出現。以降のconsumer呼び出しはハンドラーを実行せずに返る（`modifying the function response`）。`ApproximateNumberOfMessagesNotVisible`は実験時間中1で推移。「受信失敗→可視性タイムアウト→再配信」のサイクル。障害解除後（`no active faults found`、`persisting environment reset save file`）、バックログはクリーンに解消 |
 | **D-2** | 20分間待たずに確認: D-1から引き続き再配信中だったメッセージが、D-2開始から数秒以内に3回目の受信失敗を迎え、DLQが即座に埋まった。DLQへの`receive-message`で`ApproximateReceiveCount: 4`（`maxReceiveCount=3`を1回超過）を確認、リドライブポリシーの仕様通り |
-| **D-3** | 今回の検証では実機での再実行はしていない——基盤メカニズム（`invocation-add-delay`）はアーキテクチャBのB-2シナリオで既にエンドツーエンドで検証済みのものと同一 |
+| **D-3** | 今回の検証では実機での再実行はしていない。基盤メカニズム（`invocation-add-delay`）はアーキテクチャBのB-2シナリオで既にエンドツーエンドで検証済みのものと同一 |
 
 ## テスト
 
@@ -362,7 +379,7 @@ npm run test:snapshot:update --workspace=fis-arch-d-sqs-lambda
 | テストスイート | ファイル | 検証内容 |
 | -------------- | -------- | -------- |
 | スナップショット | `test/snapshot/snapshot.test.ts` | 全 3 スタックの CFn テンプレートスナップショット、DynamoDB PAY_PER_REQUEST、`maxReceiveCount=3` のリダイレブポリシーと `VisibilityTimeout=60` を持つ SQS キュー 2 つ、Python 3.13 の Lambda、`BatchSize=5` と `ReportBatchItemFailures` を持つ SQS イベントソースマッピング、`AWS_IAM` 認証の Function URL、FIS テンプレート 3 つ（全て停止条件と実在する`aws:lambda:function`アクションを使用）あり |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 非抑制の警告・エラーがないこと |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック。非抑制の警告・エラーがないこと |
 
 ## コスト見積もり
 
@@ -378,7 +395,7 @@ npm run test:snapshot:update --workspace=fis-arch-d-sqs-lambda
 | **FIS** | **アクション分単価 $0.10** | 20分間のD-2単体で約$2、3シナリオのフルサイクルで数ドル |
 | **合計（1回のフルテストサイクル）** | | **約$2〜3、主にFISのアクション分単価による** |
 
-**以前のドキュメントからの修正:** FISは**無料ではありません**——本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
+**以前のドキュメントからの修正:** FISは**無料ではありません**。本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
 
 ## セキュリティ上の考慮事項
 
@@ -396,9 +413,9 @@ npm run test:snapshot:update --workspace=fis-arch-d-sqs-lambda
 | 症状 | 考えられる原因 | 対処法 |
 | ---- | -------------- | ------ |
 | `cdk deploy` が `No parameters found for environment` で失敗 | `dev-params.ts` のエクスポートが欠けている | `parameters/index.ts` が `./dev-params` をインポートし、`dev` キーで登録していることを確認 |
-| FISテンプレート作成が`Invalid actionId ... 404`で失敗 | リージョンに存在しないアクションID | `aws fis list-actions`を確認——Lambda対象アクションは`aws:lambda:function`ファミリーに限られる |
-| Producer Function URL が 403 を返す | SigV4 署名が欠けている/無効 | `aws lambda invoke`、SDK、または SigV4 署名対応ツール（`awscurl` 等）を使用する — 認証情報のない素の `curl` は仕様上拒否される |
-| D-1/D-2でエラーが現れるまで約1分かかる | 想定通り——FIS Lambda拡張のスローポーリングによるランプアップ | 約60秒待つ。CloudWatch Logsで`AWS FIS EXTENSION - found active faults`を確認し障害が実際に有効か確認する |
+| FISテンプレート作成が`Invalid actionId ... 404`で失敗 | リージョンに存在しないアクションID | `aws fis list-actions`を確認。Lambda対象アクションは`aws:lambda:function`ファミリーに限られる |
+| Producer Function URL が 403 を返す | SigV4 署名が欠けている/無効 | `aws lambda invoke`、SDK、または SigV4 署名対応ツール（`awscurl` 等）を使用する。認証情報のない素の `curl` は仕様上拒否される |
+| D-1/D-2でエラーが現れるまで約1分かかる | 想定通り。FIS Lambda拡張のスローポーリングによるランプアップ | 約60秒待つ。CloudWatch Logsで`AWS FIS EXTENSION - found active faults`を確認し障害が実際に有効か確認する |
 | FIS 実験が即座に停止する | 停止条件アラームがすでに `ALARM` 状態 | `aws cloudwatch set-alarm-state --alarm-name ... --state-value OK` でアラームをリセット |
 | D-2 実行中も DLQ が空のまま | 20 分間のウィンドウ中にキューに十分なメッセージがなかった | 実験前/実行中に継続的にデモ負荷を投入する |
 | Lambda で `Table not found` エラー | BaseStack が未デプロイ | Base → App → FIS の順序でデプロイ |
@@ -413,11 +430,11 @@ PROJECT=<project> ENV=dev npm run stage:destroy:all -w workspaces/fis-arch-d-sqs
 
 ## まとめ
 
-本ワークスペースは、イベント駆動の SQS + Lambda コンシューマーアーキテクチャに対する FIS カオスエンジニアリングを、実際の制約の中で実演します。すなわちFISにはSQSやDynamoDBに対するネイティブアクションが存在せず——実機検証で判明した通り——Lambdaの予約同時実行数を設定するアクションも存在しません。3つのシナリオすべてが、アーキテクチャBと同じ実績のあるメカニズムである`aws:lambda:function`アクションファミリーをFIS Lambda拡張経由で使用します:
+本ワークスペースは、イベント駆動の SQS + Lambda コンシューマーアーキテクチャに対する FIS カオスエンジニアリングを、実際の制約の中で実演します。すなわちFISにはSQSやDynamoDBに対するネイティブアクションが存在せず（実機検証で判明した通り）Lambdaの予約同時実行数を設定するアクションも存在しません。3つのシナリオすべてが、アーキテクチャBと同じ実績のあるメカニズムである`aws:lambda:function`アクションファミリーをFIS Lambda拡張経由で使用します:
 
-- **D-1** は、短時間のコンシューマー停止からパイプラインがきれいに回復することを検証します — 障害が解除されればメッセージが再配信されバックログが解消されます。
+- **D-1** は、短時間のコンシューマー停止からパイプラインがきれいに回復することを検証します。障害が解除されればメッセージが再配信されバックログが解消されます。
 - **D-2** は意図的にメッセージを DLQ に誘発し（停止時間が再配送しきい値を大きく上回る）、DLQ ルーティング、アラーム、リプレイ手順が実際に機能することを検証します。
-- **D-3** は持続的な部分的キャパシティ損失下での動作を検証します — 完全停止よりも現実的な「劣化しているが停止していない」障害です。
+- **D-3** は持続的な部分的キャパシティ損失下での動作を検証します。完全停止よりも現実的な「劣化しているが停止していない」障害です。
 
 サーバーレスアーキテクチャにより、実験コストは低く抑えられ（フルテストサイクルあたり数ドル、主にFISのアクション分単価による）、VPC 管理の手間もなく、イベント駆動コンシューマーの耐障害性シナリオを迅速に反復検証できます。
 

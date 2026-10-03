@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A hybrid-DNS reference architecture for **Amazon Route 53 Resolver** inbound and outbound endpoints. A
 verification VPC owns the private hosted zone `system.example.com` and both endpoints; a second VPC stands in for
@@ -12,16 +12,16 @@ inbound endpoint's category (`INBOUND` vs the June 2025 `INBOUND_DELEGATION`) is
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#architecture-overview)
-- [Design Decisions & Best Practices](#design-decisions--best-practices)
-- [Cost Optimization](#cost-optimization)
-- [Security Considerations](#security-considerations)
-- [Prerequisites](#prerequisites)
-- [Deployment Guide](#deployment-guide)
-- [Testing Strategy](#testing-strategy)
-- [Customization](#customization)
-- [Troubleshooting](#troubleshooting)
-- [References](#references)
+- [Architecture Overview](#️-architecture-overview)
+- [Design Decisions & Best Practices](#-design-decisions--best-practices)
+- [Cost Optimization](#-cost-optimization)
+- [Security Considerations](#-security-considerations)
+- [Prerequisites](#-prerequisites)
+- [Deployment Guide](#-deployment-guide)
+- [Testing Strategy](#-testing-strategy)
+- [Customization](#️-customization)
+- [Troubleshooting](#-troubleshooting)
+- [References](#-references)
 
 ## 🏗️ Architecture Overview
 
@@ -138,7 +138,7 @@ and giving a "verification" instance a route to the internet at all is more expo
 demo needs. SSM interface endpoints remove that exposure entirely. The instances have no route to the internet in
 either direction, at the cost of running three interface endpoints per VPC instead of zero.
 
-**Trade-off**: SSM interface endpoints are billed hourly per endpoint (see [Cost Optimization](#cost-optimization)),
+**Trade-off**: SSM interface endpoints are billed hourly per endpoint (see [Cost Optimization](#-cost-optimization)),
 so this is more expensive than the public-subnet approach, though still cheaper than a NAT Gateway per VPC.
 `dnf install` for BIND9 still works with no NAT/IGW because `VpcConstruct` already adds the S3 gateway endpoint
 (free) by default, and the Amazon Linux package repos are served from S3.

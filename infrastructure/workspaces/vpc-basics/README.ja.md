@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-green?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-VPC-purple?style=flat-square)
 
 ## はじめに
@@ -17,6 +17,23 @@
 - VPCエンドポイント（Gateway/Interface）の実装
 - EC2 Instance Connect Endpointによる安全なSSHアクセス
 - セキュリティグループの相互参照と循環依存の回避
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトディレクトリ構造](#プロジェクトディレクトリ構造)
+- [パターン1: CDKデフォルトVPCを理解する](#パターン1-cdkデフォルトvpcを理解する)
+- [パターン2: カスタムVPCの作成](#パターン2-カスタムvpcの作成)
+- [VPCフローログの実装](#vpcフローログの実装)
+- [VPCエンドポイント](#vpcエンドポイント)
+- [EC2 Instance Connect Endpoint](#ec2-instance-connect-endpoint)
+- [CloudFormation出力例](#cloudformation出力例)
+- [デプロイと検証](#デプロイと検証)
+- [ベストプラクティス](#ベストプラクティス)
+- [料金見積もり](#料金見積もり)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
