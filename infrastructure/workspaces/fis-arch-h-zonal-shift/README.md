@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20ARC%20%7C%20NLB%20%7C%20EC2%20ASG%20%7C%20Aurora-orange?style=flat-square)
 
 ## Introduction
@@ -18,6 +18,24 @@ This workspace deploys the same NLB → EC2 Auto Scaling Group (2 AZs) → Auror
 - How to register an Auto Scaling group with ARC zonal shift via CDK (`AvailabilityZoneImpairmentPolicy` — not yet on the L2 `AutoScalingGroup` construct, so this uses the L1 escape hatch)
 - The precise mechanics of `ReplaceUnhealthy` vs `IgnoreUnhealthy`, and why only a launch-time failure (not a health-check failure) normally makes Auto Scaling avoid a bad AZ on its own
 - How to start, verify, and end a zonal shift against an ASG with the AWS CLI, and observe its effect on the exact fault Architecture G's G-2 already deploy-verified
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Why this isn't just "G again"](#why-this-isnt-just-g-again)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Data Flow](#data-flow)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

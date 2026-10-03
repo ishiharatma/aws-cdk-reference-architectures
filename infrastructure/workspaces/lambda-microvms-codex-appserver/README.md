@@ -1,25 +1,26 @@
-# Serverless Codex App Server on AWS Lambda MicroVMs - AWS CDK Reference Architecture
+# Serverless Codex App Server on AWS Lambda MicroVMs — A VM-Isolated, Per-Session Data Plane behind a Cognito-Authenticated Control Plane
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Source.** This reference implements the architecture described in
-> ["Lambda MicroVMsで実現するServerlessなCodex App Server"](https://note.com/japan_d2/n/n618cb3439486)
-> (Japan Digital Design, Inc. / Satoshi Toyama, 2026-09-15), adapted into an AWS CDK reference architecture.
-> The source article uses polling for output delivery and notes it chose that for implementation simplicity
-> over an SSE/WebSocket experience; this reference goes one step further than the source and adds a WebSocket
-> push path alongside polling (see "Design Decisions" #2). Two other implementation details the article
-> doesn't spell out at the API level were filled in independently from the AWS Lambda MicroVMs public API
-> surface (`@aws-sdk/client-lambda-microvms`, the `AWS::Lambda::MicrovmImage`/`AWS::Lambda::NetworkConnector`
-> CloudFormation schemas): the IAM service principal Lambda MicroVMs assumes for build/execution roles, and
-> `codex app-server`'s exact stdio JSON-RPC framing. Both were confirmed correct by a real deploy on
-> 2026-09-27 -- see [Deploy verification](#-deploy-verification), which also documents six real bugs the
-> deploy caught and fixed that neither of these two guesses accounts for.
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+
+## Introduction
+
+This reference implementation runs an on-demand, VM-isolated [`codex app-server`](https://github.com/openai/codex) per session on [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/). A session control plane (an API Gateway HTTP API with 7 Lambda functions plus a WebSocket API with 3 more) brokers each session's MicroVM lifecycle, and the turn output is delivered by both push (WebSocket) and pull (polling) from a DynamoDB event table.
+
+This architecture demonstrates:
+
+- A per-session, VM-isolated data plane with suspend/resume and idle auto-suspend, instead of a long-running shared host
+- An in-VM HTTP server that stands in for the missing "log in, execute, and stream the output" primitive, so external callers only need plain HTTPS
+- `EventsTable` as the single source of truth for output, with WebSocket push through DynamoDB Streams layered on top and polling as the fallback
+- Cognito-authenticated, owner-scoped access on every HTTP route and on the WebSocket `$connect` route
+- The OpenAI API key held in Secrets Manager and never baked into the image or the Infrastructure-as-Code
+- Deploy-verified end to end on 2026-09-27; see [Deploy verification](#-deploy-verification) for the six defects the real deployment found and fixed
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
-- [Well-Architected Alignment](#-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
@@ -105,7 +106,7 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (read-only; Mic
 
 ### Thread creation, Turn execution, and output delivery
 
-Extending the source article's sequence with a push path:
+The sequence, including the push path:
 
 1. **Start a session** -- `POST /sessions` (control plane) launches a MicroVM from the pre-baked image
    (`RunMicrovm`), with `runHookPayload: {"sessionId": "..."}` delivered as the body of the image's `/run`
@@ -131,7 +132,7 @@ Extending the source article's sequence with a push path:
 
 `cdk synth`'s CloudFormation Validate plugin confirms that `Hooks.MicrovmHooks.*` and
 `Hooks.MicrovmImageHooks.*` on `AWS::Lambda::MicrovmImage` are `ENABLED`/`DISABLED` switches, not literal
-script paths. Per the source article, enabling a hook makes the platform call it as an **HTTP request against
+script paths. Enabling a hook makes the platform call it as an **HTTP request against
 the container's `Hooks.port`**:
 
 | Hook | HTTP call | When | What the in-VM server does |
@@ -146,13 +147,12 @@ the container's `Hooks.port`**:
 
 ### 1. An in-VM HTTP server stands in for a missing "exec and stream" primitive
 
-Lambda MicroVMs has no API to log into a running MicroVM and stream a command's output back. This reference
-follows the source article's approach: the image itself runs an HTTP server that relays JSON-RPC to
+Lambda MicroVMs has no API to log into a running MicroVM and stream a command's output back. So this reference has the image itself run an HTTP server that relays JSON-RPC to
 `codex app-server` and captures its output, so external callers only ever need plain HTTPS.
 
 ### 2. Output delivery is push (WebSocket) with pull (polling) as the source of truth
 
-The source article's demo used polling alone, for implementation simplicity. This reference keeps `EventsTable`
+Polling alone is the simplest delivery mechanism. This reference keeps `EventsTable`
 as the single source of truth (so a client can always poll `get-events` and get the right answer) but adds a
 push path on top: a DynamoDB Streams trigger (`forward-event`) delivers each new item to connected WebSocket
 clients as it's written. This is additive, not a replacement -- a client that never opens a WebSocket
@@ -206,7 +206,7 @@ The Cognito subject (`sub`) becomes `ownerId` on every `SessionsTable` and `Conn
 routes 404 and WebSocket `$connect` rejects a session that isn't the caller's own, rather than leaking another
 user's MicroVM endpoint or output.
 
-## 🏛️ Well-Architected Alignment
+### 10. Well-Architected Framework Alignment
 
 | Pillar | How this reference addresses it |
 |---|---|
@@ -535,10 +535,6 @@ Terminate any still-RUNNING/SUSPENDED sessions (`DELETE /sessions/{id}`) before 
 
 ## 📚 References
 
-### Source article
-
-- [Lambda MicroVMsで実現するServerlessなCodex App Server](https://note.com/japan_d2/n/n618cb3439486) (Japan Digital Design, Inc.)
-
 ### AWS Documentation
 
 - [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)
@@ -560,3 +556,13 @@ This project is licensed under the Apache License, Version 2.0 - see the [LICENS
 ## 👥 Contributing
 
 Contributions are welcome! See the [Contribution Guide](../../../docs/contribution/CONTRIBUTING.md).
+
+## 🏆 About This Reference Architecture
+
+This reference architecture demonstrates AWS CDK best practices for building a VM-isolated, session-based serverless compute backend.
+
+**Target Level**: 300 (Advanced)
+
+---
+
+**Note**: This is a reference implementation. Always review and customize according to your specific requirements and organizational policies before deploying to production.

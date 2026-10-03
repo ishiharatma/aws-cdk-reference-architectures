@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-100-blue?style=flat-square)
+![Level 100](https://img.shields.io/badge/Level-100-green?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-S3-orange?style=flat-square)
 
 ## Introduction
@@ -24,6 +24,22 @@ This architecture demonstrates:
 | No CloudFront, no WAF, no ACM certificate | The fastest, cheapest way to get a static site online — useful as a baseline before reaching for [`cloudfront-s3-static-website`](../cloudfront-s3-static-website/) |
 | IP allow-list compatible with Block Public Access | Demonstrates that a bucket policy is only "public" (and therefore blocked) in S3's eyes when it lacks a recognized restrictive condition — `aws:SourceIp` is one such condition, so `BlockPublicAccess.BLOCK_ALL` and a source-IP-scoped public policy can coexist |
 | Auto-detected operator IP | `bin/s3-static-web-site.ts` calls `curl` to discover the deploying machine's own IP, so the freshly deployed site is viewable immediately without a manual bucket-policy edit |
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Data Flow](#data-flow)
+- [Design Decisions & Best Practices](#design-decisions--best-practices)
+- [Cost Optimization](#cost-optimization)
+- [Security Considerations](#security-considerations)
+- [Prerequisites](#prerequisites)
+- [Deployment Guide](#deployment-guide)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Clean-up](#clean-up)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
 
 ## Architecture Overview
 

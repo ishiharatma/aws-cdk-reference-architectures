@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A **custom Amazon EventBridge event bus** for an order domain: producers publish facts (`OrderPlaced`, `PaymentFailed`, …) and **rules decide who reacts** using content-based event patterns — numeric, prefix and `anything-but` filters — with four different target types, bounded retries plus a dead-letter queue, bus-level logging, and an **archive that can be replayed**. Adding a consumer is adding a rule; no producer changes.
 
@@ -16,16 +16,16 @@ A **custom Amazon EventBridge event bus** for an order domain: producers publish
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
-- [Well-Architected Alignment](#-well-architected-alignment)
+- [Well-Architected Alignment](#️-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Operational Check Script](#-operational-check-script)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)

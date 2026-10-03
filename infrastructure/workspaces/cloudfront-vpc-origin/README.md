@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-CloudFront%20%7C%20S3%20%7C%20ALB%20%7C%20Lambda%20%7C%20VPC-orange?style=flat-square)
 
 ## Introduction
@@ -18,6 +18,24 @@ This architecture demonstrates the following implementations:
 - Restricting delivery to an explicit allow-list of countries with CloudFront geo restriction
 - Optional viewer IP allow-listing at the edge with a CloudFront Function, with denied requests logged to CloudWatch Logs through CloudFront standard logging (v2)
 - TLS 1.3 (2025) as the minimum viewer protocol
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Data Flow](#data-flow)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Customization](#customization)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

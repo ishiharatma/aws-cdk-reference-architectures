@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 `aws-cdk-lib/pipelines` で作る**セルフミューテーション(自己更新)型の CDK Pipeline** です。パイプライン自身の定義がビルド元のリポジトリの中にあるため、パイプラインを変更するコミット(ステージやステップの追加)はパイプライン自身が取り込みます。最初の 1 回以降、誰もパイプラインに対して `cdk deploy` を実行しません。
 
@@ -17,16 +17,16 @@ CodePipeline/CodeBuild を手で組み立てる [`cicd-codecommit-cross-account`
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ](#-セキュリティ)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [動作確認スクリプト](#-動作確認スクリプト)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
@@ -52,14 +52,14 @@ cdk-pipelines-self-mutating/
 
 ### 主要コンポーネント
 
-- **`RepositoryStack`**(ワークスペース直下)— **初期コミットが `app/` の内容**である CodeCommit リポジトリ。CDK Pipelines はパイプラインより先にソースを必要とし、パイプライン定義自体がそのソースにあるため、別スタックにしています。1 回デプロイすれば、以降のリポジトリは開発者のものです。
-- **`PipelineStack`**(`app/`)— 手動デプロイ(`app/` で `cdk deploy`)は 1 回だけで、その後は自己更新します。
+- **`RepositoryStack`**(ワークスペース直下)。**初期コミットが `app/` の内容**である CodeCommit リポジトリ。CDK Pipelines はパイプラインより先にソースを必要とし、パイプライン定義自体がそのソースにあるため、別スタックにしています。1 回デプロイすれば、以降のリポジトリは開発者のものです。
+- **`PipelineStack`**(`app/`)。手動デプロイ(`app/` で `cdk deploy`)は 1 回だけで、その後は自己更新します。
   - V2 の `codepipeline.Pipeline`(`restartExecutionOnUpdate: true`、`crossAccountKeys: false`)と、プライベート・TLS 限定・SSE-S3 のアーティファクトバケット
   - `selfMutation: true` の `pipelines.CodePipeline` と `ShellStep` の synth(`npm ci` → `npm run build` → `npm test` → `cdk synth -c project=… -c env=…`)
   - **Dev** ステージ: CloudFormation デプロイ → デプロイした関数を呼ぶ `CodeBuildStep` のスモークテスト(`envFromCfnOutputs` で関数名を受け取り、ロールは**その 1 関数への `lambda:InvokeFunction` のみ**)
   - **Prod** ステージ: `ManualApprovalStep` → デプロイ → スモークテスト
   - すべてのビルドプロジェクトで共有する CloudWatch ロググループ(保持 7 日)
-- **サンプルアプリ**(`HelloStack`)— `{ stage, version }` を返すインラインコードの Lambda 1 つ。デプロイと昇格を観測できるようにするためのものです。自分のスタックに置き換えてください。
+- **サンプルアプリ**(`HelloStack`)。`{ stage, version }` を返すインラインコードの Lambda 1 つ。デプロイと昇格を観測できるようにするためのものです。自分のスタックに置き換えてください。
 
 ### アーキテクチャの特性
 
@@ -68,7 +68,7 @@ cdk-pipelines-self-mutating/
 | パイプラインの所有 | パイプライン自身が更新する | 手動の `cdk deploy` は 1 回だけで、以降はすべてコミット |
 | 環境 | Dev → (承認) → Prod | 昇格ゲートは人がコマンドを打つのではなくパイプラインのステップ |
 | 品質ゲート | デプロイ前に `tsc` + ユニットテスト + CDK Nag | テストを壊すコミットは `UpdatePipeline` にも Dev にも届かない |
-| アカウント | 単一アカウント(Dev と Prod は別スタック) | 1 アカウントで検証可能。マルチアカウントは[カスタマイズ](#-カスタマイズ)を参照 |
+| アカウント | 単一アカウント(Dev と Prod は別スタック) | 1 アカウントで検証可能。マルチアカウントは[カスタマイズ](#️-カスタマイズ)を参照 |
 | Assets ステージ | なし | CDK Pipelines はスタックにファイル/Docker アセットがある場合のみ `Assets` ステージを追加(ここの Lambda はインライン) |
 
 ## 🎯 設計判断とベストプラクティス
@@ -148,7 +148,7 @@ cdk-pipelines-self-mutating/
 ### コストレバー
 
 1. 単一アカウントでは**クロスアカウント KMS キーを作らない**(`crossAccountKeys: false`)。
-2. **`npm test` を速く保つ** — コストの大半はビルド時間です。
+2. **`npm test` を速く保つ**。コストの大半はビルド時間です。
 3. このサイズのアプリなら **`SMALL` コンピュート**で十分です。
 4. 共有ビルドロググループの**保持期間を短く**する。
 
@@ -236,7 +236,7 @@ npm test -w workspaces/cdk-pipelines-self-mutating   # ワークスペース直�
 |---|---|---|
 | `test/` | ユニット / スナップショット / CDK Nag | `RepositoryStack`(名前、シード、削除ポリシー、出力。アセットのハッシュは正規化) |
 | `app/test/` | ユニット | `PipelineStack`: V2 + 更新時再起動、KMS キーなし、ステージ順、ソースのリポジトリ/ブランチ、`UpdatePipeline`、Prod 前の承認、スモークテストの IAM 範囲、バケットのハードニング、埋め込まれた synth コマンド。`HelloStack`/`AppStage` |
-| `app/test/` | CDK Nag | パイプラインとアプリのスタック — **パイプラインの Build ステージでも実行される** |
+| `app/test/` | CDK Nag | パイプラインとアプリのスタック。**パイプラインの Build ステージでも実行される** |
 
 コミットとデプロイの間に立つのは `app/` のテストです。
 
@@ -289,9 +289,9 @@ Prod と Dev のアプリスタック、パイプラインスタック(アーテ
 - [CDK のブートストラップと `--trust`](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html)
 
 ### 関連アーキテクチャ
-- [cicd-codecommit-cross-account](../cicd-codecommit-cross-account/) — アカウントをまたぐ、手組みの CodePipeline/CodeBuild
-- [cicd-cloudfront-s3](../cicd-cloudfront-s3/) — 静的サイト配信の CI/CD パイプライン
-- [ecspresso-bedrock-review](../ecspresso-bedrock-review/) — CI/CD 駆動の ECS デプロイ
+- [cicd-codecommit-cross-account](../cicd-codecommit-cross-account/)。アカウントをまたぐ、手組みの CodePipeline/CodeBuild
+- [cicd-cloudfront-s3](../cicd-cloudfront-s3/)。静的サイト配信の CI/CD パイプライン
+- [ecspresso-bedrock-review](../ecspresso-bedrock-review/)。CI/CD 駆動の ECS デプロイ
 
 ## 📄 ライセンス
 

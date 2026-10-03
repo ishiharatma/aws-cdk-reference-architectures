@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 Japanese](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-orange?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-EC2%20%7C%20ALB%20%7C%20ASG-purple?style=flat-square)
 
 ## Table of Contents<!-- omit in toc -->
@@ -27,9 +27,9 @@
   - [Implementation](#implementation-2)
   - [When to Use](#when-to-use-2)
 - [Pattern 4: Auto Scaling Group — Always 2 Instances (Multi-AZ)](#pattern-4-auto-scaling-group--always-2-instances-multi-az)
-  - [Key Features](#key-features-3)
-  - [Implementation](#implementation-3)
-  - [When to Use](#when-to-use-3)
+  - [Key Features](#key-features-2)
+  - [Implementation](#implementation-2)
+  - [When to Use](#when-to-use-2)
 - [Security Design](#security-design)
 - [nginx Sample Page](#nginx-sample-page)
 - [Deploy](#deploy)

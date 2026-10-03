@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A Todos REST API served by **one** Lambda function that runs a **standard Express.js HTTP server**. The [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) layer sits in front of the runtime, turns each API Gateway proxy event into a real HTTP request against `http://localhost:8080`, and turns the HTTP response back into a Lambda result. The application code contains **no `handler(event, context)`** and no AWS Lambda types — it is the same `app` you would `docker run` on Fargate or `node` locally.
 
@@ -17,18 +17,18 @@ This is one of three companion workspaces that implement the **same API** three 
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [How the Lambda Web Adapter Works](#-how-the-lambda-web-adapter-works)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Pattern Comparison](#-pattern-comparison)
-- [Well-Architected Alignment](#-well-architected-alignment)
+- [Well-Architected Alignment](#️-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Usage](#usage)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)

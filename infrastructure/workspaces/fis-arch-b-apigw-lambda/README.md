@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20CloudFront%20%7C%20API%20Gateway%20%7C%20Lambda%20%7C%20DynamoDB-orange?style=flat-square)
 
 ## Introduction
@@ -22,6 +22,23 @@ All experiments share a CloudWatch Alarm stop condition that automatically halts
 
 > ### ⚠️ Why not inject DynamoDB faults directly?
 > An earlier version of this workspace tried `aws:fis:inject-api-internal-error` / `aws:fis:inject-api-throttle-error` with `service: dynamodb`, and a fictional `aws:lambda:put-function-concurrent-executions` action. **Both fail at deploy time.** The `aws:fis:inject-api-*` actions do not support `dynamodb` as a service value (the API rejects it with *"The service parameter value is not supported for the action"*), and no FIS action sets Lambda reserved concurrency. The only supported way to inject faults into this serverless path today is the `aws:lambda:function` action family, which is what B-1–B-4 now use. See [Implementation Highlights](#6-lessons-learned).
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Data Flow](#data-flow)
+- [Key Components and Design Points](#key-components-and-design-points)
+- [Implementation Highlights](#implementation-highlights)
+- [Deployment Guide](#deployment-guide)
+- [Testing](#testing)
+- [Cost Estimation](#cost-estimation)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [Clean-up](#clean-up)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 

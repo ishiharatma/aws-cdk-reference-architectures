@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-300-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-FIS%20%7C%20NLB%20%7C%20EC2%20ASG%20%7C%20Aurora%20PostgreSQL%20%7C%20VPC-orange?style=flat-square)
 
 ## はじめに
@@ -15,10 +15,27 @@
 | -------- | ------------ | -------- | -------- |
 | **G-1** AZ-1 クロスAZトラフィック分断 | `aws:network:disrupt-connectivity`、`scope=availability-zone`、AZ-1 のプライベートサブネット対象 | 5 分 | 暗黙のクロスAZ依存が存在しないこと、他AZに到達できない際の NLB クロスゾーンルーティングの挙動 |
 | **G-2** AZ-1 完全分断 | `aws:network:disrupt-connectivity`、`scope=all`、AZ-1 のプライベートサブネット対象 | 5 分 | NLB の異常ターゲット検知速度、AZ-2 へのトラフィック 100% 自動フェイルオーバー |
-| **G-3** Aurora マルチAZフェイルオーバー | `aws:rds:failover-db-cluster` — ライター→リーダー昇格 | 約 30 秒 | 上記のネットワーク層障害とは独立した、DB 層自体のフェイルオーバー動作 |
+| **G-3** Aurora マルチAZフェイルオーバー | `aws:rds:failover-db-cluster`。ライター→リーダー昇格 | 約 30 秒 | 上記のネットワーク層障害とは独立した、DB 層自体のフェイルオーバー動作 |
 | **G-4** AZ スコープの EC2 終了 | `aws:ec2:terminate-instances`、タグ付きインスタンスの `PERCENT(50)` | 即時 | ASG の自己修復、NLB のターゲット登録解除・再登録速度 |
 
 全実験テンプレートは NLB ターゲットグループの `UnHealthyHostCount` に基づく CloudWatch Alarm の停止条件を共有します。NLB は ALB のような HTTP ステータスコード単位のメトリクスを持たないため、この層で利用できる安全信号は異常ホスト数になります。
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [前提条件](#前提条件)
+- [プロジェクトのディレクトリ構成](#プロジェクトのディレクトリ構成)
+- [データフロー](#データフロー)
+- [主要コンポーネントと設計のポイント](#主要コンポーネントと設計のポイント)
+- [実装のポイント](#実装のポイント)
+- [デプロイガイド](#デプロイガイド)
+- [テスト](#テスト)
+- [コスト見積もり](#コスト見積もり)
+- [セキュリティ上の考慮事項](#セキュリティ上の考慮事項)
+- [トラブルシューティング](#トラブルシューティング)
+- [クリーンアップ](#クリーンアップ)
+- [まとめ](#まとめ)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 
@@ -86,7 +103,7 @@ G-4  aws:ec2:terminate-instances ───────────────�
 | `aws:network:disrupt-connectivity` | NACL やルートテーブルを手動操作せずに AZ ネットワーク障害をシミュレートできる唯一の FIS ネイティブな方法。一時的な NACL の差し替えとロールバックを FIS が自動的に管理 |
 | `scope=availability-zone` と `scope=all`（G-1 と G-2） | 同一アクションから 2 種類の障害粒度を実現。「他 AZ に到達できない」と「完全に孤立」で異なる障害モードが表面化する |
 | Aurora ライター・リーダーを 2 AZ に配置 | G-3（`aws:rds:failover-db-cluster`）はリーダーが 1 台以上必要。リーダーを AZ-2 に置くことで、G-1/G-2 がライターのレプリケーション経路を偶発的に遮断する副次効果も観測できる |
-| NLB ターゲットグループの `preserveClientIp: false` | EC2 ターゲットへ届くトラフィックは NLB ノード自身の VPC CIDR 内 IP に送信元 NAT される。そのため EC2 セキュリティグループは単純な VPC CIDR 受信ルール 1 本で十分 — NLB 側にセキュリティグループは不要 |
+| NLB ターゲットグループの `preserveClientIp: false` | EC2 ターゲットへ届くトラフィックは NLB ノード自身の VPC CIDR 内 IP に送信元 NAT される。そのため EC2 セキュリティグループは単純な VPC CIDR 受信ルール 1 本で十分。NLB 側にセキュリティグループは不要 |
 | タグベースの EC2 ターゲティング（G-4） | `fis-target: app-instance` タグにより、インスタンス ID や ASG 名をハードコードせずに FIS が対象を選択。スケールイン・アウトを経ても有効 |
 | 共有停止条件（NLB UnHealthyHostCount） | 1 つの CloudWatch Alarm が、異常ターゲットが増えすぎた場合に 4 つの実験すべてを停止 |
 
@@ -150,18 +167,18 @@ Aurora PostgreSQL Serverless v2
 | コンポーネント | 設計のポイント |
 | -------------- | -------------- |
 | VPC | CIDR 10.70.0.0/16; 2 AZ; 各 AZ にパブリック/プライベート/Isolated の 3 サブネット層; NAT Gateway × 1（両 AZ で共有） |
-| Aurora PostgreSQL Serverless v2 | エンジン v16.13（v16.4はこのリージョンで提供終了——同じ修正は[A](../fis-arch-a-ecs-aurora)と[C](../fis-arch-c-ec2-asg-rds)も参照）; ライター 1 台 + リーダー 1 台を 2 AZ に配置; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
+| Aurora PostgreSQL Serverless v2 | エンジン v16.13（v16.4はこのリージョンで提供終了。同じ修正は[A](../fis-arch-a-ecs-aurora)と[C](../fis-arch-c-ec2-asg-rds)も参照）; ライター 1 台 + リーダー 1 台を 2 AZ に配置; 最小 0.5 ACU、最大 4 ACU; Isolated サブネット; ストレージ暗号化; CloudWatch ログエクスポート |
 | EC2 Auto Scaling Group | t3.small; AL2023; requireImdsv2; EBS gp3 20 GB 暗号化; 2 AZ に分散配置; タグ `fis-target: app-instance` |
 | Network Load Balancer | インターネット向け、TCP/80、2 AZ、クロスゾーン負荷分散有効、`disableSecurityGroups: true` |
 | ターゲットグループ | TCP/80、INSTANCE タイプ、`preserveClientIp: false`、`/` への HTTP ヘルスチェック、登録解除遅延 30 秒 |
-| EC2 セキュリティグループ | VPC CIDR からの TCP/80 受信のみ許可（NLB セキュリティグループからの受信はなし — NLB はそもそも持たない） |
+| EC2 セキュリティグループ | VPC CIDR からの TCP/80 受信のみ許可（NLB セキュリティグループからの受信はなし。NLB はそもそも持たない） |
 | FIS IAM ロール | タグ付きインスタンスへの `ec2:TerminateInstances`; `aws:network:disrupt-connectivity` 用の NACL 管理アクション（`ec2:CreateNetworkAcl`、`ec2:ReplaceNetworkAclAssociation` など）; クラスター ARN 指定の `rds:FailoverDBCluster`; CloudWatch Logs 配信 |
-| 停止条件 | NLB ターゲットグループ `UnHealthyHostCount >= 2` / 1 分間 — 4 つの実験テンプレートすべてで共有 |
-| FIS ログ グループ | `/fis/{project}-{env}` — 保持期間 1 ヶ月、スタック削除時に自動削除 |
+| 停止条件 | NLB ターゲットグループ `UnHealthyHostCount >= 2` / 1 分間。4 つの実験テンプレートすべてで共有 |
+| FIS ログ グループ | `/fis/{project}-{env}`。保持期間 1 ヶ月、スタック削除時に自動削除 |
 
 ## 実装のポイント
 
-### 1. `aws:network:disrupt-connectivity` — AZ レベルのネットワーク障害注入（G-1、G-2）
+### 1. `aws:network:disrupt-connectivity`：AZ レベルのネットワーク障害注入（G-1、G-2）
 
 このアクションは `resourceType: aws:ec2:subnet` を直接ターゲットとします（多くの FIS アクションのようなタグベースではありません）。そのため FIS テンプレートは AZ-1 の Private サブネットの具体的な ARN を参照します。
 
@@ -315,9 +332,9 @@ PROJECT=fis-chaos-g ENV=dev npm run stage:deploy:all
 ```
 
 依存関係の順番で 3 つのスタックがデプロイされます。
-1. `fis-chaos-g-dev-g-base` — 2AZ VPC + Aurora PostgreSQL Serverless v2
-2. `fis-chaos-g-dev-g-app` — EC2 ASG（2 AZ）+ インターネット向け NLB
-3. `fis-chaos-g-dev-g-fis` — FIS テンプレート + IAM + アラーム
+1. `fis-chaos-g-dev-g-base`。2AZ VPC + Aurora PostgreSQL Serverless v2
+2. `fis-chaos-g-dev-g-app`。EC2 ASG（2 AZ）+ インターネット向け NLB
+3. `fis-chaos-g-dev-g-fis`。FIS テンプレート + IAM + アラーム
 
 ### 5. アプリケーションのテスト
 
@@ -346,10 +363,10 @@ AWS FIS コンソールから実験テンプレート（G-1 〜 G-4）を選択�
 
 | シナリオ | 結果 |
 | -------- | ---- |
-| **G-1** | AZ-1インスタンスのNLBターゲットヘルスは5分間の実験時間中ずっと`healthy`のまま——この単純なnginxデモには遮断が露見させるAZ間依存がそもそも存在しないため、「何も起きなかった」こと自体が正しく検証された結果 |
-| **G-2** | AZ-1インスタンスが数秒で`unhealthy`（`Target.FailedHealthChecks`）に転じ、生きたトラフィックの100%がAZ-2インスタンスに切り替わった。**予想外だが有益な発見**: Auto Scalingは「異常」（だが実際には正常な）インスタンスを障害と判断し、ネットワークの回復を待たずに置き換えた——代替インスタンスは同じAZに配置され、5分間のアクションが終了して初めてhealthyになった |
+| **G-1** | AZ-1インスタンスのNLBターゲットヘルスは5分間の実験時間中ずっと`healthy`のまま。この単純なnginxデモには遮断が露見させるAZ間依存がそもそも存在しないため、「何も起きなかった」こと自体が正しく検証された結果 |
+| **G-2** | AZ-1インスタンスが数秒で`unhealthy`（`Target.FailedHealthChecks`）に転じ、生きたトラフィックの100%がAZ-2インスタンスに切り替わった。**予想外だが有益な発見**: Auto Scalingは「異常」（だが実際には正常な）インスタンスを障害と判断し、ネットワークの回復を待たずに置き換えた。代替インスタンスは同じAZに配置され、5分間のアクションが終了して初めてhealthyになった |
 | **G-3** | `aws rds describe-events`が実験開始から数秒で`Started cross AZ failover to DB instance: ...reader1...`をログに記録 |
-| **G-4** | FISが1インスタンスを終了。NLBターゲットグループはほぼ即座に登録解除した一方、`describe-auto-scaling-groups`自身が示すインスタンスの健全性はEC2の実際の状態にもターゲットグループの状態にも明らかに遅れていた——この外部からの終了直後は`describe-instances`と`describe-target-health`の方がより新しい事実だった。ASGは数分以内に不一致を検知し代替インスタンスを起動した |
+| **G-4** | FISが1インスタンスを終了。NLBターゲットグループはほぼ即座に登録解除した一方、`describe-auto-scaling-groups`自身が示すインスタンスの健全性はEC2の実際の状態にもターゲットグループの状態にも明らかに遅れていた。この外部からの終了直後は`describe-instances`と`describe-target-health`の方がより新しい事実だった。ASGは数分以内に不一致を検知し代替インスタンスを起動した |
 
 ## テスト
 
@@ -375,7 +392,7 @@ npm run test:snapshot:update --workspace=fis-arch-g-multiaz-network
 | テストスイート | ファイル | アサーション |
 | -------------- | -------- | ------------ |
 | スナップショット | `test/snapshot/snapshot.test.ts` | 3 スタック全体の CloudFormation テンプレートスナップショット; VPC が 2 AZ にまたがること; Aurora ストレージ暗号化; ASG 存在確認; NLB がインターネット向けであること; ターゲットグループが TCP/80; FIS テンプレートがちょうど 4 本; 全テンプレートに停止条件あり; G-1/G-2 が両方とも `aws:ec2:subnet` をターゲットにしていること |
-| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック — 未抑制の警告・エラーがないこと（6 テストケース） |
+| CDK Nag | `test/compliance/cdk-nag.test.ts` | AwsSolutions パック。未抑制の警告・エラーがないこと（6 テストケース） |
 
 ## コスト見積もり
 
@@ -390,16 +407,16 @@ Aurora Serverless v2、EC2 インスタンス、NAT Gateway はアイドル時�
 | **FIS** | **アクション分単価 $0.10** | 4シナリオのフルサイクル（主に2つの5分間ネットワーク遮断アクション）で約$1〜1.5 |
 | **合計（アイドル時インフラ、1時間）** | | **約$0.17/時間 + 1回のフルテストサイクルで約$1〜1.5のFISアクション分課金** |
 
-**以前のドキュメントからの修正:** FISは**無料ではありません**——本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
+**以前のドキュメントからの修正:** FISは**無料ではありません**。本シリーズの他のFISベースワークスペースと同様、アクション分単価$0.10で課金されます。
 
 ## セキュリティ上の考慮事項
 
-- **IMDSv2 必須** (`requireImdsv2: true`) — メタデータサービス経由の SSRF 攻撃を防止
-- **EBS ルートボリューム暗号化** (gp3) — AwsSolutions-EC26 を満たす
-- **NLB は自身のセキュリティグループを持たず、EC2 の受信は VPC CIDR にスコープ** — ターゲットグループの `preserveClientIp: false` と組み合わせることで、NLB セキュリティグループを参照する必要がないまま、Internal ALB パターンと同程度に実効的な攻撃対象領域を絞り込める
-- **FIS IAM ロールをタグ/ARN 条件でスコープ** — `ec2:TerminateInstances` は `fis-target: app-instance` タグを持つインスタンスのみに制限。`rds:FailoverDBCluster` は Aurora クラスター ARN に制限
-- **Aurora を Isolated サブネットに配置** — インターネットへのルートなし。VPC 内からポート 5432 でのみアクセス可能
-- **停止条件は必須** — 全 FIS テンプレートに NLB `UnHealthyHostCount` アラーム停止条件を含む
+- **IMDSv2 必須** (`requireImdsv2: true`)。メタデータサービス経由の SSRF 攻撃を防止
+- **EBS ルートボリューム暗号化** (gp3)。AwsSolutions-EC26 を満たす
+- **NLB は自身のセキュリティグループを持たず、EC2 の受信は VPC CIDR にスコープ**。ターゲットグループの `preserveClientIp: false` と組み合わせることで、NLB セキュリティグループを参照する必要がないまま、Internal ALB パターンと同程度に実効的な攻撃対象領域を絞り込める
+- **FIS IAM ロールをタグ/ARN 条件でスコープ**。`ec2:TerminateInstances` は `fis-target: app-instance` タグを持つインスタンスのみに制限。`rds:FailoverDBCluster` は Aurora クラスター ARN に制限
+- **Aurora を Isolated サブネットに配置**。インターネットへのルートなし。VPC 内からポート 5432 でのみアクセス可能
+- **停止条件は必須**。全 FIS テンプレートに NLB `UnHealthyHostCount` アラーム停止条件を含む
 
 ## トラブルシューティング
 
@@ -428,7 +445,7 @@ PROJECT=fis-chaos-g ENV=dev npm run stage:destroy:all
 - **G-3**: ネットワーク層のシナリオとは独立した、Aurora 自体のライター→リーダー昇格動作を検証
 - **G-4**: 概ね 1 AZ 分のインスタンスが一斉に消失した場合の、ASG の自己修復と NLB ターゲットの入れ替わりを検証
 
-本アーキテクチャはアーキテクチャ C（ALB + SSM ベースのインスタンス/ネットワークアクション）を補完します。`aws:ssm:send-command` のネットワークブラックホールも `aws:ec2:terminate-instances` も到達できない、唯一の障害ドメイン — インスタンスはすべて健全なままアベイラビリティーゾーン全体が接続性を失うケース — をカバーします。
+本アーキテクチャはアーキテクチャ C（ALB + SSM ベースのインスタンス/ネットワークアクション）を補完します。`aws:ssm:send-command` のネットワークブラックホールも `aws:ec2:terminate-instances` も到達できない、唯一の障害ドメイン。インスタンスはすべて健全なままアベイラビリティーゾーン全体が接続性を失うケース。をカバーします。
 
 ## 参考資料
 

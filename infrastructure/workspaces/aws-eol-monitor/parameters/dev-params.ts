@@ -5,7 +5,7 @@ import { Environment } from '@common/parameters/environments';
 /**
  * Development Environment Parameters
  *
- * Weekly schedule and a 180-day "upcoming EOL" window, tuned for a small
+ * Daily schedule and a 180-day "upcoming EOL" window, tuned for a small
  * demo dataset (13 services) rather than a large fleet. Replace
  * `notification.emails` with a real, confirmable address before deploying.
  */

@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 200 (Intermediate)**
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 > ✅ **Deploy-verified** (2026-10-01). Every resource in this stack — CloudTrail, AWS Config (recorder, delivery channel, 11 managed rules), GuardDuty, IAM Access Analyzer and Security Hub — was deployed to a real AWS account, confirmed actually working via live AWS CLI checks, and destroyed cleanly. Two real deploy-time bugs were found and fixed in the process; see [Observed Results](#-observed-results) below.
 
@@ -21,9 +21,9 @@ A **single-account security baseline**: an audit trail (**CloudTrail**), configu
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
-- [Well-Architected Alignment](#-well-architected-alignment)
+- [Well-Architected Alignment](#️-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Observed Results](#-observed-results)

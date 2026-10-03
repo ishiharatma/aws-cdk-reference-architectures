@@ -39,6 +39,22 @@ Agentic Code Review ゲートを組み込んだ ECS Fargate 向け CodePipeline 
   （`backend/ecspresso-bedrock-review-app/`）に配置し、パイプラインの各
   ステージが1ファイルずつ対応する
 
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [レビュー結果はどこで確認できるか](#レビュー結果はどこで確認できるか)
+- [レビューの効果を経時的に測定する](#レビューの効果を経時的に測定する)
+- [`ecspresso verify` / `ecspresso deploy` を実行しない理由](#ecspresso-verify--ecspresso-deploy-を実行しない理由)
+- [desiredCount と Application Auto Scaling の関係](#desiredcount-と-application-auto-scaling-の関係)
+- [Trivy の検出結果 → Security Hub（ASFF変換、環境変数でゲート）](#trivy-の検出結果--security-hubasff変換環境変数でゲート)
+- [Bedrock レビューモデルの切り替え](#bedrock-レビューモデルの切り替え)
+- [前提条件](#前提条件)
+- [デプロイ手順](#デプロイ手順)
+- [テスト戦略](#テスト戦略)
+- [セキュリティ上の考慮事項](#セキュリティ上の考慮事項)
+- [カスタマイズ](#カスタマイズ)
+- [参考リンク](#参考リンク)
+
 ## アーキテクチャ概要
 
 ```text

@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Intermediate)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A semantic (meaning-based) search API built on **Amazon DynamoDB native vector search** — no OpenSearch, no separate vector database. Documents are stored in one on-demand DynamoDB table; **DynamoDB Streams → Lambda → Amazon Bedrock (Titan Text Embeddings V2)** writes each document's embedding back to the same item; a **vector index declared on the table** answers `SearchVectors` queries such as *"my function is slow the first time it runs after sitting idle"* → **"Reducing Lambda cold starts"**, even though the two share no keywords (and Japanese queries find English documents).
 
@@ -11,9 +11,9 @@ The vector index is declared with the `VectorIndexes` property of `AWS::DynamoDB
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
-- [Well-Architected Alignment](#-well-architected-alignment)
+- [Well-Architected Alignment](#️-well-architected-alignment)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
@@ -21,7 +21,7 @@ The vector index is declared with the `VectorIndexes` property of `AWS::DynamoDB
 - [Usage](#usage)
 - [Operational Check Script](#-operational-check-script)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [Clean-up](#-clean-up)
 - [References](#-references)

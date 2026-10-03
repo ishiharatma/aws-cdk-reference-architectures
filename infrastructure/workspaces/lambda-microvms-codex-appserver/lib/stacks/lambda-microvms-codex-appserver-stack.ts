@@ -29,9 +29,6 @@ interface StackProps extends cdk.StackProps {
 /**
  * Serverless Codex App Server on AWS Lambda MicroVMs.
  *
- * Modeled on the "Lambda MicroVMsで実現するServerlessなCodex App Server"
- * architecture (Japan Digital Design, Inc., 2026-09-15).
- *
  * A session control plane (an HTTP API with 7 Lambda functions, plus a
  * WebSocket API with 3 more) calls the Lambda MicroVMs data-plane API to
  * launch, on demand, a VM-isolated MicroVM running `codex app-server`

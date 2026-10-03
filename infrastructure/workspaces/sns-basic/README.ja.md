@@ -2,20 +2,20 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 200（中級）**
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 1つの Amazon SNS トピックを、よく使われるサブスクリプションプロトコル（Email、SQS、Lambda、API Gateway 経由の HTTPS、Amazon Data Firehose）すべてにファンアウトし、さらに「CloudWatch Logs → Lambda → SNS → Lambda」という、SNS を軽量な内部アラート用のホップとして使う別チェーンも実装したパターンです。すべての Lambda は Python で実装し、ログレベル INFO・JSON 形式の構造化ログを出力します。
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ考慮事項](#-セキュリティ考慮事項)
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [テスト戦略](#-テスト戦略)
-- [カスタマイズ](#-カスタマイズ)
+- [カスタマイズ](#️-カスタマイズ)
 - [トラブルシューティング](#-トラブルシューティング)
 - [参考リンク](#-参考リンク)
 
@@ -116,7 +116,7 @@ AppLogGroup（CloudWatch Logs, デモ用ログソース）
 
 ## 💰 コスト最適化
 
-### 月額コスト試算（ap-northeast-1、開発/テストの軽い利用 — 月あたり数千イベント程度）
+### 月額コスト試算（ap-northeast-1、開発/テストの軽い利用：月あたり数千イベント程度）
 
 ```text
 SNS（トピック2つ、パブリッシュ1,000件未満）:  無料枠内
@@ -149,10 +149,10 @@ Amazon Data Firehose（100万レコード、約1GB）:  ~$0.03
 
 ### コスト最適化戦略
 
-1. **DynamoDB の `PAY_PER_REQUEST`** — 低くスパイクのあるデモ用ワークロードに対して、容量のプロビジョニングや予測が不要
-2. **Firehose のバッファリング** — 小さな SNS メッセージを多数まとめて少数の大きな S3 オブジェクトにし、大量データ時の S3 PUT リクエストコストを削減
-3. **CloudWatch Logs の保持期間短縮**（開発は `ONE_WEEK`、本番は `ONE_MONTH`） — ログストレージの際限ない増加を防止
-4. **NAT Gateway / VPC 不使用** — プライベートネットワークアクセスが不要なため全 Lambda を VPC 外で実行し、NAT Gateway の時間課金・データ処理課金を完全に回避
+1. **DynamoDB の `PAY_PER_REQUEST`**。低くスパイクのあるデモ用ワークロードに対して、容量のプロビジョニングや予測が不要
+2. **Firehose のバッファリング**。小さな SNS メッセージを多数まとめて少数の大きな S3 オブジェクトにし、大量データ時の S3 PUT リクエストコストを削減
+3. **CloudWatch Logs の保持期間短縮**（開発は `ONE_WEEK`、本番は `ONE_MONTH`）。ログストレージの際限ない増加を防止
+4. **NAT Gateway / VPC 不使用**。プライベートネットワークアクセスが不要なため全 Lambda を VPC 外で実行し、NAT Gateway の時間課金・データ処理課金を完全に回避
 
 ## 🔒 セキュリティ考慮事項
 

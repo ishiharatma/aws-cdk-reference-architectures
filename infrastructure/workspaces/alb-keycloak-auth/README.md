@@ -19,6 +19,17 @@ This workspace is a reference architecture that uses **Keycloak** for AWS ALB us
 
 ---
 
+## 📑 Table of Contents
+
+- [Architecture](#architecture)
+- [Stack Structure](#stack-structure)
+- [Deployment Guide](#deployment-guide)
+- [Pattern B: SAML Federation Setup](#pattern-b-saml-federation-setup)
+- [Connectivity Tests](#connectivity-tests)
+- [Parameter Reference](#parameter-reference)
+- [Estimated Cost (ap-northeast-1, dev environment)](#estimated-cost-ap-northeast-1-dev-environment)
+- [Security Considerations](#security-considerations)
+
 ## Architecture
 
 ![Architecture Overview](overview.drawio.svg)

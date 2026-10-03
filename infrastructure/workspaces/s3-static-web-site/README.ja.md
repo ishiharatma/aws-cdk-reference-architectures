@@ -2,7 +2,7 @@
 
 *他の言語で読む:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-100-blue?style=flat-square)
+![Level 100](https://img.shields.io/badge/Level-100-green?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-S3-orange?style=flat-square)
 
 ## はじめに
@@ -24,6 +24,22 @@
 | CloudFrontもWAFもACM証明書もなし | 静的サイトを最速・最安でオンラインにする方法。[`cloudfront-s3-static-website`](../cloudfront-s3-static-website/)に進む前のベースラインとして有用 |
 | Block Public Accessと共存するIP許可リスト | バケットポリシーがS3にとって「公開」(=ブロック対象)とみなされるのは、決められた制限的な条件キーを一切含まない場合のみであることを示す。`aws:SourceIp`はそうした条件キーの1つであり、`BlockPublicAccess.BLOCK_ALL`とIPスコープの公開ポリシーが両立できる |
 | 操作者IPの自動検出 | `bin/s3-static-web-site.ts`が`curl`でデプロイ実行マシン自身のIPを検出するため、デプロイ直後から手動でバケットポリシーを編集することなくサイトを閲覧できる |
+
+## 📑 目次
+
+- [アーキテクチャ概要](#アーキテクチャ概要)
+- [データフロー](#データフロー)
+- [設計上の決定とベストプラクティス](#設計上の決定とベストプラクティス)
+- [コスト最適化](#コスト最適化)
+- [セキュリティの考慮事項](#セキュリティの考慮事項)
+- [前提条件](#前提条件)
+- [デプロイガイド](#デプロイガイド)
+- [使用方法](#使用方法)
+- [テスト](#テスト)
+- [カスタマイズ](#カスタマイズ)
+- [クリーンアップ](#クリーンアップ)
+- [トラブルシューティング](#トラブルシューティング)
+- [参考資料](#参考資料)
 
 ## アーキテクチャ概要
 

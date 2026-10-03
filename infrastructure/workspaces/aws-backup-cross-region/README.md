@@ -2,20 +2,20 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **Level: 300 (Advanced)**
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 A single AWS Backup Plan, protecting a sample **EC2 instance, RDS database, S3 bucket, and an entire CloudFormation stack** in Tokyo (`ap-northeast-1`) with one tag-based Backup Selection — no separate selection per resource type — and copying every recovery point to a pre-created secondary vault in Osaka (`ap-northeast-3`) for regional disaster recovery.
 
 ## 📑 Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Design Decisions & Best Practices](#-design-decisions--best-practices)
 - [Cost Optimization](#-cost-optimization)
 - [Security Considerations](#-security-considerations)
 - [Prerequisites](#-prerequisites)
 - [Deployment Guide](#-deployment-guide)
 - [Testing Strategy](#-testing-strategy)
-- [Customization](#-customization)
+- [Customization](#️-customization)
 - [Troubleshooting](#-troubleshooting)
 - [References](#-references)
 

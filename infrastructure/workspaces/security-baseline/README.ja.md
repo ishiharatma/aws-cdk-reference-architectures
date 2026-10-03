@@ -3,7 +3,7 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-> **レベル: 200（中級）**
+![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
 
 > ✅ **実機デプロイ検証済み**（2026-10-01）。CloudTrail、AWS Config（レコーダー・配信チャネル・マネージドルール11個）、GuardDuty、IAM Access Analyzer、Security Hub のすべてを実際の AWS アカウントにデプロイし、AWS CLI による実機確認を経て、クリーンに破棄しました。検証の過程で実デプロイ時にしか見つからない不具合を2件発見・修正済みです。詳細は[観測結果](#-観測結果)を参照してください。
 
@@ -21,9 +21,9 @@
 
 ## 📑 目次
 
-- [アーキテクチャ概要](#-アーキテクチャ概要)
+- [アーキテクチャ概要](#️-アーキテクチャ概要)
 - [設計判断とベストプラクティス](#-設計判断とベストプラクティス)
-- [Well-Architected との対応](#-well-architected-との対応)
+- [Well-Architected との対応](#️-well-architected-との対応)
 - [コスト最適化](#-コスト最適化)
 - [セキュリティ考慮事項](#-セキュリティ考慮事項)
 - [観測結果](#-観測結果)
@@ -40,12 +40,12 @@
 
 ### 主なコンポーネント
 
-- **`LogArchiveConstruct`** — 共有 S3 バケット（パブリックアクセスブロック、バージョニング、`enforceSSL`、バケット所有者強制、`logArchiveExpirationDays` 後の期限切れ）と KMS キー。
-- **`CloudTrailConstruct`** — `cloudtrail.Trail`。マルチリージョン、`cloudtrail/` プレフィックスへ配信、ログファイルは CMK で暗号化、CloudWatch Logs のロググループの保持期間はパラメータ化。
-- **`ConfigConstruct`** — レコーダーロール（AWS 管理の `AWS_ConfigRole`）、Config 配信用のバケットポリシー、レコーダー/配信チャネル/録画開始（`config/` プレフィックス、24 時間ごとのスナップショット。ネイティブの CFN リソースではなく `AwsCustomResource` による SDK 直接呼び出し — 理由は[観測結果](#-観測結果)参照）、マネージドルール。
-- **`GuardDutyConstruct`**、**`AccessAnalyzerConstruct`**、**`SecurityHubConstruct`** — 検出器 1 つ、アナライザー最大 2 つ、ハブ 1 つと、購読する標準ごとに 1 つの `AWS::SecurityHub::Standard`。
-- **`NotificationConstruct`** — Security Hub の検出結果に対するルール、SNS トピックとメール購読、配信できなかったイベント用の DLQ。暗号化したトピックに EventBridge が発行できるよう、CMK のキーポリシーも拡張します。
-- **`SecurityBaselineStack`** — Construct を組み合わせて順序付けします。ハブより前に Config、GuardDuty、Access Analyzer を作成します。
+- **`LogArchiveConstruct`**。共有 S3 バケット（パブリックアクセスブロック、バージョニング、`enforceSSL`、バケット所有者強制、`logArchiveExpirationDays` 後の期限切れ）と KMS キー。
+- **`CloudTrailConstruct`**。`cloudtrail.Trail`。マルチリージョン、`cloudtrail/` プレフィックスへ配信、ログファイルは CMK で暗号化、CloudWatch Logs のロググループの保持期間はパラメータ化。
+- **`ConfigConstruct`**。レコーダーロール（AWS 管理の `AWS_ConfigRole`）、Config 配信用のバケットポリシー、レコーダー/配信チャネル/録画開始（`config/` プレフィックス、24 時間ごとのスナップショット。ネイティブの CFN リソースではなく `AwsCustomResource` による SDK 直接呼び出し。理由は[観測結果](#-観測結果)参照）、マネージドルール。
+- **`GuardDutyConstruct`**、**`AccessAnalyzerConstruct`**、**`SecurityHubConstruct`**。検出器 1 つ、アナライザー最大 2 つ、ハブ 1 つと、購読する標準ごとに 1 つの `AWS::SecurityHub::Standard`。
+- **`NotificationConstruct`**。Security Hub の検出結果に対するルール、SNS トピックとメール購読、配信できなかったイベント用の DLQ。暗号化したトピックに EventBridge が発行できるよう、CMK のキーポリシーも拡張します。
+- **`SecurityBaselineStack`**。Construct を組み合わせて順序付けします。ハブより前に Config、GuardDuty、Access Analyzer を作成します。
 
 ### Config マネージドルール
 
@@ -116,9 +116,9 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 | Security Hub | セキュリティチェックと検出結果の取り込み | 購読する標準の数 |
 | Access Analyzer | 外部アクセスは無料。未使用アクセスは分析した IAM ロール/ユーザーごと | `enableUnusedAccessAnalyzer` |
 | S3 | ストレージ、リクエスト | `logArchiveExpirationDays` |
-| EventBridge | デフォルトバス上の AWS サービスのイベントは EventBridge では課金されない | — |
+| EventBridge | デフォルトバス上の AWS サービスのイベントは EventBridge では課金されない |。|
 | SNS / SQS | メール配信とリクエスト（想定する検出結果の量では小さい） | `notification.severities` の重大度フィルター |
-| KMS | キーとリクエスト | — |
+| KMS | キーとリクエスト |。|
 
 最新の単価は各料金ページで確認してください: [CloudTrail](https://aws.amazon.com/cloudtrail/pricing/)、[Config](https://aws.amazon.com/config/pricing/)、[GuardDuty](https://aws.amazon.com/guardduty/pricing/)、[Security Hub](https://aws.amazon.com/security-hub/pricing/)、[IAM Access Analyzer](https://aws.amazon.com/iam/access-analyzer/pricing/)。
 
@@ -162,7 +162,7 @@ GuardDuty、AWS Config、IAM Access Analyzer の検出結果はすべて Securit
 | GuardDuty | `aws guardduty list-detectors` | 検出器1つが作成済み |
 | IAM Access Analyzer | `aws accessanalyzer list-analyzers` | `status: ACTIVE`、ログアーカイブバケットを既に解析済み |
 | Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | ハブは購読済み。AWS 基礎セキュリティのベストプラクティス標準は `PENDING`（有効化直後は正常な状態） |
-| 破棄 | `cdk destroy '**'` 後に上記の `describe-*`/`list-*` を再実行 | すべてのリソースが消滅（Config のレコーダー/配信チャネルも、チャネル削除前にレコーダーを停止する形で正しく削除 — 上記の不具合の対策どおり） |
+| 破棄 | `cdk destroy '**'` 後に上記の `describe-*`/`list-*` を再実行 | すべてのリソースが消滅（Config のレコーダー/配信チャネルも、チャネル削除前にレコーダーを停止する形で正しく削除。上記の不具合の対策どおり） |
 
 ### 今回の検証で確認できていない点
 
@@ -227,9 +227,9 @@ npm run stage:destroy:all -w workspaces/security-baseline
 - [AWS Security Hub](https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html)
 
 ### 関連アーキテクチャ
-- [iam-basics](../iam-basics/) — IAM ロール、ポリシー、ユーザー
-- [s3-basics](../s3-basics/) — S3 バケットの堅牢化オプション
-- [eventbridge-custom-bus](../eventbridge-custom-bus/) — EventBridge のルール、ターゲット、再試行、DLQ を掘り下げた例
+- [iam-basics](../iam-basics/)。IAM ロール、ポリシー、ユーザー
+- [s3-basics](../s3-basics/)。S3 バケットの堅牢化オプション
+- [eventbridge-custom-bus](../eventbridge-custom-bus/)。EventBridge のルール、ターゲット、再試行、DLQ を掘り下げた例
 
 ## 📄 ライセンス
 

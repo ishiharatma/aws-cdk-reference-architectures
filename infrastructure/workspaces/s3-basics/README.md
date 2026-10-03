@@ -2,7 +2,7 @@
 
 *Read this in other languages:* [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md) [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level](https://img.shields.io/badge/Level-100-blue?style=flat-square)
+![Level 100](https://img.shields.io/badge/Level-100-green?style=flat-square)
 ![Services](https://img.shields.io/badge/Services-S3-orange?style=flat-square)
 
 ## Introduction
@@ -14,6 +14,23 @@ In this architecture, you can learn the following:
 - Best practices for S3 bucket security configuration
 - Cost optimization through lifecycle rules
 - Version management and non-current version handling
+
+## 📑 Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Prerequisites](#prerequisites)
+- [Project Directory Structure](#project-directory-structure)
+- [Pattern 1: Understanding CDK Default Settings](#pattern-1-understanding-cdk-default-settings)
+- [Pattern 2: Specifying Bucket Name](#pattern-2-specifying-bucket-name)
+- [Pattern 3: Delete Behavior Control](#pattern-3-delete-behavior-control)
+- [Pattern 4: Public Access Control](#pattern-4-public-access-control)
+- [Pattern 5: Encryption Settings](#pattern-5-encryption-settings)
+- [Pattern 6: Lifecycle Rules](#pattern-6-lifecycle-rules)
+- [Pattern 7: Comprehensive Lifecycle Management with Versioning](#pattern-7-comprehensive-lifecycle-management-with-versioning)
+- [Deploy and Verification](#deploy-and-verification)
+- [Best Practices](#best-practices)
+- [Summary](#summary)
+- [References](#references)
 
 ## Architecture Overview
 
