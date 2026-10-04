@@ -29,6 +29,9 @@ pass() { printf '\033[32mPASS\033[0m %s\n' "$1"; }
 fail() { printf '\033[31mFAIL\033[0m %s\n' "$1"; FAILED=1; }
 note() { RESULTS+=("$1"); }
 now() { date +%s.%N; }
+# over <start> <limit>: succeeds when more than <limit> seconds have passed since <start>.
+# (Do not write `print (n-s) > limit` in awk: `>` redirects output to a file named after the limit.)
+over() { awk -v s="$1" -v n="$(now)" -v l="$2" 'BEGIN { exit !((n - s) > l) }'; }
 elapsed() { awk -v a="$1" -v b="$(now)" 'BEGIN { printf "%.1f", b - a }'; }
 
 pout() { aws cloudformation describe-stacks --stack-name "${PROJECT}-${ENVIRONMENT}-dr-primary" --region "$PRIMARY" \
@@ -53,7 +56,7 @@ set_fail() { # $1 = strategy short name, $2 = true|false  (primary-region functi
 }
 wait_resolve() { # $1 = record, $2 = expected host
   local start; start="$(now)"
-  while (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) < '"$TIMEOUT"'}') )); do
+  while ! over "$start" "$TIMEOUT"; do
     [[ "$(resolve "$1")" == "$2" ]] && { elapsed "$start"; return 0; }
     sleep 2
   done
@@ -83,7 +86,7 @@ drill_rpo() {
       post_order "${!url_var}" "$id" >/dev/null
       start="$(now)"   # the write has been acknowledged in the primary region; count from here
       until aws dynamodb get-item --table-name "$(table "$s")" --key "{\"id\":{\"S\":\"$id\"}}" --region "$DR" --consistent-read --query Item.id.S --output text 2>/dev/null | grep -q "$id"; do
-        (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) > 60}') )) && { fail "$s: write not visible in $DR within 60s"; continue 3; }
+        over "$start" 60 && { fail "$s: write not visible in $DR within 60s"; continue 3; }
         sleep 0.2
       done
       local lag; lag="$(elapsed "$start")"
@@ -107,7 +110,7 @@ drill_warm_standby() {
   local t_dns; t_dns="$(wait_resolve ws.dr.internal "$WS_HOST_DR")" && pass "DNS failed over to the standby in ${t_dns}s" || fail "DNS did not fail over"
   aws lambda delete-function-concurrency --function-name "${PREFIX}-ws" --region "$DR"
   until [[ "$(curl -s -o /dev/null -w '%{http_code}' "${WS_STANDBY_URL%/}/orders/$id")" == "200" ]]; do
-    (( $(awk -v s="$t0" -v n="$(now)" 'BEGIN{print (n-s) > '"$TIMEOUT"'}') )) && { fail "standby never served the replicated order"; return; }
+    over "$t0" "$TIMEOUT" && { fail "standby never served the replicated order"; return; }
     sleep 1
   done
   local total; total="$(elapsed "$t0")"
@@ -131,7 +134,7 @@ drill_active_active() {
 }
 wait_all_dr() { # $1 = record, $2 = expected host; succeeds when 8 consecutive answers equal it
   local start; start="$(now)"
-  while (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) < '"$TIMEOUT"'}') )); do
+  while ! over "$start" "$TIMEOUT"; do
     local distinct; distinct="$(for _ in $(seq 1 8); do resolve "$1"; done | sort -u)"
     [[ "$distinct" == "$2" ]] && { elapsed "$start"; return 0; }
   done
@@ -166,7 +169,7 @@ wait_job() { # $1 = describe command words..., prints state when terminal
   while true; do
     local state; state="$("$@")"
     case "$state" in COMPLETED) return 0 ;; FAILED|ABORTED|EXPIRED|PARTIAL) echo "$state" >&2; return 1 ;; esac
-    (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) > 1800}') )) && return 1
+    over "$start" 1800 && return 1
     sleep 10
   done
 }
