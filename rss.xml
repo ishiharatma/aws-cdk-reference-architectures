@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 04 Oct 2026 01:10:11 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 04 Oct 2026 04:05:39 GMT</lastBuildDate>
+    <item>
+      <title>Transit Gateway Centralized Inspection with AWS Network Firewall</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/tgw-network-firewall-inspection</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/tgw-network-firewall-inspection</guid>
+      <pubDate>Sun, 04 Oct 2026 12:00:00 GMT</pubDate>
+      <description>One AWS Network Firewall inspects both internet-bound and east-west traffic of two spoke VPCs that have no internet route of their own: a Transit Gateway with two route tables and an appliance-mode attachment hands every flow to an inspection VPC, where a domain allow list, east-west pass/drop rules and a NAT gateway apply. Deploy-verified over SSM: allowed domain 200, other domain blocked, east-west TCP passes, east-west ICMP dropped, both drops in the alert log. Documents why a domain allow list also drops east-west HTTP unless a pass rule precedes it.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Network Firewall</category>
+      <category>Transit Gateway</category>
+      <category>VPC</category>
+      <category>NAT Gateway</category>
+      <category>Security</category>
+      <category>Networking</category>
+    </item>
     <item>
       <title>Multi-Region Disaster Recovery: Four Strategies Compared</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/multi-region-dr-strategies</link>

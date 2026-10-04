@@ -1,5 +1,17 @@
 [
   {
+    "id": "tgw-network-firewall-inspection",
+    "title": "Transit Gateway Centralized Inspection with AWS Network Firewall",
+    "description": "One AWS Network Firewall inspects both internet-bound and east-west traffic of two spoke VPCs that have no internet route of their own: a Transit Gateway with two route tables and an appliance-mode attachment hands every flow to an inspection VPC, where a domain allow list, east-west pass/drop rules and a NAT gateway apply. Deploy-verified over SSM: allowed domain 200, other domain blocked, east-west TCP passes, east-west ICMP dropped, both drops in the alert log. Documents why a domain allow list also drops east-west HTTP unless a pass rule precedes it.",
+    "image": "tgw-network-firewall-inspection/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Network Firewall", "Transit Gateway", "VPC", "NAT Gateway", "Security", "Networking"],
+    "link": "tgw-network-firewall-inspection",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-04",
+    "articles": {}
+  },
+  {
     "id": "multi-region-dr-strategies",
     "title": "Multi-Region Disaster Recovery: Four Strategies Compared",
     "description": "The four AWS disaster recovery strategies (backup and restore, pilot light, warm standby, multi-site active-active) built for the same orders API in Tokyo and Osaka and measured with a drill script. Global tables replicate in about 1 s; measured RTO is about 34 s (active-active), 36 s (warm standby), 84 s (pilot light) and 6 minutes or more (backup and restore). Includes a strategy decision guide and idle-cost comparison.",
