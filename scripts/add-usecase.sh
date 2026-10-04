@@ -24,8 +24,11 @@ fi
 mkdir -p ${workspacesDir}
 cd ${workspacesDir}
 
-# Initialize new CDK app
-cdk init app --language typescript
+# Initialize new CDK app.
+# --generate-only skips `npm install`: inside this monorepo that install resolved the latest majors
+# (TypeScript 7, Jest 30) and wrote them into the root package-lock.json, which then kept stale entries
+# even after node_modules was removed. Dependencies are installed once, at the root, at the end of this script.
+cdk init app --language typescript --generate-only
 
 # Remove aws-cdk from this workspace's devDependencies.
 # It is already managed as a devDependency at the workspaces root
@@ -42,6 +45,11 @@ npm pkg set "devDependencies.typescript=~6.0.3" "devDependencies.jest=^29.7.0" \
 npm pkg delete devDependencies.@swc/core devDependencies.@swc/jest
 
 rm -rf node_modules package-lock.json
+
+# `cdk init` runs the app through `npx tsc && npx tsx`. tsc would emit .js files next to the sources, and tsx
+# then loads `parameters/environments` and `parameters` as two different module copies, so the registered
+# environment parameters are lost ("No parameters found for environment"). tsx alone is enough.
+sed -i 's#"app": "npx tsc && npx tsx#"app": "npx tsx#' cdk.json
 
 # Create directory structure
 mkdir -p lib/{aspects,constructs,stacks,stages,types}
@@ -76,6 +84,10 @@ sed -i "s/Template/${StackBaseName}/g" lib/stages/${workspaces_name}-stage.ts
 # Add necessary scripts to the main package.json
 cd ${SCRIPT_DIR}
 node ./add-scripts.js infrastructure/workspaces/${workspaces_name}
+
+# Sync the root package-lock.json with the new workspace; CI runs `npm ci`, which fails on a stale lock file.
+cd ${cdkDir}
+npm install --package-lock-only
 
 echo "Usecase '${workspaces_name}' has been created successfully."
 echo "Next steps:"
