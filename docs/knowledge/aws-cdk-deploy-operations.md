@@ -166,3 +166,15 @@ expect(templateJson).toMatchSnapshot();
 Any workspace adding a **new** `NodejsFunction` with `sourceMap: true` to a stack that
 already has a snapshot test should apply this same normalization up front, rather than
 discovering it via a CI-only failure after the PR is already open.
+
+## `cdk init` inside the monorepo contaminates the root lock file
+
+`cdk init` runs `npm install` in the new workspace, and inside this npm-workspaces monorepo that resolves the
+latest majors (TypeScript 7, Jest 30) and writes them into the root `package-lock.json`. Deleting the
+workspace's `node_modules` afterwards does not remove those lock entries: `npm ci` then fails with
+"lock file not in sync", or CI fails with ts-jest's "typescript 7.0.2 does not expose the JavaScript
+compiler API". `scripts/add-usecase.sh` now runs `cdk init --generate-only` (no install), pins the toolchain
+in the workspace `package.json`, and runs `npm install --package-lock-only` at the root at the end. Also,
+`cdk init` writes `"app": "npx tsc && npx tsx ..."`; the `tsc` step emits `.js` next to the sources and tsx
+then loads two copies of the parameters module (`No parameters found for environment`), so the script
+rewrites it to `npx tsx ...`.

@@ -5,7 +5,23 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 03 Oct 2026 16:42:04 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 04 Oct 2026 01:10:11 GMT</lastBuildDate>
+    <item>
+      <title>Multi-Region Disaster Recovery: Four Strategies Compared</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/multi-region-dr-strategies</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/multi-region-dr-strategies</guid>
+      <pubDate>Sun, 04 Oct 2026 12:00:00 GMT</pubDate>
+      <description>The four AWS disaster recovery strategies (backup and restore, pilot light, warm standby, multi-site active-active) built for the same orders API in Tokyo and Osaka and measured with a drill script. Global tables replicate in about 1 s; measured RTO is about 34 s (active-active), 36 s (warm standby), 84 s (pilot light) and 6 minutes or more (backup and restore). Includes a strategy decision guide and idle-cost comparison.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Disaster Recovery</category>
+      <category>DynamoDB</category>
+      <category>Global Tables</category>
+      <category>Route 53</category>
+      <category>AWS Backup</category>
+      <category>Multi-Region</category>
+      <category>Lambda</category>
+    </item>
     <item>
       <title>Route 53 Failover Routing with Health Checks</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/route53-failover-health-check</link>
