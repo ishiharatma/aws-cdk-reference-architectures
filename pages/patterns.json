@@ -1,5 +1,17 @@
 [
   {
+    "id": "multi-region-dr-strategies",
+    "title": "Multi-Region Disaster Recovery: Four Strategies Compared",
+    "description": "The four AWS disaster recovery strategies (backup and restore, pilot light, warm standby, multi-site active-active) built for the same orders API in Tokyo and Osaka and measured with a drill script. Global tables replicate in about 1 s; measured RTO is about 34 s (active-active), 36 s (warm standby), 84 s (pilot light) and 6 minutes or more (backup and restore). Includes a strategy decision guide and idle-cost comparison.",
+    "image": "multi-region-dr-strategies/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Disaster Recovery", "DynamoDB", "Global Tables", "Route 53", "AWS Backup", "Multi-Region", "Lambda"],
+    "link": "multi-region-dr-strategies",
+    "difficulty": "advanced",
+    "level": 400,
+    "date": "2026-10-04",
+    "articles": {}
+  },
+  {
     "id": "route53-failover-health-check",
     "title": "Route 53 Failover Routing with Health Checks",
     "description": "DNS failover in its basic form: a PRIMARY record guarded by a Route 53 health check and a SECONDARY record that takes over when it fails, with two Lambda function URLs as endpoints and no domain or load balancer needed. A resolver Lambda inside the VPC resolves the private-zone record, and a check script breaks the primary and measures the switch. Deploy-verified: failover in 29 s and failback in 18 s with a 10 s interval, threshold 2 and TTL 10 s.",

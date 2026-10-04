@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # DR drill: measures RPO and RTO of the four strategies against the deployed stacks.
-# Usage: ./drill.sh --project <project> --env <env> [--only rpo|warm-standby|active-active|pilot-light|backup-restore]
+# Usage: ./drill.sh --project <project> --env <env> [--only rpo|warm-standby|active-active|pilot-light|backup-restore|cleanup]
+#   cleanup deletes the recovery points in both vaults; run it before destroying the stacks (a vault with recovery points cannot be deleted).
 # Needs: aws, jq, curl. The pilot-light drill also runs `cdk deploy` of the recovery stack from this directory.
 set -euo pipefail
 
@@ -74,15 +75,20 @@ post_order() { curl -s -m 10 -X POST -H 'content-type: application/json' -d "{\"
 drill_rpo() {
   echo "== RPO (global table replication lag)"
   for s in pl ws aa; do
-    local url_var="PRIMARY_URL_${s^^}" id="rpo-$s-$(date +%s)" start
-    start="$(now)"
-    post_order "${!url_var}" "$id" >/dev/null
-    until aws dynamodb get-item --table-name "$(table "$s")" --key "{\"id\":{\"S\":\"$id\"}}" --region "$DR" --query Item.id.S --output text 2>/dev/null | grep -q "$id"; do
-      (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) > 60}') )) && { fail "$s: write not visible in $DR within 60s"; continue 2; }
-      sleep 0.2
+    local url_var="PRIMARY_URL_${s^^}"
+    curl -s -m 10 "${!url_var}" >/dev/null   # warm up the function so the Lambda cold start is not counted
+    local i
+    for i in 1 2 3; do
+      local id="rpo-$s-$i-$(date +%s)" start
+      post_order "${!url_var}" "$id" >/dev/null
+      start="$(now)"   # the write has been acknowledged in the primary region; count from here
+      until aws dynamodb get-item --table-name "$(table "$s")" --key "{\"id\":{\"S\":\"$id\"}}" --region "$DR" --consistent-read --query Item.id.S --output text 2>/dev/null | grep -q "$id"; do
+        (( $(awk -v s="$start" -v n="$(now)" 'BEGIN{print (n-s) > 60}') )) && { fail "$s: write not visible in $DR within 60s"; continue 3; }
+        sleep 0.2
+      done
+      local lag; lag="$(elapsed "$start")"
+      pass "$s: write #$i visible in $DR ${lag}s after it was acknowledged"; note "RPO $s #$i ${lag}s"
     done
-    local lag; lag="$(elapsed "$start")"
-    pass "$s: write visible in $DR after ${lag}s"; note "RPO $s ${lag}s (replication lag)"
   done
 }
 
@@ -141,7 +147,7 @@ drill_pilot_light() {
   until aws dynamodb get-item --table-name "$(table pl)" --key "{\"id\":{\"S\":\"$id\"}}" --region "$DR" --query Item.id.S --output text 2>/dev/null | grep -q "$id"; do sleep 1; done
   pass "replica holds the order before any compute exists in $DR"
   local t0; t0="$(now)"
-  npx cdk deploy "*DrRecovery*" -c project="$PROJECT" -c env="$ENVIRONMENT" -c includeRecoveryStack=true --require-approval never >/dev/null 2>&1 \
+  npx cdk deploy '**/*DrRecovery*' -c project="$PROJECT" -c env="$ENVIRONMENT" -c includeRecoveryStack=true --require-approval never >/dev/null 2>&1 \
     || { fail "recovery stack deploy failed"; return; }
   local url; url="$(aws cloudformation describe-stacks --stack-name "${PROJECT}-${ENVIRONMENT}-dr-recovery" --region "$DR" \
     --query "Stacks[0].Outputs[?OutputKey=='PilotLightUrl'].OutputValue" --output text)"
@@ -202,9 +208,20 @@ drill_backup_restore() {
   aws dynamodb delete-table --table-name "$target" --region "$DR" >/dev/null
 }
 
-run() { [[ "$ONLY" == "all" || "$ONLY" == "$1" ]] && "drill_${1//-/_}"; true; }
+drill_cleanup() {
+  echo "== Cleanup: delete recovery points so the vaults can be destroyed"
+  local pair vault region arn
+  for pair in "$(pout PrimaryVaultName):$PRIMARY" "$(dout DrVaultName):$DR"; do
+    vault="${pair%%:*}"; region="${pair##*:}"
+    for arn in $(aws backup list-recovery-points-by-backup-vault --backup-vault-name "$vault" --region "$region" --query 'RecoveryPoints[].RecoveryPointArn' --output text); do
+      aws backup delete-recovery-point --backup-vault-name "$vault" --recovery-point-arn "$arn" --region "$region" && echo "deleted $arn"
+    done
+  done
+}
+
+run() { [[ "$ONLY" == "$1" || ( "$ONLY" == "all" && "$1" != "cleanup" ) ]] && "drill_${1//-/_}"; true; }
 echo "stacks: ${PROJECT}-${ENVIRONMENT}-dr-primary ($PRIMARY) / dr-secondary ($DR)"
-run rpo; run warm-standby; run active-active; run pilot-light; run backup-restore
+run rpo; run warm-standby; run active-active; run pilot-light; run backup-restore; run cleanup
 
 echo; echo "== Summary"; printf '%s\n' "${RESULTS[@]}"
 exit "$FAILED"
