@@ -6,7 +6,7 @@
 
 ## はじめに
 
-[AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)の上で、セッションごとに VM 分離された [`codex app-server`](https://github.com/openai/codex) をオンデマンドに起動する、リファレンス実装です。セッションを管理するコントロールプレーンは、7つの Lambda 関数を持つ API Gateway HTTP API と、さらに3つの Lambda 関数を持つ WebSocket API で構成します。Turn の出力は、DynamoDB のイベントテーブルから push(WebSocket)と pull(ポーリング)の両方で届けます。
+[AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/)の上で、セッションごとに VM 分離された [`codex app-server`](https://github.com/openai/codex) をオンデマンドに起動する、リファレンス実装です。セッションを管理するコントロールプレーンは、6つの Lambda 関数を持つ API Gateway HTTP API と、さらに3つの Lambda 関数を持つ WebSocket API で構成します。Turn の出力は、DynamoDB のイベントテーブルから push(WebSocket)と pull(ポーリング)の両方で届けます。
 
 このアーキテクチャで確認できること:
 
@@ -37,7 +37,7 @@
 
 ![Architecture Overview](overview.drawio.svg)
 
-セッションの**コントロールプレーン**(7つの Lambda 関数を持つ HTTP API と、3つの Lambda 関数を持つ WebSocket API)が、オンデマンドで起動する**データプレーン**のセッションを管理します。1セッションは、VM 分離された [AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/) 1台で、中では [`codex app-server`](https://github.com/openai/codex)(OpenAI Codex CLI の JSON-RPC エージェントプロトコル。Thread/Turn/Item を扱う)が動いています。
+セッションの**コントロールプレーン**(6つの Lambda 関数を持つ HTTP API と、3つの Lambda 関数を持つ WebSocket API)が、オンデマンドで起動する**データプレーン**のセッションを管理します。1セッションは、VM 分離された [AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/) 1台で、中では [`codex app-server`](https://github.com/openai/codex)(OpenAI Codex CLI の JSON-RPC エージェントプロトコル。Thread/Turn/Item を扱う)が動いています。
 
 この実装を作った時点の Lambda MicroVMs には、起動中の MicroVM にログインしてコマンドを実行し、その応答をストリームで呼び出し元へ返す手段がありません。そこで各 MicroVM に**専用の HTTP サーバー**(`src/microvm-image/server/`)を持たせ、次の3つを担当させています。
 
@@ -93,7 +93,7 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (読み取り�
 | **MicroVM 内 HTTP サーバー**(`server/index.mjs`) | プラットフォームのライフサイクルフック(`GET /ready`、`POST /run`・`/suspend`・`/resume`・`/terminate`)に応答し、`POST /rpc` を、自分が起動・管理する `codex app-server` の子プロセス(`server/codex-process.mjs`)へ中継する。 |
 | **Event Handler**(`server/event-handler.mjs`) | `codex app-server` が stdout に書く全行を受け取り、セッションごとの連番を付けて `EventsTable` に保存する。 |
 | Secrets Manager のシークレット | OpenAI API キーを保持する。イメージに入るのは ARN(`OPENAI_API_KEY_SECRET_ARN`)だけで、値はコンテナ起動時に、MicroVM 内サーバー(`server/secret.mjs`)が実行ロールの権限で取得する。 |
-| HTTP のコントロールプレーン Lambda 7つ | `create-session`(RunMicrovm と CreateMicrovmAuthToken)、`get-session`(GetMicrovm)、`delete-session`(TerminateMicrovm)、`suspend-session`(SuspendMicrovm)、`resume-session`(ResumeMicrovm と新しい認証トークンの発行)、`get-events`(`EventsTable` を読む)。 |
+| HTTP のコントロールプレーン Lambda 6つ | `create-session`(RunMicrovm と CreateMicrovmAuthToken)、`get-session`(GetMicrovm)、`delete-session`(TerminateMicrovm)、`suspend-session`(SuspendMicrovm)、`resume-session`(ResumeMicrovm と新しい認証トークンの発行)、`get-events`(`EventsTable` を読む)。 |
 | WebSocket 用 Lambda 3つ | `ws-authorizer`(`$connect` で Cognito の ID トークンを検証)、`ws-connect`(接続をセッションに登録)、`ws-disconnect`(登録を解除)。さらに DynamoDB Streams から起動する `forward-event` が、新しい `EventsTable` のアイテムを接続中のクライアントへ push する。 |
 | DynamoDB `SessionsTable` | セッション1件につき1アイテム(`sessionId`、`ownerId`、`microvmId`、`endpoint`、`state`)。TTL で自動的に失効する。 |
 | DynamoDB `EventsTable` | `codex app-server` の出力1行につき1アイテム(`sessionId`、`sequence`、`event`)。MicroVM 内の Event Handler が書き込む。Streams(`NEW_IMAGE`)が `forward-event` を起動し、`get-events` は直接読む。MicroVM のライフサイクルとは無関係に残る。 |

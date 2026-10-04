@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This reference implementation runs an on-demand, VM-isolated [`codex app-server`](https://github.com/openai/codex) per session on [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/). A session control plane (an API Gateway HTTP API with 7 Lambda functions plus a WebSocket API with 3 more) brokers each session's MicroVM lifecycle, and the turn output is delivered by both push (WebSocket) and pull (polling) from a DynamoDB event table.
+This reference implementation runs an on-demand, VM-isolated [`codex app-server`](https://github.com/openai/codex) per session on [AWS Lambda MicroVMs](https://aws.amazon.com/lambda/lambda-microvms/). A session control plane (an API Gateway HTTP API with 6 Lambda functions plus a WebSocket API with 3 more) brokers each session's MicroVM lifecycle, and the turn output is delivered by both push (WebSocket) and pull (polling) from a DynamoDB event table.
 
 This architecture demonstrates:
 
@@ -37,7 +37,7 @@ This architecture demonstrates:
 
 ![Architecture Overview](overview.drawio.svg)
 
-A session **control plane** (an HTTP API with 7 Lambda functions, plus a WebSocket API with 3 more) brokers
+A session **control plane** (an HTTP API with 6 Lambda functions, plus a WebSocket API with 3 more) brokers
 the lifecycle of on-demand **data plane** sessions: each session is a VM-isolated
 [AWS Lambda MicroVM](https://aws.amazon.com/lambda/lambda-microvms/) running
 [`codex app-server`](https://github.com/openai/codex) (OpenAI Codex CLI's JSON-RPC agent protocol --
@@ -97,8 +97,8 @@ API Gateway → get-events Lambda ──▶ DynamoDB EventsTable (read-only; Mic
 | **In-VM HTTP server** (`server/index.mjs`) | Answers the platform's lifecycle hooks over HTTP (`GET /ready`, `POST /run`/`/suspend`/`/resume`/`/terminate`) and relays `POST /rpc` requests to the `codex app-server` child process it spawns and manages (`server/codex-process.mjs`). |
 | **Event Handler** (`server/event-handler.mjs`) | Subscribes to every line `codex app-server` writes to stdout and persists it to `EventsTable`, sequenced per session. |
 | Secrets Manager secret | Holds the OpenAI API key. Only its ARN is baked into the image (`OPENAI_API_KEY_SECRET_ARN`); the in-VM server resolves the value at container-start time via the execution role (`server/secret.mjs`). |
-| 7 HTTP control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token), `get-events` (polls `EventsTable`). |
-| 3 WebSocket Lambdas | `ws-authorizer` (verifies the Cognito ID token on `$connect`), `ws-connect` (registers the connection against a session), `ws-disconnect` (deregisters it), `forward-event` (DynamoDB Streams-triggered; pushes new `EventsTable` items to connected clients). |
+| 6 HTTP control-plane Lambdas | `create-session` (RunMicrovm + CreateMicrovmAuthToken), `get-session` (GetMicrovm), `delete-session` (TerminateMicrovm), `suspend-session` (SuspendMicrovm), `resume-session` (ResumeMicrovm + a fresh auth token), `get-events` (polls `EventsTable`). |
+| 3 WebSocket Lambdas + `forward-event` | `ws-authorizer` (verifies the Cognito ID token on `$connect`), `ws-connect` (registers the connection against a session), `ws-disconnect` (deregisters it), and `forward-event` (DynamoDB Streams-triggered; pushes new `EventsTable` items to connected clients). |
 | DynamoDB `SessionsTable` | One item per session (`sessionId`, `ownerId`, `microvmId`, `endpoint`, `state`), TTL-expired automatically. |
 | DynamoDB `EventsTable` | One item per `codex app-server` output line (`sessionId`, `sequence`, `event`), written by the in-VM Event Handler. Streams (`NEW_IMAGE`) trigger `forward-event`; read directly by `get-events`. Survives the MicroVM's own lifecycle. |
 | DynamoDB `ConnectionsTable` | Which WebSocket connections are watching which session (`sessionId`, `connectionId`, `ownerId`), with a `ByConnectionId` GSI so `ws-disconnect` can look up a connection's session. |
