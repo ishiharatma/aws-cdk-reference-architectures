@@ -1,0 +1,1562 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlertLogGroup": {
+      "Value": {
+        "Ref": "AlertLogsFAFDE6D3",
+      },
+    },
+    "ClientInstanceId": {
+      "Value": {
+        "Ref": "ClientAB66F372D",
+      },
+    },
+    "FirewallName": {
+      "Value": "TestProject-test-nfw-firewall",
+    },
+    "FlowLogGroup": {
+      "Value": {
+        "Ref": "FlowLogs16C1943A",
+      },
+    },
+    "ServerInstanceId": {
+      "Value": {
+        "Ref": "ServerBF7007274",
+      },
+    },
+    "ServerPrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ServerBF7007274",
+          "PrivateIp",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AlertLogsFAFDE6D3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject-test-nfw/alert",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AssociateInspection": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "InspectionAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "InspectionRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "AssociateSpokeA": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "SpokeAAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "SpokeRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "AssociateSpokeB": {
+      "Properties": {
+        "TransitGatewayAttachmentId": {
+          "Ref": "SpokeBAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "SpokeRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTableAssociation",
+    },
+    "ClientAB66F372D": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "InstanceRole3CCE2F1D",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "ClientAInstanceProfile76282ABD",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ClientALaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "ClientALaunchTemplate3892A10A",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClientASg874426AC",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "SpokeAworkloadSubnet1SubnetDAFEA806",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/ClientA",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "ClientAInstanceProfile76282ABD": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "ClientALaunchTemplate3892A10A": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ClientALaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "ClientASg874426AC": {
+      "Properties": {
+        "GroupDescription": "ClientA test instance",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "HTTP test from the spokes",
+            "FromPort": 8080,
+            "IpProtocol": "tcp",
+            "ToPort": 8080,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "ICMP from the spokes (the firewall decides, not the security group)",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "SpokeA17CE7760",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "SpokeB25F051A3",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "InspectionE5664AD5",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DomainAllowList": {
+      "Properties": {
+        "Capacity": 100,
+        "RuleGroup": {
+          "RuleVariables": {
+            "IPSets": {
+              "HOME_NET": {
+                "Definition": [
+                  "10.0.0.0/8",
+                ],
+              },
+            },
+          },
+          "RulesSource": {
+            "RulesSourceList": {
+              "GeneratedRulesType": "ALLOWLIST",
+              "TargetTypes": [
+                "HTTP_HOST",
+                "TLS_SNI",
+              ],
+              "Targets": [
+                ".amazonaws.com",
+              ],
+            },
+          },
+        },
+        "RuleGroupName": "TestProject-test-nfw-domain-allow",
+        "Type": "STATEFUL",
+      },
+      "Type": "AWS::NetworkFirewall::RuleGroup",
+    },
+    "EastWestRules": {
+      "Properties": {
+        "Capacity": 20,
+        "RuleGroup": {
+          "RulesSource": {
+            "RulesString": "pass tcp 10.1.0.0/24 any <> 10.2.0.0/24 8080 (msg:"east-west TCP 8080 allowed"; sid:1000100; rev:1;)
+drop icmp 10.1.0.0/24 any <> 10.2.0.0/24 any (msg:"east-west ICMP blocked"; sid:1000001; rev:1;)",
+          },
+        },
+        "RuleGroupName": "TestProject-test-nfw-east-west",
+        "Type": "STATEFUL",
+      },
+      "Type": "AWS::NetworkFirewall::RuleGroup",
+    },
+    "Firewall": {
+      "Properties": {
+        "DeleteProtection": false,
+        "FirewallName": "TestProject-test-nfw-firewall",
+        "FirewallPolicyArn": {
+          "Fn::GetAtt": [
+            "Policy",
+            "FirewallPolicyArn",
+          ],
+        },
+        "SubnetMappings": [
+          {
+            "SubnetId": {
+              "Ref": "InspectionfirewallSubnet1SubnetCC679D8B",
+            },
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::NetworkFirewall::Firewall",
+    },
+    "FirewallDefaultToNat": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "Nat",
+        },
+        "RouteTableId": {
+          "Ref": "InspectionfirewallSubnet1RouteTableEBBAA788",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "FirewallToSpokeA": {
+      "DependsOn": [
+        "InspectionAttachment",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "10.1.0.0/24",
+        "RouteTableId": {
+          "Ref": "InspectionfirewallSubnet1RouteTableEBBAA788",
+        },
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "FirewallToSpokeB": {
+      "DependsOn": [
+        "InspectionAttachment",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "10.2.0.0/24",
+        "RouteTableId": {
+          "Ref": "InspectionfirewallSubnet1RouteTableEBBAA788",
+        },
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "FlowLogs16C1943A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/TestProject-test-nfw/flow",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectionAttachment": {
+      "Properties": {
+        "Options": {
+          "ApplianceModeSupport": "enable",
+        },
+        "SubnetIds": [
+          {
+            "Ref": "InspectiontgwSubnet1Subnet06F12E5B",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-inspection",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "InspectionE5664AD5": {
+      "Properties": {
+        "CidrBlock": "10.100.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "InspectionIGW18C7A111": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "InspectionRestrictDefaultSecurityGroupCustomResource73B91EA8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "InspectionE5664AD5",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectionRouteTable": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-inspection",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTable",
+    },
+    "InspectionTgwToFirewall": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "InspectiontgwSubnet1RouteTableBE66009A",
+        },
+        "VpcEndpointId": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Split": [
+                ":",
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Firewall",
+                        "EndpointIds",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InspectionToSpokeA": {
+      "Properties": {
+        "DestinationCidrBlock": "10.1.0.0/24",
+        "TransitGatewayAttachmentId": {
+          "Ref": "SpokeAAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "InspectionRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRoute",
+    },
+    "InspectionToSpokeB": {
+      "Properties": {
+        "DestinationCidrBlock": "10.2.0.0/24",
+        "TransitGatewayAttachmentId": {
+          "Ref": "SpokeBAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "InspectionRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRoute",
+    },
+    "InspectionVPCGWFCF4A121": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InspectionIGW18C7A111",
+        },
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "InspectionfirewallSubnet1RouteTableAssociationDF8EE3F4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectionfirewallSubnet1RouteTableEBBAA788",
+        },
+        "SubnetId": {
+          "Ref": "InspectionfirewallSubnet1SubnetCC679D8B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectionfirewallSubnet1RouteTableEBBAA788": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/firewallSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectionfirewallSubnet1SubnetCC679D8B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.100.0.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "firewall",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/firewallSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InspectionpublicSubnet1DefaultRoute92CB84AB": {
+      "DependsOn": [
+        "InspectionVPCGWFCF4A121",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InspectionIGW18C7A111",
+        },
+        "RouteTableId": {
+          "Ref": "InspectionpublicSubnet1RouteTable17F3DBAA",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InspectionpublicSubnet1RouteTable17F3DBAA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectionpublicSubnet1RouteTableAssociation234E47D6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectionpublicSubnet1RouteTable17F3DBAA",
+        },
+        "SubnetId": {
+          "Ref": "InspectionpublicSubnet1Subnet6DCAFDB2",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectionpublicSubnet1Subnet6DCAFDB2": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.100.0.0/28",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InspectiontgwSubnet1RouteTableAssociationCE1AA7E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectiontgwSubnet1RouteTableBE66009A",
+        },
+        "SubnetId": {
+          "Ref": "InspectiontgwSubnet1Subnet06F12E5B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectiontgwSubnet1RouteTableBE66009A": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectiontgwSubnet1Subnet06F12E5B": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.100.0.32/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/Inspection/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectionE5664AD5",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InstanceRole3CCE2F1D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Logging": {
+      "Properties": {
+        "FirewallArn": {
+          "Fn::GetAtt": [
+            "Firewall",
+            "FirewallArn",
+          ],
+        },
+        "LoggingConfiguration": {
+          "LogDestinationConfigs": [
+            {
+              "LogDestination": {
+                "logGroup": {
+                  "Ref": "AlertLogsFAFDE6D3",
+                },
+              },
+              "LogDestinationType": "CloudWatchLogs",
+              "LogType": "ALERT",
+            },
+            {
+              "LogDestination": {
+                "logGroup": {
+                  "Ref": "FlowLogs16C1943A",
+                },
+              },
+              "LogDestinationType": "CloudWatchLogs",
+              "LogType": "FLOW",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::NetworkFirewall::LoggingConfiguration",
+    },
+    "Nat": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "NatEip",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "InspectionpublicSubnet1Subnet6DCAFDB2",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-nat",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "NatEip": {
+      "Properties": {
+        "Domain": "vpc",
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "Policy": {
+      "Properties": {
+        "FirewallPolicy": {
+          "StatefulRuleGroupReferences": [
+            {
+              "ResourceArn": {
+                "Fn::GetAtt": [
+                  "DomainAllowList",
+                  "RuleGroupArn",
+                ],
+              },
+            },
+            {
+              "ResourceArn": {
+                "Fn::GetAtt": [
+                  "EastWestRules",
+                  "RuleGroupArn",
+                ],
+              },
+            },
+          ],
+          "StatelessDefaultActions": [
+            "aws:forward_to_sfe",
+          ],
+          "StatelessFragmentDefaultActions": [
+            "aws:forward_to_sfe",
+          ],
+        },
+        "FirewallPolicyName": "TestProject-test-nfw-policy",
+      },
+      "Type": "AWS::NetworkFirewall::FirewallPolicy",
+    },
+    "PublicToSpokeAViaFirewall": {
+      "Properties": {
+        "DestinationCidrBlock": "10.1.0.0/24",
+        "RouteTableId": {
+          "Ref": "InspectionpublicSubnet1RouteTable17F3DBAA",
+        },
+        "VpcEndpointId": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Split": [
+                ":",
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Firewall",
+                        "EndpointIds",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "PublicToSpokeBViaFirewall": {
+      "Properties": {
+        "DestinationCidrBlock": "10.2.0.0/24",
+        "RouteTableId": {
+          "Ref": "InspectionpublicSubnet1RouteTable17F3DBAA",
+        },
+        "VpcEndpointId": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Split": [
+                ":",
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Firewall",
+                        "EndpointIds",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "ServerBF7007274": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "InstanceRole3CCE2F1D",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "ServerBInstanceProfileA4BA2963",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "ServerBLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "ServerBLaunchTemplateAB1FADD5",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ServerBSg82BAE0D1",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "SpokeBworkloadSubnet1Subnet895DD8EB",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/ServerB",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+mkdir -p /srv/www && echo "{\\"server\\":\\"spoke-b\\"}" > /srv/www/index.html
+cd /srv/www && nohup python3 -m http.server 8080 > /var/log/http-server.log 2>&1 &",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "ServerBInstanceProfileA4BA2963": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "ServerBLaunchTemplateAB1FADD5": {
+      "DependsOn": [
+        "InspectionTgwToFirewall",
+        "InspectionToSpokeA",
+        "InspectionToSpokeB",
+        "Nat",
+        "SpokeADefaultToTgw",
+        "SpokeBDefaultToTgw",
+        "SpokesDefaultToInspection",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "ServerBLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "ServerBSg82BAE0D1": {
+      "Properties": {
+        "GroupDescription": "ServerB test instance",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "HTTP test from the spokes",
+            "FromPort": 8080,
+            "IpProtocol": "tcp",
+            "ToPort": 8080,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "ICMP from the spokes (the firewall decides, not the security group)",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SpokeA17CE7760": {
+      "Properties": {
+        "CidrBlock": "10.1.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeA",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "SpokeAAttachment": {
+      "Properties": {
+        "SubnetIds": [
+          {
+            "Ref": "SpokeAtgwSubnet1Subnet85CD2B49",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-spokea",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "SpokeADefaultToTgw": {
+      "DependsOn": [
+        "SpokeAAttachment",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "SpokeAworkloadSubnet1RouteTableE5B6381C",
+        },
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SpokeARestrictDefaultSecurityGroupCustomResource3C6D6422": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SpokeA17CE7760",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SpokeAtgwSubnet1RouteTableAssociationE699C308": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SpokeAtgwSubnet1RouteTableF2FAF758",
+        },
+        "SubnetId": {
+          "Ref": "SpokeAtgwSubnet1Subnet85CD2B49",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SpokeAtgwSubnet1RouteTableF2FAF758": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeA/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SpokeAtgwSubnet1Subnet85CD2B49": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.64/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeA/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SpokeAworkloadSubnet1RouteTableAssociationCEA16572": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SpokeAworkloadSubnet1RouteTableE5B6381C",
+        },
+        "SubnetId": {
+          "Ref": "SpokeAworkloadSubnet1SubnetDAFEA806",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SpokeAworkloadSubnet1RouteTableE5B6381C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeA/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SpokeAworkloadSubnet1SubnetDAFEA806": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.1.0.0/26",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "workload",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeA/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeA17CE7760",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SpokeB25F051A3": {
+      "Properties": {
+        "CidrBlock": "10.2.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeB",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "SpokeBAttachment": {
+      "Properties": {
+        "SubnetIds": [
+          {
+            "Ref": "SpokeBtgwSubnet1Subnet2E234C64",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-spokeb",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayVpcAttachment",
+    },
+    "SpokeBDefaultToTgw": {
+      "DependsOn": [
+        "SpokeBAttachment",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "SpokeBworkloadSubnet1RouteTableC143448D",
+        },
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "SpokeBRestrictDefaultSecurityGroupCustomResourceB08820DE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SpokeB25F051A3",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SpokeBtgwSubnet1RouteTable35AFD731": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeB/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SpokeBtgwSubnet1RouteTableAssociationDAB0D011": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SpokeBtgwSubnet1RouteTable35AFD731",
+        },
+        "SubnetId": {
+          "Ref": "SpokeBtgwSubnet1Subnet2E234C64",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SpokeBtgwSubnet1Subnet2E234C64": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.64/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "tgw",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeB/tgwSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SpokeBworkloadSubnet1RouteTableAssociationF0812179": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SpokeBworkloadSubnet1RouteTableC143448D",
+        },
+        "SubnetId": {
+          "Ref": "SpokeBworkloadSubnet1Subnet895DD8EB",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SpokeBworkloadSubnet1RouteTableC143448D": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeB/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SpokeBworkloadSubnet1Subnet895DD8EB": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.2.0.0/26",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "workload",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "TgwNetworkFirewallInspection/SpokeB/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "SpokeB25F051A3",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SpokeRouteTable": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-spokes",
+          },
+        ],
+        "TransitGatewayId": {
+          "Ref": "Tgw",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRouteTable",
+    },
+    "SpokesDefaultToInspection": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "TransitGatewayAttachmentId": {
+          "Ref": "InspectionAttachment",
+        },
+        "TransitGatewayRouteTableId": {
+          "Ref": "SpokeRouteTable",
+        },
+      },
+      "Type": "AWS::EC2::TransitGatewayRoute",
+    },
+    "Tgw": {
+      "Properties": {
+        "AmazonSideAsn": 64512,
+        "DefaultRouteTableAssociation": "disable",
+        "DefaultRouteTablePropagation": "disable",
+        "Description": "TestProject-test-nfw transit gateway",
+        "DnsSupport": "enable",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestProject-test-nfw-tgw",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::TransitGateway",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::Instance": 2,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::LaunchTemplate": 2,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 9,
+  "AWS::EC2::RouteTable": 7,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::Subnet": 7,
+  "AWS::EC2::SubnetRouteTableAssociation": 7,
+  "AWS::EC2::TransitGateway": 1,
+  "AWS::EC2::TransitGatewayRoute": 3,
+  "AWS::EC2::TransitGatewayRouteTable": 2,
+  "AWS::EC2::TransitGatewayRouteTableAssociation": 3,
+  "AWS::EC2::TransitGatewayVpcAttachment": 3,
+  "AWS::EC2::VPC": 3,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::NetworkFirewall::Firewall": 1,
+  "AWS::NetworkFirewall::FirewallPolicy": 1,
+  "AWS::NetworkFirewall::LoggingConfiguration": 1,
+  "AWS::NetworkFirewall::RuleGroup": 2,
+  "Custom::VpcRestrictDefaultSG": 3,
+}
+`;
