@@ -41,6 +41,7 @@ checked `aws fis list-actions`).
 - [amplify-hosting.md](amplify-hosting.md) — Amplify Hosting: `StartDeployment` with an `s3://` sourceUrl needs a bucket policy (not just IAM grants), why that's often unreachable for a CDK-asset zip, and the presigned-URL fix that avoids it entirely
 - [lambda-microvms.md](lambda-microvms.md) — AWS Lambda MicroVMs: lifecycle hooks live under `/aws/lambda-microvms/runtime/v1/<hook-name>` (not bare paths), IAM actions are `lambda:*` not `lambda-microvms:*`, `PassNetworkConnector` needed for both custom and AWS-managed connectors, build-time hooks run under the build role not the execution role
 - [lambda-web-functions.md](lambda-web-functions.md) — AWS Lambda Web Functions: boto3-only, experimental and internal-use-only as of 2026-10-03; API surface and open questions to check at GA
+- [transfer-family-custom-idp.md](transfer-family-custom-idp.md) — Transfer Family SFTP with a Lambda custom IdP: user-role trust needs the `user/<server-id>/*` source ARN (login works, file ops fail otherwise), key-only `PUBLIC_KEY` flow, LOGICAL home + session policy isolation, `test-identity-provider` for source-IP tests, nested string-set updates, a stopped server is still billed (recycle by delete/create: permissions, host key, DNS delay), alarm/SNS/KMS notes
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 
 ## Convention: when and how to add to this directory

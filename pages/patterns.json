@@ -648,5 +648,17 @@
     "level": 200,
     "date": "2026-10-01",
     "articles": {}
+  },
+  {
+    "id": "transfer-sftp-custom-idp",
+    "title": "Transfer Family SFTP with a Custom Identity Provider: SSH Key Auth + Source IP Allow List",
+    "description": "An AWS Transfer Family SFTP server on a PUBLIC endpoint where a Lambda custom identity provider authenticates SSH public keys from a DynamoDB user table (AWS custom IdP solution layout) and rejects logins from IPs outside each user's allow list. Per-user S3 isolation via LOGICAL home directories and a session policy, CloudShell shell scripts for user and key management, fail-closed behavior, three run modes (always on, scheduled, manual: the server is deleted while off because a stopped server is still billed), and alarms with SNS for auth failures, IP denials, IdP errors and transfer volume. Deploy-verified with 31 real SFTP checks.",
+    "image": "transfer-sftp-custom-idp/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Transfer Family", "SFTP", "Lambda", "DynamoDB", "S3", "Security", "CloudWatch", "EventBridge Scheduler"],
+    "link": "transfer-sftp-custom-idp",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-06",
+    "articles": {}
   }
 ]
