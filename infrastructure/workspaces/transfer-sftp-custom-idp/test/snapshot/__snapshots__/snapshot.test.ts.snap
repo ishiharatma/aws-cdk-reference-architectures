@@ -161,7 +161,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "8e2bff57c5a44218619fa8f13fa42759a2497c7cbd1a1f27cfa8a0a2234aa9be.zip",
+          "S3Key": "f9eccb465ad84d6e59ebc8277d91710e910e230bdc9f479f22d9e14b7b8e3586.zip",
         },
         "Environment": {
           "Variables": {
