@@ -292,3 +292,20 @@ describe('Monitoring', () => {
     t.resourceCountIs('AWS::SNS::Topic', 0);
   });
 });
+
+describe('Log masking', () => {
+  test('the Transfer log group masks the SSH public key body', () => {
+    const t = build();
+    const groups = Object.values(t.findResources('AWS::Logs::LogGroup')) as { Properties: Record<string, unknown> }[];
+    const masked = groups.filter((g) => g.Properties.DataProtectionPolicy !== undefined);
+    expect(masked).toHaveLength(1);
+    const policy = JSON.stringify(masked[0].Properties.DataProtectionPolicy);
+    expect(policy).toContain('AAAA[A-Za-z0-9+/]{60,}={0,3}');
+    expect(policy).toContain('Deidentify');
+  });
+
+  test('masking can be turned off by parameter', () => {
+    const t = build({ maskSshPublicKeyInLogs: false });
+    expect(JSON.stringify(t.toJSON())).not.toContain('DataProtectionPolicy');
+  });
+});

@@ -892,6 +892,43 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
     "TransferLogGroupF7C99B6E": {
       "DeletionPolicy": "Delete",
       "Properties": {
+        "DataProtectionPolicy": {
+          "Configuration": {
+            "CustomDataIdentifier": [
+              {
+                "Name": "SshPublicKeyBody",
+                "Regex": "AAAA[A-Za-z0-9+/]{60,}={0,3}",
+              },
+            ],
+          },
+          "Description": "cdk generated data protection policy",
+          "Name": "mask-ssh-public-key",
+          "Statement": [
+            {
+              "DataIdentifier": [
+                "SshPublicKeyBody",
+              ],
+              "Operation": {
+                "Audit": {
+                  "FindingsDestination": {},
+                },
+              },
+              "Sid": "audit-statement-cdk",
+            },
+            {
+              "DataIdentifier": [
+                "SshPublicKeyBody",
+              ],
+              "Operation": {
+                "Deidentify": {
+                  "MaskConfig": {},
+                },
+              },
+              "Sid": "redact-statement-cdk",
+            },
+          ],
+          "Version": "2021-06-01",
+        },
         "KmsKeyId": {
           "Fn::GetAtt": [
             "LogKeyE83D0C1B",

@@ -115,6 +115,14 @@ export class TransferSftpCustomIdpStack extends cdk.Stack {
       logGroupName: `/aws/transfer/${props.project}-${props.environment}-sftp`,
       retention,
       encryptionKey: logKey,
+      // Transfer Family writes the public key body of the user in every CONNECTED event and has no option to omit it.
+      // Every OpenSSH public key body (ed25519, ecdsa, rsa) starts with "AAAA"; the fingerprint is not matched.
+      dataProtectionPolicy: envParams.maskSshPublicKeyInLogs
+        ? new logs.DataProtectionPolicy({
+          name: 'mask-ssh-public-key',
+          identifiers: [new logs.CustomDataIdentifier('SshPublicKeyBody', 'AAAA[A-Za-z0-9+/]{60,}={0,3}')],
+        })
+        : undefined,
       removalPolicy,
     });
     const loggingRole = new iam.Role(this, 'TransferLoggingRole', {

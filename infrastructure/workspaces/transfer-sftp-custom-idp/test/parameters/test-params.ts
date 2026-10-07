@@ -9,6 +9,7 @@ const testParams: EnvParams = {
     securityPolicyName: 'TransferSecurityPolicy-2024-01',
     logRetentionDays: 30,
     enableLogEncryption: true,
+    maskSshPublicKeyInLogs: true,
     lambdaLogLevel: 'INFO',
     // always | scheduled | manual (see ServerLifecycle). Overridable with -c serverMode=...
     serverLifecycle: { mode: 'always' },

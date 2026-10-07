@@ -24,6 +24,7 @@ VPCホスト型エンドポイントが使えない環境向けに、**PUBLICエ
 - [設計判断とベストプラクティス](#設計判断とベストプラクティス)
 - [サーバーの起動モード](#サーバーの起動モード)
 - [モニタリング](#モニタリング)
+- [ログのマスク](#ログのマスク)
 - [コスト最適化](#コスト最適化)
 - [セキュリティ考慮事項](#セキュリティ考慮事項)
 - [前提条件](#前提条件)
@@ -219,7 +220,61 @@ aws secretsmanager create-secret --name sftp-host-key --secret-string file://sft
 
 しきい値と期間はパラメータ（`monitoring`）です。`always` ではサーバーのアラームはCloudFormationリソースです。他のモードではcontrollerが管理し、サーバーがある間だけ存在します。ログのメトリクスフィルターは固定名のロググループに付くため、サーバーを作り直しても有効なままです。
 
+アラームの集計は5分ごとの固定の枠なので、2つの枠にまたがった失敗の集中は、しきい値に届かないことがあります（80秒の間の6回の失敗が4回と2回に分かれ、アラームになりませんでした。1つの枠に8回入ると、アラームになりました）。気になる場合は、しきい値か期間を小さくしてください。
+
+失敗が続いたユーザーの自動無効化は実装していません。IPの許可リストが第一の防御で、許可外からの失敗はそもそも拒否され、不正なログインが成功した場合は数えるべき失敗が残らないためです。後から追加する場合は、Transferの `AUTH_FAILURE` イベントを元にします（鍵が違う場合、IdPが鍵を返した後でTransferが拒否するため、IdP Lambdaからは見えません）。また、ユーザーの許可IPからの失敗だけを数えないと、ユーザー名を知っている第三者がそのユーザーを締め出せてしまいます。
+
 検証では、3つのログ系アラームと、controllerが作成した `BytesIn` アラームが `ALARM` になり、SNSアクションが実行されたことをアラーム履歴で確認しました。
+
+## ログのマスク
+
+Transfer Familyの構造化ログは、`CONNECTED` イベントごとに `ssh-public-key`（公開鍵の本体）を含みます。省く設定はなく、ログ変換の `deleteKeys` も、元のイベントが併せて保存されるため使えません。`maskSshPublicKeyInLogs: true` にすると、Transferのロググループにデータ保護ポリシーが付きます（カスタムデータ識別子 `AAAA[A-Za-z0-9+/]{60,}={0,3}`。OpenSSH形式の公開鍵の本体はすべて一致し、フィンガープリントは一致しません。監査とマスクの2つの操作を設定）。`false` にすると無効になります。
+
+`CONNECTED` イベントの見え方です（一部の項目と値は短くしています）。
+
+マスクなし:
+
+```json
+{
+  "activity-type": "CONNECTED",
+  "user": "demo-user",
+  "source-ip": "203.0.113.10",
+  "client": "SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u7",
+  "home-dir": "LOGICAL",
+  "role": "arn:aws:iam::123456789012:role/TransferSftp...-TransferAccessRole",
+  "ssh-public-key-type": "ssh-ed25519",
+  "ssh-public-key-fingerprint": "SHA256:CBJTS7P1fWdMklIPX5Nl2UEXOQdhYyxqTBVQWrO1Q0U",
+  "ssh-public-key": "AAAAC3NzaC1lZDI1NTE5AAAAIJZ1bdSW9rO6X/UGht9VDZ6LCFwiJ4Bx//dVyAzMg11V",
+  "session-id": "049695adf319f5e2cd4f"
+}
+```
+
+マスクあり（ポリシーが有効な間に取り込んだ同じイベント。フィンガープリントはそのままで、鍵の本体は同じ長さのアスタリスクになります）:
+
+```json
+{
+  "activity-type": "CONNECTED",
+  "user": "demo-user",
+  "source-ip": "203.0.113.10",
+  "client": "SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u7",
+  "home-dir": "LOGICAL",
+  "role": "arn:aws:iam::123456789012:role/TransferSftp...-TransferAccessRole",
+  "ssh-public-key-type": "ssh-ed25519",
+  "ssh-public-key-fingerprint": "SHA256:CBJTS7P1fWdMklIPX5Nl2UEXOQdhYyxqTBVQWrO1Q0U",
+  "ssh-public-key": "********************************************************************",
+  "session-id": "049695adf319f5e2cd4f"
+}
+```
+
+ポリシーが有効になる前に取り込まれたイベントは、前者のままです。
+
+検証では、新しいイベントについて、`filter-log-events`、`tail`、Logs Insightsのいずれも `****...` と表示されました。`logs:Unmask` を持つプリンシパルが `--unmask` を付けると、元の値が返りました。コンソール、Logs Insights、Live Tailでマスクを外す操作は、公式ドキュメントの手順に従ってください: [Viewing unmasked sensitive data in CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-view.html)（コンソールの操作はここでは未検証で、検証済みなのは上記のCLIの結果です）。
+
+注意点:
+
+- マスクはポリシーが有効になった後に取り込まれたイベントが対象です。それ以前のイベントと、変更直後の1分ほどのイベントは、読めてしまいます
+- 保存済みのイベント自体は書き換わりません。`logs:Unmask` を持つ人（管理者は持っています）は鍵を読めます。公開鍵は秘密情報ではないため、多層防御の位置づけです。`logs:Unmask` とロググループ（KMS暗号化）の読み取り権限も絞ってください
+- ポリシーには監査とマスクの両方の文が必要で、CDKの `DataProtectionPolicy` は両方を作ります。スキャンしたログ量はGB単位で課金されますが、このログ量では無視できる程度です
 
 ## 💰 コスト最適化
 
@@ -266,7 +321,7 @@ manual、月20時間使用:           20時間 × $0.30 = 約$6/月
 ### 実装済みのセキュリティベストプラクティス
 
 - ✅ 秘密鍵はAWSもスクリプトも生成、保存、送信しません。登録するのは `.pub` の内容のみで、OpenSSH公開鍵でないファイルはスクリプトが拒否します
-- ✅ 公開鍵とパスワードはログに出力しません（Lambdaログに鍵情報が無いことを確認済み）
+- ✅ IdP Lambdaは公開鍵とパスワードをログに出力しません（Lambdaログに鍵情報が無いことを確認済み）。Transfer Family自身は、`CONNECTED` イベントごとに公開鍵の本体を出力し、省く設定がありません。`maskSshPublicKeyInLogs`（既定は `true`）で、CloudWatch Logsのデータ保護ポリシーによりマスクします（[ログのマスク](#ログのマスク)を参照）
 - ✅ 未登録ユーザー、無効ユーザー、許可リストが空、レコード不正、DynamoDBエラー、想定外の例外はすべてFail Closed
 - ✅ `enabled` は `true` の場合のみ有効
 - ✅ スクリプトでCIDRを検証（`0.0.0.0/0` は拒否）。保存済みの不正なCIDRはLambdaで一致しない
@@ -389,6 +444,7 @@ python3 -m unittest discover -s tests-python   # boto3が必要
 
 - **ユーザー専用ロール**: ロールを作成し（信頼先は `transfer.amazonaws.com`、条件 `aws:SourceArn` = `arn:aws:transfer:<region>:<account>:user/<server-id>/*`）、`--role` で指定します
 - **セキュリティポリシー**: パラメータの `securityPolicyName`
+- **ログのマスク**: パラメータの `maskSshPublicKeyInLogs`
 - **通知先としきい値**: パラメータの `monitoring`
 - **デュアルスタック**: 未有効化です。サーバーのアドレスタイプ変更とIPv6のCIDR登録が必要です（LambdaはすでにIPv6のCIDRを評価できます）
 - **独自ドメイン**: `ServerEndpoint` に対するRoute 53レコードを作成します
