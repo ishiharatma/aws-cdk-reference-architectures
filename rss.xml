@@ -5,7 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 04 Oct 2026 04:05:39 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 06 Oct 2026 13:07:04 GMT</lastBuildDate>
+    <item>
+      <title>Transfer Family SFTP with a Custom Identity Provider: SSH Key Auth + Source IP Allow List</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transfer-sftp-custom-idp</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transfer-sftp-custom-idp</guid>
+      <pubDate>Tue, 06 Oct 2026 12:00:00 GMT</pubDate>
+      <description>An AWS Transfer Family SFTP server on a PUBLIC endpoint where a Lambda custom identity provider authenticates SSH public keys from a DynamoDB user table (AWS custom IdP solution layout) and rejects logins from IPs outside each user&apos;s allow list. Per-user S3 isolation via LOGICAL home directories and a session policy, CloudShell shell scripts for user and key management, and fail-closed behavior. Deploy-verified with 20 real SFTP checks.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Transfer Family</category>
+      <category>SFTP</category>
+      <category>Lambda</category>
+      <category>DynamoDB</category>
+      <category>S3</category>
+      <category>Security</category>
+    </item>
     <item>
       <title>Transit Gateway Centralized Inspection with AWS Network Firewall</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/tgw-network-firewall-inspection</link>

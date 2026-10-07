@@ -1,0 +1,1089 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlertTopicArn": {
+      "Value": {
+        "Ref": "MonitoringAlertTopicB48B06C2",
+      },
+    },
+    "BucketName": {
+      "Value": {
+        "Ref": "SftpBucketCE9DC1B4",
+      },
+    },
+    "IdpFunctionName": {
+      "Value": {
+        "Ref": "IdpFunctionEA9EC1B5",
+      },
+    },
+    "ServerEndpoint": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::GetAtt": [
+                "SftpServer",
+                "ServerId",
+              ],
+            },
+            ".server.transfer.ap-northeast-1.amazonaws.com",
+          ],
+        ],
+      },
+    },
+    "ServerId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SftpServer",
+          "ServerId",
+        ],
+      },
+    },
+    "TransferAccessRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "TransferAccessRole8190D40E",
+          "Arn",
+        ],
+      },
+    },
+    "TransferLogGroupName": {
+      "Value": {
+        "Ref": "TransferLogGroupF7C99B6E",
+      },
+    },
+    "UserAdminPolicyArn": {
+      "Value": {
+        "Ref": "UserAdminPolicy70FEA874",
+      },
+    },
+    "UserTableName": {
+      "Value": {
+        "Ref": "UserTableBD4BF69E",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "SftpBucketCE9DC1B4",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "IdpFunctionAllowTransferInvoke24FD9614": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "IdpFunctionEA9EC1B5",
+            "Arn",
+          ],
+        },
+        "Principal": "transfer.amazonaws.com",
+        "SourceAccount": "123456789012",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "SftpServer",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "IdpFunctionEA9EC1B5": {
+      "DependsOn": [
+        "IdpFunctionServiceRoleDefaultPolicy6C401D7B",
+        "IdpFunctionServiceRole3C80377D",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "f9eccb465ad84d6e59ebc8277d91710e910e230bdc9f479f22d9e14b7b8e3586.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "IDENTITY_PROVIDER_KEY": "publickeys",
+            "LOG_LEVEL": "INFO",
+            "USER_TABLE_NAME": {
+              "Ref": "UserTableBD4BF69E",
+            },
+          },
+        },
+        "Handler": "handler.lambda_handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "IdpLogGroup06FE4D3A",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "IdpFunctionServiceRole3C80377D",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "IdpFunctionServiceRole3C80377D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "IdpFunctionServiceRoleDefaultPolicy6C401D7B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:GetItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserTableBD4BF69E",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "IdpFunctionServiceRoleDefaultPolicy6C401D7B",
+        "Roles": [
+          {
+            "Ref": "IdpFunctionServiceRole3C80377D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "IdpLogGroup06FE4D3A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsKeyId": {
+          "Fn::GetAtt": [
+            "LogKeyE83D0C1B",
+            "Arn",
+          ],
+        },
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LogKeyE83D0C1B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "TestProject-test SFTP log encryption key",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Encrypt*",
+                "kms:Decrypt*",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Describe*",
+              ],
+              "Condition": {
+                "ArnLike": {
+                  "kms:EncryptionContext:aws:logs:arn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:ap-northeast-1:123456789012:log-group:*",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "logs.ap-northeast-1.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MonitoringAlertKey8972AECA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "TestProject-test-sftp SFTP alert topic key",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MonitoringAlertTopicB48B06C2": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "MonitoringAlertKey8972AECA",
+            "Arn",
+          ],
+        },
+        "TopicName": "TestProject-test-sftp-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "MonitoringAlertTopicPolicyE767CC17": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "MonitoringAlertTopicB48B06C2",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudwatch:ap-northeast-1:123456789012:alarm:TestProject-test-sftp-*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "MonitoringAlertTopicB48B06C2",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "MonitoringAuthFailureAlarmE409BFBE": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+        "AlarmDescription": "Authentication failures reported by Transfer Family (unknown user, key mismatch, rejected by the IdP)",
+        "AlarmName": "TestProject-test-sftp-AuthFailure",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "AuthFailureCount",
+        "Namespace": "Sftp/TestProject-test-sftp",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 5,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "MonitoringAuthFailureFilter5B2ED6DC": {
+      "Properties": {
+        "FilterPattern": ""AUTH_FAILURE"",
+        "LogGroupName": {
+          "Ref": "TransferLogGroupF7C99B6E",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "AuthFailureCount",
+            "MetricNamespace": "Sftp/TestProject-test-sftp",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "MonitoringBytesInAlarm923D990F": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+        "AlarmDescription": "BytesIn of the SFTP server exceeded 1024 MB in 5 minutes",
+        "AlarmName": "TestProject-test-sftp-BytesIn",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "ServerId",
+            "Value": {
+              "Fn::GetAtt": [
+                "SftpServer",
+                "ServerId",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "BytesIn",
+        "Namespace": "AWS/Transfer",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1073741824,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "MonitoringBytesOutAlarm0AA21BE1": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+        "AlarmDescription": "BytesOut of the SFTP server exceeded 1024 MB in 5 minutes",
+        "AlarmName": "TestProject-test-sftp-BytesOut",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "Dimensions": [
+          {
+            "Name": "ServerId",
+            "Value": {
+              "Fn::GetAtt": [
+                "SftpServer",
+                "ServerId",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "BytesOut",
+        "Namespace": "AWS/Transfer",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1073741824,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "MonitoringIdpErrorAlarmA7E8FE7D": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+        "AlarmDescription": "The custom IdP failed closed because of an internal error: every login is being rejected until this is fixed",
+        "AlarmName": "TestProject-test-sftp-IdpError",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "IdpErrorCount",
+        "Namespace": "Sftp/TestProject-test-sftp",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "MonitoringIdpErrorFilter18296C41": {
+      "Properties": {
+        "FilterPattern": "?"dynamodb_error" ?"unexpected_error"",
+        "LogGroupName": {
+          "Ref": "IdpLogGroup06FE4D3A",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "IdpErrorCount",
+            "MetricNamespace": "Sftp/TestProject-test-sftp",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "MonitoringIpDeniedAlarm9DB407C8": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "MonitoringAlertTopicB48B06C2",
+          },
+        ],
+        "AlarmDescription": "Logins rejected because the source IP is not on the user allow list (a valid user from an unexpected IP)",
+        "AlarmName": "TestProject-test-sftp-IpDenied",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "IpDeniedCount",
+        "Namespace": "Sftp/TestProject-test-sftp",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "MonitoringIpDeniedFilterC20734F1": {
+      "Properties": {
+        "FilterPattern": ""ip_not_allowed"",
+        "LogGroupName": {
+          "Ref": "IdpLogGroup06FE4D3A",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "IpDeniedCount",
+            "MetricNamespace": "Sftp/TestProject-test-sftp",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "SftpBucketAutoDeleteObjectsCustomResourceB2E7632F": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "SftpBucketPolicy6D55F811",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "SftpBucketCE9DC1B4",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SftpBucketCE9DC1B4": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SftpBucketPolicy6D55F811": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "SftpBucketCE9DC1B4",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SftpBucketCE9DC1B4",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SftpBucketCE9DC1B4",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SftpBucketCE9DC1B4",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SftpBucketCE9DC1B4",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "SftpServer": {
+      "DependsOn": [
+        "TransferLogGroupF7C99B6E",
+      ],
+      "Properties": {
+        "Domain": "S3",
+        "EndpointType": "PUBLIC",
+        "IdentityProviderDetails": {
+          "Function": {
+            "Fn::GetAtt": [
+              "IdpFunctionEA9EC1B5",
+              "Arn",
+            ],
+          },
+          "SftpAuthenticationMethods": "PUBLIC_KEY",
+        },
+        "IdentityProviderType": "AWS_LAMBDA",
+        "LoggingRole": {
+          "Fn::GetAtt": [
+            "TransferLoggingRole1ADF8EEC",
+            "Arn",
+          ],
+        },
+        "Protocols": [
+          "SFTP",
+        ],
+        "SecurityPolicyName": "TransferSecurityPolicy-2024-01",
+        "StructuredLogDestinations": [
+          {
+            "Fn::GetAtt": [
+              "TransferLogGroupF7C99B6E",
+              "Arn",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Transfer::Server",
+    },
+    "TransferAccessRole8190D40E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":transfer:ap-northeast-1:123456789012:user/",
+                        {
+                          "Fn::GetAtt": [
+                            "SftpServer",
+                            "ServerId",
+                          ],
+                        },
+                        "/*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "transfer.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "S3 access role assumed by AWS Transfer Family (narrowed per user by a session policy)",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TransferAccessRoleDefaultPolicyC7BC3C9A": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SftpBucketCE9DC1B4",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:GetObjectAttributes",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:DeleteObjectVersion",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "SftpBucketCE9DC1B4",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TransferAccessRoleDefaultPolicyC7BC3C9A",
+        "Roles": [
+          {
+            "Ref": "TransferAccessRole8190D40E",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "TransferLogGroupF7C99B6E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "KmsKeyId": {
+          "Fn::GetAtt": [
+            "LogKeyE83D0C1B",
+            "Arn",
+          ],
+        },
+        "LogGroupName": "/aws/transfer/TestProject-test-sftp",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TransferLoggingRole1ADF8EEC": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "transfer.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TransferLoggingRoleDefaultPolicyE62C6B71": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TransferLogGroupF7C99B6E",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TransferLogGroupF7C99B6E",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TransferLoggingRoleDefaultPolicyE62C6B71",
+        "Roles": [
+          {
+            "Ref": "TransferLoggingRole1ADF8EEC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "UserAdminPolicy70FEA874": {
+      "Properties": {
+        "Description": "Allows managing SFTP user records in the custom IdP DynamoDB table (CloudShell scripts)",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserTableBD4BF69E",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::ManagedPolicy",
+    },
+    "UserTableBD4BF69E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "user",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "identity_provider_key",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "DeletionProtectionEnabled": false,
+        "KeySchema": [
+          {
+            "AttributeName": "user",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "identity_provider_key",
+            "KeyType": "RANGE",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 5,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::IAM::ManagedPolicy": 1,
+  "AWS::IAM::Policy": 3,
+  "AWS::IAM::Role": 4,
+  "AWS::KMS::Key": 2,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::Permission": 1,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::Logs::MetricFilter": 3,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::Transfer::Server": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
