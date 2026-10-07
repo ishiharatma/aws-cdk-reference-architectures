@@ -24,6 +24,7 @@ This architecture demonstrates:
 - [Design Decisions & Best Practices](#design-decisions--best-practices)
 - [Server Run Modes](#server-run-modes)
 - [Monitoring](#monitoring)
+- [Log masking](#log-masking)
 - [Cost Optimization](#cost-optimization)
 - [Security Considerations](#security-considerations)
 - [Prerequisites](#prerequisites)
@@ -219,7 +220,61 @@ All alarms notify the SNS topic `<project>-<env>-sftp-alerts` (customer managed 
 
 Thresholds and the period are parameters (`monitoring`). In `always` mode the server alarms are CloudFormation resources; in the other modes the controller owns them (they exist only while the server exists). The log metric filters stay on the fixed log group names, so they keep working across re-creation.
 
+Alarm windows are fixed 5 minute buckets, so a burst that straddles two buckets can stay under the threshold (6 failures within 80 seconds were split 4 and 2 and did not alarm; 8 failures in one bucket did). Lower the threshold or the period if that matters.
+
+Automatic disabling of a user after repeated failures is not implemented. The IP allow list is the first line of defense, failures from outside it are rejected anyway, and a successful unauthorized login leaves no failure to count. If it is added later, base it on the Transfer `AUTH_FAILURE` events (a wrong key is rejected by Transfer after the IdP has already returned the keys, so the IdP Lambda never sees it) and count only failures from IPs on the user's allow list, otherwise anyone who knows a user name can lock that user out.
+
 Verified: the three log based alarms and the `BytesIn` alarm created by the controller reached `ALARM` and the SNS action was executed (alarm history).
+
+## Log masking
+
+The structured Transfer Family log has `ssh-public-key` (the public key body) in each `CONNECTED` event. There is no setting to leave it out, and a log transformer's `deleteKeys` does not help because the original event is stored as well. With `maskSshPublicKeyInLogs: true` the Transfer log group gets a data protection policy (custom data identifier `AAAA[A-Za-z0-9+/]{60,}={0,3}`, which every OpenSSH public key body matches; the fingerprint does not) with audit and mask operations. Set it to `false` to turn it off.
+
+What a `CONNECTED` event looks like (some fields and values shortened).
+
+Without masking:
+
+```json
+{
+  "activity-type": "CONNECTED",
+  "user": "demo-user",
+  "source-ip": "203.0.113.10",
+  "client": "SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u7",
+  "home-dir": "LOGICAL",
+  "role": "arn:aws:iam::123456789012:role/TransferSftp...-TransferAccessRole",
+  "ssh-public-key-type": "ssh-ed25519",
+  "ssh-public-key-fingerprint": "SHA256:CBJTS7P1fWdMklIPX5Nl2UEXOQdhYyxqTBVQWrO1Q0U",
+  "ssh-public-key": "AAAAC3NzaC1lZDI1NTE5AAAAIJZ1bdSW9rO6X/UGht9VDZ6LCFwiJ4Bx//dVyAzMg11V",
+  "session-id": "049695adf319f5e2cd4f"
+}
+```
+
+With masking (the same event ingested while the policy is active; the fingerprint stays, the key body becomes asterisks of the same length):
+
+```json
+{
+  "activity-type": "CONNECTED",
+  "user": "demo-user",
+  "source-ip": "203.0.113.10",
+  "client": "SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u7",
+  "home-dir": "LOGICAL",
+  "role": "arn:aws:iam::123456789012:role/TransferSftp...-TransferAccessRole",
+  "ssh-public-key-type": "ssh-ed25519",
+  "ssh-public-key-fingerprint": "SHA256:CBJTS7P1fWdMklIPX5Nl2UEXOQdhYyxqTBVQWrO1Q0U",
+  "ssh-public-key": "********************************************************************",
+  "session-id": "049695adf319f5e2cd4f"
+}
+```
+
+Events ingested before the policy was active stay in the first form.
+
+Verified: `filter-log-events`, `tail` and Logs Insights show `****...` for new events, and `--unmask` returns the original for principals with `logs:Unmask`. For the console, Logs Insights and Live Tail, follow the official procedure: [Viewing unmasked sensitive data in CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-view.html) (not verified here; the CLI result above is).
+
+Limits to know:
+
+- Masking applies to events ingested after the policy is active. Events written before that, and during the first minute or so after a change, stay readable
+- The stored event is not rewritten. Whoever holds `logs:Unmask` (administrators have it) can read the key. A public key is not a secret, so this is a defense in depth measure; restrict `logs:Unmask` and read access to the log group (KMS encrypted) as well
+- The policy needs both an audit and a mask statement; the CDK `DataProtectionPolicy` creates both. Scanned log data is billed per GB, which is negligible at this log volume
 
 ## 💰 Cost Optimization
 
@@ -266,7 +321,7 @@ manual, used 20 h/month:             20 h × $0.30 = ~$6/month
 ### Security Best Practices Implemented
 
 - ✅ Private keys are never generated, stored or transmitted by AWS or by the scripts; only `.pub` content is registered. The scripts reject files that are not OpenSSH public keys
-- ✅ Public keys and passwords are never logged (verified: no key material in Lambda logs)
+- ✅ The IdP Lambda never logs public keys or passwords (verified: no key material in its logs). Transfer Family itself writes the public key body in every `CONNECTED` event and has no option to omit it; `maskSshPublicKeyInLogs` (default `true`) masks it with a CloudWatch Logs data protection policy (see [Log masking](#log-masking))
 - ✅ Fail closed for unknown users, disabled users, empty allow list, malformed records, DynamoDB errors and unexpected exceptions
 - ✅ `enabled` must be exactly `true`
 - ✅ CIDR validation in the scripts (`0.0.0.0/0` is refused); malformed stored CIDRs never match in the Lambda
@@ -389,6 +444,7 @@ python3 -m unittest discover -s tests-python   # needs boto3
 
 - **Dedicated role per user**: create the role (trust `transfer.amazonaws.com`, condition `aws:SourceArn` = `arn:aws:transfer:<region>:<account>:user/<server-id>/*`) and pass `--role`
 - **Security policy**: `securityPolicyName` in the parameters
+- **Log masking**: `maskSshPublicKeyInLogs` in the parameters
 - **Alert recipients and thresholds**: `monitoring` in the parameters
 - **Dual-stack**: not enabled. It requires a server address type change and IPv6 CIDRs in the allow list; the Lambda already evaluates IPv6 CIDRs
 - **Custom domain**: attach a Route 53 record to `ServerEndpoint`

@@ -73,6 +73,16 @@ survives because users live in DynamoDB and files in S3. Verified in ap-northeas
 - `AWS/Transfer` metrics `BytesIn` / `BytesOut` have the dimension `ServerId`, so an on-demand server needs alarms created after each start (the metric alarm fired about 4 minutes after a 3 MB upload with a 5-minute period)
 - A CloudWatch alarm can not publish to an SNS topic encrypted with `alias/aws/sns`. Use a customer managed key whose policy allows `cloudwatch.amazonaws.com` (`kms:Decrypt`, `kms:GenerateDataKey*`); the alarm history then shows `Successfully executed action`
 
+## The public key body is in the Transfer log, and can only be masked
+
+Structured Transfer logs put `ssh-public-key` (the key body) and its fingerprint in every `CONNECTED` event; there is no option to omit fields, and a CloudWatch Logs transformer (`deleteKeys`) keeps the original event too. A data protection policy on the log group works:
+
+- `PutDataProtectionPolicy` requires **two** statements, one Audit and one Deidentify (`Policy can only have two statements. One for Audit Operation and one for Deidentify Operation`); CDK `logs.DataProtectionPolicy` creates both
+- A custom data identifier `AAAA[A-Za-z0-9+/]{60,}={0,3}` matches every OpenSSH key body (ed25519, ecdsa, rsa) and not the `SHA256:` fingerprint
+- Verified on Transfer's own events: `filter-log-events`, `tail` and Logs Insights show `****`; `--unmask` (needs `logs:Unmask`) returns the original, so the stored event is unchanged
+- Console, Logs Insights and Live Tail unmasking is described in [Viewing unmasked sensitive data in CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-view.html) (needs `logs:Unmask`; the console steps were not verified here, only the CLI `--unmask`)
+- Applied by hand with the CLI, the first two connections within about a minute were still plain; the CloudFormation deploy was masked on the first connection after it. Allow a short delay
+
 ## Misc
 
 - Transfer Family server cost is $0.30 per hour per server ($219 for a 730-hour month), plus $0.04/GB.

@@ -46,6 +46,11 @@ export interface EnvParams extends EnvironmentConfig {
     readonly securityPolicyName: string;
     /** Lambda / Transfer structured log retention in days (a valid CloudWatch Logs retention value). */
     readonly logRetentionDays: number;
+    /**
+     * Mask the SSH public key body that Transfer Family writes in its CONNECTED log events (CloudWatch Logs data
+     * protection policy). Principals with logs:Unmask can still read the original.
+     */
+    readonly maskSshPublicKeyInLogs: boolean;
     /** Encrypt CloudWatch Logs log groups with a customer managed KMS key. */
     readonly enableLogEncryption: boolean;
     /** Lambda log level (INFO / DEBUG). */
