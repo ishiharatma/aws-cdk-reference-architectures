@@ -1,7 +1,7 @@
 # AWS Lambda MicroVMs — Gotchas
 
-Findings from deploy-verifying `lambda-microvms-codex-appserver` (a preview/limited-availability
-service as of this writing). Six real, independently-confirmed bugs surfaced across the image
+Findings from deploy-verifying `lambda-microvms-codex-appserver` and
+`code-server-ec2-vs-lambda-microvms` (a preview/limited-availability service as of this writing). Six real, independently-confirmed bugs surfaced across the image
 build and the session data plane — none caught by `cdk synth`, unit tests, or cdk-nag, since every
 one of them is a live-service behavior no static check can see.
 
@@ -133,3 +133,49 @@ type" when it's actually a straightforward missing IAM grant on the log destinat
   fails with the exact same `AccessDeniedException` — confirm the deployed CloudFormation
   template's `IAM::Policy` resource (`aws cloudformation get-template`) matches your code first,
   then retry after a short wait before assuming the fix itself is wrong.
+
+## Serving a browser app from a MicroVM (code-server)
+
+Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
+
+- **A browser cannot reach a MicroVM endpoint directly.** Every request needs the JWE token in the
+  `X-aws-proxy-auth` header, and a browser cannot add a header to a navigation or a WebSocket
+  handshake. For `new WebSocket(...)` the documented alternative is the subprotocols
+  `lambda-microvms`, `lambda-microvms.authentication.<token>` and `lambda-microvms.port.<N>`, but a page
+  load still has no such option. A local relay that listens on `127.0.0.1`, injects the header and
+  forwards HTTP and WebSocket traffic works for the whole app. Tokens last at most the
+  `--expiration-in-minutes` given, so the relay re-issues them (every 25 minutes for a 30-minute token).
+- **The relay must rewrite `Host` and `Origin` to the endpoint host.** Routing uses `Host`, and
+  code-server refuses a WebSocket whose `Origin` differs from `Host`.
+- **Strip `Domain=` (and `Secure`) from `Set-Cookie`.** code-server scopes its session cookie to the
+  endpoint host, a browser on `localhost` discards it, and the symptom is a redirect back to the login
+  page after a successful login.
+- **code-server reads `$PORT` ahead of `--bind-addr`.** A helper process that used `PORT=8080` made
+  code-server bind 8080 and collide with it. Name your own listener variable something else.
+- **`AWS_REGION` is a reserved image environment variable name.** `AWS::Lambda::MicrovmImage` rejects it
+  (`Environment variable key 'AWS_REGION' is reserved`) and the stack update rolls back. Derive the Region
+  from an ARN you already have in the image environment.
+- **Runtime logs are off unless `--logging '{"cloudWatch":{"logGroup":"..."}}'` is passed to
+  `run-microvm`.** The log group must be writable by the execution role. Stream names are
+  `<yyyy/mm/dd>[<image version>]<microvm id>`; `describe-log-streams` cannot combine
+  `--order-by LastEventTime` with a name prefix.
+- **A `/run` hook that returns non-200 terminates the MicroVM** within about 20 seconds. `get-microvm`
+  then shows `state: TERMINATED` and `stateReason: Run lifecycle hook returned HTTP status 500`, and the
+  endpoint answers 502 with `x-aws-proxy-error: MICROVM_CONNECT_FAILED`. The endpoint admits no traffic
+  until `/run` returns 200, so starting the app from `/run` (per-MicroVM secrets) also means the first
+  request never reaches a half-started app.
+- **Default egress is the public internet; no VPC or NAT is needed.** The AWS-managed connector is
+  `arn:aws:lambda:<region>:aws:network-connector:aws-network-connector:INTERNET_EGRESS`. It is accepted on
+  both `AWS::Lambda::MicrovmImage.EgressNetworkConnectors` and `run-microvm`. Image builds run with
+  network access (`curl`, `apt-get`, `npm install`, `code-server --install-extension` all worked).
+- **`maximumDurationInSeconds` counts running and suspended time together (1 to 28800).** At the limit
+  the MicroVM ends with `MicroVM exceeded maximum lifetime`. Each image change creates a new version
+  (`imageVersion` in `get-microvm`), and `run-microvm` uses the latest active one.
+- **Timing observed (ap-northeast-1, 2 GiB, arm64):** `run-microvm` to first healthy response 3 to 16
+  seconds; the first request after `suspend-microvm` returned in 0.65 seconds with `autoResumeEnabled`;
+  image build about 190 to 210 seconds.
+- **List does not mean usable for Bedrock.** `aws bedrock list-inference-profiles` showed
+  `global.anthropic.claude-sonnet-5-5`, `jp.anthropic.claude-opus-5-5` and `jp.anthropic.claude-haiku-5-5`,
+  and `converse` returned `AccessDeniedException` for all three, while `jp.anthropic.claude-sonnet-4-6` and
+  `jp.anthropic.claude-haiku-4-5-20251001-v1:0` answered. Call `converse` before choosing a model ID.
+

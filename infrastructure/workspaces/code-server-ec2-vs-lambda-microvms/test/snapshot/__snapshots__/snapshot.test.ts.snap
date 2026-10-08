@@ -1,0 +1,1284 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Ec2 stack snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "CodeServerUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "Distribution830FAC52",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "InstanceId": {
+      "Value": {
+        "Ref": "InstanceC1063A87ec887c25ba3a9b5b",
+      },
+    },
+    "PasswordSecretName": {
+      "Value": {
+        "Fn::Join": [
+          "-",
+          [
+            {
+              "Fn::Select": [
+                0,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                1,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                2,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                5,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "CodeServerPasswordA9061133": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "code-server login password (EC2 variant)",
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "PasswordLength": 24,
+        },
+        "Name": "test-test-code-server-ec2-password",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "Distribution830FAC52": {
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "test-test code-server (EC2)",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PUT",
+              "PATCH",
+              "POST",
+              "DELETE",
+            ],
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "Compress": true,
+            "OriginRequestPolicyId": "216adef6-5c7f-47e4-b989-5492eafa07d3",
+            "TargetOriginId": "Ec2DistributionOrigin1B76B3FD1",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "CustomOriginConfig": {
+                "HTTPPort": 8080,
+                "OriginProtocolPolicy": "http-only",
+                "OriginSSLProtocols": [
+                  "TLSv1.2",
+                ],
+              },
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "InstanceC1063A87ec887c25ba3a9b5b",
+                  "PublicDnsName",
+                ],
+              },
+              "Id": "Ec2DistributionOrigin1B76B3FD1",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "InstanceC1063A87ec887c25ba3a9b5b": {
+      "DependsOn": [
+        "InstanceRoleDefaultPolicy1531605C",
+        "InstanceRole3CCE2F1D",
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+        "VpcpublicSubnet2DefaultRoute732F0BEB",
+        "VpcpublicSubnet2RouteTableAssociationCCE257FF",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 30,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "InstanceInstanceProfileAB5AEF02",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiamazonlinuxlatestal2023amikernel61arm64C96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.medium",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "InstanceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "InstanceLaunchTemplateFB1C3D8B",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Fn::GetAtt": [
+                  "InstanceSecurityGroup896E10BF",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetId": {
+              "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Ec2/Instance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash
+set -euxo pipefail
+dnf install -y git tar gzip
+curl -fsSL https://github.com/coder/code-server/releases/download/v4.141.0/code-server-4.141.0-linux-arm64.tar.gz -o /tmp/code-server.tgz
+mkdir -p /opt/code-server && tar -xzf /tmp/code-server.tgz -C /opt/code-server --strip-components=1
+ln -sf /opt/code-server/bin/code-server /usr/local/bin/code-server
+install -d -o ec2-user -g ec2-user /home/ec2-user/project
+PASSWORD=$(aws secretsmanager get-secret-value --region ap-northeast-1 --secret-id ",
+                {
+                  "Ref": "CodeServerPasswordA9061133",
+                },
+                " --query SecretString --output text)
+(umask 077; printf "PASSWORD=%s\\n" "$PASSWORD" > /etc/code-server.env)
+cat > /etc/systemd/system/code-server.service <<'UNIT'
+[Unit]
+Description=code-server
+After=network-online.target
+[Service]
+User=ec2-user
+EnvironmentFile=/etc/code-server.env
+Environment=HOME=/home/ec2-user
+ExecStart=/usr/local/bin/code-server --bind-addr 0.0.0.0:8080 --auth password --disable-telemetry --disable-update-check /home/ec2-user/project
+Restart=always
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload && systemctl enable --now code-server
+dnf install -y nodejs22 nodejs22-npm
+npm install -g @anthropic-ai/claude-code
+sudo -u ec2-user HOME=/home/ec2-user /usr/local/bin/code-server --install-extension Anthropic.claude-code
+install -d -o ec2-user -g ec2-user /home/ec2-user/.claude
+cat > /home/ec2-user/.claude/settings.json <<'JSON'
+{
+  "env": {
+    "CLAUDE_CODE_USE_BEDROCK": "1",
+    "AWS_REGION": "ap-northeast-1",
+    "ANTHROPIC_MODEL": "jp.anthropic.claude-sonnet-4-6",
+    "ANTHROPIC_SMALL_FAST_MODEL": "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
+  }
+}
+JSON
+chown ec2-user:ec2-user /home/ec2-user/.claude/settings.json",
+              ],
+            ],
+          },
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "InstanceInstanceProfileAB5AEF02": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "InstanceLaunchTemplateFB1C3D8B": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "InstanceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "InstanceRole3CCE2F1D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "InstanceRoleDefaultPolicy1531605C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CodeServerPasswordA9061133",
+              },
+            },
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:*::foundation-model/anthropic.claude-sonnet-4-6",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:ap-northeast-1:123456789012:inference-profile/jp.anthropic.claude-sonnet-4-6",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:ap-northeast-1:123456789012:inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0",
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "ClaudeCodeBedrockInvoke",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "InstanceRoleDefaultPolicy1531605C",
+        "Roles": [
+          {
+            "Ref": "InstanceRole3CCE2F1D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "InstanceSecurityGroup896E10BF": {
+      "Properties": {
+        "GroupDescription": "code-server instance: inbound only from CloudFront origin-facing IPs",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "InstanceSecurityGroupfromplxxxxxxxx80806D811FFB": {
+      "Properties": {
+        "Description": "code-server from CloudFront",
+        "FromPort": 8080,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "InstanceSecurityGroup896E10BF",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourcePrefixListId": "pl-xxxxxxxx",
+        "ToPort": 8080,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Ec2/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Ec2 stack snapshots Resource types and counts 1`] = `
+{
+  "AWS::CloudFront::Distribution": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::Route": 2,
+  "AWS::EC2::RouteTable": 2,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 2,
+  "AWS::EC2::SubnetRouteTableAssociation": 2,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 1,
+  "AWS::SecretsManager::Secret": 1,
+}
+`;
+
+exports[`Microvms stack snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "InternetEgressConnectorArn": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:",
+            {
+              "Ref": "AWS::Partition",
+            },
+            ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+          ],
+        ],
+      },
+    },
+    "LogGroupName": {
+      "Value": {
+        "Ref": "MicrovmImageLogGroup9AB810C2",
+      },
+    },
+    "MicrovmExecutionRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "MicrovmExecutionRole1ADA6FF9",
+          "Arn",
+        ],
+      },
+    },
+    "MicrovmImageArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CodeServerImage",
+          "ImageArn",
+        ],
+      },
+    },
+    "PasswordSecretName": {
+      "Value": {
+        "Fn::Join": [
+          "-",
+          [
+            {
+              "Fn::Select": [
+                0,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                1,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                2,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                5,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "CodeServerPasswordA9061133",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CodeServerImage": {
+      "Properties": {
+        "AdditionalOsCapabilities": [],
+        "BaseImageArn": "arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1",
+        "BaseImageVersion": "1",
+        "BuildRoleArn": {
+          "Fn::GetAtt": [
+            "MicrovmImageBuildRole04A0F8FE",
+            "Arn",
+          ],
+        },
+        "CodeArtifact": {
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/10114e4789a828c11ef1ce0dcdc14476b05040f3ce3fe8b718eff97aa7a40ef6.zip",
+        },
+        "CpuConfigurations": [
+          {
+            "Architecture": "ARM_64",
+          },
+        ],
+        "Description": "code-server behind a small launcher/reverse proxy, packaged as a Lambda MicroVM image",
+        "EgressNetworkConnectors": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+              ],
+            ],
+          },
+        ],
+        "EnvironmentVariables": [
+          {
+            "Key": "PASSWORD_SECRET_ARN",
+            "Value": {
+              "Ref": "CodeServerPasswordA9061133",
+            },
+          },
+          {
+            "Key": "CLAUDE_CODE_USE_BEDROCK",
+            "Value": "1",
+          },
+          {
+            "Key": "ANTHROPIC_MODEL",
+            "Value": "jp.anthropic.claude-sonnet-4-6",
+          },
+          {
+            "Key": "ANTHROPIC_SMALL_FAST_MODEL",
+            "Value": "jp.anthropic.claude-haiku-4-5-20251001-v1:0",
+          },
+        ],
+        "Hooks": {
+          "MicrovmHooks": {
+            "Resume": "DISABLED",
+            "Run": "ENABLED",
+            "RunTimeoutInSeconds": 60,
+            "Suspend": "DISABLED",
+            "Terminate": "ENABLED",
+            "TerminateTimeoutInSeconds": 15,
+          },
+          "MicrovmImageHooks": {
+            "Ready": "ENABLED",
+            "ReadyTimeoutInSeconds": 60,
+            "Validate": "ENABLED",
+            "ValidateTimeoutInSeconds": 60,
+          },
+          "Port": 8080,
+        },
+        "Logging": {
+          "CloudWatch": {
+            "LogGroup": {
+              "Ref": "MicrovmImageLogGroup9AB810C2",
+            },
+          },
+        },
+        "Name": "test-test-code-server-image",
+        "Resources": [
+          {
+            "MinimumMemoryInMiB": 2048,
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::MicrovmImage",
+    },
+    "CodeServerPasswordA9061133": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "code-server login password (MicroVMs variant)",
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "PasswordLength": 24,
+        },
+        "Name": "test-test-code-server-microvms-password",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MicrovmExecutionRole1ADA6FF9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by running code-server MicroVMs to read the login password",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmExecutionRoleDefaultPolicy2F5F9AAC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CodeServerPasswordA9061133",
+              },
+            },
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:*::foundation-model/anthropic.claude-sonnet-4-6",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:ap-northeast-1:123456789012:inference-profile/jp.anthropic.claude-sonnet-4-6",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:ap-northeast-1:123456789012:inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0",
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "ClaudeCodeBedrockInvoke",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmImageLogGroup9AB810C2",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmExecutionRoleDefaultPolicy2F5F9AAC",
+        "Roles": [
+          {
+            "Ref": "MicrovmExecutionRole1ADA6FF9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageBuildRole04A0F8FE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda MicroVMs while building the code-server image",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmImageBuildRoleDefaultPolicy1AFC78A1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmImageLogGroup9AB810C2",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "Roles": [
+          {
+            "Ref": "MicrovmImageBuildRole04A0F8FE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageLogGroup9AB810C2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/lambda-microvms/test-test-code-server-image",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Microvms stack snapshots Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::MicrovmImage": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SecretsManager::Secret": 1,
+}
+`;
