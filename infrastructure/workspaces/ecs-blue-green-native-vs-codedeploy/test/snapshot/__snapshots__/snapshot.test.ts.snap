@@ -1,0 +1,1817 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ClusterName": {
+      "Value": {
+        "Ref": "ClusterEB0386A7",
+      },
+    },
+    "CodeDeployApplicationName": {
+      "Value": {
+        "Ref": "CodeDeployApplicationE587C27C",
+      },
+    },
+    "CodeDeployGroupName": {
+      "Value": {
+        "Ref": "CodeDeployGroup58220FC8",
+      },
+    },
+    "CodeDeployHookVerdictParameter": {
+      "Value": {
+        "Ref": "codedeployHookVerdict1F54AE0F",
+      },
+    },
+    "CodeDeployServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CodeDeployService5046C048",
+          "Name",
+        ],
+      },
+    },
+    "CodeDeployTaskFamily": {
+      "Value": "TestProject-test-bg-codedeploy",
+    },
+    "CodeDeployTestUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "CodeDeployAlbAF961054",
+                "DNSName",
+              ],
+            },
+            ":8080",
+          ],
+        ],
+      },
+    },
+    "CodeDeployUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "CodeDeployAlbAF961054",
+                "DNSName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "HookFunctionName": {
+      "Value": {
+        "Ref": "HookFunctionAA39778C",
+      },
+    },
+    "NativeHookVerdictParameter": {
+      "Value": {
+        "Ref": "nativeHookVerdict731125BB",
+      },
+    },
+    "NativeServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "NativeService5DD887D2",
+          "Name",
+        ],
+      },
+    },
+    "NativeTaskFamily": {
+      "Value": "TestProject-test-bg-native",
+    },
+    "NativeTestUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "NativeAlb59E1FA3D",
+                "DNSName",
+              ],
+            },
+            ":8080",
+          ],
+        ],
+      },
+    },
+    "NativeUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "NativeAlb59E1FA3D",
+                "DNSName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "Load balancers: the operator only",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.10/32",
+            "Description": "operator 203.0.113.10",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "203.0.113.10/32",
+            "Description": "operator 203.0.113.10",
+            "FromPort": 8080,
+            "IpProtocol": "tcp",
+            "ToPort": 8080,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AlbSecurityGrouptoEcsBlueGreenNativeVsCodedeployServiceSecurityGroup83E627AD80F91BD189": {
+      "Properties": {
+        "Description": "ALB to tasks",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ServiceSecurityGroup61DE1A49",
+            "GroupId",
+          ],
+        },
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "ClusterEB0386A7": {
+      "Properties": {
+        "ClusterName": "TestProject-test-bg-cluster",
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "CodeDeployAlbAF961054": {
+      "DependsOn": [
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+        "VpcpublicSubnet2DefaultRoute732F0BEB",
+        "VpcpublicSubnet2RouteTableAssociationCCE257FF",
+      ],
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+          {
+            "Key": "routing.http.drop_invalid_header_fields.enabled",
+            "Value": "true",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+          },
+          {
+            "Ref": "VpcpublicSubnet2SubnetE34B022A",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "CodeDeployAlbCodeDeployProd4E223E92": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "CodeDeployBlue06EF1ACF",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "CodeDeployAlbAF961054",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "CodeDeployAlbCodeDeployTest1F15D121": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "CodeDeployGreenE485FE98",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "CodeDeployAlbAF961054",
+        },
+        "Port": 8080,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "CodeDeployApplicationE587C27C": {
+      "Properties": {
+        "ApplicationName": "TestProject-test-bg-app",
+        "ComputePlatform": "ECS",
+      },
+      "Type": "AWS::CodeDeploy::Application",
+    },
+    "CodeDeployBlue06EF1ACF": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 5,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 3,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "5",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "CodeDeployErrorAlarm007D6A34": {
+      "Properties": {
+        "AlarmName": "TestProject-test-bg-codedeploy-5xx",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Ref": "CodeDeployAlbCodeDeployProd4E223E92",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Ref": "CodeDeployAlbCodeDeployProd4E223E92",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  "/",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          "/",
+                          {
+                            "Ref": "CodeDeployAlbCodeDeployProd4E223E92",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              ],
+            },
+          },
+          {
+            "Name": "TargetGroup",
+            "Value": {
+              "Fn::GetAtt": [
+                "CodeDeployBlue06EF1ACF",
+                "TargetGroupFullName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "HTTPCode_Target_5XX_Count",
+        "Namespace": "AWS/ApplicationELB",
+        "Period": 60,
+        "Statistic": "Sum",
+        "Threshold": 5,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "CodeDeployGreenE485FE98": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 5,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 3,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "5",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "CodeDeployGroup58220FC8": {
+      "Properties": {
+        "AlarmConfiguration": {
+          "Alarms": [
+            {
+              "Name": {
+                "Ref": "CodeDeployErrorAlarm007D6A34",
+              },
+            },
+          ],
+          "Enabled": true,
+        },
+        "ApplicationName": {
+          "Ref": "CodeDeployApplicationE587C27C",
+        },
+        "AutoRollbackConfiguration": {
+          "Enabled": true,
+          "Events": [
+            "DEPLOYMENT_FAILURE",
+            "DEPLOYMENT_STOP_ON_ALARM",
+          ],
+        },
+        "BlueGreenDeploymentConfiguration": {
+          "DeploymentReadyOption": {
+            "ActionOnTimeout": "CONTINUE_DEPLOYMENT",
+            "WaitTimeInMinutes": 0,
+          },
+          "TerminateBlueInstancesOnDeploymentSuccess": {
+            "Action": "TERMINATE",
+            "TerminationWaitTimeInMinutes": 2,
+          },
+        },
+        "DeploymentConfigName": "CodeDeployDefault.ECSAllAtOnce",
+        "DeploymentGroupName": "TestProject-test-bg-group",
+        "DeploymentStyle": {
+          "DeploymentOption": "WITH_TRAFFIC_CONTROL",
+          "DeploymentType": "BLUE_GREEN",
+        },
+        "ECSServices": [
+          {
+            "ClusterName": {
+              "Ref": "ClusterEB0386A7",
+            },
+            "ServiceName": {
+              "Fn::GetAtt": [
+                "CodeDeployService5046C048",
+                "Name",
+              ],
+            },
+          },
+        ],
+        "LoadBalancerInfo": {
+          "TargetGroupPairInfoList": [
+            {
+              "ProdTrafficRoute": {
+                "ListenerArns": [
+                  {
+                    "Ref": "CodeDeployAlbCodeDeployProd4E223E92",
+                  },
+                ],
+              },
+              "TargetGroups": [
+                {
+                  "Name": {
+                    "Fn::GetAtt": [
+                      "CodeDeployBlue06EF1ACF",
+                      "TargetGroupName",
+                    ],
+                  },
+                },
+                {
+                  "Name": {
+                    "Fn::GetAtt": [
+                      "CodeDeployGreenE485FE98",
+                      "TargetGroupName",
+                    ],
+                  },
+                },
+              ],
+              "TestTrafficRoute": {
+                "ListenerArns": [
+                  {
+                    "Ref": "CodeDeployAlbCodeDeployTest1F15D121",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        "ServiceRoleArn": {
+          "Fn::GetAtt": [
+            "CodeDeployGroupServiceRole50553EBF",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CodeDeploy::DeploymentGroup",
+    },
+    "CodeDeployGroupServiceRole50553EBF": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "codedeploy.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AWSCodeDeployRoleForECS",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CodeDeployGroupServiceRoleDefaultPolicyC6456B9E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "HookFunctionAA39778C",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HookFunctionAA39778C",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CodeDeployGroupServiceRoleDefaultPolicyC6456B9E",
+        "Roles": [
+          {
+            "Ref": "CodeDeployGroupServiceRole50553EBF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CodeDeployService5046C048": {
+      "DependsOn": [
+        "CodeDeployAlbCodeDeployProd4E223E92",
+        "codedeployTaskDefExecutionRoleDefaultPolicy9BECBCC4",
+        "codedeployTaskDefExecutionRole5025554C",
+        "codedeployTaskDef102B9C84",
+        "codedeployTaskDefTaskRoleC450CA1F",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterEB0386A7",
+        },
+        "DeploymentConfiguration": {
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 50,
+        },
+        "DeploymentController": {
+          "Type": "CODE_DEPLOY",
+        },
+        "DesiredCount": 2,
+        "EnableECSManagedTags": false,
+        "HealthCheckGracePeriodSeconds": 60,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "app",
+            "ContainerPort": 80,
+            "TargetGroupArn": {
+              "Ref": "CodeDeployBlue06EF1ACF",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "ServiceSecurityGroup61DE1A49",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+              },
+              {
+                "Ref": "VpcpublicSubnet2SubnetE34B022A",
+              },
+            ],
+          },
+        },
+        "ServiceName": "TestProject-test-bg-codedeploy",
+        "TaskDefinition": "TestProject-test-bg-codedeploy",
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "Vpc8378EB38",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "HookFunctionAA39778C": {
+      "DependsOn": [
+        "HookFunctionServiceRoleDefaultPolicy65592A50",
+        "HookFunctionServiceRole106143C4",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "5588b26c9fb2187ba4f288a6d4f8b8df6d313aab9298db50d100fddf0562e744.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "HOOK_DELAY_SECONDS": "25",
+            "VERDICT_PARAMETER_CODEDEPLOY": {
+              "Ref": "codedeployHookVerdict1F54AE0F",
+            },
+            "VERDICT_PARAMETER_NATIVE": {
+              "Ref": "nativeHookVerdict731125BB",
+            },
+          },
+        },
+        "FunctionName": "TestProject-test-bg-hook",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "HookLogGroupA99ADA7D",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "HookFunctionServiceRole106143C4",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "HookFunctionServiceRole106143C4": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "HookFunctionServiceRoleDefaultPolicy65592A50": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "nativeHookVerdict731125BB",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:GetParameterHistory",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter",
+                    {
+                      "Ref": "codedeployHookVerdict1F54AE0F",
+                    },
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "codedeploy:PutLifecycleEventHookExecutionStatus",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "HookFunctionServiceRoleDefaultPolicy65592A50",
+        "Roles": [
+          {
+            "Ref": "HookFunctionServiceRole106143C4",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "HookLogGroupA99ADA7D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "NativeAlb59E1FA3D": {
+      "DependsOn": [
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+        "VpcpublicSubnet2DefaultRoute732F0BEB",
+        "VpcpublicSubnet2RouteTableAssociationCCE257FF",
+      ],
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+          {
+            "Key": "routing.http.drop_invalid_header_fields.enabled",
+            "Value": "true",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+          },
+          {
+            "Ref": "VpcpublicSubnet2SubnetE34B022A",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "NativeAlbNativeProd0DD26EDC": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "FixedResponseConfig": {
+              "StatusCode": "404",
+            },
+            "Type": "fixed-response",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "NativeAlb59E1FA3D",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "NativeAlbNativeTestDC9E9516": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "FixedResponseConfig": {
+              "StatusCode": "404",
+            },
+            "Type": "fixed-response",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "NativeAlb59E1FA3D",
+        },
+        "Port": 8080,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "NativeBlueC4D127D5": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 5,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 3,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "5",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "NativeGreenBDA1678F": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 5,
+        "HealthCheckPath": "/",
+        "HealthCheckTimeoutSeconds": 3,
+        "HealthyThresholdCount": 2,
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "5",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "NativeProdRule54074F74": {
+      "Properties": {
+        "Actions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "NativeBlueC4D127D5",
+            },
+            "Type": "forward",
+          },
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "PathPatternConfig": {
+              "Values": [
+                "/*",
+              ],
+            },
+          },
+        ],
+        "ListenerArn": {
+          "Ref": "NativeAlbNativeProd0DD26EDC",
+        },
+        "Priority": 1,
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+    },
+    "NativeService5DD887D2": {
+      "DependsOn": [
+        "NativeProdRule54074F74",
+        "nativeTaskDefTaskRoleAF9FF922",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "ClusterEB0386A7",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "BakeTimeInMinutes": 2,
+          "LifecycleHooks": [
+            {
+              "HookTargetArn": {
+                "Fn::GetAtt": [
+                  "HookFunctionAA39778C",
+                  "Arn",
+                ],
+              },
+              "LifecycleStages": [
+                "POST_TEST_TRAFFIC_SHIFT",
+              ],
+              "RoleArn": {
+                "Fn::GetAtt": [
+                  "NativeServiceNativePostTestTrafficHookRoleD5888BD9",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 50,
+          "Strategy": "BLUE_GREEN",
+        },
+        "DesiredCount": 2,
+        "EnableECSManagedTags": false,
+        "HealthCheckGracePeriodSeconds": 60,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "AdvancedConfiguration": {
+              "AlternateTargetGroupArn": {
+                "Ref": "NativeGreenBDA1678F",
+              },
+              "ProductionListenerRule": {
+                "Ref": "NativeProdRule54074F74",
+              },
+              "RoleArn": {
+                "Fn::GetAtt": [
+                  "NativeServiceNativeAlternateTargetRoleD6F888EA",
+                  "Arn",
+                ],
+              },
+              "TestListenerRule": {
+                "Ref": "NativeTestRuleEC891EED",
+              },
+            },
+            "ContainerName": "app",
+            "ContainerPort": 80,
+            "TargetGroupArn": {
+              "Ref": "NativeBlueC4D127D5",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "ServiceSecurityGroup61DE1A49",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+              },
+              {
+                "Ref": "VpcpublicSubnet2SubnetE34B022A",
+              },
+            ],
+          },
+        },
+        "ServiceName": "TestProject-test-bg-native",
+        "TaskDefinition": {
+          "Ref": "nativeTaskDefC0CF1F9F",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "NativeServiceNativeAlternateTargetRoleD6F888EA": {
+      "DependsOn": [
+        "nativeTaskDefTaskRoleAF9FF922",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonECSInfrastructureRolePolicyForLoadBalancers",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "NativeServiceNativePostTestTrafficHookRoleD5888BD9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "NativeServiceNativePostTestTrafficHookRoleDefaultPolicyC1C3A682": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "HookFunctionAA39778C",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HookFunctionAA39778C",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "NativeServiceNativePostTestTrafficHookRoleDefaultPolicyC1C3A682",
+        "Roles": [
+          {
+            "Ref": "NativeServiceNativePostTestTrafficHookRoleD5888BD9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "NativeTestRuleEC891EED": {
+      "Properties": {
+        "Actions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "NativeGreenBDA1678F",
+            },
+            "Type": "forward",
+          },
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "PathPatternConfig": {
+              "Values": [
+                "/*",
+              ],
+            },
+          },
+        ],
+        "ListenerArn": {
+          "Ref": "NativeAlbNativeTestDC9E9516",
+        },
+        "Priority": 1,
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+    },
+    "ServiceSecurityGroup61DE1A49": {
+      "Properties": {
+        "GroupDescription": "Tasks: HTTP from the load balancers only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "ServiceSecurityGroupfromEcsBlueGreenNativeVsCodedeployAlbSecurityGroup9AC40D7480DBD9A8DA": {
+      "Properties": {
+        "Description": "From the ALBs",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "ServiceSecurityGroup61DE1A49",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.92.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcRestrictDefaultSecurityGroupCustomResourceC73DA2BE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.92.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.92.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "EcsBlueGreenNativeVsCodedeploy/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "codedeployHookVerdict1F54AE0F": {
+      "Properties": {
+        "Description": "pass or fail: what the sample lifecycle hook answers for codedeploy deployments",
+        "Name": "/TestProject/test/bluegreen/hook-verdict-codedeploy",
+        "Type": "String",
+        "Value": "pass",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "codedeployLogGroup0C2A5F34": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "codedeployTaskDef102B9C84": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "[ "$BREAK" = "true" ] && exit 1; printf '{"version":"%s","service":"%s","task":"%s"}\\n' "$VERSION" "$SERVICE" "$(hostname)" > /usr/share/nginx/html/index.html && exec nginx -g 'daemon off;'",
+            ],
+            "EntryPoint": [
+              "/bin/sh",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "VERSION",
+                "Value": "v1",
+              },
+              {
+                "Name": "SERVICE",
+                "Value": "codedeploy",
+              },
+              {
+                "Name": "BREAK",
+                "Value": "false",
+              },
+            ],
+            "Essential": true,
+            "Image": "public.ecr.aws/nginx/nginx:stable",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "codedeployLogGroup0C2A5F34",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "codedeploy",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "codedeployTaskDefExecutionRole5025554C",
+            "Arn",
+          ],
+        },
+        "Family": "TestProject-test-bg-codedeploy",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "codedeployTaskDefTaskRoleC450CA1F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "codedeployTaskDefExecutionRole5025554C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "codedeployTaskDefExecutionRoleDefaultPolicy9BECBCC4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "codedeployLogGroup0C2A5F34",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "codedeployTaskDefExecutionRoleDefaultPolicy9BECBCC4",
+        "Roles": [
+          {
+            "Ref": "codedeployTaskDefExecutionRole5025554C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "codedeployTaskDefTaskRoleC450CA1F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "nativeHookVerdict731125BB": {
+      "Properties": {
+        "Description": "pass or fail: what the sample lifecycle hook answers for native deployments",
+        "Name": "/TestProject/test/bluegreen/hook-verdict-native",
+        "Type": "String",
+        "Value": "pass",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "nativeLogGroup39E28367": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "nativeTaskDefC0CF1F9F": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "[ "$BREAK" = "true" ] && exit 1; printf '{"version":"%s","service":"%s","task":"%s"}\\n' "$VERSION" "$SERVICE" "$(hostname)" > /usr/share/nginx/html/index.html && exec nginx -g 'daemon off;'",
+            ],
+            "EntryPoint": [
+              "/bin/sh",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "VERSION",
+                "Value": "v1",
+              },
+              {
+                "Name": "SERVICE",
+                "Value": "native",
+              },
+              {
+                "Name": "BREAK",
+                "Value": "false",
+              },
+            ],
+            "Essential": true,
+            "Image": "public.ecr.aws/nginx/nginx:stable",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "nativeLogGroup39E28367",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "native",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "nativeTaskDefExecutionRole9A9A42C4",
+            "Arn",
+          ],
+        },
+        "Family": "TestProject-test-bg-native",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "nativeTaskDefTaskRoleAF9FF922",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "nativeTaskDefExecutionRole9A9A42C4": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "nativeTaskDefExecutionRoleDefaultPolicyBB954A66": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "nativeLogGroup39E28367",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "nativeTaskDefExecutionRoleDefaultPolicyBB954A66",
+        "Roles": [
+          {
+            "Ref": "nativeTaskDefExecutionRole9A9A42C4",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "nativeTaskDefTaskRoleAF9FF922": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::CodeDeploy::Application": 1,
+  "AWS::CodeDeploy::DeploymentGroup": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::Route": 2,
+  "AWS::EC2::RouteTable": 2,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupEgress": 1,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 2,
+  "AWS::EC2::SubnetRouteTableAssociation": 2,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::ECS::Cluster": 1,
+  "AWS::ECS::Service": 2,
+  "AWS::ECS::TaskDefinition": 2,
+  "AWS::ElasticLoadBalancingV2::Listener": 4,
+  "AWS::ElasticLoadBalancingV2::ListenerRule": 2,
+  "AWS::ElasticLoadBalancingV2::LoadBalancer": 2,
+  "AWS::ElasticLoadBalancingV2::TargetGroup": 4,
+  "AWS::IAM::Policy": 5,
+  "AWS::IAM::Role": 9,
+  "AWS::Lambda::Function": 2,
+  "AWS::Logs::LogGroup": 3,
+  "AWS::SSM::Parameter": 2,
+  "Custom::VpcRestrictDefaultSG": 1,
+}
+`;

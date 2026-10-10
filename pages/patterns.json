@@ -1,5 +1,17 @@
 [
   {
+    "id": "ecs-blue-green-native-vs-codedeploy",
+    "title": "ECS Blue/Green: Native versus CodeDeploy",
+    "description": "The same application deployed blue/green with native ECS (deploymentStrategy BLUE_GREEN) and with CodeDeploy, side by side behind ALBs with a production and a test listener, and driven through the same four deployments: a good release, a failing lifecycle hook, a rollback during the bake period and a container that never starts. Deploy-verified with a 5 requests-per-second probe: no HTTP error on either flavor, rollback to the old version in 20 s (native) and 14 s (CodeDeploy), and neither gave up on the broken release within 7 minutes.",
+    "image": "ecs-blue-green-native-vs-codedeploy/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "ECS", "Fargate", "Blue/Green", "CodeDeploy", "ALB", "Deployment", "Lambda"],
+    "link": "ecs-blue-green-native-vs-codedeploy",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
     "id": "tgw-network-firewall-inspection",
     "title": "Transit Gateway Centralized Inspection with AWS Network Firewall",
     "description": "One AWS Network Firewall inspects both internet-bound and east-west traffic of two spoke VPCs that have no internet route of their own: a Transit Gateway with two route tables and an appliance-mode attachment hands every flow to an inspection VPC, where a domain allow list, east-west pass/drop rules and a NAT gateway apply. Deploy-verified over SSM: allowed domain 200, other domain blocked, east-west TCP passes, east-west ICMP dropped, both drops in the alert log. Documents why a domain allow list also drops east-west HTTP unless a pass rule precedes it.",
