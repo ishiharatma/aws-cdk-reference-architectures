@@ -179,3 +179,14 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
   and `converse` returned `AccessDeniedException` for all three, while `jp.anthropic.claude-sonnet-4-6` and
   `jp.anthropic.claude-haiku-4-5-20251001-v1:0` answered. Call `converse` before choosing a model ID.
 
+
+## Webhook-driven Claude Managed Agents worker (`claude-managed-agents-lambda-microvms`, verified 2026-10-09)
+
+- **`NO_INGRESS` still delivers the `/run` hook.** With `ingressNetworkConnectors: [...:aws-network-connector:NO_INGRESS]` the worker received `/run`, so a pull-based worker does not need `ALL_INGRESS`.
+- **An image whose build-time egress connector is `INTERNET_EGRESS` can be run with a VPC egress connector.** The build succeeded, and the VPC connector set in `RunMicrovm` carried the run-time traffic.
+- **A VPC egress connector takes about 4 minutes to create** (`AWS::Lambda::NetworkConnector` CREATE_IN_PROGRESS to COMPLETE), so a firewall-mode stack takes about 11 minutes.
+- **A MicroVM ENI in the connector subnet shows up in the Network Firewall flow log** (private source IP in the workload subnet, destination port 443). Use it to confirm a MicroVM's traffic goes through the firewall.
+- **A pull-based worker that loses access to the Anthropic API does not exit.** The SDK poller logs `Request timed out` and backs off, so the MicroVM keeps running until the idle policy or `maximumDurationInSeconds` ends it. The stale-MicroVM alarm covers this; `terminate-microvm` ends it by hand.
+- **Network Firewall rule group updates take one to two minutes to take effect**, even when `ConfigurationSyncStateSummary` already reads `IN_SYNC`. A test run right after the update still passed traffic that the new rule should block.
+
+See also [network-firewall-inspection.md](network-firewall-inspection.md) for the routing recipe.

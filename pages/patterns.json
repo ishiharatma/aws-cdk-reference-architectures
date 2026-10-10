@@ -672,5 +672,18 @@
     "level": 300,
     "date": "2026-10-08",
     "articles": {}
+  },
+  {
+    "id": "claude-managed-agents-lambda-microvms",
+    "title": "Claude Managed Agents on AWS Lambda MicroVMs: Self-Hosted Sandboxes with an Event-Driven Control Plane",
+    "description": "Runs the tool-execution side of Claude Managed Agents in your own AWS account. A signed webhook starts one Lambda MicroVM per session, the worker pulls work from Anthropic and ends itself when done. A CDK port of the AWS sample with secrets split by reader, an optional Network Firewall domain allow list for egress, NO_INGRESS, a customer managed key, alarms, stale MicroVM detection and a budget. Draft until deploy-verified.",
+    "image": "claude-managed-agents-lambda-microvms/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Lambda MicroVMs", "Claude Managed Agents", "API Gateway", "WAF", "Network Firewall", "SSM Parameter Store", "KMS", "CloudWatch"],
+    "link": "claude-managed-agents-lambda-microvms",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-09",
+    "draft": true,
+    "articles": {}
   }
 ]

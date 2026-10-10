@@ -1,0 +1,3740 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Stack Snapshot Tests (firewall egress) Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlarmTopicArn": {
+      "Value": {
+        "Ref": "AlarmTopicD01E77F9",
+      },
+    },
+    "EgressConnectorArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "InspectedEgressConnector96B2327F",
+          "Arn",
+        ],
+      },
+    },
+    "EgressMode": {
+      "Value": "firewall",
+    },
+    "EnvironmentKeyParamName": {
+      "Value": "/test/test/anthropic/environment-key",
+    },
+    "FirewallAlertLogGroup": {
+      "Value": {
+        "Ref": "InspectedEgressAlertLogs9CEDD7C3",
+      },
+    },
+    "FirewallFlowLogGroup": {
+      "Value": {
+        "Ref": "InspectedEgressFlowLogsD21D5456",
+      },
+    },
+    "IngressConnectorArn": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:",
+            {
+              "Ref": "AWS::Partition",
+            },
+            ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:NO_INGRESS",
+          ],
+        ],
+      },
+    },
+    "LauncherFunctionName": {
+      "Value": {
+        "Ref": "LauncherFunction59CBB1BA",
+      },
+    },
+    "MicrovmImageArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WorkerImage",
+          "ImageArn",
+        ],
+      },
+    },
+    "MicrovmLogGroupName": {
+      "Value": {
+        "Ref": "MicrovmLogGroup050CA0A7",
+      },
+    },
+    "SecretsKeyAlias": {
+      "Value": "alias/aws/ssm",
+    },
+    "SigningParamName": {
+      "Value": "/test/test/anthropic/webhook-signing-secret",
+    },
+    "WebhookApiEndpoint5B53C9C0": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "WebhookApi28122C53",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "WebhookUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "WebhookApi28122C53",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+            },
+            "/webhook",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlarmTopicD01E77F9": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "AlarmTopicKey57B0D3A7",
+            "Arn",
+          ],
+        },
+        "TopicName": "test-test-claude-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AlarmTopicKey57B0D3A7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Encrypts the alarm topic",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "cloudwatch.amazonaws.com",
+                  "budgets.amazonaws.com",
+                ],
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlarmTopicPolicy309DB5F8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "AlarmTopicD01E77F9",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "AlarmTopicopsexamplecom7B0F70A1": {
+      "Properties": {
+        "Endpoint": "ops@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "AlarmTopicD01E77F9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "ApiAccessLogsE9DF007D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "InspectedEgressVpc8CB7EF78",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "IdempotencyTable22A5A209": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-claude-idempotency",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiration",
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectedEgressAlertLogs9CEDD7C3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/test-test-claude/firewall/alert",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectedEgressConnector96B2327F": {
+      "DependsOn": [
+        "InspectedEgressFirewallDefaultToNat763EACF1",
+        "InspectedEgressNat995423AE",
+        "InspectedEgressPublicToWorkloadViaFirewallA620AAC0",
+        "InspectedEgressWorkloadDefaultToFirewallF8A3D1F4",
+      ],
+      "Properties": {
+        "Configuration": {
+          "VpcEgressConfiguration": {
+            "AssociatedComputeResourceTypes": [
+              "MicroVm",
+            ],
+            "NetworkProtocol": "IPv4",
+            "SecurityGroupIds": [
+              {
+                "Fn::GetAtt": [
+                  "InspectedEgressConnectorSecurityGroup1D00D5EA",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetIds": [
+              {
+                "Ref": "InspectedEgressVpcworkloadSubnet1Subnet55719D0F",
+              },
+            ],
+          },
+        },
+        "Name": "test-test-claude-egress",
+        "OperatorRole": {
+          "Fn::GetAtt": [
+            "InspectedEgressConnectorOperatorRole647B559E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::NetworkConnector",
+    },
+    "InspectedEgressConnectorOperatorRole647B559E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda to manage ENIs in the MicroVM egress subnet",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "InspectedEgressConnectorSecurityGroup1D00D5EA": {
+      "Properties": {
+        "GroupDescription": "Outbound HTTPS only for Claude worker MicroVMs",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "HTTPS to the internet, filtered by Network Firewall",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "InspectedEgressDomainAllowList4B5EC356": {
+      "Properties": {
+        "Capacity": 100,
+        "RuleGroup": {
+          "RuleVariables": {
+            "IPSets": {
+              "HOME_NET": {
+                "Definition": [
+                  "10.60.0.0/24",
+                ],
+              },
+            },
+          },
+          "RulesSource": {
+            "RulesSourceList": {
+              "GeneratedRulesType": "ALLOWLIST",
+              "TargetTypes": [
+                "HTTP_HOST",
+                "TLS_SNI",
+              ],
+              "Targets": [
+                "api.anthropic.com",
+                ".amazonaws.com",
+              ],
+            },
+          },
+        },
+        "RuleGroupName": "test-test-claude-domain-allow",
+        "Type": "STATEFUL",
+      },
+      "Type": "AWS::NetworkFirewall::RuleGroup",
+    },
+    "InspectedEgressFirewall4B2B694E": {
+      "Properties": {
+        "DeleteProtection": false,
+        "FirewallName": "test-test-claude-firewall",
+        "FirewallPolicyArn": {
+          "Fn::GetAtt": [
+            "InspectedEgressPolicy226FB227",
+            "FirewallPolicyArn",
+          ],
+        },
+        "SubnetMappings": [
+          {
+            "SubnetId": {
+              "Ref": "InspectedEgressVpcfirewallSubnet1Subnet3FE13A43",
+            },
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::NetworkFirewall::Firewall",
+    },
+    "InspectedEgressFirewallDefaultToNat763EACF1": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "InspectedEgressNat995423AE",
+        },
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcfirewallSubnet1RouteTableCD325CFA",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InspectedEgressFlowLogsD21D5456": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/test-test-claude/firewall/flow",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectedEgressLoggingFEFA0431": {
+      "Properties": {
+        "FirewallArn": {
+          "Fn::GetAtt": [
+            "InspectedEgressFirewall4B2B694E",
+            "FirewallArn",
+          ],
+        },
+        "LoggingConfiguration": {
+          "LogDestinationConfigs": [
+            {
+              "LogDestination": {
+                "logGroup": {
+                  "Ref": "InspectedEgressAlertLogs9CEDD7C3",
+                },
+              },
+              "LogDestinationType": "CloudWatchLogs",
+              "LogType": "ALERT",
+            },
+            {
+              "LogDestination": {
+                "logGroup": {
+                  "Ref": "InspectedEgressFlowLogsD21D5456",
+                },
+              },
+              "LogDestinationType": "CloudWatchLogs",
+              "LogType": "FLOW",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::NetworkFirewall::LoggingConfiguration",
+    },
+    "InspectedEgressNat995423AE": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "InspectedEgressNatEipE8C0B612",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "InspectedEgressVpcpublicSubnet1Subnet833FAC8E",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-claude-nat",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "InspectedEgressNatEipE8C0B612": {
+      "Properties": {
+        "Domain": "vpc",
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "InspectedEgressPolicy226FB227": {
+      "Properties": {
+        "FirewallPolicy": {
+          "StatefulRuleGroupReferences": [
+            {
+              "ResourceArn": {
+                "Fn::GetAtt": [
+                  "InspectedEgressDomainAllowList4B5EC356",
+                  "RuleGroupArn",
+                ],
+              },
+            },
+          ],
+          "StatelessDefaultActions": [
+            "aws:forward_to_sfe",
+          ],
+          "StatelessFragmentDefaultActions": [
+            "aws:forward_to_sfe",
+          ],
+        },
+        "FirewallPolicyName": "test-test-claude-policy",
+      },
+      "Type": "AWS::NetworkFirewall::FirewallPolicy",
+    },
+    "InspectedEgressPublicToWorkloadViaFirewallA620AAC0": {
+      "Properties": {
+        "DestinationCidrBlock": "10.60.0.32/27",
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcpublicSubnet1RouteTable0E367FEA",
+        },
+        "VpcEndpointId": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Split": [
+                ":",
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "InspectedEgressFirewall4B2B694E",
+                        "EndpointIds",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InspectedEgressVpc8CB7EF78": {
+      "Properties": {
+        "CidrBlock": "10.60.0.0/24",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "InspectedEgressVpcIGW35D302C3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "InspectedEgressVpcRestrictDefaultSecurityGroupCustomResource3162E802": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "InspectedEgressVpc8CB7EF78",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InspectedEgressVpcVPCGWC414C14F": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InspectedEgressVpcIGW35D302C3",
+        },
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "InspectedEgressVpcfirewallSubnet1RouteTableAssociationEAD62D10": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcfirewallSubnet1RouteTableCD325CFA",
+        },
+        "SubnetId": {
+          "Ref": "InspectedEgressVpcfirewallSubnet1Subnet3FE13A43",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectedEgressVpcfirewallSubnet1RouteTableCD325CFA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/firewallSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectedEgressVpcfirewallSubnet1Subnet3FE13A43": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.60.0.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "firewall",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/firewallSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InspectedEgressVpcpublicSubnet1DefaultRouteB2E0B08A": {
+      "DependsOn": [
+        "InspectedEgressVpcVPCGWC414C14F",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InspectedEgressVpcIGW35D302C3",
+        },
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcpublicSubnet1RouteTable0E367FEA",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InspectedEgressVpcpublicSubnet1RouteTable0E367FEA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectedEgressVpcpublicSubnet1RouteTableAssociation15D08F12": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcpublicSubnet1RouteTable0E367FEA",
+        },
+        "SubnetId": {
+          "Ref": "InspectedEgressVpcpublicSubnet1Subnet833FAC8E",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectedEgressVpcpublicSubnet1Subnet833FAC8E": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.60.0.0/28",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InspectedEgressVpcworkloadSubnet1RouteTable8A0E944C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "InspectedEgressVpcworkloadSubnet1RouteTableAssociation3B5F4257": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcworkloadSubnet1RouteTable8A0E944C",
+        },
+        "SubnetId": {
+          "Ref": "InspectedEgressVpcworkloadSubnet1Subnet55719D0F",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "InspectedEgressVpcworkloadSubnet1Subnet55719D0F": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.60.0.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "workload",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Main/InspectedEgress/Vpc/workloadSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "InspectedEgressVpc8CB7EF78",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "InspectedEgressWorkloadDefaultToFirewallF8A3D1F4": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "InspectedEgressVpcworkloadSubnet1RouteTable8A0E944C",
+        },
+        "VpcEndpointId": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Split": [
+                ":",
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "InspectedEgressFirewall4B2B694E",
+                        "EndpointIds",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "LauncherErrors46B0C75B": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "The launcher Lambda raised an unhandled error",
+        "AlarmName": "test-test-claude-LauncherErrors",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "LauncherFunction59CBB1BA",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "LauncherFunction59CBB1BA": {
+      "DependsOn": [
+        "LauncherFunctionServiceRoleDefaultPolicy07E7F018",
+        "LauncherFunctionServiceRole299D9F31",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ANTHROPIC_ENVIRONMENT_ID": "env_test",
+            "EGRESS_CONNECTOR_ARN": {
+              "Fn::GetAtt": [
+                "InspectedEgressConnector96B2327F",
+                "Arn",
+              ],
+            },
+            "ENVIRONMENT_KEY_PARAM_NAME": "/test/test/anthropic/environment-key",
+            "IDEMPOTENCY_TABLE": {
+              "Ref": "IdempotencyTable22A5A209",
+            },
+            "IDEMPOTENCY_TTL_SECONDS": "14400",
+            "IDLE_POLICY": "{"maxIdleDurationSeconds":600,"suspendedDurationSeconds":0,"autoResumeEnabled":false}",
+            "INGRESS_CONNECTOR_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:NO_INGRESS",
+                ],
+              ],
+            },
+            "MAX_LIFETIME_SECONDS": "14400",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "WorkerImage",
+                "ImageArn",
+              ],
+            },
+            "MICROVM_LOG_GROUP": {
+              "Ref": "MicrovmLogGroup050CA0A7",
+            },
+            "SIGNING_PARAM_NAME": "/test/test/anthropic/webhook-signing-secret",
+          },
+        },
+        "FunctionName": "test-test-claude-launcher",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "LauncherLogGroupF86FA07D",
+          },
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "LauncherFunctionServiceRole299D9F31",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LauncherFunctionServiceRole299D9F31": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LauncherFunctionServiceRoleDefaultPolicy07E7F018": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/webhook-signing-secret",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "kms:Decrypt",
+              "Condition": {
+                "StringEquals": {
+                  "kms:EncryptionContext:PARAMETER_ARN": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/webhook-signing-secret",
+                      ],
+                    ],
+                  },
+                  "kms:ViaService": "ssm.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "IdempotencyTable22A5A209",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:RunMicrovm",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmExecutionRole1ADA6FF9",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "lambda:PassNetworkConnector",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "InspectedEgressConnector96B2327F",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LauncherFunctionServiceRoleDefaultPolicy07E7F018",
+        "Roles": [
+          {
+            "Ref": "LauncherFunctionServiceRole299D9F31",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LauncherLogGroupF86FA07D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MicrovmExecutionRole1ADA6FF9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+            {
+              "Action": "sts:TagSession",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by running worker MicroVMs: read the environment key, terminate itself",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmExecutionRoleDefaultPolicy2F5F9AAC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/environment-key",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "kms:Decrypt",
+              "Condition": {
+                "StringEquals": {
+                  "kms:EncryptionContext:PARAMETER_ARN": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/environment-key",
+                      ],
+                    ],
+                  },
+                  "kms:ViaService": "ssm.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmLogGroup050CA0A7",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "lambda:TerminateMicrovm",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmExecutionRoleDefaultPolicy2F5F9AAC",
+        "Roles": [
+          {
+            "Ref": "MicrovmExecutionRole1ADA6FF9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageBuildRole04A0F8FE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda MicroVMs while building the worker image",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmImageBuildRoleDefaultPolicy1AFC78A1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmLogGroup050CA0A7",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "Roles": [
+          {
+            "Ref": "MicrovmImageBuildRole04A0F8FE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmLogGroup050CA0A7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda-microvms/test-test-claude-worker",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MonthlyBudget": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 100,
+            "Unit": "USD",
+          },
+          "BudgetName": "test-test-claude-monthly",
+          "BudgetType": "COST",
+          "CostFilters": {
+            "TagKeyValue": [
+              "user:Project$test",
+            ],
+          },
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+    "RunMicrovmCapacity628639D0": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "MicroVM quota or throttling limit reached: request a limit increase",
+        "AlarmName": "test-test-claude-RunMicrovmCapacity",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "RunMicrovmCapacityErrors",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "RunMicrovmCapacityFilterC5CAF6B3": {
+      "Properties": {
+        "FilterPattern": "?"ServiceQuotaExceededException" ?"ThrottlingException"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "RunMicrovmCapacityErrors",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "RunMicrovmFailed70BABC32": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "RunMicrovm failed; Anthropic retries the delivery",
+        "AlarmName": "test-test-claude-RunMicrovmFailed",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "RunMicrovmFailed",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "RunMicrovmFailedFilterDCAC9CF9": {
+      "Properties": {
+        "FilterPattern": ""RunMicrovm failed"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "RunMicrovmFailed",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "StaleDetectorFunction65ED9956": {
+      "DependsOn": [
+        "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5",
+        "StaleDetectorFunctionServiceRole7413CB17",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "METRIC_NAMESPACE": "ClaudeManagedAgents",
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "WorkerImage",
+                "ImageArn",
+              ],
+            },
+            "STALE_THRESHOLD_MINUTES": "240",
+          },
+        },
+        "FunctionName": "test-test-claude-stale-detector",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "StaleDetectorLogGroup0E5771AA",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "StaleDetectorFunctionServiceRole7413CB17",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "StaleDetectorFunctionServiceRole7413CB17": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:ListMicrovms",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "cloudwatch:PutMetricData",
+              "Condition": {
+                "StringEquals": {
+                  "cloudwatch:namespace": "ClaudeManagedAgents",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5",
+        "Roles": [
+          {
+            "Ref": "StaleDetectorFunctionServiceRole7413CB17",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "StaleDetectorLogGroup0E5771AA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StaleDetectorSchedule6D9B4B0C": {
+      "Properties": {
+        "Description": "Looks for worker MicroVMs that outlived the expected session length",
+        "ScheduleExpression": "rate(10 minutes)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "StaleDetectorFunction65ED9956",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "StaleDetectorScheduleAllowEventRuleMainStaleDetectorFunction1C64757DC10F4968": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "StaleDetectorFunction65ED9956",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "StaleDetectorSchedule6D9B4B0C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "StaleMicrovms0B8ADBD5": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A worker MicroVM is still RUNNING past the stale threshold: self-termination was missed",
+        "AlarmName": "test-test-claude-StaleMicrovms",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "StaleMicrovms",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 600,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "WafLogging": {
+      "Properties": {
+        "LogDestinationConfigs": [
+          {
+            "Fn::GetAtt": [
+              "WafLogsF9F75746",
+              "Arn",
+            ],
+          },
+        ],
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "WebhookWebAcl",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::LoggingConfiguration",
+    },
+    "WafLogsF9F75746": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "aws-waf-logs-test-test-claude-webhook",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WebAclAssociation": {
+      "DependsOn": [
+        "WebhookApiDeploymentStageprodF1908D9A",
+      ],
+      "Properties": {
+        "ResourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":apigateway:ap-northeast-1::/restapis/",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/stages/",
+              {
+                "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+              },
+            ],
+          ],
+        },
+        "WebACLArn": {
+          "Fn::GetAtt": [
+            "WebhookWebAcl",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::WebACLAssociation",
+    },
+    "WebhookApi28122C53": {
+      "Properties": {
+        "Description": "Receives Anthropic webhooks; the launcher verifies the signature",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "test-test-claude-webhook",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "WebhookApiAnthropicWebhookEvent2F88AD58": {
+      "Properties": {
+        "ContentType": "application/json",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "Schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "properties": {
+            "created_at": {
+              "type": "string",
+            },
+            "data": {
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+                "type": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "type",
+                "id",
+              ],
+              "type": "object",
+            },
+            "id": {
+              "type": "string",
+            },
+            "type": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "type",
+            "id",
+            "created_at",
+            "data",
+          ],
+          "type": "object",
+        },
+      },
+      "Type": "AWS::ApiGateway::Model",
+    },
+    "WebhookApiBodyValidatorB24C53ED": {
+      "Properties": {
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "ValidateRequestBody": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "WebhookApiDeployment5953494D5d553dee4937ac30a1e377d8a1ae5abb": {
+      "DependsOn": [
+        "WebhookApiAnthropicWebhookEvent2F88AD58",
+        "WebhookApiBodyValidatorB24C53ED",
+        "WebhookApiwebhookPOST86DAF885",
+        "WebhookApiwebhook45FF8A56",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Receives Anthropic webhooks; the launcher verifies the signature",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "WebhookApiDeploymentStageprodF1908D9A": {
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogsE9DF007D",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "WebhookApiDeployment5953494D5d553dee4937ac30a1e377d8a1ae5abb",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "StageName": "prod",
+        "TracingEnabled": true,
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "WebhookApiwebhook45FF8A56": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "WebhookApi28122C53",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "webhook",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "WebhookApiwebhookPOST86DAF885": {
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "LauncherFunction59CBB1BA",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestModels": {
+          "application/json": {
+            "Ref": "WebhookApiAnthropicWebhookEvent2F88AD58",
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "WebhookApiBodyValidatorB24C53ED",
+        },
+        "ResourceId": {
+          "Ref": "WebhookApiwebhook45FF8A56",
+        },
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "WebhookApiwebhookPOSTApiPermissionMainWebhookApiCE46D1D5POSTwebhook77FA97F2": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LauncherFunction59CBB1BA",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/",
+              {
+                "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+              },
+              "/POST/webhook",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebhookApiwebhookPOSTApiPermissionTestMainWebhookApiCE46D1D5POSTwebhookD50DA461": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LauncherFunction59CBB1BA",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/test-invoke-stage/POST/webhook",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebhookRejected76DBFE7F": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "Webhook deliveries failed signature verification (HTTP 401): check the signing secret in SSM",
+        "AlarmName": "test-test-claude-WebhookRejected",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "WebhookRejected",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "WebhookRejectedFilter3640AF05": {
+      "Properties": {
+        "FilterPattern": ""webhook signature verification failed"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "WebhookRejected",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "WebhookWebAcl": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Name": "test-test-claude-webhook",
+        "Rules": [
+          {
+            "Name": "AWSManagedRulesCommonRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 1,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesCommonRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 2,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesKnownBadInputsRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesAmazonIpReputationList",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 3,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesAmazonIpReputationList",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesAmazonIpReputationList",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Block": {},
+            },
+            "Name": "RateLimitPerIp",
+            "Priority": 4,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "EvaluationWindowSec": 300,
+                "Limit": 100,
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-rate-limit",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "REGIONAL",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-claude-webhook",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "WorkerImage": {
+      "DependsOn": [
+        "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "MicrovmImageBuildRole04A0F8FE",
+      ],
+      "Properties": {
+        "AdditionalOsCapabilities": [],
+        "BaseImageArn": "arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1",
+        "BaseImageVersion": "1",
+        "BuildRoleArn": {
+          "Fn::GetAtt": [
+            "MicrovmImageBuildRole04A0F8FE",
+            "Arn",
+          ],
+        },
+        "CodeArtifact": {
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/ASSET.zip",
+        },
+        "CpuConfigurations": [
+          {
+            "Architecture": "ARM_64",
+          },
+        ],
+        "Description": "Claude self-hosted environment worker (EnvironmentWorker) packaged as a Lambda MicroVM image",
+        "EgressNetworkConnectors": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+              ],
+            ],
+          },
+        ],
+        "EnvironmentVariables": [],
+        "Hooks": {
+          "MicrovmHooks": {
+            "Resume": "ENABLED",
+            "ResumeTimeoutInSeconds": 5,
+            "Run": "ENABLED",
+            "RunTimeoutInSeconds": 5,
+            "Suspend": "ENABLED",
+            "SuspendTimeoutInSeconds": 5,
+            "Terminate": "ENABLED",
+            "TerminateTimeoutInSeconds": 5,
+          },
+          "MicrovmImageHooks": {
+            "Ready": "ENABLED",
+            "ReadyTimeoutInSeconds": 300,
+            "Validate": "ENABLED",
+            "ValidateTimeoutInSeconds": 300,
+          },
+          "Port": 9000,
+        },
+        "Logging": {
+          "CloudWatch": {
+            "LogGroup": {
+              "Ref": "MicrovmLogGroup050CA0A7",
+            },
+          },
+        },
+        "Name": "test-test-claude-worker",
+        "Resources": [
+          {
+            "MinimumMemoryInMiB": 2048,
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::MicrovmImage",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests (firewall egress) Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 1,
+  "AWS::ApiGateway::Model": 1,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 1,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::Budgets::Budget": 1,
+  "AWS::CloudWatch::Alarm": 5,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 4,
+  "AWS::EC2::RouteTable": 3,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 3,
+  "AWS::EC2::SubnetRouteTableAssociation": 3,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::Events::Rule": 1,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 6,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 3,
+  "AWS::Lambda::MicrovmImage": 1,
+  "AWS::Lambda::NetworkConnector": 1,
+  "AWS::Lambda::Permission": 3,
+  "AWS::Logs::LogGroup": 7,
+  "AWS::Logs::MetricFilter": 3,
+  "AWS::NetworkFirewall::Firewall": 1,
+  "AWS::NetworkFirewall::FirewallPolicy": 1,
+  "AWS::NetworkFirewall::LoggingConfiguration": 1,
+  "AWS::NetworkFirewall::RuleGroup": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::WAFv2::LoggingConfiguration": 1,
+  "AWS::WAFv2::WebACL": 1,
+  "AWS::WAFv2::WebACLAssociation": 1,
+  "Custom::VpcRestrictDefaultSG": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests (internet egress) Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlarmTopicArn": {
+      "Value": {
+        "Ref": "AlarmTopicD01E77F9",
+      },
+    },
+    "EgressConnectorArn": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:",
+            {
+              "Ref": "AWS::Partition",
+            },
+            ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+          ],
+        ],
+      },
+    },
+    "EgressMode": {
+      "Value": "internet",
+    },
+    "EnvironmentKeyParamName": {
+      "Value": "/test/test/anthropic/environment-key",
+    },
+    "IngressConnectorArn": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:",
+            {
+              "Ref": "AWS::Partition",
+            },
+            ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:ALL_INGRESS",
+          ],
+        ],
+      },
+    },
+    "LauncherFunctionName": {
+      "Value": {
+        "Ref": "LauncherFunction59CBB1BA",
+      },
+    },
+    "MicrovmImageArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WorkerImage",
+          "ImageArn",
+        ],
+      },
+    },
+    "MicrovmLogGroupName": {
+      "Value": {
+        "Ref": "MicrovmLogGroup050CA0A7",
+      },
+    },
+    "SecretsKeyAlias": {
+      "Value": "alias/aws/ssm",
+    },
+    "SigningParamName": {
+      "Value": "/test/test/anthropic/webhook-signing-secret",
+    },
+    "WebhookApiEndpoint5B53C9C0": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "WebhookApi28122C53",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "WebhookUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "WebhookApi28122C53",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+            },
+            "/webhook",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlarmTopicD01E77F9": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "AlarmTopicKey57B0D3A7",
+            "Arn",
+          ],
+        },
+        "TopicName": "test-test-claude-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AlarmTopicKey57B0D3A7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Encrypts the alarm topic",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "cloudwatch.amazonaws.com",
+                  "budgets.amazonaws.com",
+                ],
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlarmTopicPolicy309DB5F8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "AlarmTopicD01E77F9",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "AlarmTopicopsexamplecom7B0F70A1": {
+      "Properties": {
+        "Endpoint": "ops@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "AlarmTopicD01E77F9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "ApiAccessLogsE9DF007D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "IdempotencyTable22A5A209": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-claude-idempotency",
+        "TimeToLiveSpecification": {
+          "AttributeName": "expiration",
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LauncherErrors46B0C75B": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "The launcher Lambda raised an unhandled error",
+        "AlarmName": "test-test-claude-LauncherErrors",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "LauncherFunction59CBB1BA",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "LauncherFunction59CBB1BA": {
+      "DependsOn": [
+        "LauncherFunctionServiceRoleDefaultPolicy07E7F018",
+        "LauncherFunctionServiceRole299D9F31",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ANTHROPIC_ENVIRONMENT_ID": "env_test",
+            "EGRESS_CONNECTOR_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+                ],
+              ],
+            },
+            "ENVIRONMENT_KEY_PARAM_NAME": "/test/test/anthropic/environment-key",
+            "IDEMPOTENCY_TABLE": {
+              "Ref": "IdempotencyTable22A5A209",
+            },
+            "IDEMPOTENCY_TTL_SECONDS": "14400",
+            "IDLE_POLICY": "{"maxIdleDurationSeconds":600,"suspendedDurationSeconds":0,"autoResumeEnabled":false}",
+            "INGRESS_CONNECTOR_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:ALL_INGRESS",
+                ],
+              ],
+            },
+            "MAX_LIFETIME_SECONDS": "14400",
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "MicrovmExecutionRole1ADA6FF9",
+                "Arn",
+              ],
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "WorkerImage",
+                "ImageArn",
+              ],
+            },
+            "MICROVM_LOG_GROUP": {
+              "Ref": "MicrovmLogGroup050CA0A7",
+            },
+            "SIGNING_PARAM_NAME": "/test/test/anthropic/webhook-signing-secret",
+          },
+        },
+        "FunctionName": "test-test-claude-launcher",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "LauncherLogGroupF86FA07D",
+          },
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "LauncherFunctionServiceRole299D9F31",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LauncherFunctionServiceRole299D9F31": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LauncherFunctionServiceRoleDefaultPolicy07E7F018": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/webhook-signing-secret",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "kms:Decrypt",
+              "Condition": {
+                "StringEquals": {
+                  "kms:EncryptionContext:PARAMETER_ARN": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/webhook-signing-secret",
+                      ],
+                    ],
+                  },
+                  "kms:ViaService": "ssm.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "IdempotencyTable22A5A209",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:RunMicrovm",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:PassRole",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmExecutionRole1ADA6FF9",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "lambda:PassNetworkConnector",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LauncherFunctionServiceRoleDefaultPolicy07E7F018",
+        "Roles": [
+          {
+            "Ref": "LauncherFunctionServiceRole299D9F31",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "LauncherLogGroupF86FA07D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MicrovmExecutionRole1ADA6FF9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+            {
+              "Action": "sts:TagSession",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by running worker MicroVMs: read the environment key, terminate itself",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmExecutionRoleDefaultPolicy2F5F9AAC": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/environment-key",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "kms:Decrypt",
+              "Condition": {
+                "StringEquals": {
+                  "kms:EncryptionContext:PARAMETER_ARN": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":ssm:ap-northeast-1:123456789012:parameter/test/test/anthropic/environment-key",
+                      ],
+                    ],
+                  },
+                  "kms:ViaService": "ssm.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmLogGroup050CA0A7",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "lambda:TerminateMicrovm",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmExecutionRoleDefaultPolicy2F5F9AAC",
+        "Roles": [
+          {
+            "Ref": "MicrovmExecutionRole1ADA6FF9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmImageBuildRole04A0F8FE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Lambda MicroVMs while building the worker image",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MicrovmImageBuildRoleDefaultPolicy1AFC78A1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MicrovmLogGroup050CA0A7",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "Roles": [
+          {
+            "Ref": "MicrovmImageBuildRole04A0F8FE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "MicrovmLogGroup050CA0A7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda-microvms/test-test-claude-worker",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MonthlyBudget": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 100,
+            "Unit": "USD",
+          },
+          "BudgetName": "test-test-claude-monthly",
+          "BudgetType": "COST",
+          "CostFilters": {
+            "TagKeyValue": [
+              "user:Project$test",
+            ],
+          },
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
+    "RunMicrovmCapacity628639D0": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "MicroVM quota or throttling limit reached: request a limit increase",
+        "AlarmName": "test-test-claude-RunMicrovmCapacity",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "RunMicrovmCapacityErrors",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "RunMicrovmCapacityFilterC5CAF6B3": {
+      "Properties": {
+        "FilterPattern": "?"ServiceQuotaExceededException" ?"ThrottlingException"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "RunMicrovmCapacityErrors",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "RunMicrovmFailed70BABC32": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "RunMicrovm failed; Anthropic retries the delivery",
+        "AlarmName": "test-test-claude-RunMicrovmFailed",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "RunMicrovmFailed",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "RunMicrovmFailedFilterDCAC9CF9": {
+      "Properties": {
+        "FilterPattern": ""RunMicrovm failed"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "RunMicrovmFailed",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "StaleDetectorFunction65ED9956": {
+      "DependsOn": [
+        "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5",
+        "StaleDetectorFunctionServiceRole7413CB17",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "METRIC_NAMESPACE": "ClaudeManagedAgents",
+            "MICROVM_IMAGE_ARN": {
+              "Fn::GetAtt": [
+                "WorkerImage",
+                "ImageArn",
+              ],
+            },
+            "STALE_THRESHOLD_MINUTES": "240",
+          },
+        },
+        "FunctionName": "test-test-claude-stale-detector",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "StaleDetectorLogGroup0E5771AA",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "StaleDetectorFunctionServiceRole7413CB17",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "StaleDetectorFunctionServiceRole7413CB17": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:ListMicrovms",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "cloudwatch:PutMetricData",
+              "Condition": {
+                "StringEquals": {
+                  "cloudwatch:namespace": "ClaudeManagedAgents",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "StaleDetectorFunctionServiceRoleDefaultPolicy7BBB31B5",
+        "Roles": [
+          {
+            "Ref": "StaleDetectorFunctionServiceRole7413CB17",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "StaleDetectorLogGroup0E5771AA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StaleDetectorSchedule6D9B4B0C": {
+      "Properties": {
+        "Description": "Looks for worker MicroVMs that outlived the expected session length",
+        "ScheduleExpression": "rate(10 minutes)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "StaleDetectorFunction65ED9956",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "StaleDetectorScheduleAllowEventRuleMainStaleDetectorFunction1C64757DC10F4968": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "StaleDetectorFunction65ED9956",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "StaleDetectorSchedule6D9B4B0C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "StaleMicrovms0B8ADBD5": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A worker MicroVM is still RUNNING past the stale threshold: self-termination was missed",
+        "AlarmName": "test-test-claude-StaleMicrovms",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "StaleMicrovms",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 600,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "WafLogging": {
+      "Properties": {
+        "LogDestinationConfigs": [
+          {
+            "Fn::GetAtt": [
+              "WafLogsF9F75746",
+              "Arn",
+            ],
+          },
+        ],
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "WebhookWebAcl",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::LoggingConfiguration",
+    },
+    "WafLogsF9F75746": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "aws-waf-logs-test-test-claude-webhook",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WebAclAssociation": {
+      "DependsOn": [
+        "WebhookApiDeploymentStageprodF1908D9A",
+      ],
+      "Properties": {
+        "ResourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":apigateway:ap-northeast-1::/restapis/",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/stages/",
+              {
+                "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+              },
+            ],
+          ],
+        },
+        "WebACLArn": {
+          "Fn::GetAtt": [
+            "WebhookWebAcl",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::WebACLAssociation",
+    },
+    "WebhookApi28122C53": {
+      "Properties": {
+        "Description": "Receives Anthropic webhooks; the launcher verifies the signature",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "test-test-claude-webhook",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "WebhookApiAnthropicWebhookEvent2F88AD58": {
+      "Properties": {
+        "ContentType": "application/json",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "Schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "properties": {
+            "created_at": {
+              "type": "string",
+            },
+            "data": {
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+                "type": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "type",
+                "id",
+              ],
+              "type": "object",
+            },
+            "id": {
+              "type": "string",
+            },
+            "type": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "type",
+            "id",
+            "created_at",
+            "data",
+          ],
+          "type": "object",
+        },
+      },
+      "Type": "AWS::ApiGateway::Model",
+    },
+    "WebhookApiBodyValidatorB24C53ED": {
+      "Properties": {
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "ValidateRequestBody": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "WebhookApiDeployment5953494D5d553dee4937ac30a1e377d8a1ae5abb": {
+      "DependsOn": [
+        "WebhookApiAnthropicWebhookEvent2F88AD58",
+        "WebhookApiBodyValidatorB24C53ED",
+        "WebhookApiwebhookPOST86DAF885",
+        "WebhookApiwebhook45FF8A56",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Receives Anthropic webhooks; the launcher verifies the signature",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "WebhookApiDeploymentStageprodF1908D9A": {
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogsE9DF007D",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "WebhookApiDeployment5953494D5d553dee4937ac30a1e377d8a1ae5abb",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+        "StageName": "prod",
+        "TracingEnabled": true,
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "WebhookApiwebhook45FF8A56": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "WebhookApi28122C53",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "webhook",
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "WebhookApiwebhookPOST86DAF885": {
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "LauncherFunction59CBB1BA",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestModels": {
+          "application/json": {
+            "Ref": "WebhookApiAnthropicWebhookEvent2F88AD58",
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "WebhookApiBodyValidatorB24C53ED",
+        },
+        "ResourceId": {
+          "Ref": "WebhookApiwebhook45FF8A56",
+        },
+        "RestApiId": {
+          "Ref": "WebhookApi28122C53",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "WebhookApiwebhookPOSTApiPermissionMainWebhookApiCE46D1D5POSTwebhook77FA97F2": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LauncherFunction59CBB1BA",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/",
+              {
+                "Ref": "WebhookApiDeploymentStageprodF1908D9A",
+              },
+              "/POST/webhook",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebhookApiwebhookPOSTApiPermissionTestMainWebhookApiCE46D1D5POSTwebhookD50DA461": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LauncherFunction59CBB1BA",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "WebhookApi28122C53",
+              },
+              "/test-invoke-stage/POST/webhook",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "WebhookRejected76DBFE7F": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "Webhook deliveries failed signature verification (HTTP 401): check the signing secret in SSM",
+        "AlarmName": "test-test-claude-WebhookRejected",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "WebhookRejected",
+        "Namespace": "ClaudeManagedAgents",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "WebhookRejectedFilter3640AF05": {
+      "Properties": {
+        "FilterPattern": ""webhook signature verification failed"",
+        "LogGroupName": {
+          "Ref": "LauncherLogGroupF86FA07D",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "WebhookRejected",
+            "MetricNamespace": "ClaudeManagedAgents",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
+    "WebhookWebAcl": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Name": "test-test-claude-webhook",
+        "Rules": [
+          {
+            "Name": "AWSManagedRulesCommonRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 1,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesCommonRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 2,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesKnownBadInputsRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesAmazonIpReputationList",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 3,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesAmazonIpReputationList",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-AWSManagedRulesAmazonIpReputationList",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Block": {},
+            },
+            "Name": "RateLimitPerIp",
+            "Priority": 4,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "EvaluationWindowSec": 300,
+                "Limit": 100,
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-claude-rate-limit",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "REGIONAL",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-claude-webhook",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "WorkerImage": {
+      "DependsOn": [
+        "MicrovmImageBuildRoleDefaultPolicy1AFC78A1",
+        "MicrovmImageBuildRole04A0F8FE",
+      ],
+      "Properties": {
+        "AdditionalOsCapabilities": [],
+        "BaseImageArn": "arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1",
+        "BaseImageVersion": "1",
+        "BuildRoleArn": {
+          "Fn::GetAtt": [
+            "MicrovmImageBuildRole04A0F8FE",
+            "Arn",
+          ],
+        },
+        "CodeArtifact": {
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/ASSET.zip",
+        },
+        "CpuConfigurations": [
+          {
+            "Architecture": "ARM_64",
+          },
+        ],
+        "Description": "Claude self-hosted environment worker (EnvironmentWorker) packaged as a Lambda MicroVM image",
+        "EgressNetworkConnectors": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+              ],
+            ],
+          },
+        ],
+        "EnvironmentVariables": [],
+        "Hooks": {
+          "MicrovmHooks": {
+            "Resume": "ENABLED",
+            "ResumeTimeoutInSeconds": 5,
+            "Run": "ENABLED",
+            "RunTimeoutInSeconds": 5,
+            "Suspend": "ENABLED",
+            "SuspendTimeoutInSeconds": 5,
+            "Terminate": "ENABLED",
+            "TerminateTimeoutInSeconds": 5,
+          },
+          "MicrovmImageHooks": {
+            "Ready": "ENABLED",
+            "ReadyTimeoutInSeconds": 300,
+            "Validate": "ENABLED",
+            "ValidateTimeoutInSeconds": 300,
+          },
+          "Port": 9000,
+        },
+        "Logging": {
+          "CloudWatch": {
+            "LogGroup": {
+              "Ref": "MicrovmLogGroup050CA0A7",
+            },
+          },
+        },
+        "Name": "test-test-claude-worker",
+        "Resources": [
+          {
+            "MinimumMemoryInMiB": 2048,
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::MicrovmImage",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests (internet egress) Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 1,
+  "AWS::ApiGateway::Model": 1,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 1,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::Budgets::Budget": 1,
+  "AWS::CloudWatch::Alarm": 5,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::Events::Rule": 1,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 4,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::MicrovmImage": 1,
+  "AWS::Lambda::Permission": 3,
+  "AWS::Logs::LogGroup": 5,
+  "AWS::Logs::MetricFilter": 3,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::WAFv2::LoggingConfiguration": 1,
+  "AWS::WAFv2::WebACL": 1,
+  "AWS::WAFv2::WebACLAssociation": 1,
+}
+`;
