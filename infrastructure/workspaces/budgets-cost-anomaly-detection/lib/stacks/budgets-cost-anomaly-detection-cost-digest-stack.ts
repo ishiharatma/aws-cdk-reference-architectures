@@ -47,7 +47,7 @@ function buildCostDigestDescriptionExpression(locale: 'ja' | 'en', periodDays: n
             ' & " USD."' +
             ' & "\\n"' +
             ` & "👁‍🗨 ${periodDays}-day threshold: " & $AngryThreshold & " USD"` +
-            ' & "📅 Period: " & $states.input.Start & " to " & $states.input.End' +
+            ' & "\\n📅 Period: " & $states.input.Start & " to " & $states.input.End' +
             ' & "\\n"' +
             ' & "💸 Top 5 services by cost"' +
             ' & "\\n"' +
@@ -56,7 +56,7 @@ function buildCostDigestDescriptionExpression(locale: 'ja' | 'en', periodDays: n
             ' & "\\n:three: " & ( $states.input.CostSorted[2].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[2].Total & " USD"' +
             ' & "\\n:four: " & ( $states.input.CostSorted[3].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[3].Total & " USD"' +
             ' & "\\n:five: " & ( $states.input.CostSorted[4].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[4].Total & " USD"' +
-            ' & "\\n"' +
+            ' & "\\n\\n"' +
             ' & "* Note: cost data has a reporting lag and may not reflect the most recent charges."'
         );
     }
@@ -69,7 +69,7 @@ function buildCostDigestDescriptionExpression(locale: 'ja' | 'en', periodDays: n
         ' & " USD です。"' +
         ' & "\\n"' +
         ` & "👁‍🗨${periodDays}日あたりのコスト閾値: " & $AngryThreshold & " USD"` +
-        ' & "📅集計期間: " & $states.input.Start & " ～ " & $states.input.End' +
+        ' & "\\n📅集計期間: " & $states.input.Start & " ～ " & $states.input.End' +
         ' & "\\n"' +
         ' & "💸コスト使用量上位5位サービス"' +
         ' & "\\n"' +
@@ -78,7 +78,7 @@ function buildCostDigestDescriptionExpression(locale: 'ja' | 'en', periodDays: n
         ' & "\\n:three: " & ( $states.input.CostSorted[2].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[2].Total & " USD"' +
         ' & "\\n:four: " & ( $states.input.CostSorted[3].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[3].Total & " USD"' +
         ' & "\\n:five: " & ( $states.input.CostSorted[4].Service ~> $replace(/^(AWS|Amazon)\\s*/, "") ) & ": " & $states.input.CostSorted[4].Total & " USD"' +
-        ' & "\\n"' +
+        ' & "\\n\\n"' +
         ' & "※ コスト反映にはタイムラグがあるため、最新ではない可能性があります。"'
     );
 }
@@ -182,15 +182,24 @@ export class BudgetsCostAnomalyDetectionCostDigestStack extends cdk.Stack {
                 Type: 'Task',
                 Resource: 'arn:aws:states:::sns:publish',
                 Arguments: {
-                    Message: {
-                        version: '1.0',
-                        source: 'custom',
-                        content: {
-                            textType: 'client-markdown',
-                            title: `{% ${buildCostDigestTitleExpression(digestLocale)} %}`,
-                            description: `{% ${buildCostDigestDescriptionExpression(digestLocale, digestParams.periodDays)} %}`,
-                        },
-                    },
+                    // SNS requires the Subject to be ASCII only (no emoji), so a fixed
+                    // subject is used. Chatbot ignores it.
+                    Subject: `AWS Cost Digest (${props.project}/${props.environment})`,
+                    // MessageStructure "json" lets each protocol receive its own body:
+                    //  - "default" (Chatbot / other protocols): Chatbot custom notification JSON
+                    //  - "email": human-readable plain text instead of raw JSON
+                    MessageStructure: 'json',
+                    Message:
+                        '{% ( ' +
+                        `$title := ${buildCostDigestTitleExpression(digestLocale)}; ` +
+                        `$desc := ${buildCostDigestDescriptionExpression(digestLocale, digestParams.periodDays)}; ` +
+                        '$string({ ' +
+                        '"default": $string({ "version": "1.0", "source": "custom", ' +
+                        '"content": { "textType": "client-markdown", "title": $title, "description": $desc } }), ' +
+                        // Slack emoji codes are not rendered in email, so use plain numbering
+                        '"email": $title & "\\n\\n" & ( $desc ~> $replace(":one:", "1.") ~> $replace(":two:", "2.") ' +
+                        '~> $replace(":three:", "3.") ~> $replace(":four:", "4.") ~> $replace(":five:", "5.") ) ' +
+                        '}) ) %}',
                     TopicArn: this.topic.topicArn,
                 },
             },
