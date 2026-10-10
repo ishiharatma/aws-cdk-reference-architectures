@@ -63,6 +63,43 @@ function applySuppressions(stack: SecurityBaselineStack): void {
   );
   NagSuppressions.addResourceSuppressionsByPath(
     stack,
+    `/${stack.node.id}/Remediation/Dlq/Resource`,
+    [
+      {
+        id: 'AwsSolutions-SQS3',
+        reason: 'This queue is itself the dead-letter destination for events the rules could not deliver to the function; a DLQ for the DLQ adds nothing.',
+      },
+    ]
+  );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `/${stack.node.id}/Remediation/Function/ServiceRole/Resource`,
+    [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'AWSLambdaBasicExecutionRole is the AWS-recommended policy for Lambda log delivery.',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],
+      },
+    ]
+  );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
+    `/${stack.node.id}/Remediation/Function/ServiceRole/DefaultPolicy/Resource`,
+    [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'The security group, instance and bucket to fix are named by the finding at run time, so their ARNs cannot be listed. The actions are limited to the calls the three remediations need; dry-run mode and the skip tag are the safeguards (README, Security Considerations).',
+        appliesTo: ['Resource::*', 'Resource::arn:aws:s3:::*'],
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'kms:GenerateDataKey* on the findings topic key is what the CDK grant for publishing to a CMK-encrypted topic adds.',
+        appliesTo: ['Action::kms:GenerateDataKey*'],
+      },
+    ]
+  );
+  NagSuppressions.addResourceSuppressionsByPath(
+    stack,
     `/${stack.node.id}/Config/RecorderRole/Resource`,
     [
       {

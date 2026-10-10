@@ -479,3 +479,97 @@ describe('SecurityBaselineStack', () => {
     });
   });
 });
+
+describe('Remediation', () => {
+  const template = build();
+  const remediation = (overrides: Partial<NonNullable<typeof envParams>['remediation']> = {}) =>
+    build({ remediation: { ...envParams.remediation, ...overrides } });
+
+  test('one ARM64 function with the mode, controls and skip tag as settings', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      FunctionName: 'test-test-secbase-remediation',
+      Architectures: ['arm64'],
+      Environment: {
+        Variables: Match.objectLike({
+          MODE: 'dry-run',
+          S3_CONTROL_IDS: 'S3.8,S3.2,S3.3',
+          SG_CONTROL_IDS: 'EC2.13,EC2.14,EC2.53,EC2.54',
+          REMOTE_ADMIN_PORTS: '22,3389',
+          SKIP_TAG_KEY: 'security-baseline:remediation-skip',
+        }),
+      },
+    });
+  });
+
+  test('reserved concurrency is applied only when configured', () => {
+    const fn = (t: Template) => Object.values(t.findResources('AWS::Lambda::Function', { Properties: { FunctionName: 'test-test-secbase-remediation' } })) as any[];
+    expect(fn(template)[0].Properties.ReservedConcurrentExecutions).toBeUndefined();
+    expect(fn(remediation({ reservedConcurrency: 3 }))[0].Properties.ReservedConcurrentExecutions).toBe(3);
+  });
+
+  test('the controls rule matches failed, new, active findings of the configured controls only', () => {
+    template.hasResourceProperties('AWS::Events::Rule', {
+      Name: 'test-test-secbase-remediate-controls',
+      EventPattern: Match.objectLike({
+        detail: {
+          findings: {
+            ProductName: ['Security Hub', 'Default'],
+            RecordState: ['ACTIVE'],
+            Workflow: { Status: ['NEW'] },
+            Compliance: { Status: ['FAILED'], SecurityControlId: ['S3.8', 'S3.2', 'S3.3', 'EC2.13', 'EC2.14', 'EC2.53', 'EC2.54'] },
+          },
+        },
+      }),
+    });
+  });
+
+  test('the threats rule matches GuardDuty findings on EC2 instances at or above the minimum severity', () => {
+    template.hasResourceProperties('AWS::Events::Rule', {
+      Name: 'test-test-secbase-remediate-threats',
+      EventPattern: Match.objectLike({
+        detail: { findings: Match.objectLike({ Severity: { Label: ['HIGH', 'CRITICAL'] }, Resources: { Type: ['AwsEc2Instance'] } }) },
+      }),
+    });
+    const critical = remediation({ guardDutyMinSeverity: 'CRITICAL' });
+    critical.hasResourceProperties('AWS::Events::Rule', {
+      EventPattern: Match.objectLike({ detail: { findings: Match.objectLike({ Severity: { Label: ['CRITICAL'] } }) } }),
+    });
+  });
+
+  test('imported findings are trusted only when the test hook is on', () => {
+    const off = remediation({ acceptImportedFindings: false });
+    off.hasResourceProperties('AWS::Events::Rule', {
+      Name: 'test-test-secbase-remediate-controls',
+      EventPattern: Match.objectLike({ detail: { findings: Match.objectLike({ ProductName: ['Security Hub'] }) } }),
+    });
+    off.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: { Variables: Match.objectLike({ TRUSTED_PRODUCTS: 'Security Hub,GuardDuty' }) },
+    });
+  });
+
+  test('both rules deliver with retries and a dead-letter queue', () => {
+    const rules = Object.values(template.findResources('AWS::Events::Rule', {
+      Properties: { Name: Match.stringLikeRegexp('remediate-') },
+    })) as any[];
+    expect(rules).toHaveLength(2);
+    rules.forEach((r) => {
+      expect(r.Properties.Targets[0].RetryPolicy).toMatchObject({ MaximumRetryAttempts: 2 });
+      expect(r.Properties.Targets[0].DeadLetterConfig).toBeDefined();
+    });
+  });
+
+  test('the role can change only what the three remediations need', () => {
+    const policies = JSON.stringify(Object.values(template.findResources('AWS::IAM::Policy', {
+      Properties: { PolicyName: Match.stringLikeRegexp('^RemediationFunctionServiceRole') },
+    })));
+    expect(policies).not.toBe('[]');
+    ['ec2:RevokeSecurityGroupIngress', 'ec2:ModifyInstanceAttribute', 's3:PutBucketPublicAccessBlock', 'securityhub:BatchUpdateFindings'].forEach((a) =>
+      expect(policies).toContain(a));
+    ['ec2:TerminateInstances', 'ec2:StopInstances', 's3:DeleteBucket', 's3:PutBucketPolicy', 'iam:'].forEach((a) =>
+      expect(policies).not.toContain(a));
+  });
+
+  test('the remediation log group is retained for a month', () => {
+    template.hasResourceProperties('AWS::Logs::LogGroup', { RetentionInDays: 30 });
+  });
+});
