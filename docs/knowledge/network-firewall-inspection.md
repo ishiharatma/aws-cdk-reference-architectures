@@ -36,3 +36,7 @@ association and propagation off, appliance mode on the inspection attachment. Th
 
 In templates, a VPC attachment is `AWS::EC2::TransitGatewayVpcAttachment` (not `...TransitGatewayAttachment`);
 a test that counts the wrong type finds zero resources.
+
+## The public subnet's return route cannot use the VPC CIDR
+
+In a single-VPC layout (workload, firewall and public subnets in one VPC), the route that sends return traffic from the NAT gateway's public subnet back through the firewall endpoint must use the **workload subnet CIDR**. Using the VPC CIDR fails with `The route identified by <cidr> already exists`, because every route table already has a local route for it. A destination more specific than the local route is accepted (verified 2026-10-09, `claude-managed-agents-lambda-microvms`).
