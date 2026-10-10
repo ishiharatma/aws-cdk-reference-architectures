@@ -5,13 +5,44 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Tue, 06 Oct 2026 13:07:04 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 10 Oct 2026 19:20:30 GMT</lastBuildDate>
+    <item>
+      <title>RDS Multi-AZ versus a Read Replica</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/rds-multiaz-vs-read-replica</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/rds-multiaz-vs-read-replica</guid>
+      <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+      <description>The two RDS features people confuse most, side by side on one PostgreSQL database and measured by a probe Lambda in the VPC: the Multi-AZ standby is invisible and synchronous, the replica is readable and asynchronous (median 7 ms behind), refuses writes, survives a Multi-AZ failover of the primary (13 s write outage, 0 s read outage) and, once promoted, is an independent database. Documents why the ReplicaLag metric climbs on an idle PostgreSQL primary and what a heartbeat does to it.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>RDS</category>
+      <category>PostgreSQL</category>
+      <category>Multi-AZ</category>
+      <category>Read Replica</category>
+      <category>High Availability</category>
+      <category>Lambda</category>
+    </item>
+    <item>
+      <title>code-server on EC2 vs AWS Lambda MicroVMs: The Same Browser IDE on Two Compute Models, with Claude Code on Bedrock</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/code-server-ec2-vs-lambda-microvms</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/code-server-ec2-vs-lambda-microvms</guid>
+      <pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+      <description>VS Code in the browser (code-server) on two compute models in one CDK app: an always-on EC2 instance behind CloudFront, and an on-demand AWS Lambda MicroVM that suspends when idle. A local relay injects the X-aws-proxy-auth token so a browser can reach the MicroVM endpoint, including WebSockets. Claude Code (CLI and extension) is wired to Amazon Bedrock through role credentials on both. Deploy-verified: MicroVM start in 3 to 16 seconds, resume after suspend in 0.65 seconds.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Lambda MicroVMs</category>
+      <category>EC2</category>
+      <category>CloudFront</category>
+      <category>code-server</category>
+      <category>Bedrock</category>
+      <category>Secrets Manager</category>
+      <category>Systems Manager</category>
+    </item>
     <item>
       <title>Transfer Family SFTP with a Custom Identity Provider: SSH Key Auth + Source IP Allow List</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transfer-sftp-custom-idp</link>
       <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/transfer-sftp-custom-idp</guid>
       <pubDate>Tue, 06 Oct 2026 12:00:00 GMT</pubDate>
-      <description>An AWS Transfer Family SFTP server on a PUBLIC endpoint where a Lambda custom identity provider authenticates SSH public keys from a DynamoDB user table (AWS custom IdP solution layout) and rejects logins from IPs outside each user&apos;s allow list. Per-user S3 isolation via LOGICAL home directories and a session policy, CloudShell shell scripts for user and key management, and fail-closed behavior. Deploy-verified with 20 real SFTP checks.</description>
+      <description>An AWS Transfer Family SFTP server on a PUBLIC endpoint where a Lambda custom identity provider authenticates SSH public keys from a DynamoDB user table (AWS custom IdP solution layout) and rejects logins from IPs outside each user&apos;s allow list. Per-user S3 isolation via LOGICAL home directories and a session policy, CloudShell shell scripts for user and key management, fail-closed behavior, three run modes (always on, scheduled, manual: the server is deleted while off because a stopped server is still billed), and alarms with SNS for auth failures, IP denials, IdP errors and transfer volume. Deploy-verified with 31 real SFTP checks.</description>
       <category>CDK</category>
       <category>TypeScript</category>
       <category>Transfer Family</category>
@@ -20,6 +51,8 @@
       <category>DynamoDB</category>
       <category>S3</category>
       <category>Security</category>
+      <category>CloudWatch</category>
+      <category>EventBridge Scheduler</category>
     </item>
     <item>
       <title>Transit Gateway Centralized Inspection with AWS Network Firewall</title>

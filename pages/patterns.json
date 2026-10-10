@@ -1,5 +1,17 @@
 [
   {
+    "id": "rds-multiaz-vs-read-replica",
+    "title": "RDS Multi-AZ versus a Read Replica",
+    "description": "The two RDS features people confuse most, side by side on one PostgreSQL database and measured by a probe Lambda in the VPC: the Multi-AZ standby is invisible and synchronous, the replica is readable and asynchronous (median 7 ms behind), refuses writes, survives a Multi-AZ failover of the primary (13 s write outage, 0 s read outage) and, once promoted, is an independent database. Documents why the ReplicaLag metric climbs on an idle PostgreSQL primary and what a heartbeat does to it.",
+    "image": "rds-multiaz-vs-read-replica/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "RDS", "PostgreSQL", "Multi-AZ", "Read Replica", "High Availability", "Lambda"],
+    "link": "rds-multiaz-vs-read-replica",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
     "id": "tgw-network-firewall-inspection",
     "title": "Transit Gateway Centralized Inspection with AWS Network Firewall",
     "description": "One AWS Network Firewall inspects both internet-bound and east-west traffic of two spoke VPCs that have no internet route of their own: a Transit Gateway with two route tables and an appliance-mode attachment hands every flow to an inspection VPC, where a domain allow list, east-west pass/drop rules and a NAT gateway apply. Deploy-verified over SSM: allowed domain 200, other domain blocked, east-west TCP passes, east-west ICMP dropped, both drops in the alert log. Documents why a domain allow list also drops east-west HTTP unless a pass rule precedes it.",
