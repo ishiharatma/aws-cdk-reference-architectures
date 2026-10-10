@@ -1,5 +1,17 @@
 [
   {
+    "id": "data-lake-glue-athena",
+    "title": "Data Lake with AWS Glue and Amazon Athena",
+    "description": "Raw CSV to cleaned, de-duplicated, partitioned Parquet with a Glue workflow (crawler, Spark job, crawler), queried with an Athena workgroup that enforces encrypted results and a per-query scan limit. Deploy-verified with generated data: 59,770 valid orders from 60,600 raw rows, Parquet scanning 7% of the CSV bytes, partition pruning, and an idempotent rerun when a new day arrives. Documents why a crawler's string partition key rejects DATE literals.",
+    "image": "data-lake-glue-athena/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Glue", "Athena", "Data Lake", "Parquet", "S3", "ETL", "Data Catalog"],
+    "link": "data-lake-glue-athena",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
     "id": "tgw-network-firewall-inspection",
     "title": "Transit Gateway Centralized Inspection with AWS Network Firewall",
     "description": "One AWS Network Firewall inspects both internet-bound and east-west traffic of two spoke VPCs that have no internet route of their own: a Transit Gateway with two route tables and an appliance-mode attachment hands every flow to an inspection VPC, where a domain allow list, east-west pass/drop rules and a NAT gateway apply. Deploy-verified over SSM: allowed domain 200, other domain blocked, east-west TCP passes, east-west ICMP dropped, both drops in the alert log. Documents why a domain allow list also drops east-west HTTP unless a pass rule precedes it.",
