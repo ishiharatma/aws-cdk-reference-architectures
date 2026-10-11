@@ -31,6 +31,8 @@ checked `aws fis list-actions`).
 - [apigw-vpc-link-v2-alb.md](apigw-vpc-link-v2-alb.md) — REST API to an ALB over VPC link v2: L1 overrides, `IntegrationTarget` takes the ALB ARN, tsc-emit pitfall
 - [multi-region-dr.md](multi-region-dr.md) — measured DR numbers (replication, DNS failover, backup copy/restore), Lambda concurrency 0 = 429, vault cleanup, Stage stack selection, bootstrap
 - [network-firewall-inspection.md](network-firewall-inspection.md) — Network Firewall behind a TGW: domain allow list also drops east-west HTTP (add a pass rule), alert log evidence, SSM as an egress check, routing recipe
+- [ecs-blue-green-native-vs-codedeploy.md](ecs-blue-green-native-vs-codedeploy.md) — ECS native vs CodeDeploy blue/green measured: L2 API, deployment states, timings, hooks (two protocols), broken release not given up, per-flavor state, bash subshell trap
+- [rds-multiaz-vs-read-replica.md](rds-multiaz-vs-read-replica.md) — RDS Multi-AZ vs read replica measured: ReplicaLag climbs on an idle PostgreSQL primary, marker lag in ms, failover impact on each, promotion detaches
 - [glue-athena-data-lake.md](glue-athena-data-lake.md) — Glue + Athena lake: string partition keys vs DATE literals, workflow triggers, dynamic partition overwrite, get-partitions pagination, workgroup enforcement
 - [bedrock-kb-s3-vectors.md](bedrock-kb-s3-vectors.md) — Bedrock Knowledge Bases on S3 Vectors: non-filterable chunk keys, dimension agreement, filter is not access control, inference-profile permissions, SigV4 curl
 - [security-hub-remediation.md](security-hub-remediation.md) — Security Hub auto-remediation: reserved concurrency quota trap, BatchImportFindings test method, SecurityControlId matching, GuardDuty sample findings, quarantine SG egress

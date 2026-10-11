@@ -1,5 +1,29 @@
 [
   {
+    "id": "ecs-blue-green-native-vs-codedeploy",
+    "title": "ECS Blue/Green: Native versus CodeDeploy",
+    "description": "The same application deployed blue/green with native ECS (deploymentStrategy BLUE_GREEN) and with CodeDeploy, side by side behind ALBs with a production and a test listener, and driven through the same four deployments: a good release, a failing lifecycle hook, a rollback during the bake period and a container that never starts. Deploy-verified with a 5 requests-per-second probe: no HTTP error on either flavor, rollback to the old version in 20 s (native) and 14 s (CodeDeploy), and neither gave up on the broken release within 7 minutes.",
+    "image": "ecs-blue-green-native-vs-codedeploy/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "ECS", "Fargate", "Blue/Green", "CodeDeploy", "ALB", "Deployment", "Lambda"],
+    "link": "ecs-blue-green-native-vs-codedeploy",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
+    "id": "rds-multiaz-vs-read-replica",
+    "title": "RDS Multi-AZ versus a Read Replica",
+    "description": "The two RDS features people confuse most, side by side on one PostgreSQL database and measured by a probe Lambda in the VPC: the Multi-AZ standby is invisible and synchronous, the replica is readable and asynchronous (median 7 ms behind), refuses writes, survives a Multi-AZ failover of the primary (13 s write outage, 0 s read outage) and, once promoted, is an independent database. Documents why the ReplicaLag metric climbs on an idle PostgreSQL primary and what a heartbeat does to it.",
+    "image": "rds-multiaz-vs-read-replica/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "RDS", "PostgreSQL", "Multi-AZ", "Read Replica", "High Availability", "Lambda"],
+    "link": "rds-multiaz-vs-read-replica",
+    "difficulty": "intermediate",
+    "level": 200,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
     "id": "data-lake-glue-athena",
     "title": "Data Lake with AWS Glue and Amazon Athena",
     "description": "Raw CSV to cleaned, de-duplicated, partitioned Parquet with a Glue workflow (crawler, Spark job, crawler), queried with an Athena workgroup that enforces encrypted results and a per-query scan limit. Deploy-verified with generated data: 59,770 valid orders from 60,600 raw rows, Parquet scanning 7% of the CSV bytes, partition pruning, and an idempotent rerun when a new day arrives. Documents why a crawler's string partition key rejects DATE literals.",
