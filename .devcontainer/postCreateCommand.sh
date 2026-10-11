@@ -444,6 +444,9 @@ aws configure list-profiles || echo ""
 # Initial tips display
 echo "Run the 'tips' command to see registered helpful command aliases"
 
+# Install Claude Code plugins declared in .claude/settings.json
+bash .devcontainer/install-claude-plugins.sh
+
 echo "=== Post-create setup completed ==="
 echo "You can now use:"
 echo "  - q --help          (Amazon Q CLI)"
