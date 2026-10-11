@@ -1,0 +1,959 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "CuratedBucketName": {
+      "Value": {
+        "Ref": "CuratedBucket6A59C97E",
+      },
+    },
+    "DatabaseName": {
+      "Value": "testproject_test_lake",
+    },
+    "EtlJobName": {
+      "Value": "TestProject-test-lake-orders-to-parquet",
+    },
+    "RawBucketName": {
+      "Value": {
+        "Ref": "RawBucket0C3EE094",
+      },
+    },
+    "WorkGroupName": {
+      "Value": "TestProject-test-lake-analysts",
+    },
+    "WorkflowName": {
+      "Value": "TestProject-test-lake-workflow",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AthenaResultsBucket879938FA": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 7,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AthenaResultsBucketAutoDeleteObjectsCustomResourceD2206C34": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AthenaResultsBucketPolicyD63DEF63",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AthenaResultsBucket879938FA",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AthenaResultsBucketPolicyD63DEF63": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AthenaResultsBucket879938FA",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaResultsBucket879938FA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaResultsBucket879938FA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AthenaResultsBucket879938FA",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AthenaResultsBucket879938FA",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "CatalogCuratedTrigger": {
+      "DependsOn": [
+        "CuratedCrawler",
+        "EtlJob",
+        "RawCrawler",
+        "Workflow",
+      ],
+      "Properties": {
+        "Actions": [
+          {
+            "CrawlerName": "TestProject-test-lake-curated",
+          },
+        ],
+        "Name": "TestProject-test-lake-catalogcuratedtrigger",
+        "Predicate": {
+          "Conditions": [
+            {
+              "JobName": "TestProject-test-lake-orders-to-parquet",
+              "LogicalOperator": "EQUALS",
+              "State": "SUCCEEDED",
+            },
+          ],
+        },
+        "StartOnCreation": true,
+        "Type": "CONDITIONAL",
+        "WorkflowName": "TestProject-test-lake-workflow",
+      },
+      "Type": "AWS::Glue::Trigger",
+    },
+    "ConvertTrigger": {
+      "DependsOn": [
+        "CuratedCrawler",
+        "EtlJob",
+        "RawCrawler",
+        "Workflow",
+      ],
+      "Properties": {
+        "Actions": [
+          {
+            "JobName": "TestProject-test-lake-orders-to-parquet",
+          },
+        ],
+        "Name": "TestProject-test-lake-converttrigger",
+        "Predicate": {
+          "Conditions": [
+            {
+              "CrawlState": "SUCCEEDED",
+              "CrawlerName": "TestProject-test-lake-raw",
+              "LogicalOperator": "EQUALS",
+            },
+          ],
+        },
+        "StartOnCreation": true,
+        "Type": "CONDITIONAL",
+        "WorkflowName": "TestProject-test-lake-workflow",
+      },
+      "Type": "AWS::Glue::Trigger",
+    },
+    "CuratedBucket6A59C97E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CuratedBucketAutoDeleteObjectsCustomResourceEEC097DE": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "CuratedBucketPolicyFFF5920D",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "CuratedBucket6A59C97E",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CuratedBucketPolicyFFF5920D": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "CuratedBucket6A59C97E",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CuratedBucket6A59C97E",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CuratedBucket6A59C97E",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CuratedBucket6A59C97E",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CuratedBucket6A59C97E",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "CuratedCrawler": {
+      "DependsOn": [
+        "Database",
+      ],
+      "Properties": {
+        "Configuration": "{"Version":1,"CrawlerOutput":{"Partitions":{"AddOrUpdateBehavior":"InheritFromTable"}}}",
+        "DatabaseName": "testproject_test_lake",
+        "Name": "TestProject-test-lake-curated",
+        "Role": {
+          "Fn::GetAtt": [
+            "GlueRoleDEDFFD2C",
+            "Arn",
+          ],
+        },
+        "SchemaChangePolicy": {
+          "DeleteBehavior": "LOG",
+          "UpdateBehavior": "UPDATE_IN_DATABASE",
+        },
+        "TablePrefix": "curated_",
+        "Targets": {
+          "S3Targets": [
+            {
+              "Path": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "s3://",
+                    {
+                      "Ref": "CuratedBucket6A59C97E",
+                    },
+                    "/orders/",
+                  ],
+                ],
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Glue::Crawler",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "RawBucket0C3EE094",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DailyRevenueQuery": {
+      "DependsOn": [
+        "WorkGroup",
+      ],
+      "Properties": {
+        "Database": "testproject_test_lake",
+        "Description": "Revenue and order count per day from the curated Parquet table (reads two columns, prunes partitions)",
+        "Name": "TestProject-test-lake-daily-revenue",
+        "QueryString": "SELECT order_date, count(*) AS orders, sum(amount) AS revenue FROM curated_orders WHERE order_date >= '2026-10-01' GROUP BY order_date ORDER BY order_date",
+        "WorkGroup": "TestProject-test-lake-analysts",
+      },
+      "Type": "AWS::Athena::NamedQuery",
+    },
+    "Database": {
+      "Properties": {
+        "CatalogId": "123456789012",
+        "DatabaseInput": {
+          "Description": "Raw and curated orders",
+          "Name": "testproject_test_lake",
+        },
+      },
+      "Type": "AWS::Glue::Database",
+    },
+    "EtlJob": {
+      "Properties": {
+        "Command": {
+          "Name": "glueetl",
+          "PythonVersion": "3",
+          "ScriptLocation": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/910a0fda93bc0bcc321e07776b90ee01ee35daa00b3752691dfd363c2398d716.py",
+        },
+        "DefaultArguments": {
+          "--enable-continuous-cloudwatch-log": "true",
+          "--enable-job-insights": "false",
+          "--enable-metrics": "true",
+          "--job-language": "python",
+          "--source_database": "testproject_test_lake",
+          "--source_table": "raw_orders",
+          "--target_path": {
+            "Fn::Join": [
+              "",
+              [
+                "s3://",
+                {
+                  "Ref": "CuratedBucket6A59C97E",
+                },
+                "/orders/",
+              ],
+            ],
+          },
+        },
+        "GlueVersion": "5.0",
+        "MaxRetries": 0,
+        "Name": "TestProject-test-lake-orders-to-parquet",
+        "NumberOfWorkers": 2,
+        "Role": {
+          "Fn::GetAtt": [
+            "GlueRoleDEDFFD2C",
+            "Arn",
+          ],
+        },
+        "Timeout": 15,
+        "WorkerType": "G.1X",
+      },
+      "Type": "AWS::Glue::Job",
+    },
+    "GlueRoleDEDFFD2C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "glue.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSGlueServiceRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GlueRoleDefaultPolicy83D85957": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RawBucket0C3EE094",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RawBucket0C3EE094",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CuratedBucket6A59C97E",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CuratedBucket6A59C97E",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GlueRoleDefaultPolicy83D85957",
+        "Roles": [
+          {
+            "Ref": "GlueRoleDEDFFD2C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "RawBucket0C3EE094": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RawBucketAutoDeleteObjectsCustomResource4CB74628": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "RawBucketPolicy61C50A52",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "RawBucket0C3EE094",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RawBucketPolicy61C50A52": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "RawBucket0C3EE094",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RawBucket0C3EE094",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RawBucket0C3EE094",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RawBucket0C3EE094",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RawBucket0C3EE094",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "RawCrawler": {
+      "DependsOn": [
+        "Database",
+      ],
+      "Properties": {
+        "Configuration": "{"Version":1,"CrawlerOutput":{"Partitions":{"AddOrUpdateBehavior":"InheritFromTable"}}}",
+        "DatabaseName": "testproject_test_lake",
+        "Name": "TestProject-test-lake-raw",
+        "Role": {
+          "Fn::GetAtt": [
+            "GlueRoleDEDFFD2C",
+            "Arn",
+          ],
+        },
+        "SchemaChangePolicy": {
+          "DeleteBehavior": "LOG",
+          "UpdateBehavior": "UPDATE_IN_DATABASE",
+        },
+        "TablePrefix": "raw_",
+        "Targets": {
+          "S3Targets": [
+            {
+              "Path": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "s3://",
+                    {
+                      "Ref": "RawBucket0C3EE094",
+                    },
+                    "/orders/",
+                  ],
+                ],
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Glue::Crawler",
+    },
+    "StartTrigger": {
+      "DependsOn": [
+        "CuratedCrawler",
+        "EtlJob",
+        "RawCrawler",
+        "Workflow",
+      ],
+      "Properties": {
+        "Actions": [
+          {
+            "CrawlerName": "TestProject-test-lake-raw",
+          },
+        ],
+        "Name": "TestProject-test-lake-starttrigger",
+        "Type": "ON_DEMAND",
+        "WorkflowName": "TestProject-test-lake-workflow",
+      },
+      "Type": "AWS::Glue::Trigger",
+    },
+    "WorkGroup": {
+      "Properties": {
+        "Description": "Analysts: results are encrypted in one bucket and a query may scan at most a fixed number of bytes",
+        "Name": "TestProject-test-lake-analysts",
+        "RecursiveDeleteOption": true,
+        "State": "ENABLED",
+        "WorkGroupConfiguration": {
+          "BytesScannedCutoffPerQuery": 104857600,
+          "EnforceWorkGroupConfiguration": true,
+          "EngineVersion": {
+            "SelectedEngineVersion": "Athena engine version 3",
+          },
+          "PublishCloudWatchMetricsEnabled": true,
+          "RequesterPaysEnabled": false,
+          "ResultConfiguration": {
+            "EncryptionConfiguration": {
+              "EncryptionOption": "SSE_S3",
+            },
+            "OutputLocation": {
+              "Fn::Join": [
+                "",
+                [
+                  "s3://",
+                  {
+                    "Ref": "AthenaResultsBucket879938FA",
+                  },
+                  "/results/",
+                ],
+              ],
+            },
+          },
+        },
+      },
+      "Type": "AWS::Athena::WorkGroup",
+    },
+    "Workflow": {
+      "Properties": {
+        "Description": "Raw CSV to curated Parquet",
+        "Name": "TestProject-test-lake-workflow",
+      },
+      "Type": "AWS::Glue::Workflow",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests CloudFormation Template Snapshots Resource types and counts 1`] = `
+{
+  "AWS::Athena::NamedQuery": 1,
+  "AWS::Athena::WorkGroup": 1,
+  "AWS::Glue::Crawler": 2,
+  "AWS::Glue::Database": 1,
+  "AWS::Glue::Job": 1,
+  "AWS::Glue::Trigger": 3,
+  "AWS::Glue::Workflow": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::S3::Bucket": 3,
+  "AWS::S3::BucketPolicy": 3,
+  "Custom::S3AutoDeleteObjects": 3,
+}
+`;
