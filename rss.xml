@@ -5,7 +5,23 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 10 Oct 2026 17:17:03 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 11 Oct 2026 00:59:02 GMT</lastBuildDate>
+    <item>
+      <title>Bedrock Knowledge Base RAG on Amazon S3 Vectors</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/bedrock-kb-rag-s3-vectors</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/bedrock-kb-rag-s3-vectors</guid>
+      <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+      <description>A retrieval-augmented generation API on Amazon Bedrock Knowledge Bases with S3 Vectors as the vector store, so there is no idle vector cluster. A SigV4-signed HTTP API answers with citations, filters by a metadata attribute, keeps a conversation through a session ID and exposes retrieval alone for tuning. Deploy-verified with golden questions, an out-of-corpus question, the metadata filter and a follow-up turn; about 0.5 s per retrieval and 1.8 s per answer. Documents why Bedrock&apos;s chunk-text keys must be non-filterable and why a caller-supplied filter is not access control.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Bedrock</category>
+      <category>Knowledge Bases</category>
+      <category>RAG</category>
+      <category>S3 Vectors</category>
+      <category>Claude</category>
+      <category>Lambda</category>
+      <category>API Gateway</category>
+    </item>
     <item>
       <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</link>
