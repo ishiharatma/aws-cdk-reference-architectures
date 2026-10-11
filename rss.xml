@@ -5,22 +5,22 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 11 Oct 2026 00:59:32 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 11 Oct 2026 01:03:30 GMT</lastBuildDate>
     <item>
-      <title>Data Lake with AWS Glue and Amazon Athena</title>
-      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/data-lake-glue-athena</link>
-      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/data-lake-glue-athena</guid>
+      <title>Bedrock Knowledge Base RAG on Amazon S3 Vectors</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/bedrock-kb-rag-s3-vectors</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/bedrock-kb-rag-s3-vectors</guid>
       <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-      <description>Raw CSV to cleaned, de-duplicated, partitioned Parquet with a Glue workflow (crawler, Spark job, crawler), queried with an Athena workgroup that enforces encrypted results and a per-query scan limit. Deploy-verified with generated data: 59,770 valid orders from 60,600 raw rows, Parquet scanning 7% of the CSV bytes, partition pruning, and an idempotent rerun when a new day arrives. Documents why a crawler&apos;s string partition key rejects DATE literals.</description>
+      <description>A retrieval-augmented generation API on Amazon Bedrock Knowledge Bases with S3 Vectors as the vector store, so there is no idle vector cluster. A SigV4-signed HTTP API answers with citations, filters by a metadata attribute, keeps a conversation through a session ID and exposes retrieval alone for tuning. Deploy-verified with golden questions, an out-of-corpus question, the metadata filter and a follow-up turn; about 0.5 s per retrieval and 1.8 s per answer. Documents why Bedrock&apos;s chunk-text keys must be non-filterable and why a caller-supplied filter is not access control.</description>
       <category>CDK</category>
       <category>TypeScript</category>
-      <category>Glue</category>
-      <category>Athena</category>
-      <category>Data Lake</category>
-      <category>Parquet</category>
-      <category>S3</category>
-      <category>ETL</category>
-      <category>Data Catalog</category>
+      <category>Bedrock</category>
+      <category>Knowledge Bases</category>
+      <category>RAG</category>
+      <category>S3 Vectors</category>
+      <category>Claude</category>
+      <category>Lambda</category>
+      <category>API Gateway</category>
     </item>
     <item>
       <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
