@@ -650,16 +650,16 @@
     "articles": {}
   },
   {
-    "id": "security-baseline",
-    "title": "Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer & Security Hub",
-    "description": "A single-account, detection-only security baseline in one CDK stack: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices, with new high-severity findings emailed through EventBridge and SNS. Deploy-verified end-to-end; the Config recorder/delivery channel are created via AwsCustomResource to work around a CloudFormation circular-dependency limitation.",
-    "image": "security-baseline/overview.drawio.svg",
-    "tags": ["CDK", "TypeScript", "Security", "CloudTrail", "Config", "GuardDuty", "Access Analyzer", "Security Hub"],
-    "link": "security-baseline",
-    "difficulty": "intermediate",
-    "level": 200,
-    "date": "2026-10-01",
-    "articles": {}
+      "id": "security-baseline",
+      "title": "Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer & Security Hub",
+      "description": "A single-account security baseline in one CDK stack, with opt-in automatic remediation: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices, with new high-severity findings emailed through EventBridge and SNS. Deploy-verified end-to-end; the Config recorder/delivery channel are created via AwsCustomResource to work around a CloudFormation circular-dependency limitation. Automatic remediation (dry-run by default, skip tag) blocks S3 public access, revokes open SSH/RDP rules and isolates GuardDuty-flagged EC2 instances; verified with real resources and Security Hub findings.",
+      "image": "security-baseline/overview.drawio.svg",
+      "tags": ["CDK", "TypeScript", "Security", "CloudTrail", "Config", "GuardDuty", "Access Analyzer", "Security Hub", "Remediation", "Lambda", "EventBridge"],
+      "link": "security-baseline",
+      "difficulty": "intermediate",
+      "level": 300,
+      "date": "2026-10-10",
+      "articles": {}
   },
   {
     "id": "transfer-sftp-custom-idp",

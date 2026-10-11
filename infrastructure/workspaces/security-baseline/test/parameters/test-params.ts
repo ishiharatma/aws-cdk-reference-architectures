@@ -23,6 +23,15 @@ const testParams: EnvParams = {
     severities: ['CRITICAL', 'HIGH'],
     emails: ['security@example.com'],
   },
+  remediation: {
+    mode: 'dry-run',
+    s3ControlIds: ['S3.8', 'S3.2', 'S3.3'],
+    sgControlIds: ['EC2.13', 'EC2.14', 'EC2.53', 'EC2.54'],
+    remoteAdminPorts: [22, 3389],
+    guardDutyMinSeverity: 'HIGH',
+    skipTagKey: 'security-baseline:remediation-skip',
+    acceptImportedFindings: true,
+  },
 };
 
 params[Environment.TEST] = testParams;
