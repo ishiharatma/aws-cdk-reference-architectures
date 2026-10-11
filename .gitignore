@@ -140,3 +140,4 @@ typings/
 # environment-specific redaction patterns for scripts/check-public-safety.sh
 scripts/redaction-patterns.local.txt
 
+rss.xml
