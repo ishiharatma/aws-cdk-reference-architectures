@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
 {
@@ -17,6 +17,14 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
       "Value": {
         "Ref": "LogArchiveBucket6951A440",
       },
+    },
+    "RemediationFunctionName": {
+      "Value": {
+        "Ref": "RemediationFunction559AD217",
+      },
+    },
+    "RemediationMode": {
+      "Value": "dry-run",
     },
     "SecurityHubArn": {
       "Value": {
@@ -1257,6 +1265,422 @@ exports[`Stack Snapshot Tests Complete CloudFormation template snapshot 1`] = `
       },
       "Type": "AWS::SNS::Subscription",
     },
+    "RemediationControlFindingsRule82B7D096": {
+      "Properties": {
+        "Description": "Failed Security Hub controls that have an automatic remediation",
+        "EventPattern": {
+          "detail": {
+            "findings": {
+              "Compliance": {
+                "SecurityControlId": [
+                  "S3.8",
+                  "S3.2",
+                  "S3.3",
+                  "EC2.13",
+                  "EC2.14",
+                  "EC2.53",
+                  "EC2.54",
+                ],
+                "Status": [
+                  "FAILED",
+                ],
+              },
+              "ProductName": [
+                "Security Hub",
+                "Default",
+              ],
+              "RecordState": [
+                "ACTIVE",
+              ],
+              "Workflow": {
+                "Status": [
+                  "NEW",
+                ],
+              },
+            },
+          },
+          "detail-type": [
+            "Security Hub Findings - Imported",
+          ],
+          "source": [
+            "aws.securityhub",
+          ],
+        },
+        "Name": "TestProject-test-secbase-remediate-controls",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RemediationFunction559AD217",
+                "Arn",
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "RemediationDlqF70EC1ED",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 1800,
+              "MaximumRetryAttempts": 2,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "RemediationControlFindingsRuleAllowEventRuleSecurityBaselineRemediationFunction4FFDE08E9E2372C1": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "RemediationFunction559AD217",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "RemediationControlFindingsRule82B7D096",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RemediationDlqF70EC1ED": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "TestProject-test-secbase-remediation-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RemediationDlqPolicyBC116C24": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "RemediationDlqF70EC1ED",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "RemediationControlFindingsRule82B7D096",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "RemediationDlqF70EC1ED",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleSecurityBaselineRemediationControlFindingsRule3286D748",
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "RemediationThreatFindingsRule76B04F08",
+                      "Arn",
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "RemediationDlqF70EC1ED",
+                  "Arn",
+                ],
+              },
+              "Sid": "AllowEventRuleSecurityBaselineRemediationThreatFindingsRule135027B0",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "RemediationDlqF70EC1ED",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "RemediationFunction559AD217": {
+      "DependsOn": [
+        "RemediationFunctionServiceRoleDefaultPolicy473B8EB9",
+        "RemediationFunctionServiceRole1B9AC247",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "aa8742b450c26779301a2e77b918fbffdc6f6021b315d4df14442e4b4ad9c081.zip",
+        },
+        "Description": "Remediates Security Hub findings: S3 public access, open SSH/RDP, compromised EC2 instances",
+        "Environment": {
+          "Variables": {
+            "GUARDDUTY_MIN_SEVERITY": "HIGH",
+            "MODE": "dry-run",
+            "NAME_PREFIX": "TestProject-test-secbase",
+            "REMOTE_ADMIN_PORTS": "22,3389",
+            "S3_CONTROL_IDS": "S3.8,S3.2,S3.3",
+            "SG_CONTROL_IDS": "EC2.13,EC2.14,EC2.53,EC2.54",
+            "SKIP_TAG_KEY": "security-baseline:remediation-skip",
+            "TOPIC_ARN": {
+              "Ref": "NotificationTopicC6E25629",
+            },
+            "TRUSTED_PRODUCTS": "Security Hub,Default,GuardDuty,Default",
+          },
+        },
+        "FunctionName": "TestProject-test-secbase-remediation",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RemediationLogGroupF58C38F3",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "RemediationFunctionServiceRole1B9AC247",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "RemediationFunctionServiceRole1B9AC247": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "RemediationFunctionServiceRoleDefaultPolicy473B8EB9": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeSecurityGroups",
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateTags",
+                "ec2:ModifyInstanceAttribute",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "ReadAndFixSecurityGroupsAndInstances",
+            },
+            {
+              "Action": [
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketTagging",
+              ],
+              "Effect": "Allow",
+              "Resource": "arn:aws:s3:::*",
+              "Sid": "BlockPublicAccessOnBuckets",
+            },
+            {
+              "Action": "securityhub:BatchUpdateFindings",
+              "Effect": "Allow",
+              "Resource": "*",
+              "Sid": "RecordOutcomeOnFindings",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "NotificationTopicC6E25629",
+              },
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "LogArchiveKey11A44769",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "RemediationFunctionServiceRoleDefaultPolicy473B8EB9",
+        "Roles": [
+          {
+            "Ref": "RemediationFunctionServiceRole1B9AC247",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "RemediationLogGroupF58C38F3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RemediationThreatFindingsRule76B04F08": {
+      "Properties": {
+        "Description": "GuardDuty findings on EC2 instances at or above HIGH",
+        "EventPattern": {
+          "detail": {
+            "findings": {
+              "ProductName": [
+                "GuardDuty",
+                "Default",
+              ],
+              "RecordState": [
+                "ACTIVE",
+              ],
+              "Resources": {
+                "Type": [
+                  "AwsEc2Instance",
+                ],
+              },
+              "Severity": {
+                "Label": [
+                  "HIGH",
+                  "CRITICAL",
+                ],
+              },
+              "Workflow": {
+                "Status": [
+                  "NEW",
+                ],
+              },
+            },
+          },
+          "detail-type": [
+            "Security Hub Findings - Imported",
+          ],
+          "source": [
+            "aws.securityhub",
+          ],
+        },
+        "Name": "TestProject-test-secbase-remediate-threats",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RemediationFunction559AD217",
+                "Arn",
+              ],
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "RemediationDlqF70EC1ED",
+                  "Arn",
+                ],
+              },
+            },
+            "Id": "Target0",
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 1800,
+              "MaximumRetryAttempts": 2,
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "RemediationThreatFindingsRuleAllowEventRuleSecurityBaselineRemediationFunction4FFDE08ED71E6AC6": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "RemediationFunction559AD217",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "RemediationThreatFindingsRule76B04F08",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "SecurityHubA8F400AD": {
       "DependsOn": [
         "AccessAnalyzerExternalAccessA986A651",
@@ -1331,20 +1755,21 @@ exports[`Stack Snapshot Tests Resource types and counts 1`] = `
   "AWS::AccessAnalyzer::Analyzer": 2,
   "AWS::CloudTrail::Trail": 1,
   "AWS::Config::ConfigRule": 11,
-  "AWS::Events::Rule": 1,
+  "AWS::Events::Rule": 3,
   "AWS::GuardDuty::Detector": 1,
-  "AWS::IAM::Policy": 4,
-  "AWS::IAM::Role": 4,
+  "AWS::IAM::Policy": 5,
+  "AWS::IAM::Role": 5,
   "AWS::KMS::Key": 1,
-  "AWS::Lambda::Function": 2,
-  "AWS::Logs::LogGroup": 1,
+  "AWS::Lambda::Function": 3,
+  "AWS::Lambda::Permission": 2,
+  "AWS::Logs::LogGroup": 2,
   "AWS::S3::Bucket": 1,
   "AWS::S3::BucketPolicy": 1,
   "AWS::SNS::Subscription": 1,
   "AWS::SNS::Topic": 1,
   "AWS::SNS::TopicPolicy": 1,
-  "AWS::SQS::Queue": 1,
-  "AWS::SQS::QueuePolicy": 1,
+  "AWS::SQS::Queue": 2,
+  "AWS::SQS::QueuePolicy": 2,
   "AWS::SecurityHub::Hub": 1,
   "AWS::SecurityHub::Standard": 1,
   "Custom::ConfigConfigurationRecorder": 1,
