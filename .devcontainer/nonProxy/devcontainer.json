@@ -49,10 +49,10 @@
 		// Using these features saves you from writing custom installation scripts for tools you need
 
 		// Docker in Docker - allows you to create Docker containers within your development environment
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 
-		// Claude Code feature (if needed)
-		// "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+		// Claude Code CLI (required for installing Claude Code plugins in postCreateCommand)
+		"ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
 
 		// Security tools (optional, uncomment if needed)
 		// tfsec: Security scanner for Terraform code
@@ -77,7 +77,9 @@
 		// Required if using static AWS IAM keys
 		// Useful if using AWS SSO and want to share AWS config across environments
 		//"source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws/,target=/home/vscode/.aws/,type=bind,consistency=cached"
-		"source=./.aws/,target=/home/node/.aws/,type=bind,consistency=cached"
+		"source=./.aws/,target=/home/node/.aws/,type=bind,consistency=cached",
+		// Persist Claude Code config and installed plugins across container rebuilds
+		"source=claude-config-${devcontainerId},target=/home/node/.claude,type=volume"
 	],
 
 	// Recommended settings for the development environment

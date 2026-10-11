@@ -187,6 +187,9 @@ aws configure list-profiles || echo ""
 # 初回のtips表示
 echo "登録済みの便利なコマンドエイリアスは、tipsコマンドを実行して確認してください"
 
+# Install Claude Code plugins declared in .claude/settings.json
+bash .devcontainer/install-claude-plugins.sh
+
 echo "=== Post-create setup completed ==="
 echo "You can now use:"
 echo "  - q --help          (Amazon Q CLI)"
