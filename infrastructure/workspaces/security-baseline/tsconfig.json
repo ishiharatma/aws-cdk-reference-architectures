@@ -9,5 +9,5 @@
       "*": ["./*"]
     }
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "parameters/**/*.ts"]
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "parameters/**/*.ts", "src/**/*.ts"]
 }

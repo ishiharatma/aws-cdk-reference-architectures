@@ -3,11 +3,11 @@
 [![🇯🇵 日本語](https://img.shields.io/badge/%F0%9F%87%AF%F0%9F%87%B5-日本語-white)](./README.ja.md)
 [![🇺🇸 English](https://img.shields.io/badge/%F0%9F%87%BA%F0%9F%87%B8-English-white)](./README.md)
 
-![Level 200](https://img.shields.io/badge/Level-200-blue?style=flat-square)
+![Level 300](https://img.shields.io/badge/Level-300-orange?style=flat-square)
 
 > ✅ **Deploy-verified** (2026-10-01). Every resource in this stack — CloudTrail, AWS Config (recorder, delivery channel, 11 managed rules), GuardDuty, IAM Access Analyzer and Security Hub — was deployed to a real AWS account, confirmed actually working via live AWS CLI checks, and destroyed cleanly. Two real deploy-time bugs were found and fixed in the process; see [Observed Results](#-observed-results) below.
 
-A **single-account security baseline**: an audit trail (**CloudTrail**), configuration history and rules (**AWS Config**), threat detection (**GuardDuty**), external/unused-access analysis (**IAM Access Analyzer**), and one place to read all findings (**Security Hub**), all in one CDK stack. **Detection and notification, not prevention**: nothing here blocks an action or remediates a finding; new high-severity findings are emailed through EventBridge and SNS.
+A **single-account security baseline**: an audit trail (**CloudTrail**), configuration history and rules (**AWS Config**), threat detection (**GuardDuty**), external/unused-access analysis (**IAM Access Analyzer**), and one place to read all findings (**Security Hub**), all in one CDK stack. **Detection, notification and a small, opt-in set of automatic fixes**: nothing here blocks an action; new high-severity findings are emailed through EventBridge and SNS, and three well-understood findings are remediated by a Lambda function that starts in `dry-run` mode (S3 bucket without Block Public Access, SSH/RDP open to the internet, a GuardDuty-flagged EC2 instance).
 
 | Service | What this stack creates |
 |---|---|
@@ -45,6 +45,7 @@ A **single-account security baseline**: an audit trail (**CloudTrail**), configu
 - **`ConfigConstruct`** — recorder role (AWS managed `AWS_ConfigRole`), bucket-policy statements for Config delivery, the recorder/delivery channel/start-recording call (as `AwsCustomResource` SDK calls, not native CFN resources — see [Observed Results](#-observed-results)) and the managed rules.
 - **`GuardDutyConstruct`**, **`AccessAnalyzerConstruct`**, **`SecurityHubConstruct`** — one detector, up to two analyzers, one hub plus one `AWS::SecurityHub::Standard` per subscribed standard.
 - **`NotificationConstruct`** — the rule on Security Hub findings, the SNS topic and its email subscriptions, and a DLQ for events that cannot be delivered. It also extends the CMK's key policy so EventBridge can publish to the encrypted topic.
+- **`RemediationConstruct`** — two EventBridge rules (failed S3/security-group controls; GuardDuty findings on EC2 instances at or above a severity), one ARM64 Lambda function (`src/remediation/`), a DLQ for undeliverable events, and a role limited to the calls the three remediations need. The function writes its outcome to the finding as a note, resolves the finding when it acted, and publishes to the findings topic.
 - **`SecurityBaselineStack`** — wires the constructs together and orders them: Config before the hub, GuardDuty and Access Analyzer before the hub.
 
 ### Managed Config rules
@@ -53,9 +54,9 @@ A **single-account security baseline**: an audit trail (**CloudTrail**), configu
 
 ## 🎯 Design Decisions & Best Practices
 
-### 1. Observe and tell a person; do not change anything
+### 1. Observe and tell a person first; fix only what is well understood
 
-Every service here observes. Nothing blocks (no SCPs, no preventive controls) or remediates (no auto-remediation). A baseline that silently changes resources is a surprise in a shared account. The only outward action is an email about a new high-severity finding; everything else is read in Security Hub.
+The services observe. Nothing blocks (no SCPs, no preventive controls). The only automatic changes are the three remediations in design decisions 11 to 14, and they are conservative: `dry-run` by default, a skip tag, and a change that is easy to explain and to undo. A baseline that silently changes resources is a surprise in a shared account, so everything else is read in Security Hub or arrives as an email.
 
 ### 2. One bucket for CloudTrail and Config
 
@@ -93,16 +94,38 @@ Delivery to the topic retries up to 3 times for at most 60 minutes; what still f
 
 `logArchiveExpirationDays`, `trailLogGroupRetentionDays`, `guardDuty.*`, `additionalSecurityHubStandardArns`, `enableUnusedAccessAnalyzer`, `unusedAccessAgeDays`, `notification.severities`, `notification.emails` in `parameters/<env>-params.ts`.
 
+### 11. Automatic remediation starts in `dry-run`
+
+`remediation.mode` is `dry-run` or `enforce`. In `dry-run` the function decides exactly as it would in `enforce`, changes nothing, and writes `[dry-run] ... would ...` as a note on the finding and to the topic. Run it that way in a real account, read the notes for a few days, then switch to `enforce`. The development default is `dry-run`; the check script flips the mode on the function for the duration of the test and restores it.
+
+### 12. Three remediations, each limited to what it can explain
+
+| Finding | Action | What is left alone |
+|---|---|---|
+| Failed control `S3.8`, `S3.2`, `S3.3` (bucket without Block Public Access) | Enable all four Block Public Access settings | Bucket policy, ACLs and objects |
+| Failed control `EC2.13`, `EC2.14`, `EC2.53`, `EC2.54` (SSH/RDP open to the internet) | Revoke the `0.0.0.0/0` and `::/0` ranges on ports 22 and 3389 | Every other rule, port and source, including `10.0.0.0/8` on port 22 |
+| GuardDuty finding on an EC2 instance at `HIGH` or above | Replace the instance's security groups with an empty, no-egress group of its VPC; keep the original group IDs in a tag | The instance keeps running (memory and disk are preserved for investigation) |
+
+Terminating, stopping or deleting anything is outside the role's permissions, and the unit tests assert it.
+
+### 13. A skip tag beats everything
+
+A bucket, security group or instance tagged `security-baseline:remediation-skip=true` is never changed, even in `enforce`. The finding gets a `[skipped]` note instead. This is the way to protect a deliberately open resource, such as a public website bucket or a bastion's SSH rule.
+
+### 14. The rules trust Security Hub findings, so who can import findings matters
+
+The rules match findings from `Security Hub` and `GuardDuty`. The check script needs findings it can create on demand, so `acceptImportedFindings` also trusts the `Default` product (findings added with `BatchImportFindings`). That parameter is `true` in development only: anyone allowed to import findings could otherwise trigger a remediation. The check script uses real buckets, security groups and instances, and imports findings with the same shape the control or GuardDuty would produce.
+
 ## 🏛️ Well-Architected Alignment
 
 | Pillar | Implementation |
 |---|---|
-| **Operational Excellence** | Everything as code; new high-severity findings are emailed; Config history answers "what changed"; snapshot and unit tests pin the shape |
+| **Operational Excellence** | Everything as code; new high-severity findings are emailed; three known findings are fixed automatically, `dry-run` first, with the outcome written to the finding; Config history answers "what changed"; snapshot and unit tests pin the shape |
 | **Security** | Audit trail with integrity validation; CMK with rotation; private, TLS-only archive; threat detection; Foundational Security Best Practices |
-| **Reliability** | Multi-Region trail; versioned archive; bounded retries and a DLQ for notifications; no compute to fail |
-| **Performance Efficiency** | Managed services only; no compute |
+| **Reliability** | Multi-Region trail; versioned archive; bounded retries and a DLQ for notifications and remediation; a failed write-back never stops the next finding |
+| **Performance Efficiency** | Managed services; one small ARM64 function runs only when a matching finding arrives |
 | **Cost Optimization** | Paid options are opt-in parameters; lifecycle expiration bounds storage |
-| **Sustainability** | No compute; retention bounded by parameter |
+| **Sustainability** | Event-driven compute only; retention bounded by parameter |
 
 ## 💰 Cost Optimization
 
@@ -130,6 +153,8 @@ Check the current rates for your Region on the pricing pages: [CloudTrail](https
 - ✅ Config delivery permitted to `config.amazonaws.com` only, for this account (`aws:SourceAccount`), `bucket-owner-full-control`, on the `config/` prefix only
 - ✅ Findings from GuardDuty, Config and Access Analyzer aggregated in Security Hub
 - ✅ Findings topic encrypted with the CMK, TLS-only; the key policy admits EventBridge for this account only
+- ✅ Remediation role limited to `ec2` describe/revoke/create-group/tag/modify-attribute, `s3:PutBucketPublicAccessBlock`/`GetBucketTagging`, `securityhub:BatchUpdateFindings` and `sns:Publish`; no terminate, stop, delete or IAM permission
+- ✅ `dry-run` mode, a skip tag, a concurrency cap parameter, retries and a DLQ on both rules
 
 ### CDK Nag suppressions (with reasons)
 
@@ -137,10 +162,13 @@ Check the current rates for your Region on the pricing pages: [CloudTrail](https
 |---|---|---|
 | `AwsSolutions-S1` | archive bucket | It is the terminal audit archive; server access logs would need a second bucket that itself needs logging |
 | `AwsSolutions-SQS3` | findings DLQ | It is itself the dead-letter destination for undeliverable findings; a DLQ for the DLQ adds nothing |
+| `AwsSolutions-SQS3` | remediation DLQ | Same reason: it is the dead-letter destination for events the rules could not deliver to the function |
+| `AwsSolutions-IAM4` | remediation function role | `AWSLambdaBasicExecutionRole` is the AWS-recommended policy for Lambda log delivery |
+| `AwsSolutions-IAM5` | remediation function role | The security group, instance and bucket to fix are named by the finding at run time, so their ARNs cannot be listed; `kms:GenerateDataKey*` is what the CDK grant for a CMK-encrypted topic adds. The safeguards are `dry-run`, the skip tag and the limited action list |
 | `AwsSolutions-IAM4` | Config recorder role | `AWS_ConfigRole` is the AWS managed policy documented for the recorder role and is maintained as new resource types appear |
 
 ### Out of scope (add per environment)
-- **Chat integrations** (AWS Chatbot / Slack), paging, and **remediation**.
+- **Chat integrations** (AWS Chatbot / Slack), paging, and **further remediations** (for example deactivating an exposed access key, which needs a decision about who owns the key).
 - **Organization-wide** enablement (delegated administrators, auto-enable for member accounts).
 - **Preventive** controls (SCPs, permission boundaries) and CloudTrail **data events**.
 - **Config with the CMK**, S3 **Object Lock** on the archive.
@@ -164,9 +192,28 @@ What was confirmed live, beyond "the stack reached `CREATE_COMPLETE`":
 | Security Hub | `aws securityhub describe-hub` / `get-enabled-standards` | Hub subscribed; AWS Foundational Security Best Practices standard in `PENDING` (normal right after enabling) |
 | Teardown | `cdk destroy '**'` then re-running each `describe-*`/`list-*` above | Every resource gone, including the Config recorder/channel (stopped before the channel was deleted — see the gotcha above) |
 
+### Automatic remediation, verified 2026-10-10
+
+`./test-remediation.sh --project <project> --env <env>` creates real resources in a bad state (a bucket without Block Public Access, a security group with SSH and HTTPS open to the internet, an instance) plus a copy of each protected by the skip tag, imports a Security Hub finding for each, and checks the result. All checks passed:
+
+| Check | Result |
+|---|---|
+| `dry-run` | All three findings get a `[dry-run]` note; bucket, security group and instance unchanged |
+| S3 | Block Public Access on after `enforce` |
+| Security group | The `0.0.0.0/0` rule on port 22 revoked; the `10.0.0.0/8` rule and the port 443 rule untouched |
+| Instance | Only the quarantine group attached; it has no inbound and no outbound rules; the instance is tagged and its original groups are kept in a tag |
+| Findings | Remediated findings set to `RESOLVED` with an outcome note |
+| Skip tag | The tagged bucket, security group and instance unchanged in `enforce`, findings noted as skipped |
+| Real GuardDuty sample finding | Delivered through Security Hub by the real rule and skipped safely: the sample instance (`i-99999999`) does not exist |
+
+Two things worth knowing from the deployment:
+
+- **A reserved concurrency of 5 fails the stack in an account with the default Lambda concurrency quota.** The account must keep 10 unreserved executions; `ReservedConcurrentExecutions` is therefore an optional parameter.
+- **A failed rollback can strand the stack.** One run ended in `ROLLBACK_FAILED` because deleting the Config recorder custom resource was throttled (`Rate exceeded`). Deleting the stack again completed it.
+
 ### Still not covered by this verification
 
-- **The notification event shape was not checked against a live Security Hub finding.** The EventBridge rule matches the documented `Security Hub Findings - Imported` shape, but no GuardDuty sample finding was generated during this verification to confirm an end-to-end email delivery.
+- **The email notification was not checked against a live finding.** The remediation rules were exercised with real and imported findings (above), but the notification rule and the email delivery were not.
 - **Retained resources in production.** With `isAutoDeleteObject: false` (production), the bucket and key are retained on stack deletion — this was verified with `isAutoDeleteObject: true` (the `dev` default) only.
 - **Only one Region, one account was exercised.** The services here are per-account-and-Region singletons (see [Prerequisites](#-prerequisites)); deploying into a Region or account with a pre-existing GuardDuty detector, Security Hub hub, or Config recorder/channel was not tested (expected to fail with an already-exists error, per AWS's documented singleton behavior).
 
@@ -192,13 +239,14 @@ After deployment, confirm the subscription email (if `notification.emails` is se
 ## 🧪 Testing Strategy
 
 ```bash
-npm test -w workspaces/security-baseline   # 36 tests
+npm test -w workspaces/security-baseline   # 65 tests
 ```
 
 | Type | Covers |
 |---|---|
 | Snapshot (2) | Template and resource counts |
 | Unit (32) | Archive hardening and removal policy per environment, trail properties and its KMS key-policy grant, Config recorder/channel/start-recording (`AwsCustomResource`) and their ordering, the `ACCESS_KEYS_ROTATED` input parameter, bucket policy/rules, GuardDuty features (including disabled ones), both analyzers, hub, standards and ordering, the findings rule pattern, severity parameter, topic encryption and TLS, key policy for EventBridge, retries and DLQ, message fields, subscriptions, outputs |
+| Unit, remediation (29) | The rules and their patterns, the function settings, the least-privilege role, and the remediator logic against fake AWS clients: which finding maps to which action, dry-run, the skip tag, only the open admin-port ranges revoked, quarantine group creation and reuse, sample findings skipped, resilience to write-back failures |
 | Compliance (2) | CDK Nag `AwsSolutions` |
 
 ## 🔄 Customization
@@ -207,6 +255,7 @@ npm test -w workspaces/security-baseline   # 36 tests
 - **More standards**: `additionalSecurityHubStandardArns` (copy the ARN from the Security Hub console for your Region).
 - **Other Regions**: deploy the stack per Region.
 - **Organization**: for many accounts, use delegated administrators and organization-level enablement instead of per-account stacks.
+- **Remediation**: `remediation.mode`, the control IDs (`s3ControlIds`, `sgControlIds`), `remoteAdminPorts`, `guardDutyMinSeverity`, `skipTagKey`, and `reservedConcurrency` (leave it unset in an account whose Lambda concurrency quota is still the default of 10: reserving any of it fails the deployment).
 - **Notification**: set `notification.emails`, and widen or narrow `notification.severities`. To reach chat, subscribe AWS Chatbot to the topic.
 
 ## 🧹 Clean-up
