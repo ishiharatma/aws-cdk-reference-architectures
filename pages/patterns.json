@@ -6,6 +6,12 @@
     "image": "data-lake-glue-athena/overview.drawio.svg",
     "tags": ["CDK", "TypeScript", "Glue", "Athena", "Data Lake", "Parquet", "S3", "ETL", "Data Catalog"],
     "link": "data-lake-glue-athena",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-10",
+    "articles": {}
+  },
+  {
     "id": "bedrock-kb-rag-s3-vectors",
     "title": "Bedrock Knowledge Base RAG on Amazon S3 Vectors",
     "description": "A retrieval-augmented generation API on Amazon Bedrock Knowledge Bases with S3 Vectors as the vector store, so there is no idle vector cluster. A SigV4-signed HTTP API answers with citations, filters by a metadata attribute, keeps a conversation through a session ID and exposes retrieval alone for tuning. Deploy-verified with golden questions, an out-of-corpus question, the metadata filter and a follow-up turn; about 0.5 s per retrieval and 1.8 s per answer. Documents why Bedrock's chunk-text keys must be non-filterable and why a caller-supplied filter is not access control.",
