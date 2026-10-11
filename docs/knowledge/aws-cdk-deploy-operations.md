@@ -178,3 +178,8 @@ in the workspace `package.json`, and runs `npm install --package-lock-only` at t
 `cdk init` writes `"app": "npx tsc && npx tsx ..."`; the `tsc` step emits `.js` next to the sources and tsx
 then loads two copies of the parameters module (`No parameters found for environment`), so the script
 rewrites it to `npx tsx ...`.
+
+## `pkill -f <script name>` kills your own shell
+
+`pkill -f "test-comparison.sh"` matches the shell that runs the command (its command line contains the name) and
+ends it (exit 144). Use `kill $(pgrep -f "[t]est-comparison.sh --project")`.
