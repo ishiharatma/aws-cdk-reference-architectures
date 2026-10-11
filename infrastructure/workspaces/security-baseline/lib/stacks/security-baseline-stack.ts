@@ -8,6 +8,7 @@ import { ConfigConstruct } from 'lib/constructs/config-construct';
 import { GuardDutyConstruct } from 'lib/constructs/guardduty-construct';
 import { LogArchiveConstruct } from 'lib/constructs/log-archive-construct';
 import { NotificationConstruct } from 'lib/constructs/notification-construct';
+import { RemediationConstruct } from 'lib/constructs/remediation-construct';
 import { SecurityHubConstruct } from 'lib/constructs/security-hub-construct';
 
 /** Properties for {@link SecurityBaselineStack}. */
@@ -27,9 +28,10 @@ export interface SecurityBaselineStackProps extends cdk.StackProps {
  *   Public / unused access ► Access Analyzer ─┼─► Security Hub (AWS Foundational Security Best Practices)
  *   Config rules & controls ──────────────────┘
  *
- * Detection only: nothing here blocks or remediates. High-severity findings are emailed through
+ * High-severity findings are emailed through
  *   Security Hub ─► EventBridge rule ─► SNS topic ─► email
- * and all findings can be read in Security Hub.
+ * and a few well-understood findings are fixed automatically (dry-run first, then enforce):
+ *   Security Hub ─► EventBridge rules ─► remediation Lambda ─► S3 public access blocked / open SSH+RDP revoked / EC2 isolated
  * These services are account-and-Region singletons; see the README for what happens if any is already enabled.
  */
 export class SecurityBaselineStack extends cdk.Stack {
@@ -91,6 +93,16 @@ export class SecurityBaselineStack extends cdk.Stack {
       key: archive.key,
       severities: params.notification.severities,
       emails: params.notification.emails,
+      isAutoDeleteObject,
+    });
+
+    // ---------------------------------------------------------------------------------------------
+    // Remediation: Security Hub findings -> EventBridge -> Lambda fixes the resource, notes the finding, tells the topic
+    // ---------------------------------------------------------------------------------------------
+    new RemediationConstruct(this, 'Remediation', {
+      namePrefix,
+      params: params.remediation,
+      topic: notification.topic,
       isAutoDeleteObject,
     });
 

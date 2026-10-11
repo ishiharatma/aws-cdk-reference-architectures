@@ -5,7 +5,7 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 10 Oct 2026 19:20:30 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 11 Oct 2026 00:59:51 GMT</lastBuildDate>
     <item>
       <title>RDS Multi-AZ versus a Read Replica</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/rds-multiaz-vs-read-replica</link>
@@ -20,6 +20,24 @@
       <category>Read Replica</category>
       <category>High Availability</category>
       <category>Lambda</category>
+    </item>
+    <item>
+      <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</guid>
+      <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+      <description>A single-account security baseline in one CDK stack, with opt-in automatic remediation: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices, with new high-severity findings emailed through EventBridge and SNS. Deploy-verified end-to-end; the Config recorder/delivery channel are created via AwsCustomResource to work around a CloudFormation circular-dependency limitation. Automatic remediation (dry-run by default, skip tag) blocks S3 public access, revokes open SSH/RDP rules and isolates GuardDuty-flagged EC2 instances; verified with real resources and Security Hub findings.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>Security</category>
+      <category>CloudTrail</category>
+      <category>Config</category>
+      <category>GuardDuty</category>
+      <category>Access Analyzer</category>
+      <category>Security Hub</category>
+      <category>Remediation</category>
+      <category>Lambda</category>
+      <category>EventBridge</category>
     </item>
     <item>
       <title>code-server on EC2 vs AWS Lambda MicroVMs: The Same Browser IDE on Two Compute Models, with Claude Code on Bedrock</title>
@@ -130,21 +148,6 @@
       <category>Multi-AZ</category>
       <category>Failover</category>
       <category>Lambda</category>
-    </item>
-    <item>
-      <title>Security Baseline: CloudTrail, Config, GuardDuty, Access Analyzer &amp; Security Hub</title>
-      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</link>
-      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/security-baseline</guid>
-      <pubDate>Thu, 01 Oct 2026 12:00:00 GMT</pubDate>
-      <description>A single-account, detection-only security baseline in one CDK stack: a multi-Region CloudTrail trail and AWS Config recorder with managed rules delivering to a hardened S3 log archive, a GuardDuty detector with optional protection plans, IAM Access Analyzer, and Security Hub subscribed to AWS Foundational Security Best Practices, with new high-severity findings emailed through EventBridge and SNS. Deploy-verified end-to-end; the Config recorder/delivery channel are created via AwsCustomResource to work around a CloudFormation circular-dependency limitation.</description>
-      <category>CDK</category>
-      <category>TypeScript</category>
-      <category>Security</category>
-      <category>CloudTrail</category>
-      <category>Config</category>
-      <category>GuardDuty</category>
-      <category>Access Analyzer</category>
-      <category>Security Hub</category>
     </item>
     <item>
       <title>Serverless Codex App Server on AWS Lambda MicroVMs</title>
