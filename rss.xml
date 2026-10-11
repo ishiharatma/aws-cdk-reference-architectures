@@ -5,7 +5,23 @@
     <link>https://ishiharatma.github.io/aws-cdk-reference-architectures/</link>
     <description>Newly published and newly deploy-verified AWS CDK reference architectures.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 11 Oct 2026 01:05:07 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 11 Oct 2026 01:06:01 GMT</lastBuildDate>
+    <item>
+      <title>ECS Blue/Green: Native versus CodeDeploy</title>
+      <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecs-blue-green-native-vs-codedeploy</link>
+      <guid isPermaLink="true">https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/ecs-blue-green-native-vs-codedeploy</guid>
+      <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+      <description>The same application deployed blue/green with native ECS (deploymentStrategy BLUE_GREEN) and with CodeDeploy, side by side behind ALBs with a production and a test listener, and driven through the same four deployments: a good release, a failing lifecycle hook, a rollback during the bake period and a container that never starts. Deploy-verified with a 5 requests-per-second probe: no HTTP error on either flavor, rollback to the old version in 20 s (native) and 14 s (CodeDeploy), and neither gave up on the broken release within 7 minutes.</description>
+      <category>CDK</category>
+      <category>TypeScript</category>
+      <category>ECS</category>
+      <category>Fargate</category>
+      <category>Blue/Green</category>
+      <category>CodeDeploy</category>
+      <category>ALB</category>
+      <category>Deployment</category>
+      <category>Lambda</category>
+    </item>
     <item>
       <title>Bedrock Knowledge Base RAG on Amazon S3 Vectors</title>
       <link>https://github.com/ishiharatma/aws-cdk-reference-architectures/tree/main/infrastructure/workspaces/bedrock-kb-rag-s3-vectors</link>
