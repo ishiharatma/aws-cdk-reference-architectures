@@ -3,7 +3,7 @@
     "agent-skills-private": {
       "source": {
         "source": "url",
-        "url": "git@github.com:ishiharatma/agent-skills-private.git"
+        "url": "https://github.com/ishiharatma/agent-skills-private.git"
       }
     },
     "agent-toolkit-for-aws": {
