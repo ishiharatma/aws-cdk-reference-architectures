@@ -3,6 +3,12 @@
 # Never fails the container build: SSH access to the private marketplace is optional.
 SETTINGS=".claude/settings.json"
 
+# The named volume mounted at ~/.claude is created root-owned by Docker.
+# Without this, the node user cannot write credentials (login fails) or plugins.
+if [ -d "$HOME/.claude" ] && [ "$(stat -c %U "$HOME/.claude")" != "$(id -un)" ]; then
+    sudo chown -R "$(id -un):$(id -gn)" "$HOME/.claude" || echo "⚠️ Failed to chown ~/.claude"
+fi
+
 if ! command -v claude >/dev/null 2>&1; then
     echo "⚠️ claude CLI not found. Skipping plugin installation."
     exit 0
