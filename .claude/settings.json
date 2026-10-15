@@ -3,7 +3,7 @@
     "agent-skills-private": {
       "source": {
         "source": "url",
-        "url": "git@github.com:ishiharatma/agent-skills-private.git"
+        "url": "https://github.com/ishiharatma/agent-skills-private.git"
       }
     },
     "agent-toolkit-for-aws": {
@@ -27,6 +27,11 @@
     { "marketplace": "agent-skills-private", "plugin": "aws-icon-diagram" },
     { "marketplace": "agent-skills-private", "plugin": "claudeception" },
     { "marketplace": "agent-skills-private", "plugin": "show-me" },
+    { "marketplace": "agent-skills-private", "plugin": "cdk-configuration-wiring-review" },
+    { "marketplace": "agent-skills-private", "plugin": "cloudformation-deploy-constraint-review" },
+    { "marketplace": "agent-skills-private", "plugin": "iac-secret-boundary" },
+    { "marketplace": "agent-skills-private", "plugin": "nag-suppression-review" },
+    { "marketplace": "agent-skills-private", "plugin": "spec-readability-review" },
     { "marketplace": "agent-toolkit-for-aws", "plugin": "aws-core" }
   ],
   "permissions": {
