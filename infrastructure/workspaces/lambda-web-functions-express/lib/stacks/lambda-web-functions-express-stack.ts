@@ -80,7 +80,9 @@ export class LambdaWebFunctionsExpressStack extends cdk.Stack {
 
     // ---- CloudFront with origin access control ------------------------------
     // Web Function origins accept only signing behavior `always-amz-auth`: CloudFront signs every
-    // origin request but leaves the viewer's Authorization header untouched for the app.
+    // origin request but does not overwrite the viewer's Authorization header. CloudFront still
+    // strips that header from GET/HEAD requests unless the cache policy includes it, so with
+    // CACHING_DISABLED below the app never sees it; add it to a cache policy if the app needs it.
     const oac = new cloudfront.CfnOriginAccessControl(this, 'WebFunctionOac', {
       originAccessControlConfig: {
         name: `${namePrefix}-web-function-oac`,

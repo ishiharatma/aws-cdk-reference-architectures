@@ -78,6 +78,10 @@ GB-seconds over the environment lifetime + data transfer.
   `originAccessControlOriginType: lambda`, `signingBehavior: always-amz-auth` (the only
   value Web Function origins accept; it preserves the viewer `Authorization` header),
   `signingProtocol: sigv4` (regional) or `sigv4a` (MultiRegion/global hostname).
+- `always-amz-auth` alone does not get `Authorization` to the app: for GET/HEAD, CloudFront
+  removes the header unless the cache policy includes it (per the CloudFront developer guide),
+  so `CachingDisabled` + `AllViewerExceptHostHeader` drops it. Use a cache policy that adds
+  `Authorization` to the cache key when the app authenticates with it.
 - Origin request policy must not forward the viewer `Host` (use
   `AllViewerExceptHostHeader`), otherwise the endpoint returns 404.
 - Resource policy: principal `cloudfront.amazonaws.com`, action
