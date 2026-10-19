@@ -733,5 +733,17 @@
     "date": "2026-10-09",
     "draft": true,
     "articles": {}
+  },
+  {
+    "id": "lambda-web-functions-express",
+    "title": "Lambda Web Functions (Express.js) behind CloudFront + OAC",
+    "description": "The same Todos REST API as the apigw-* series, served by a plain Express.js server running as an AWS Lambda Web Function: no API Gateway, no adapter, no handler. The IamAuth endpoint only accepts CloudFront OAC-signed requests and WAF sits on CloudFront. Deploy-verified: multi-concurrency (100 requests on 3 environments once warm), dynamic per-environment limits vs maxEnvironments throttling, SSE through CloudFront, 90/10 canary weights, a zero-error revision rollout, optional VPC egress through a network connector, and a head-to-head run against the API Gateway + Lambda Web Adapter version.",
+    "image": "lambda-web-functions-express/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Lambda Web Functions", "Lambda", "CloudFront", "WAF", "DynamoDB", "Express", "Serverless"],
+    "link": "lambda-web-functions-express",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-15",
+    "articles": {}
   }
 ]
