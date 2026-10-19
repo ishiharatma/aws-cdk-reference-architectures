@@ -1,0 +1,1101 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CloudfrontWafStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AllowedIpv4Set": {
+      "Properties": {
+        "Addresses": [
+          "203.0.113.10/32",
+        ],
+        "IPAddressVersion": "IPV4",
+        "Name": "test-test-lwf-allowed-ipv4",
+        "Scope": "CLOUDFRONT",
+      },
+      "Type": "AWS::WAFv2::IPSet",
+    },
+    "WebAcl": {
+      "Properties": {
+        "DefaultAction": {
+          "Block": {},
+        },
+        "Name": "test-test-lwf-cloudfront",
+        "Rules": [
+          {
+            "Action": {
+              "Block": {},
+            },
+            "Name": "RateLimitPerIp",
+            "Priority": 1,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "EvaluationWindowSec": 60,
+                "Limit": 1000,
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-lwf-RateLimitPerIp",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesCommonRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 2,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-lwf-AWSManagedRulesCommonRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 3,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-lwf-AWSManagedRulesKnownBadInputsRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Allow": {},
+            },
+            "Name": "AllowListedIps",
+            "Priority": 100,
+            "Statement": {
+              "IPSetReferenceStatement": {
+                "Arn": {
+                  "Fn::GetAtt": [
+                    "AllowedIpv4Set",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-lwf-AllowListedIps",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "CLOUDFRONT",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-lwf-WebAcl",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`CloudfrontWafStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::WAFv2::IPSet": 1,
+  "AWS::WAFv2::WebACL": 1,
+}
+`;
+
+exports[`LambdaWebFunctionsExpressStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "DistributionUrl": {
+      "Description": "Public URL (CloudFront)",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "Distribution830FAC52",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "EndpointDomainName": {
+      "Description": "Web Function endpoint domain (IamAuth; unsigned requests are rejected)",
+      "Value": {
+        "Fn::GetAtt": [
+          "TodosWebFunctionEndpointCE8D63A7",
+          "DomainName",
+        ],
+      },
+    },
+    "EndpointName": {
+      "Value": "test",
+    },
+    "LogGroupName": {
+      "Value": {
+        "Ref": "TodosWebFunctionLogGroupBC6475F0",
+      },
+    },
+    "RevisionId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "TodosWebFunctionRevisionD2D6F4A4",
+          "RevisionId",
+        ],
+      },
+    },
+    "TodosTableName": {
+      "Value": {
+        "Ref": "TodosTable250330D8",
+      },
+    },
+    "WebFunctionName": {
+      "Value": "test-test-lwf-todos",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "TodosWebFunctionCodeDeploymentAwsCliLayer73C127F2",
+          },
+        ],
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TodosWebFunctionCodeBucketB031E3DC",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TodosWebFunctionCodeBucketB031E3DC",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "TodosWebFunctionCodeBucketB031E3DC",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Distribution830FAC52": {
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "test-test-lwf Todos API (Lambda Web Functions)",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PUT",
+              "PATCH",
+              "POST",
+              "DELETE",
+            ],
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "Compress": true,
+            "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+            "TargetOriginId": "LambdaWebFunctionsExpressDistributionOrigin126755168",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "Enabled": true,
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "https-only",
+                "OriginReadTimeout": 30,
+                "OriginSSLProtocols": [
+                  "TLSv1.2",
+                ],
+              },
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "TodosWebFunctionEndpointCE8D63A7",
+                  "DomainName",
+                ],
+              },
+              "Id": "LambdaWebFunctionsExpressDistributionOrigin126755168",
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "WebFunctionOac",
+                  "Id",
+                ],
+              },
+            },
+          ],
+          "PriceClass": "PriceClass_200",
+          "WebACLId": "arn:aws:wafv2:us-east-1:123456789012:global/webacl/test/00000000-0000-0000-0000-000000000000",
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "TodosTable250330D8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "todoId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "todoId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-lwf-todos",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunction86F6FF09": {
+      "Properties": {
+        "FunctionName": "test-test-lwf-todos",
+      },
+      "Type": "AWS::Lambda::WebFunction",
+    },
+    "TodosWebFunctionCodeBucketAutoDeleteObjectsCustomResourceE2739D23": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "TodosWebFunctionCodeBucketPolicy9BAA1E20",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "TodosWebFunctionCodeBucketB031E3DC",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunctionCodeBucketB031E3DC": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:code/:a4125bd7",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunctionCodeBucketPolicy9BAA1E20": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "TodosWebFunctionCodeBucketB031E3DC",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TodosWebFunctionCodeBucketB031E3DC",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TodosWebFunctionCodeBucketB031E3DC",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TodosWebFunctionCodeBucketB031E3DC",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "TodosWebFunctionCodeBucketB031E3DC",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+              ],
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":lambda:ap-northeast-1:123456789012:web-function/test-test-lwf-todos/*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "TodosWebFunctionCodeBucketB031E3DC",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowLambdaWebFunctionsRead",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "TodosWebFunctionCodeDeploymentAwsCliLayer73C127F2": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "TodosWebFunctionCodeDeploymentCustomResource3985DA5D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketKeyPrefix": "code/",
+        "DestinationBucketName": {
+          "Ref": "TodosWebFunctionCodeBucketB031E3DC",
+        },
+        "Extract": false,
+        "OutputObjectKeys": true,
+        "OutputObjectVersionIds": true,
+        "Prune": false,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+        ],
+        "SourceObjectKeys": [
+          "a0c4d6b257437130b1671b673e46f91156feaf37abfc86f4f7cb78e3858cd9a9.zip",
+        ],
+        "WaitForDistributionInvalidation": true,
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunctionEndpointCE8D63A7": {
+      "DependsOn": [
+        "TodosWebFunction86F6FF09",
+        "TodosWebFunctionRevisionD2D6F4A4",
+      ],
+      "Properties": {
+        "AuthType": "IamAuth",
+        "EndpointName": "test",
+        "EndpointType": "HomeRegion",
+        "FunctionName": "test-test-lwf-todos",
+        "RevisionWeights": [
+          {
+            "RevisionId": {
+              "Fn::GetAtt": [
+                "TodosWebFunctionRevisionD2D6F4A4",
+                "RevisionId",
+              ],
+            },
+            "Weight": 100,
+          },
+        ],
+        "ScalingConfig": {
+          "MaxEnvironments": 3,
+        },
+        "ThrottleConfig": {
+          "RateLimit": 100,
+        },
+      },
+      "Type": "AWS::Lambda::WebFunctionEndpoint",
+    },
+    "TodosWebFunctionExecutionRole71684219": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Execution role for Lambda Web Function test-test-lwf-todos",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TodosWebFunctionExecutionRoleDefaultPolicyBB57FA24": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:*:123456789012:log-group:/aws/lambda/web/test-test-lwf-todos:*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":logs:*:123456789012:log-group:/aws/lambda/web/test-test-lwf-todos.local:*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TodosTable250330D8",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TodosTable250330D8",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TodosWebFunctionExecutionRoleDefaultPolicyBB57FA24",
+        "Roles": [
+          {
+            "Ref": "TodosWebFunctionExecutionRole71684219",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "TodosWebFunctionLocalLogGroupF9CEDD8C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/web/test-test-lwf-todos.local",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunctionLogGroupBC6475F0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/web/test-test-lwf-todos",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TodosWebFunctionRevisionD2D6F4A4": {
+      "DependsOn": [
+        "TodosWebFunctionCodeBucketPolicy9BAA1E20",
+        "TodosWebFunctionCodeDeploymentAwsCliLayer73C127F2",
+        "TodosWebFunctionCodeDeploymentCustomResource3985DA5D",
+        "TodosWebFunctionExecutionRoleDefaultPolicyBB57FA24",
+        "TodosWebFunctionExecutionRole71684219",
+        "TodosWebFunction86F6FF09",
+        "TodosWebFunctionLocalLogGroupF9CEDD8C",
+        "TodosWebFunctionLogGroupBC6475F0",
+      ],
+      "Properties": {
+        "BuildConfig": {
+          "CodeConfig": {
+            "S3Object": {
+              "Bucket": {
+                "Ref": "TodosWebFunctionCodeBucketB031E3DC",
+              },
+              "Key": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "code/",
+                    {
+                      "Fn::Select": [
+                        0,
+                        {
+                          "Fn::GetAtt": [
+                            "TodosWebFunctionCodeDeploymentCustomResource3985DA5D",
+                            "SourceObjectKeys",
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                ],
+              },
+              "VersionId": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::GetAtt": [
+                      "TodosWebFunctionCodeDeploymentCustomResource3985DA5D",
+                      "SourceObjectVersionIds",
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+          "RuntimeConfig": {
+            "Runtime": "nodejs24.x",
+          },
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Code code/",
+              {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::GetAtt": [
+                      "TodosWebFunctionCodeDeploymentCustomResource3985DA5D",
+                      "SourceObjectKeys",
+                    ],
+                  },
+                ],
+              },
+            ],
+          ],
+        },
+        "FunctionName": "test-test-lwf-todos",
+        "ServiceConfig": {
+          "EnvironmentVariables": {
+            "ENABLE_DEBUG_ROUTES": "false",
+            "TABLE_NAME": {
+              "Ref": "TodosTable250330D8",
+            },
+          },
+          "ExecutionRoleArn": {
+            "Fn::GetAtt": [
+              "TodosWebFunctionExecutionRole71684219",
+              "Arn",
+            ],
+          },
+          "MaxConcurrencyPerEnvironment": 64,
+          "TelemetryConfig": {
+            "LoggingConfig": {
+              "ApplicationLogLevel": "INFO",
+              "LogGroup": "/aws/lambda/web/test-test-lwf-todos",
+              "SystemLogLevel": "INFO",
+            },
+          },
+          "TimeoutSeconds": 30,
+        },
+      },
+      "Type": "AWS::Lambda::WebFunctionRevision",
+    },
+    "WebFunctionOac": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Description": "OAC for the Lambda Web Function endpoint",
+          "Name": "test-test-lwf-web-function-oac",
+          "OriginAccessControlOriginType": "lambda",
+          "SigningBehavior": "always-amz-auth",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "WebFunctionResourcePolicy": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeWebFunctionEndpoint",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudfront::123456789012:distribution/",
+                        {
+                          "Ref": "Distribution830FAC52",
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TodosWebFunctionEndpointCE8D63A7",
+                  "EndpointArn",
+                ],
+              },
+              "Sid": "AllowCloudFrontOAC",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "TodosWebFunction86F6FF09",
+            "FunctionArn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::ResourcePolicy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`LambdaWebFunctionsExpressStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::CloudFront::Distribution": 1,
+  "AWS::CloudFront::OriginAccessControl": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 2,
+  "AWS::Lambda::LayerVersion": 1,
+  "AWS::Lambda::ResourcePolicy": 1,
+  "AWS::Lambda::WebFunction": 1,
+  "AWS::Lambda::WebFunctionEndpoint": 1,
+  "AWS::Lambda::WebFunctionRevision": 1,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "Custom::CDKBucketDeployment": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;
