@@ -85,6 +85,10 @@ The three resources map to three lifecycles:
 - **Revision** — immutable. Changing code, runtime, timeout, environment variables, concurrency or logging creates a new revision; CloudFormation replaces it.
 - **Endpoint** — mutable. Auth type, revision weights (up to 2, for canaries), `maxEnvironments` and `rateLimit` update in place in a few seconds.
 
+CloudFront signs each request and sends it to the endpoint, which splits traffic across at most two immutable revisions by weight. A canary or rollback changes only the weights, without a new deployment:
+
+![Web Functions resource model](resource-model.drawio.svg)
+
 ## 🎯 Design Decisions & Best Practices
 
 ### 1. `IamAuth` + CloudFront OAC instead of a public endpoint
@@ -166,6 +170,10 @@ Measured on 2026-10-15 with [`test-api.sh`](test-api.sh) and ad-hoc load from a 
 | Idle scale-down | 9 → 3 environments within ~1 min of the load stopping; the last environment got `SIGTERM` ~6 min after the last request (scale to zero) |
 | First request after ~22 min idle | **0.89 s** end-to-end through CloudFront (`platform.initReport` 430 ms), next request 0.086 s |
 | Starting limit varies | right after a CloudFormation revision switch on a warm endpoint, 30 parallel ran on **1 environment (30 in flight)**; on a freshly created endpoint, 30 parallel gave 8 OK / 22 × 429 twice in a row |
+
+The configured `maxConcurrencyPerEnvironment` (64) is only a ceiling. The dynamic limit each environment actually accepts starts at 2–3 and rises with repeated bursts; once learned, it is kept after scaling to zero:
+
+![Dynamic concurrency limit](dynamic-concurrency.drawio.svg)
 
 **Take-away:** `maxEnvironments` × `maxConcurrencyPerEnvironment` is an upper bound, not the capacity you get on a cold burst. If clients burst, either leave `maxEnvironments` unset (or generous) or make clients retry 429/503 with backoff.
 
