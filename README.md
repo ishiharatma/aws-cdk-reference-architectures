@@ -21,9 +21,9 @@ This repository provides reference architectures for AWS implemented using AWS C
 - Node.js 20.x or later
 - AWS CLI configured with appropriate credentials
 - AWS CDK CLI installed (`npm install -g aws-cdk`)
-- npm 11.10.0 or later (required for `min-release-age` in `.npmrc`; older npm silently ignores it)
+- npm 11.10.0 or later (required for `min-release-age` and `allow-git` in `.npmrc`; older npm silently ignores them)
 
-Each npm project in this repository ships a `.npmrc` that disables dependency install scripts (`ignore-scripts=true`), enforces `engines` (`engine-strict=true`), and skips package versions published less than one day ago (`min-release-age=1`).
+Each npm project in this repository ships a `.npmrc` that disables dependency install scripts (`ignore-scripts=true`), enforces `engines` (`engine-strict=true`), skips package versions published less than one day ago (`min-release-age=1`), fails on conflicting peer dependencies (`strict-peer-deps=true`), rejects git dependencies (`allow-git=none`), and saves new dependencies with exact versions (`save-exact=true`).
 
 This reference architecture requires creating an AWS profile named `project-env` (where project and env are passed as CDK command arguments) before running CDK commands.
 
