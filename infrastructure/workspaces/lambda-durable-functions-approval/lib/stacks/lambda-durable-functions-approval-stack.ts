@@ -123,7 +123,7 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
-      bundling: { minify: true, sourceMap: true },
+      bundling: { minify: true },
     } satisfies Partial<lambdaNodejs.NodejsFunctionProps>;
     // The durable execution APIs (DurableExecutionName, SendDurableExecutionCallbackSuccess) need a
     // recent @aws-sdk/client-lambda; bundle it instead of relying on the runtime-provided SDK version.
