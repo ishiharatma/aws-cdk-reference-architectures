@@ -12,10 +12,11 @@ const testParams: EnvParams = {
   workflow: {
     executionTimeoutDays: 7,
     retentionDays: 14,
-    approvalTimeoutHours: 48,
+    approvalTimeoutMinutes: 48 * 60,
     invocationTimeoutSeconds: 60,
   },
   apiThrottle: { rateLimit: 10, burstLimit: 20 },
+  demoWebUi: { enabled: true },
   approverEmails: ['approver@example.com'],
   alertEmails: ['ops@example.com'],
 };

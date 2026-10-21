@@ -1,17 +1,24 @@
 import { randomUUID } from 'crypto';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DurableExecutionAlreadyStartedException,
   InvokeCommand,
   LambdaClient,
 } from '@aws-sdk/client-lambda';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { requireEnv } from '../shared/env';
-import { callerArn, header, json, parseBody } from '../shared/http';
+import { callerId, header, json, parseBody } from '../shared/http';
+import { RequestsRepository } from '../shared/requests-repository';
 import { REQUEST_ID_PATTERN, toExecutionName, type ApprovalRequestInput } from '../shared/types';
 
 const lambda = new LambdaClient({});
 /** Qualified ARN of the `live` alias. Durable functions reject unqualified ARNs. */
 const workflowFunctionArn = requireEnv('WORKFLOW_FUNCTION_ARN');
+const repository = new RequestsRepository(
+  DynamoDBDocumentClient.from(new DynamoDBClient({})),
+  requireEnv('TABLE_NAME')
+);
 
 /**
  * POST /requests — start one durable execution per request.
@@ -20,6 +27,11 @@ const workflowFunctionArn = requireEnv('WORKFLOW_FUNCTION_ARN');
  * 15 minutes, far shorter than an approval wait. The request ID becomes the durable
  * execution name, so a client retry with the same `Idempotency-Key` and body attaches to
  * the existing execution instead of starting a second one.
+ *
+ * A reused key with a different body is not rejected by an asynchronous invoke: Invoke still
+ * returns the existing execution ARN, and the event fails later with
+ * "DurableExecutionAlreadyExists ... different payload" and lands in the DLQ. The projection
+ * check below turns that into a 409 before invoking.
  */
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const body = parseBody(event);
@@ -40,7 +52,22 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   // No timestamps in the payload: the execution-name idempotency check compares payloads,
   // so a retry must produce byte-identical input.
-  const input: ApprovalRequestInput = { requestId, title, amount, requester: callerArn(event) };
+  const input: ApprovalRequestInput = { requestId, title, amount, requester: callerId(event) };
+
+  const existing = idempotencyKey !== undefined ? await repository.get(requestId) : undefined;
+  if (existing) {
+    const sameRequest =
+      existing.title === input.title &&
+      existing.amount === input.amount &&
+      existing.requester === input.requester;
+    if (!sameRequest) {
+      return json(409, {
+        message: 'This Idempotency-Key was already used with a different request',
+        requestId,
+      });
+    }
+    return json(200, { requestId, status: existing.status, durableExecutionArn: null });
+  }
 
   try {
     const res = await lambda.send(
@@ -57,6 +84,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       durableExecutionArn: res.DurableExecutionArn ?? null,
     });
   } catch (error) {
+    // Synchronous-only safety net; see the note above for asynchronous invokes.
     if (error instanceof DurableExecutionAlreadyStartedException) {
       return json(409, {
         message: 'This Idempotency-Key was already used with a different request body',

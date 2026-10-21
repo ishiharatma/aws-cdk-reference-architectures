@@ -749,14 +749,13 @@
   {
     "id": "lambda-durable-functions-approval",
     "title": "Human-in-the-loop approval workflow on Lambda durable functions",
-    "description": "A submit / approve / expire business flow written as one Lambda durable function: executions start asynchronously with an idempotent DurableExecutionName through a published-version alias, wait up to 48 hours for an approver with waitForCallback (no compute while suspended) and resume from checkpoints when the decision API sends the callback. Shows the durable-specific rules in code and infrastructure: deterministic replay, retained versions for in-flight executions, at-least-once steps with conditional DynamoDB writes, a DynamoDB status projection instead of the 30 rps GetDurableExecution API, and failure detection through EventBridge status-change events plus a DLQ.",
+    "description": "A submit / approve / expire business flow written as one Lambda durable function: executions start asynchronously with an idempotent DurableExecutionName through a published-version alias, wait up to 48 hours for an approver with waitForCallback (no compute while suspended) and resume from checkpoints when the decision API sends the callback. Shows the durable-specific rules in code and infrastructure: deterministic replay, retained versions for in-flight executions, at-least-once steps with conditional DynamoDB writes, a DynamoDB status projection instead of the 30 rps GetDurableExecution API, and failure detection through EventBridge status-change events plus a DLQ. Deploy-verified, including the observation that an asynchronous retry with a different payload is not rejected but lands in the DLQ. An optional demo web UI (Cognito managed login, identity pool roles per group, CloudFront + S3) calls the same IAM-authorized API with SigV4.",
     "image": "lambda-durable-functions-approval/overview.drawio.svg",
-    "tags": ["CDK", "TypeScript", "Lambda", "Lambda durable functions", "API Gateway", "DynamoDB", "SNS", "EventBridge", "Serverless"],
+    "tags": ["CDK", "TypeScript", "Lambda", "Lambda durable functions", "API Gateway", "DynamoDB", "SNS", "EventBridge", "Cognito", "CloudFront", "Serverless"],
     "link": "lambda-durable-functions-approval",
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-10-21",
-    "draft": true,
     "articles": {}
   }
 ]
