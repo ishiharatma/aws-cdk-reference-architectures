@@ -294,3 +294,14 @@ query to a Private Hosted Zone`. To test a failover record in a private zone, re
 inside the associated VPC (for example a Lambda in an isolated subnet calling `dns.resolveCname`).
 Route 53 health checkers still run outside the VPC, so a health check needs a publicly reachable endpoint.
 Measured with a 10 s interval, threshold 2 and TTL 10 s: failover 29 s, failback 18 s.
+
+## DynamoDB: a GSI added to an existing table is not readable when CloudFormation finishes
+
+Adding a `GlobalSecondaryIndex` to an existing `AWS::DynamoDB::Table` (found in
+`lambda-durable-functions-approval`, October 2026): the table reached `UPDATE_COMPLETE` and the
+stack finished, but the index stayed `CREATING` / `Backfilling: true` for about eight more minutes
+on a table with a handful of items. Queries during that window fail with
+`ValidationException: Cannot read from backfilling global secondary index: <index>` (a 502
+through API Gateway). Confirmed with
+`aws dynamodb describe-table --query 'Table.GlobalSecondaryIndexes[].{s:IndexStatus,b:Backfilling}'`.
+Wait for `ACTIVE` before smoke-testing a new query path, or treat that error as retryable.
