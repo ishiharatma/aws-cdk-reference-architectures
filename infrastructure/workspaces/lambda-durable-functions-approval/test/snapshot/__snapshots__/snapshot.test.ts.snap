@@ -1,0 +1,1622 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiUrl": {
+      "Description": "REST API base URL (IAM auth)",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "RequestsApi5EAF7131",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "RequestsApiEndpointB96F020E": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "RequestsApi5EAF7131",
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "RequestsTableName": {
+      "Value": {
+        "Ref": "RequestsTable419243C7",
+      },
+    },
+    "WorkflowAliasArn": {
+      "Description": "Qualified ARN used to start executions",
+      "Value": {
+        "Ref": "WorkflowLiveAliasACF3BD1F",
+      },
+    },
+    "WorkflowDlqUrl": {
+      "Value": {
+        "Ref": "WorkflowDlq64416DC0",
+      },
+    },
+    "WorkflowFunctionName": {
+      "Value": {
+        "Ref": "WorkflowFunction9B932173",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlertTopic2720D535": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "TopicKeyB2E0C9CB",
+            "Arn",
+          ],
+        },
+        "TopicName": "test-test-ldf-alerts",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AlertTopicPolicy3376BC02": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "AlertTopic2720D535",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": {
+                "Ref": "AlertTopic2720D535",
+              },
+              "Sid": "1",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "AlertTopic2720D535",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "AlertTopicopsexamplecom6DA82EC4": {
+      "Properties": {
+        "Endpoint": "ops@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "AlertTopic2720D535",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "ApiAccessLogGroupCEA70788": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApprovalTopic1D517B4C": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "TopicKeyB2E0C9CB",
+            "Arn",
+          ],
+        },
+        "TopicName": "test-test-ldf-approval-requests",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "ApprovalTopicPolicyA21B1F19": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "ApprovalTopic1D517B4C",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "ApprovalTopic1D517B4C",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "ApprovalTopicapproverexamplecomE3CB1A4D": {
+      "Properties": {
+        "Endpoint": "approver@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "ApprovalTopic1D517B4C",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "GetRequestFunction66D99464": {
+      "DependsOn": [
+        "GetRequestFunctionServiceRoleDefaultPolicy612D5D46",
+        "GetRequestFunctionServiceRoleC5C144DE",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "007aa1248cb0008e042edbb2727c18bec464f294097137c24b9cc335b6f1263c.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Ref": "RequestsTable419243C7",
+            },
+          },
+        },
+        "FunctionName": "test-test-ldf-get-request",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetRequestLogGroupE2CF0805",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "GetRequestFunctionServiceRoleC5C144DE",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "GetRequestFunctionServiceRoleC5C144DE": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GetRequestFunctionServiceRoleDefaultPolicy612D5D46": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "GetRequestFunctionServiceRoleDefaultPolicy612D5D46",
+        "Roles": [
+          {
+            "Ref": "GetRequestFunctionServiceRoleC5C144DE",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "GetRequestLogGroupE2CF0805": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RequestsApi5EAF7131": {
+      "Properties": {
+        "Description": "Approval requests API backed by a Lambda durable function",
+        "Name": "test-test-ldf-requests-api",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "RequestsApiAccount7A33359B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "RequestsApi5EAF7131",
+      ],
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "RequestsApiCloudWatchRole51BAFEF6",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ApiGateway::Account",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RequestsApiBodyValidatorA5AE366F": {
+      "Properties": {
+        "Name": "validate-body",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+        "ValidateRequestBody": true,
+        "ValidateRequestParameters": true,
+      },
+      "Type": "AWS::ApiGateway::RequestValidator",
+    },
+    "RequestsApiCloudWatchRole51BAFEF6": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RequestsApiCreateRequestModel824F369C": {
+      "Properties": {
+        "ContentType": "application/json",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+        "Schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "amount": {
+              "exclusiveMinimum": true,
+              "minimum": 0,
+              "type": "number",
+            },
+            "title": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string",
+            },
+          },
+          "required": [
+            "title",
+            "amount",
+          ],
+          "type": "object",
+        },
+      },
+      "Type": "AWS::ApiGateway::Model",
+    },
+    "RequestsApiDecisionModelA3146ECD": {
+      "Properties": {
+        "ContentType": "application/json",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+        "Schema": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "additionalProperties": false,
+          "properties": {
+            "approved": {
+              "type": "boolean",
+            },
+            "comment": {
+              "maxLength": 1000,
+              "type": "string",
+            },
+          },
+          "required": [
+            "approved",
+          ],
+          "type": "object",
+        },
+      },
+      "Type": "AWS::ApiGateway::Model",
+    },
+    "RequestsApiDeploymentE3FB80368786f059a75eaf1220c18acb06c9a631": {
+      "DependsOn": [
+        "RequestsApiBodyValidatorA5AE366F",
+        "RequestsApiCreateRequestModel824F369C",
+        "RequestsApiDecisionModelA3146ECD",
+        "RequestsApirequestsrequestIddecisionPOST2CDA4DD9",
+        "RequestsApirequestsrequestIddecision5353891D",
+        "RequestsApirequestsrequestIdGETA915EAB1",
+        "RequestsApirequestsrequestId2455441A",
+        "RequestsApirequestsPOST7EBDD91C",
+        "RequestsApirequests1036C9DC",
+      ],
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "Description": "Approval requests API backed by a Lambda durable function",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "RequestsApiDeploymentStagetestA4D5B1C1": {
+      "DependsOn": [
+        "RequestsApiAccount7A33359B",
+      ],
+      "Properties": {
+        "AccessLogSetting": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "ApiAccessLogGroupCEA70788",
+              "Arn",
+            ],
+          },
+          "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
+        },
+        "DeploymentId": {
+          "Ref": "RequestsApiDeploymentE3FB80368786f059a75eaf1220c18acb06c9a631",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*",
+            "ThrottlingBurstLimit": 20,
+            "ThrottlingRateLimit": 10,
+          },
+        ],
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+        "StageName": "test",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "RequestsApirequests1036C9DC": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "RequestsApi5EAF7131",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "requests",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "RequestsApirequestsPOST7EBDD91C": {
+      "Properties": {
+        "AuthorizationType": "AWS_IAM",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "StartRequestFunction9BA49637",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestModels": {
+          "application/json": {
+            "Ref": "RequestsApiCreateRequestModel824F369C",
+          },
+        },
+        "RequestParameters": {
+          "method.request.header.Idempotency-Key": false,
+        },
+        "RequestValidatorId": {
+          "Ref": "RequestsApiBodyValidatorA5AE366F",
+        },
+        "ResourceId": {
+          "Ref": "RequestsApirequests1036C9DC",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "RequestsApirequestsPOSTApiPermissionLambdaDurableFunctionsApprovalRequestsApi6C4DBA71POSTrequests65F412C3": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "StartRequestFunction9BA49637",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/",
+              {
+                "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+              },
+              "/POST/requests",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsPOSTApiPermissionTestLambdaDurableFunctionsApprovalRequestsApi6C4DBA71POSTrequests1AEE3D4B": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "StartRequestFunction9BA49637",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/test-invoke-stage/POST/requests",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsrequestId2455441A": {
+      "Properties": {
+        "ParentId": {
+          "Ref": "RequestsApirequests1036C9DC",
+        },
+        "PathPart": "{requestId}",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "RequestsApirequestsrequestIdGETA915EAB1": {
+      "Properties": {
+        "AuthorizationType": "AWS_IAM",
+        "HttpMethod": "GET",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "GetRequestFunction66D99464",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "RequestsApiBodyValidatorA5AE366F",
+        },
+        "ResourceId": {
+          "Ref": "RequestsApirequestsrequestId2455441A",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "RequestsApirequestsrequestIdGETApiPermissionLambdaDurableFunctionsApprovalRequestsApi6C4DBA71GETrequestsrequestIdDFC66840": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetRequestFunction66D99464",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/",
+              {
+                "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+              },
+              "/GET/requests/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsrequestIdGETApiPermissionTestLambdaDurableFunctionsApprovalRequestsApi6C4DBA71GETrequestsrequestId93BF650A": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetRequestFunction66D99464",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/test-invoke-stage/GET/requests/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsrequestIddecision5353891D": {
+      "Properties": {
+        "ParentId": {
+          "Ref": "RequestsApirequestsrequestId2455441A",
+        },
+        "PathPart": "decision",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "RequestsApirequestsrequestIddecisionPOST2CDA4DD9": {
+      "Properties": {
+        "AuthorizationType": "AWS_IAM",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "SubmitDecisionFunction0AC4FAB3",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestModels": {
+          "application/json": {
+            "Ref": "RequestsApiDecisionModelA3146ECD",
+          },
+        },
+        "RequestValidatorId": {
+          "Ref": "RequestsApiBodyValidatorA5AE366F",
+        },
+        "ResourceId": {
+          "Ref": "RequestsApirequestsrequestIddecision5353891D",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "RequestsApirequestsrequestIddecisionPOSTApiPermissionLambdaDurableFunctionsApprovalRequestsApi6C4DBA71POSTrequestsrequestIddecisionCEF26B3F": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SubmitDecisionFunction0AC4FAB3",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/",
+              {
+                "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+              },
+              "/POST/requests/*/decision",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsrequestIddecisionPOSTApiPermissionTestLambdaDurableFunctionsApprovalRequestsApi6C4DBA71POSTrequestsrequestIddecisionD3146F6F": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SubmitDecisionFunction0AC4FAB3",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/test-invoke-stage/POST/requests/*/decision",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsTable419243C7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "requestId",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "requestId",
+            "KeyType": "HASH",
+          },
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true,
+        },
+        "SSESpecification": {
+          "SSEEnabled": true,
+        },
+        "TableName": "test-test-ldf-requests",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StartRequestFunction9BA49637": {
+      "DependsOn": [
+        "StartRequestFunctionServiceRoleDefaultPolicyDF94ACBA",
+        "StartRequestFunctionServiceRole30AF9B02",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "8bddecb880777860be4982f05216f5459c898ebc0f3f06aaf8148e0c5cb72c38.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "WORKFLOW_FUNCTION_ARN": {
+              "Ref": "WorkflowLiveAliasACF3BD1F",
+            },
+          },
+        },
+        "FunctionName": "test-test-ldf-start-request",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "StartRequestLogGroup35B75E9C",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "StartRequestFunctionServiceRole30AF9B02",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "StartRequestFunctionServiceRole30AF9B02": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "StartRequestFunctionServiceRoleDefaultPolicyDF94ACBA": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "WorkflowLiveAliasACF3BD1F",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "StartRequestFunctionServiceRoleDefaultPolicyDF94ACBA",
+        "Roles": [
+          {
+            "Ref": "StartRequestFunctionServiceRole30AF9B02",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "StartRequestLogGroup35B75E9C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SubmitDecisionFunction0AC4FAB3": {
+      "DependsOn": [
+        "SubmitDecisionFunctionServiceRoleDefaultPolicyFD889AA5",
+        "SubmitDecisionFunctionServiceRoleC71324C7",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "7274a288bec9d773e2084dfe33c89e8ca34a4ff155a23e990e52c3b4e6bae3b7.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "TABLE_NAME": {
+              "Ref": "RequestsTable419243C7",
+            },
+          },
+        },
+        "FunctionName": "test-test-ldf-submit-decision",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SubmitDecisionLogGroupB9710F60",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "SubmitDecisionFunctionServiceRoleC71324C7",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "SubmitDecisionFunctionServiceRoleC71324C7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SubmitDecisionFunctionServiceRoleDefaultPolicyFD889AA5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:SendDurableExecutionCallbackSuccess",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "WorkflowFunction9B932173",
+                        "Arn",
+                      ],
+                    },
+                    ":*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SubmitDecisionFunctionServiceRoleDefaultPolicyFD889AA5",
+        "Roles": [
+          {
+            "Ref": "SubmitDecisionFunctionServiceRoleC71324C7",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SubmitDecisionLogGroupB9710F60": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TopicKeyAlias7728FB4F": {
+      "Properties": {
+        "AliasName": "alias/test-test-ldf-topics",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "TopicKeyB2E0C9CB",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+    "TopicKeyB2E0C9CB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "test-test-ldf SNS topic encryption",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkflowDlq64416DC0": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "QueueName": "test-test-ldf-workflow-dlq",
+        "SqsManagedSseEnabled": true,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkflowDlqAlarm509191CA": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlertTopic2720D535",
+          },
+        ],
+        "AlarmDescription": "Original events of failed durable executions are waiting in the DLQ",
+        "AlarmName": "test-test-ldf-workflow-dlq-not-empty",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "WorkflowDlq64416DC0",
+                "QueueName",
+              ],
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Namespace": "AWS/SQS",
+        "Period": 300,
+        "Statistic": "Maximum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "WorkflowDlqPolicyAF8BCC79": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WorkflowDlq64416DC0",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "WorkflowDlq64416DC0",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "WorkflowFailedRule00DA4146": {
+      "Properties": {
+        "Description": "Durable executions of the approval workflow that ended abnormally",
+        "EventPattern": {
+          "detail": {
+            "functionArn": [
+              {
+                "prefix": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkflowFunction9B932173",
+                          "Arn",
+                        ],
+                      },
+                      ":",
+                    ],
+                  ],
+                },
+              },
+            ],
+            "status": [
+              "FAILED",
+              "TIMED_OUT",
+              "STOPPED",
+            ],
+          },
+          "detail-type": [
+            "Durable Execution Status Change",
+          ],
+          "source": [
+            "aws.lambda",
+          ],
+        },
+        "Name": "test-test-ldf-workflow-failed",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "AlertTopic2720D535",
+            },
+            "Id": "Target0",
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "WorkflowFunction9B932173": {
+      "DependsOn": [
+        "WorkflowFunctionServiceRoleDefaultPolicy3260C7E7",
+        "WorkflowFunctionServiceRole7444ED13",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "8d543f8744718818061071930765ac00bd9d76351fa7ec0216f11de93dd578ce.zip",
+        },
+        "DeadLetterConfig": {
+          "TargetArn": {
+            "Fn::GetAtt": [
+              "WorkflowDlq64416DC0",
+              "Arn",
+            ],
+          },
+        },
+        "Description": "Durable approval workflow (invoke through the live alias only)",
+        "DurableConfig": {
+          "ExecutionTimeout": 604800,
+          "RetentionPeriodInDays": 14,
+        },
+        "Environment": {
+          "Variables": {
+            "APPROVAL_TIMEOUT_HOURS": "48",
+            "APPROVAL_TOPIC_ARN": {
+              "Ref": "ApprovalTopic1D517B4C",
+            },
+            "TABLE_NAME": {
+              "Ref": "RequestsTable419243C7",
+            },
+          },
+        },
+        "FunctionName": "test-test-ldf-approval-workflow",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WorkflowLogGroup6BCB73FD",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkflowFunctionServiceRole7444ED13",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkflowFunctionCurrentVersion13EA5935d898970de8230ae3a388afe370e9f13d": {
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "FunctionName": {
+          "Ref": "WorkflowFunction9B932173",
+        },
+      },
+      "Type": "AWS::Lambda::Version",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "WorkflowFunctionServiceRole7444ED13": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicDurableExecutionRolePolicy",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkflowFunctionServiceRoleDefaultPolicy3260C7E7": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sqs:SendMessage",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WorkflowDlq64416DC0",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "ApprovalTopic1D517B4C",
+              },
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "TopicKeyB2E0C9CB",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkflowFunctionServiceRoleDefaultPolicy3260C7E7",
+        "Roles": [
+          {
+            "Ref": "WorkflowFunctionServiceRole7444ED13",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkflowLiveAliasACF3BD1F": {
+      "Properties": {
+        "Description": "New executions start on the version this alias points to",
+        "FunctionName": {
+          "Ref": "WorkflowFunction9B932173",
+        },
+        "FunctionVersion": {
+          "Fn::GetAtt": [
+            "WorkflowFunctionCurrentVersion13EA5935d898970de8230ae3a388afe370e9f13d",
+            "Version",
+          ],
+        },
+        "Name": "live",
+      },
+      "Type": "AWS::Lambda::Alias",
+    },
+    "WorkflowLogGroup6BCB73FD": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`LambdaDurableFunctionsApprovalStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::ApiGateway::Account": 1,
+  "AWS::ApiGateway::Deployment": 1,
+  "AWS::ApiGateway::Method": 3,
+  "AWS::ApiGateway::Model": 2,
+  "AWS::ApiGateway::RequestValidator": 1,
+  "AWS::ApiGateway::Resource": 3,
+  "AWS::ApiGateway::RestApi": 1,
+  "AWS::ApiGateway::Stage": 1,
+  "AWS::CloudWatch::Alarm": 1,
+  "AWS::DynamoDB::Table": 1,
+  "AWS::Events::Rule": 1,
+  "AWS::IAM::Policy": 4,
+  "AWS::IAM::Role": 5,
+  "AWS::KMS::Alias": 1,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Alias": 1,
+  "AWS::Lambda::Function": 4,
+  "AWS::Lambda::Permission": 6,
+  "AWS::Lambda::Version": 1,
+  "AWS::Logs::LogGroup": 5,
+  "AWS::SNS::Subscription": 2,
+  "AWS::SNS::Topic": 2,
+  "AWS::SNS::TopicPolicy": 2,
+  "AWS::SQS::Queue": 1,
+  "AWS::SQS::QueuePolicy": 1,
+}
+`;
