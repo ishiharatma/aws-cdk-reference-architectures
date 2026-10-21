@@ -9,9 +9,10 @@ export const projectName = 'test';
 export const envName: Environment = Environment.TEST;
 
 /**
- * Build the stack for tests. esbuild bundling is skipped
- * (`aws:cdk:bundling-stacks: []`) so the asset hash is derived from the source
- * directory and snapshots stay deterministic without running esbuild.
+ * Build the stack for tests. esbuild bundling runs (no `aws:cdk:bundling-stacks: []`):
+ * with bundling skipped, NodejsFunction hashes its whole project root (`infrastructure/`,
+ * including node_modules and cdk.out), so the asset keys differ between machines and the
+ * snapshot fails in CI. The bundled output hash depends only on the sources and the lockfile.
  */
 export function buildStack(
   app?: cdk.App,
@@ -22,7 +23,7 @@ export function buildStack(
     throw new Error(`No parameters found for environment: ${envName}`);
   }
   const envParams: EnvParams = { ...base, ...overrides };
-  const scope = app ?? new cdk.App({ context: { 'aws:cdk:bundling-stacks': [] } });
+  const scope = app ?? new cdk.App();
   return new LambdaDurableFunctionsApprovalStack(scope, 'LambdaDurableFunctionsApproval', {
     project: projectName,
     environment: envName,

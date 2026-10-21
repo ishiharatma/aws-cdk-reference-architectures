@@ -210,7 +210,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "dae03a78cf839ab2cc43748a8079f583d7a1921f2dbd2368f6d1ae34eb46aaab.zip",
+          "S3Key": "7e623b2d854dc7a164091156a60e6581109b3c69a1a4210f0887336b1c7e105f.zip",
         },
         "Environment": {
           "Variables": {
@@ -901,7 +901,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "8ad360b5a99d4618aa6253f0717986fd04a3ac79b3178aab3a24332fd067962e.zip",
+          "S3Key": "ebf6c4b0ed0e4d752818c80fec6a12c51fb11ba2ae94ab3f9728a5553af31470.zip",
         },
         "Environment": {
           "Variables": {
@@ -1002,7 +1002,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "0f5deb6f4649e80fac513788e6e7b75db4fb7267932561095bc0c439fde7f156.zip",
+          "S3Key": "3cd1c8e91217f87daf0219444e482614c7d9d672c3fc34627f9cd4b127cc41f2.zip",
         },
         "Environment": {
           "Variables": {
@@ -1363,7 +1363,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "74feb8d9775a483113c74c2782ff0f17fcfd49d033d8a4fe60f3565f8021b2ef.zip",
+          "S3Key": "45e6c4629bd535586b3dab503677d9195e5cb9f54f09cede2a680b8a4cb31187.zip",
         },
         "DeadLetterConfig": {
           "TargetArn": {
@@ -1408,7 +1408,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       },
       "Type": "AWS::Lambda::Function",
     },
-    "WorkflowFunctionCurrentVersion13EA5935e3592dc7d766cb41b7784b28462af1ba": {
+    "WorkflowFunctionCurrentVersion13EA593584b3ac7fbee4a16ca4492ca4bb4ca087": {
       "DeletionPolicy": "Retain",
       "Metadata": {
         "aws:cdk:do-not-refactor": true,
@@ -1544,7 +1544,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         },
         "FunctionVersion": {
           "Fn::GetAtt": [
-            "WorkflowFunctionCurrentVersion13EA5935e3592dc7d766cb41b7784b28462af1ba",
+            "WorkflowFunctionCurrentVersion13EA593584b3ac7fbee4a16ca4492ca4bb4ca087",
             "Version",
           ],
         },
