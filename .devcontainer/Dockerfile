@@ -1,4 +1,4 @@
-ARG VARIANT="1-22-bookworm"
+ARG VARIANT="4.0.10-24-bookworm"
 ARG IS_PROXY="false"
 ARG CERT_NAME="YourRootCA"
 FROM mcr.microsoft.com/devcontainers/typescript-node:${VARIANT}
@@ -49,6 +49,27 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Override the base image's Node.js with a pinned patch release.
+# The devcontainer base image lags behind Node.js security releases,
+# so pin NODE_VERSION here and bump it when a new security release is published.
+# see: https://nodejs.org/en/blog/vulnerability/october-2026-security-releases
+ARG NODE_VERSION="24.22.1"
+RUN ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+    amd64) NODE_ARCH="x64" ;; \
+    arm64) NODE_ARCH="arm64" ;; \
+    *) echo "Unsupported architecture for Node.js installation: $ARCH" && exit 1 ;; \
+    esac && \
+    NODE_TARBALL="node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.gz" && \
+    cd /tmp && \
+    curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/${NODE_TARBALL}" && \
+    curl -fsSLO "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" && \
+    grep " ${NODE_TARBALL}\$" SHASUMS256.txt | sha256sum -c - && \
+    tar -xzf "${NODE_TARBALL}" -C /usr/local --strip-components=1 --no-same-owner \
+    --exclude='*/CHANGELOG.md' --exclude='*/LICENSE' --exclude='*/README.md' && \
+    rm -f "${NODE_TARBALL}" SHASUMS256.txt && \
+    node -v | grep -qx "v${NODE_VERSION}"
 
 # Install GH
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
