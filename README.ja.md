@@ -21,6 +21,9 @@ AWS CDKで実装されたリファレンスアーキテクチャ集 - AWS CDKを
 - Node.js 20.x以降
 - 適切な認証情報が設定されたAWS CLI
 - AWS CDK CLI（`npm install -g aws-cdk`でインストール）
+- npm 11.10.0以降（`.npmrc`の`min-release-age`に必要。古いnpmでは警告なしで無視されます）
+
+このリポジトリの各npmプロジェクトには`.npmrc`を配置しています。依存パッケージのインストールスクリプトを実行せず（`ignore-scripts=true`）、`engines`の不一致をエラーにし（`engine-strict=true`）、公開から1日未満のバージョンをインストールしません（`min-release-age=1`）。
 
 このリファレンスアーキテクチャでは、CDKコマンド実行時に渡す`project`と`env`でプロファイル`project-env`を作成しておく必要があります。
 
