@@ -4,8 +4,8 @@ FROM public.ecr.aws/docker/library/node:lts-alpine3.23 AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files and .npmrc (install-time supply-chain hardening)
+COPY package*.json .npmrc ./
 
 # Install dependencies
 RUN npm ci --omit=dev
