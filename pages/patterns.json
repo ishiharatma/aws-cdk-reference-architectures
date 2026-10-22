@@ -768,6 +768,9 @@
     "difficulty": "advanced",
     "level": 300,
     "date": "2026-10-22",
-    "articles": {}
+    "articles": {
+      "devto":"https://dev.to/aws-builders/testing-the-aws-waf-mitigations-for-php2shell-on-both-cloudfront-and-an-alb-28ng",
+      "zenn": "https://zenn.dev/issy/articles/aws-waf-php2shell-mitigation"
+    }
   }
 ]
