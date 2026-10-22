@@ -54,3 +54,49 @@ tests with mocked clients cannot catch it; only an end-to-end call does.
 Current cdk-nag reports `AwsSolutions-COG8` ("not on the plus tier / feature plan") in addition to
 `COG3` (advanced security) for a user pool on the default plan. Both need suppressions with a cost
 reason unless you buy the Plus plan.
+
+## Identity pool credentials: every user of a role has the same ARN
+
+Verified while deploy-verifying `lambda-durable-functions-approval` (IAM-authorized REST API called
+from a browser with identity pool credentials, October 2026). Credentials from
+`GetCredentialsForIdentity` (enhanced flow, role from `cognito:preferred_role`) are an assumed-role
+session named **`CognitoIdentityCredentials`** for every user:
+
+```text
+arn:aws:sts::<account>:assumed-role/<group-role>/CognitoIdentityCredentials
+```
+
+So `event.requestContext.identity.userArn` identifies the role, not the user. Any per-user logic
+(owner checks, separation of duties) must use `requestContext.identity.cognitoIdentityId` (present
+only for identity pool callers) instead. Confirmed with `aws sts get-caller-identity` on the
+credentials of two different users and with the IAM denial message from API Gateway.
+
+## Calling an IAM-authorized REST API from a browser
+
+- An IAM denial is a 403 produced by API Gateway, not by your Lambda. Without a `DEFAULT_4XX`
+  gateway response that adds `Access-Control-Allow-Origin`, the browser hides it as a network
+  error. With `api.addGatewayResponse` for `DEFAULT_4XX` / `DEFAULT_5XX`, the 403 body
+  (`User: ... is not authorized to perform: execute-api:Invoke ...`) is readable.
+- `@smithy/signature-v4` adds `x-amz-content-sha256`; allow it (and any custom header such as
+  `Idempotency-Key`) in the CORS preflight. `Resource.addCorsPreflight` creates the OPTIONS
+  method with `AuthorizationType: NONE` even when the API default is `AWS_IAM`.
+- `@aws-sdk/credential-providers` does not bundle for the browser (it imports
+  `node:child_process`); use `@aws-sdk/credential-provider-cognito-identity` with
+  `@aws-sdk/client-cognito-identity`. Its provider calls `GetId` + `GetCredentialsForIdentity` on
+  every invocation, and `SignatureV4` asks for credentials on every request, so cache them until
+  shortly before `expiration`.
+
+## Managed login (v2) cannot be driven with curl
+
+The curl recipe above (read `_csrf` from the form, POST username/password) works for the classic
+hosted UI. The managed login v2 page renders with JavaScript: the HTML has no `_csrf` form field
+and the POST does not redirect with a code. For command-line verification of what happens *after*
+sign-in, temporarily add `ALLOW_ADMIN_USER_PASSWORD_AUTH` to the same app client
+(`update-user-pool-client` overwrites unspecified settings, so send the full current config) and
+use `admin-initiate-auth`; the ID token is equivalent for the identity pool. Revert afterwards.
+
+## Managed login language follows `lang`, not the browser
+
+The managed login (v2) page rendered in English for a headless Chromium with locale `ja-JP`.
+Adding `lang=ja` to the `/oauth2/authorize` URL rendered it in Japanese ("サインイン",
+"E メールアドレス"). Pass the app's UI language as `lang` when building the authorize URL.

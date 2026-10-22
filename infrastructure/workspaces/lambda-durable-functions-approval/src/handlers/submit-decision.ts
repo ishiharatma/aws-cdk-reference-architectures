@@ -3,7 +3,7 @@ import { LambdaClient, SendDurableExecutionCallbackSuccessCommand } from '@aws-s
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { requireEnv } from '../shared/env';
-import { callerArn, json, parseBody } from '../shared/http';
+import { callerId, json, parseBody } from '../shared/http';
 import { RequestsRepository } from '../shared/requests-repository';
 import { REQUEST_ID_PATTERN, type ApprovalDecision } from '../shared/types';
 
@@ -41,7 +41,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return json(409, { message: `Request is ${item.status}, not waiting for approval`, requestId });
   }
 
-  const approver = callerArn(event);
+  const approver = callerId(event);
   // Separation of duties: the requester cannot approve their own request.
   if (approver === item.requester) {
     return json(403, { message: 'The requester cannot decide on their own request', requestId });
