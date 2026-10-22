@@ -1,0 +1,1261 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CloudfrontWafStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "CloudFrontWafLogGroup": {
+      "Value": {
+        "Ref": "WebAclLogGroup9469B567",
+      },
+    },
+    "CloudFrontWebAclName": {
+      "Value": "test-test-php2shell-cloudfront",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "WebAclAllowedIpv4SetAF1E9E72": {
+      "Properties": {
+        "Addresses": [
+          "203.0.113.10/32",
+        ],
+        "IPAddressVersion": "IPV4",
+        "Name": "test-test-php2shell-cloudfront-allowed-ipv4",
+        "Scope": "CLOUDFRONT",
+      },
+      "Type": "AWS::WAFv2::IPSet",
+    },
+    "WebAclE76B067C": {
+      "Properties": {
+        "AssociationConfig": {
+          "RequestBody": {
+            "CLOUDFRONT": {
+              "DefaultSizeInspectionLimit": "KB_64",
+            },
+          },
+        },
+        "DefaultAction": {
+          "Block": {},
+        },
+        "Name": "test-test-php2shell-cloudfront",
+        "Rules": [
+          {
+            "Action": {
+              "Block": {
+                "CustomResponse": {
+                  "ResponseCode": 403,
+                  "ResponseHeaders": [
+                    {
+                      "Name": "x-php2shell-blocked-by",
+                      "Value": "cloudfront:PHP2Shell",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "PHP2Shell",
+            "Priority": 0,
+            "Statement": {
+              "AndStatement": {
+                "Statements": [
+                  {
+                    "ByteMatchStatement": {
+                      "FieldToMatch": {
+                        "Method": {},
+                      },
+                      "PositionalConstraint": "EXACTLY",
+                      "SearchString": "POST",
+                      "TextTransformations": [
+                        {
+                          "Priority": 0,
+                          "Type": "NONE",
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    "OrStatement": {
+                      "Statements": [
+                        {
+                          "ByteMatchStatement": {
+                            "FieldToMatch": {
+                              "Cookies": {
+                                "MatchPattern": {
+                                  "All": {},
+                                },
+                                "MatchScope": "KEY",
+                                "OversizeHandling": "CONTINUE",
+                              },
+                            },
+                            "PositionalConstraint": "EXACTLY",
+                            "SearchString": "PHPSESSID",
+                            "TextTransformations": [
+                              {
+                                "Priority": 0,
+                                "Type": "NONE",
+                              },
+                            ],
+                          },
+                        },
+                        {
+                          "ByteMatchStatement": {
+                            "FieldToMatch": {
+                              "Body": {
+                                "OversizeHandling": "CONTINUE",
+                              },
+                            },
+                            "PositionalConstraint": "CONTAINS",
+                            "SearchString": "PHPSESSID",
+                            "TextTransformations": [
+                              {
+                                "Priority": 0,
+                                "Type": "NONE",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    "ByteMatchStatement": {
+                      "FieldToMatch": {
+                        "Body": {
+                          "OversizeHandling": "CONTINUE",
+                        },
+                      },
+                      "PositionalConstraint": "CONTAINS",
+                      "SearchString": "PHP_SESSION_UPLOAD_PROGRESS",
+                      "TextTransformations": [
+                        {
+                          "Priority": 0,
+                          "Type": "NONE",
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-cloudfront-PHP2Shell",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Count": {
+                "CustomRequestHandling": {
+                  "InsertHeaders": [
+                    {
+                      "Name": "php2shell-cloudfront-multipart",
+                      "Value": "counted",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "Block-Multipart-FormData",
+            "Priority": 1,
+            "Statement": {
+              "ByteMatchStatement": {
+                "FieldToMatch": {
+                  "SingleHeader": {
+                    "Name": "content-type",
+                  },
+                },
+                "PositionalConstraint": "CONTAINS",
+                "SearchString": "multipart/form-data",
+                "TextTransformations": [
+                  {
+                    "Priority": 0,
+                    "Type": "LOWERCASE",
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-cloudfront-BlockMultipart",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Count": {
+                "CustomRequestHandling": {
+                  "InsertHeaders": [
+                    {
+                      "Name": "php2shell-cloudfront-oversize",
+                      "Value": "counted",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "Block-Oversize-Body",
+            "Priority": 3,
+            "Statement": {
+              "SizeConstraintStatement": {
+                "ComparisonOperator": "GT",
+                "FieldToMatch": {
+                  "Body": {
+                    "OversizeHandling": "MATCH",
+                  },
+                },
+                "Size": 8192,
+                "TextTransformations": [
+                  {
+                    "Priority": 0,
+                    "Type": "NONE",
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-cloudfront-BlockOversizeBody",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Count": {
+                "CustomRequestHandling": {
+                  "InsertHeaders": [
+                    {
+                      "Name": "php2shell-cloudfront-ratelimit",
+                      "Value": "counted",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "RateLimit-Posts",
+            "Priority": 4,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "EvaluationWindowSec": 60,
+                "Limit": 100,
+                "ScopeDownStatement": {
+                  "ByteMatchStatement": {
+                    "FieldToMatch": {
+                      "Method": {},
+                    },
+                    "PositionalConstraint": "EXACTLY",
+                    "SearchString": "POST",
+                    "TextTransformations": [
+                      {
+                        "Priority": 0,
+                        "Type": "NONE",
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-cloudfront-RateLimitPosts",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Allow": {},
+            },
+            "Name": "AllowListedIps",
+            "Priority": 100,
+            "Statement": {
+              "IPSetReferenceStatement": {
+                "Arn": {
+                  "Fn::GetAtt": [
+                    "WebAclAllowedIpv4SetAF1E9E72",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-cloudfront-AllowListedIps",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "CLOUDFRONT",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-php2shell-cloudfront-WebAcl",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "WebAclLogGroup9469B567": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "aws-waf-logs-test-test-php2shell-cloudfront",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WebAclLogging56D8A3B1": {
+      "DependsOn": [
+        "WebAclLogGroup9469B567",
+      ],
+      "Properties": {
+        "LogDestinationConfigs": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":logs:us-east-1:123456789012:log-group:",
+                {
+                  "Ref": "WebAclLogGroup9469B567",
+                },
+              ],
+            ],
+          },
+        ],
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "WebAclE76B067C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::LoggingConfiguration",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`CloudfrontWafStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::Logs::LogGroup": 1,
+  "AWS::WAFv2::IPSet": 1,
+  "AWS::WAFv2::LoggingConfiguration": 1,
+  "AWS::WAFv2::WebACL": 1,
+}
+`;
+
+exports[`WafPhp2ShellMitigationStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "Alb16C2F182",
+                "DNSName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "AlbWafLogGroup": {
+      "Value": {
+        "Ref": "AlbWebAclLogGroup18F581A9",
+      },
+    },
+    "AlbWebAclName": {
+      "Value": "test-test-php2shell-alb",
+    },
+    "CloudFrontUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "Distribution830FAC52",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "OriginFunctionName": {
+      "Value": {
+        "Ref": "PhpOrigin67A27D65",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alb16C2F182": {
+      "DependsOn": [
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+        "VpcpublicSubnet2DefaultRoute732F0BEB",
+        "VpcpublicSubnet2RouteTableAssociationCCE257FF",
+      ],
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+          {
+            "Key": "routing.http.drop_invalid_header_fields.enabled",
+            "Value": "true",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "AlbSecurityGroup86A59E99",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+          },
+          {
+            "Ref": "VpcpublicSubnet2SubnetE34B022A",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbHttp7966E42E": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "FixedResponseConfig": {
+              "ContentType": "text/plain",
+              "MessageBody": "Direct access denied",
+              "StatusCode": "403",
+            },
+            "Type": "fixed-response",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpDirectVerificationClientRuleAFA3388E": {
+      "Properties": {
+        "Actions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "OriginTargetGroup5773A8B9",
+            },
+            "Type": "forward",
+          },
+        ],
+        "Conditions": [
+          {
+            "Field": "source-ip",
+            "SourceIpConfig": {
+              "Values": [
+                "203.0.113.10/32",
+              ],
+            },
+          },
+        ],
+        "ListenerArn": {
+          "Ref": "AlbHttp7966E42E",
+        },
+        "Priority": 20,
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+    },
+    "AlbHttpFromCloudFrontRule96A65FAB": {
+      "Properties": {
+        "Actions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "OriginTargetGroup5773A8B9",
+            },
+            "Type": "forward",
+          },
+        ],
+        "Conditions": [
+          {
+            "Field": "http-header",
+            "HttpHeaderConfig": {
+              "HttpHeaderName": "X-Origin-Verify",
+              "Values": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "{{resolve:secretsmanager:",
+                      {
+                        "Ref": "OriginVerifySecret1DED2FB3",
+                      },
+                      ":SecretString:::}}",
+                    ],
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+        "ListenerArn": {
+          "Ref": "AlbHttp7966E42E",
+        },
+        "Priority": 10,
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+    },
+    "AlbSecurityGroup86A59E99": {
+      "Properties": {
+        "GroupDescription": "ALB: HTTP from CloudFront origin-facing IPs and the verification client only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.10/32",
+            "Description": "Verification client (direct)",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "AlbSecurityGroupfrompl58a045318057AB35EB": {
+      "Properties": {
+        "Description": "CloudFront origin-facing",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "AlbSecurityGroup86A59E99",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourcePrefixListId": "pl-58a04531",
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "AlbWebAclAssociation": {
+      "Properties": {
+        "ResourceArn": {
+          "Ref": "Alb16C2F182",
+        },
+        "WebACLArn": {
+          "Fn::GetAtt": [
+            "AlbWebAclB22FB623",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::WebACLAssociation",
+    },
+    "AlbWebAclB22FB623": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Name": "test-test-php2shell-alb",
+        "Rules": [
+          {
+            "Action": {
+              "Block": {
+                "CustomResponse": {
+                  "ResponseCode": 403,
+                  "ResponseHeaders": [
+                    {
+                      "Name": "x-php2shell-blocked-by",
+                      "Value": "alb:PHP2Shell",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "PHP2Shell",
+            "Priority": 0,
+            "Statement": {
+              "AndStatement": {
+                "Statements": [
+                  {
+                    "ByteMatchStatement": {
+                      "FieldToMatch": {
+                        "Method": {},
+                      },
+                      "PositionalConstraint": "EXACTLY",
+                      "SearchString": "POST",
+                      "TextTransformations": [
+                        {
+                          "Priority": 0,
+                          "Type": "NONE",
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    "OrStatement": {
+                      "Statements": [
+                        {
+                          "ByteMatchStatement": {
+                            "FieldToMatch": {
+                              "Cookies": {
+                                "MatchPattern": {
+                                  "All": {},
+                                },
+                                "MatchScope": "KEY",
+                                "OversizeHandling": "CONTINUE",
+                              },
+                            },
+                            "PositionalConstraint": "EXACTLY",
+                            "SearchString": "PHPSESSID",
+                            "TextTransformations": [
+                              {
+                                "Priority": 0,
+                                "Type": "NONE",
+                              },
+                            ],
+                          },
+                        },
+                        {
+                          "ByteMatchStatement": {
+                            "FieldToMatch": {
+                              "Body": {
+                                "OversizeHandling": "CONTINUE",
+                              },
+                            },
+                            "PositionalConstraint": "CONTAINS",
+                            "SearchString": "PHPSESSID",
+                            "TextTransformations": [
+                              {
+                                "Priority": 0,
+                                "Type": "NONE",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    "ByteMatchStatement": {
+                      "FieldToMatch": {
+                        "Body": {
+                          "OversizeHandling": "CONTINUE",
+                        },
+                      },
+                      "PositionalConstraint": "CONTAINS",
+                      "SearchString": "PHP_SESSION_UPLOAD_PROGRESS",
+                      "TextTransformations": [
+                        {
+                          "Priority": 0,
+                          "Type": "NONE",
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-alb-PHP2Shell",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Count": {
+                "CustomRequestHandling": {
+                  "InsertHeaders": [
+                    {
+                      "Name": "php2shell-alb-multipart",
+                      "Value": "counted",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "Block-Multipart-FormData",
+            "Priority": 1,
+            "Statement": {
+              "ByteMatchStatement": {
+                "FieldToMatch": {
+                  "SingleHeader": {
+                    "Name": "content-type",
+                  },
+                },
+                "PositionalConstraint": "CONTAINS",
+                "SearchString": "multipart/form-data",
+                "TextTransformations": [
+                  {
+                    "Priority": 0,
+                    "Type": "LOWERCASE",
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-alb-BlockMultipart",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Count": {
+                "CustomRequestHandling": {
+                  "InsertHeaders": [
+                    {
+                      "Name": "php2shell-alb-oversize",
+                      "Value": "counted",
+                    },
+                  ],
+                },
+              },
+            },
+            "Name": "Block-Oversize-Body",
+            "Priority": 3,
+            "Statement": {
+              "SizeConstraintStatement": {
+                "ComparisonOperator": "GT",
+                "FieldToMatch": {
+                  "Body": {
+                    "OversizeHandling": "MATCH",
+                  },
+                },
+                "Size": 8192,
+                "TextTransformations": [
+                  {
+                    "Priority": 0,
+                    "Type": "NONE",
+                  },
+                ],
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-php2shell-alb-BlockOversizeBody",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "REGIONAL",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-php2shell-alb-WebAcl",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "AlbWebAclLogGroup18F581A9": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "aws-waf-logs-test-test-php2shell-alb",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlbWebAclLoggingBF691FEE": {
+      "DependsOn": [
+        "AlbWebAclLogGroup18F581A9",
+      ],
+      "Properties": {
+        "LogDestinationConfigs": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":logs:ap-northeast-1:123456789012:log-group:",
+                {
+                  "Ref": "AlbWebAclLogGroup18F581A9",
+                },
+              ],
+            ],
+          },
+        ],
+        "ResourceArn": {
+          "Fn::GetAtt": [
+            "AlbWebAclB22FB623",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::WAFv2::LoggingConfiguration",
+    },
+    "Distribution830FAC52": {
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "test-test-php2shell PHP2Shell WAF verification",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+              "OPTIONS",
+              "PUT",
+              "PATCH",
+              "POST",
+              "DELETE",
+            ],
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "Compress": true,
+            "OriginRequestPolicyId": "216adef6-5c7f-47e4-b989-5492eafa07d3",
+            "TargetOriginId": "WafPhp2ShellMitigationDistributionOrigin198987D8E",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "http-only",
+                "OriginSSLProtocols": [
+                  "TLSv1.2",
+                ],
+              },
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "Alb16C2F182",
+                  "DNSName",
+                ],
+              },
+              "Id": "WafPhp2ShellMitigationDistributionOrigin198987D8E",
+              "OriginCustomHeaders": [
+                {
+                  "HeaderName": "X-Origin-Verify",
+                  "HeaderValue": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "{{resolve:secretsmanager:",
+                        {
+                          "Ref": "OriginVerifySecret1DED2FB3",
+                        },
+                        ":SecretString:::}}",
+                      ],
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+          "PriceClass": "PriceClass_200",
+          "WebACLId": "arn:aws:wafv2:us-east-1:123456789012:global/webacl/test/00000000-0000-0000-0000-000000000000",
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "OriginLogGroup379867F7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/test-test-php2shell-origin",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OriginTargetGroup5773A8B9": {
+      "DependsOn": [
+        "PhpOriginInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYF4F74037",
+      ],
+      "Properties": {
+        "TargetType": "lambda",
+        "Targets": [
+          {
+            "Id": {
+              "Fn::GetAtt": [
+                "PhpOrigin67A27D65",
+                "Arn",
+              ],
+            },
+          },
+        ],
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "OriginVerifySecret1DED2FB3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "X-Origin-Verify header value shared by CloudFront and the ALB listener",
+        "GenerateSecretString": {
+          "ExcludePunctuation": true,
+          "PasswordLength": 32,
+        },
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PhpOrigin67A27D65": {
+      "DependsOn": [
+        "PhpOriginServiceRole873F0E02",
+      ],
+      "Properties": {
+        "Architectures": [
+          "x86_64",
+        ],
+        "Code": {
+          "ImageUri": {
+            "Fn::Sub": "123456789012.dkr.ecr.ap-northeast-1.\${AWS::URLSuffix}/cdk-hnb659fds-container-assets-123456789012-ap-northeast-1:f285d824cea59df346252ad0bda8ddf8e70af9ee704b7cae9bb9de43df8747d2",
+          },
+        },
+        "Description": "PHP-FPM 8.4.27 + nginx echo origin behind the Lambda Web Adapter",
+        "FunctionName": "test-test-php2shell-origin",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "OriginLogGroup379867F7",
+          },
+        },
+        "MemorySize": 1024,
+        "PackageType": "Image",
+        "Role": {
+          "Fn::GetAtt": [
+            "PhpOriginServiceRole873F0E02",
+            "Arn",
+          ],
+        },
+        "Timeout": 30,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PhpOriginInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYF4F74037": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PhpOrigin67A27D65",
+            "Arn",
+          ],
+        },
+        "Principal": "elasticloadbalancing.amazonaws.com",
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PhpOriginServiceRole873F0E02": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "WafPhp2ShellMitigation/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`WafPhp2ShellMitigationStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::CloudFront::Distribution": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::Route": 2,
+  "AWS::EC2::RouteTable": 2,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 2,
+  "AWS::EC2::SubnetRouteTableAssociation": 2,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::ElasticLoadBalancingV2::Listener": 1,
+  "AWS::ElasticLoadBalancingV2::ListenerRule": 2,
+  "AWS::ElasticLoadBalancingV2::LoadBalancer": 1,
+  "AWS::ElasticLoadBalancingV2::TargetGroup": 1,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::Lambda::Permission": 1,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::SecretsManager::Secret": 1,
+  "AWS::WAFv2::LoggingConfiguration": 1,
+  "AWS::WAFv2::WebACL": 1,
+  "AWS::WAFv2::WebACLAssociation": 1,
+}
+`;

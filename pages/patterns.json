@@ -757,5 +757,17 @@
     "level": 300,
     "date": "2026-10-21",
     "articles": {}
+  },
+  {
+    "id": "waf-php2shell-mitigation",
+    "title": "AWS WAF mitigations for PHP2Shell (CVE-2026-109618 / 109619) verified on CloudFront and ALB",
+    "description": "The four AWS WAF custom rules from the AWS Security Blog applied to both CloudFront (body inspection raised to 64 KB) and an ALB (fixed 8 KB) in front of a patched PHP-FPM 8.4.27 origin on a Lambda container image. Deploy-verified: rule conditions, the exact 8 / 16 / 64 KB inspection boundaries, false positives, per-layer oversize thresholds, rate-rule lag, origin lockdown with the CloudFront prefix list and a shared-secret header, and Count headers echoed by the origin.",
+    "image": "waf-php2shell-mitigation/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "AWS WAF", "CloudFront", "ALB", "Lambda", "Lambda Web Adapter", "PHP", "Security"],
+    "link": "waf-php2shell-mitigation",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-22",
+    "articles": {}
   }
 ]
