@@ -16,7 +16,7 @@ export interface WorkflowDeps {
   readonly notifyApprovers: (input: ApprovalRequestInput) => Promise<void>;
   /** Business action after approval. Must be idempotent: the step runs at least once. */
   readonly fulfill: (input: ApprovalRequestInput) => Promise<string>;
-  readonly approvalTimeoutHours: number;
+  readonly approvalTimeoutMinutes: number;
 }
 
 const fulfillRetry = createRetryStrategy({
@@ -57,7 +57,7 @@ export function createApprovalWorkflow(deps: WorkflowDeps) {
           await deps.repository.markWaitingApproval(requestId, callbackId, now());
           await deps.notifyApprovers(input);
         },
-        { timeout: { hours: deps.approvalTimeoutHours } }
+        { timeout: { minutes: deps.approvalTimeoutMinutes } }
       );
     } catch (error) {
       if (!(error instanceof CallbackTimeoutError)) throw error;

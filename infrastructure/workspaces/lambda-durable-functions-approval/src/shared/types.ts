@@ -2,6 +2,18 @@
 export type RequestStatus =
   'SUBMITTED' | 'WAITING_APPROVAL' | 'DECISION_RECEIVED' | 'COMPLETED' | 'REJECTED' | 'EXPIRED';
 
+export const REQUEST_STATUSES: readonly RequestStatus[] = [
+  'SUBMITTED',
+  'WAITING_APPROVAL',
+  'DECISION_RECEIVED',
+  'COMPLETED',
+  'REJECTED',
+  'EXPIRED',
+];
+
+export const isRequestStatus = (value: string): value is RequestStatus =>
+  (REQUEST_STATUSES as readonly string[]).includes(value);
+
 /** Statuses after which the durable execution has ended. */
 export type TerminalStatus = Extract<RequestStatus, 'COMPLETED' | 'REJECTED' | 'EXPIRED'>;
 
@@ -27,6 +39,9 @@ export interface WorkflowResult {
   readonly status: TerminalStatus;
   readonly fulfillmentId?: string;
 }
+
+/** GSI of the requests table that lists requests by status, newest first. */
+export const STATUS_INDEX_NAME = 'status-createdAt-index';
 
 const EXECUTION_NAME_PREFIX = 'approval-';
 

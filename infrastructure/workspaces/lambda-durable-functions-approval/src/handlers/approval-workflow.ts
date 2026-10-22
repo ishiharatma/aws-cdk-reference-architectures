@@ -13,13 +13,13 @@ const repository = new RequestsRepository(
 );
 const sns = new SNSClient({});
 const topicArn = requireEnv('APPROVAL_TOPIC_ARN');
-const approvalTimeoutHours = Number(requireEnv('APPROVAL_TIMEOUT_HOURS'));
+const approvalTimeoutMinutes = Number(requireEnv('APPROVAL_TIMEOUT_MINUTES'));
 
 /** Durable function entry point. Invoke it only through the `live` alias (a published version). */
 export const handler = withDurableExecution<ApprovalRequestInput, WorkflowResult>(
   createApprovalWorkflow({
     repository,
-    approvalTimeoutHours,
+    approvalTimeoutMinutes,
     notifyApprovers: async (input) => {
       await sns.send(
         new PublishCommand({
@@ -31,7 +31,7 @@ export const handler = withDurableExecution<ApprovalRequestInput, WorkflowResult
             `Title      : ${input.title}`,
             `Amount     : ${input.amount}`,
             `Requester  : ${input.requester}`,
-            `Expires in : ${approvalTimeoutHours} hours`,
+            `Expires in : ${approvalTimeoutMinutes} minutes`,
             '',
             `POST /requests/${input.requestId}/decision  {"approved": true|false, "comment": "..."}`,
           ].join('\n'),

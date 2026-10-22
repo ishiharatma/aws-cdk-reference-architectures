@@ -26,6 +26,29 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
       },
     },
+    "DemoWebUiDemoUserPoolId410FEDC0": {
+      "Description": "Pass to scripts/create-demo-users.sh",
+      "Value": {
+        "Ref": "DemoWebUiUserPoolA370D570",
+      },
+    },
+    "DemoWebUiDemoWebUrlF509F965": {
+      "Description": "Demo UI URL",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "DemoWebUiDistribution72032FD5",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
     "RequestsApiEndpointB96F020E": {
       "Value": {
         "Fn::Join": [
@@ -199,6 +222,1160 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       },
       "Type": "AWS::SNS::Subscription",
     },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiB5F7BD223": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleDefaultPolicyE5468F0E",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleF991ED9F",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "DemoWebUiDeployWebAwsCliLayerD8EACA2D",
+          },
+        ],
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleF991ED9F",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.13",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleDefaultPolicyE5468F0E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::cdk-hnb659fds-assets-123456789012-ap-northeast-1/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiWebBucket8FFDB3E2",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiWebBucket8FFDB3E2",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "cloudfront:GetInvalidation",
+                "cloudfront:CreateInvalidation",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleDefaultPolicyE5468F0E",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleF991ED9F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiBServiceRoleF991ED9F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "DemoWebUiWebBucket8FFDB3E2",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DemoWebUiApproverRoleDefaultPolicy934D5E5B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "execute-api:Invoke",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":execute-api:ap-northeast-1:123456789012:",
+                      {
+                        "Ref": "RequestsApi5EAF7131",
+                      },
+                      "/",
+                      {
+                        "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                      },
+                      "/GET/requests",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":execute-api:ap-northeast-1:123456789012:",
+                      {
+                        "Ref": "RequestsApi5EAF7131",
+                      },
+                      "/",
+                      {
+                        "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                      },
+                      "/GET/requests/*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":execute-api:ap-northeast-1:123456789012:",
+                      {
+                        "Ref": "RequestsApi5EAF7131",
+                      },
+                      "/",
+                      {
+                        "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                      },
+                      "/POST/requests/*/decision",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DemoWebUiApproverRoleDefaultPolicy934D5E5B",
+        "Roles": [
+          {
+            "Ref": "DemoWebUiApproverRoleFCAF7EAC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DemoWebUiApproverRoleFCAF7EAC": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "authenticated",
+                },
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "DemoWebUiIdentityPool3C771354",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Demo UI approvers: list, read and decide requests",
+        "MaxSessionDuration": 3600,
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DemoWebUiApproversGroupBBDD9BE8": {
+      "Properties": {
+        "GroupName": "approvers",
+        "Precedence": 1,
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "DemoWebUiApproverRoleFCAF7EAC",
+            "Arn",
+          ],
+        },
+        "UserPoolId": {
+          "Ref": "DemoWebUiUserPoolA370D570",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolGroup",
+    },
+    "DemoWebUiDeployWebAwsCliLayerD8EACA2D": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "DemoWebUiDeployWebCustomResource256MiB4604555C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "DemoWebUiWebBucket8FFDB3E2",
+        },
+        "DistributionId": {
+          "Ref": "DemoWebUiDistribution72032FD5",
+        },
+        "DistributionPaths": [
+          "/*",
+        ],
+        "OutputObjectKeys": true,
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C256MiB5F7BD223",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+        ],
+        "SourceMarkers": [
+          {},
+          {
+            "<<marker:0xbaba:0>>": {
+              "Fn::Join": [
+                "",
+                [
+                  ""https://",
+                  {
+                    "Ref": "RequestsApi5EAF7131",
+                  },
+                  ".execute-api.ap-northeast-1.",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                  },
+                  "/"",
+                ],
+              ],
+            },
+            "<<marker:0xbaba:1>>": {
+              "Fn::Join": [
+                "",
+                [
+                  """,
+                  {
+                    "Ref": "DemoWebUiUserPoolA370D570",
+                  },
+                  """,
+                ],
+              ],
+            },
+            "<<marker:0xbaba:2>>": {
+              "Fn::Join": [
+                "",
+                [
+                  """,
+                  {
+                    "Ref": "DemoWebUiUserPoolWebClient4518857E",
+                  },
+                  """,
+                ],
+              ],
+            },
+            "<<marker:0xbaba:3>>": {
+              "Fn::Join": [
+                "",
+                [
+                  """,
+                  {
+                    "Ref": "DemoWebUiIdentityPool3C771354",
+                  },
+                  """,
+                ],
+              ],
+            },
+          },
+        ],
+        "SourceMarkersConfig": [
+          {},
+          {},
+        ],
+        "SourceObjectKeys": [
+          "9df6477a587fe862b96a91ec9e65e9a8fbec4d49082fe8f8aba8c08a14b8e2aa.zip",
+          "fc628675e9f1631af210941acf2e9f946c89ef277e610eced0cb4be9d799d56d.zip",
+        ],
+        "WaitForDistributionInvalidation": true,
+      },
+      "Type": "Custom::CDKBucketDeployment",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DemoWebUiDistribution72032FD5": {
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "test-test-ldf approval demo UI",
+          "DefaultCacheBehavior": {
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "Compress": true,
+            "ResponseHeadersPolicyId": {
+              "Ref": "DemoWebUiSecurityHeadersDE8BF199",
+            },
+            "TargetOriginId": "LambdaDurableFunctionsApprovalDemoWebUiDistributionOrigin10F022327",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2and3",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "DemoWebUiWebBucket8FFDB3E2",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "LambdaDurableFunctionsApprovalDemoWebUiDistributionOrigin10F022327",
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "DemoWebUiDistributionOrigin1S3OriginAccessControl2980B0FD",
+                  "Id",
+                ],
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": "",
+              },
+            },
+          ],
+          "PriceClass": "PriceClass_200",
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "DemoWebUiDistributionOrigin1S3OriginAccessControl2980B0FD": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "LambdaDurableFunctionsApprovOrigin1S3OriginAccessControlF11ADECA",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "DemoWebUiIdentityPool3C771354": {
+      "DependsOn": [
+        "DemoWebUiUserPoolDomain84BF7427",
+        "DemoWebUiUserPoolA370D570",
+        "DemoWebUiUserPoolWebClient4518857E",
+      ],
+      "Properties": {
+        "AllowUnauthenticatedIdentities": false,
+        "CognitoIdentityProviders": [
+          {
+            "ClientId": {
+              "Ref": "DemoWebUiUserPoolWebClient4518857E",
+            },
+            "ProviderName": {
+              "Fn::Join": [
+                "",
+                [
+                  "cognito-idp.ap-northeast-1.",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Ref": "DemoWebUiUserPoolA370D570",
+                  },
+                ],
+              ],
+            },
+            "ServerSideTokenCheck": true,
+          },
+        ],
+        "IdentityPoolName": "test-test-ldf-demo-identities",
+      },
+      "Type": "AWS::Cognito::IdentityPool",
+    },
+    "DemoWebUiIdentityPoolAuthenticatedRoleC0FF48C1": {
+      "DependsOn": [
+        "DemoWebUiUserPoolDomain84BF7427",
+        "DemoWebUiUserPoolA370D570",
+        "DemoWebUiUserPoolWebClient4518857E",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "authenticated",
+                },
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "DemoWebUiIdentityPool3C771354",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Default Authenticated Role for Identity Pool ",
+              {
+                "Fn::GetAtt": [
+                  "DemoWebUiIdentityPool3C771354",
+                  "Name",
+                ],
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DemoWebUiIdentityPoolDefaultRoleAttachment17EC889D": {
+      "DependsOn": [
+        "DemoWebUiUserPoolDomain84BF7427",
+        "DemoWebUiUserPoolA370D570",
+        "DemoWebUiUserPoolWebClient4518857E",
+      ],
+      "Properties": {
+        "IdentityPoolId": {
+          "Ref": "DemoWebUiIdentityPool3C771354",
+        },
+        "RoleMappings": {
+          "userpool": {
+            "AmbiguousRoleResolution": "Deny",
+            "IdentityProvider": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::GetAtt": [
+                      "DemoWebUiUserPoolA370D570",
+                      "ProviderName",
+                    ],
+                  },
+                  ":",
+                  {
+                    "Ref": "DemoWebUiUserPoolWebClient4518857E",
+                  },
+                ],
+              ],
+            },
+            "Type": "Token",
+          },
+        },
+        "Roles": {
+          "authenticated": {
+            "Fn::GetAtt": [
+              "DemoWebUiIdentityPoolAuthenticatedRoleC0FF48C1",
+              "Arn",
+            ],
+          },
+          "unauthenticated": {
+            "Fn::GetAtt": [
+              "DemoWebUiIdentityPoolUnauthenticatedRoleF1923312",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Cognito::IdentityPoolRoleAttachment",
+    },
+    "DemoWebUiIdentityPoolUnauthenticatedRoleF1923312": {
+      "DependsOn": [
+        "DemoWebUiUserPoolDomain84BF7427",
+        "DemoWebUiUserPoolA370D570",
+        "DemoWebUiUserPoolWebClient4518857E",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "unauthenticated",
+                },
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "DemoWebUiIdentityPool3C771354",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Default Unauthenticated Role for Identity Pool ",
+              {
+                "Fn::GetAtt": [
+                  "DemoWebUiIdentityPool3C771354",
+                  "Name",
+                ],
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DemoWebUiManagedLoginBrandingD00E234E": {
+      "DependsOn": [
+        "DemoWebUiUserPoolDomain84BF7427",
+      ],
+      "Properties": {
+        "ClientId": {
+          "Ref": "DemoWebUiUserPoolWebClient4518857E",
+        },
+        "UseCognitoProvidedValues": true,
+        "UserPoolId": {
+          "Ref": "DemoWebUiUserPoolA370D570",
+        },
+      },
+      "Type": "AWS::Cognito::ManagedLoginBranding",
+    },
+    "DemoWebUiRequesterRole20C81963": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "authenticated",
+                },
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "DemoWebUiIdentityPool3C771354",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Demo UI requesters: submit and read requests",
+        "MaxSessionDuration": 3600,
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DemoWebUiRequesterRoleDefaultPolicy9E2B9DE9": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "execute-api:Invoke",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":execute-api:ap-northeast-1:123456789012:",
+                      {
+                        "Ref": "RequestsApi5EAF7131",
+                      },
+                      "/",
+                      {
+                        "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                      },
+                      "/POST/requests",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":execute-api:ap-northeast-1:123456789012:",
+                      {
+                        "Ref": "RequestsApi5EAF7131",
+                      },
+                      "/",
+                      {
+                        "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+                      },
+                      "/GET/requests/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "DemoWebUiRequesterRoleDefaultPolicy9E2B9DE9",
+        "Roles": [
+          {
+            "Ref": "DemoWebUiRequesterRole20C81963",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "DemoWebUiRequestersGroupCF27BE67": {
+      "Properties": {
+        "GroupName": "requesters",
+        "Precedence": 2,
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "DemoWebUiRequesterRole20C81963",
+            "Arn",
+          ],
+        },
+        "UserPoolId": {
+          "Ref": "DemoWebUiUserPoolA370D570",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolGroup",
+    },
+    "DemoWebUiSecurityHeadersDE8BF199": {
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "Name": "test-test-ldf-demo-web-headers",
+          "SecurityHeadersConfig": {
+            "ContentSecurityPolicy": {
+              "ContentSecurityPolicy": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "default-src 'self'; connect-src 'self' https://",
+                    {
+                      "Ref": "RequestsApi5EAF7131",
+                    },
+                    ".execute-api.ap-northeast-1.",
+                    {
+                      "Ref": "AWS::URLSuffix",
+                    },
+                    " https://cognito-identity.ap-northeast-1.amazonaws.com https://test-test-ldf-123456789012.auth.ap-northeast-1.amazoncognito.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self' https://test-test-ldf-123456789012.auth.ap-northeast-1.amazoncognito.com",
+                  ],
+                ],
+              },
+              "Override": true,
+            },
+            "ContentTypeOptions": {
+              "Override": true,
+            },
+            "FrameOptions": {
+              "FrameOption": "DENY",
+              "Override": true,
+            },
+            "ReferrerPolicy": {
+              "Override": true,
+              "ReferrerPolicy": "strict-origin-when-cross-origin",
+            },
+            "StrictTransportSecurity": {
+              "AccessControlMaxAgeSec": 31536000,
+              "IncludeSubdomains": true,
+              "Override": true,
+            },
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
+    },
+    "DemoWebUiUserPoolA370D570": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [
+            {
+              "Name": "verified_email",
+              "Priority": 1,
+            },
+          ],
+        },
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true,
+        },
+        "AutoVerifiedAttributes": [
+          "email",
+        ],
+        "EmailVerificationMessage": "The verification code to your new account is {####}",
+        "EmailVerificationSubject": "Verify your new account",
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 12,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "RequireUppercase": true,
+            "TemporaryPasswordValidityDays": 3,
+          },
+        },
+        "SmsVerificationMessage": "The verification code to your new account is {####}",
+        "UserPoolName": "test-test-ldf-demo-users",
+        "UserPoolTier": "ESSENTIALS",
+        "UsernameAttributes": [
+          "email",
+        ],
+        "VerificationMessageTemplate": {
+          "DefaultEmailOption": "CONFIRM_WITH_CODE",
+          "EmailMessage": "The verification code to your new account is {####}",
+          "EmailSubject": "Verify your new account",
+          "SmsMessage": "The verification code to your new account is {####}",
+        },
+      },
+      "Type": "AWS::Cognito::UserPool",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DemoWebUiUserPoolDomain84BF7427": {
+      "Properties": {
+        "Domain": "test-test-ldf-123456789012",
+        "ManagedLoginVersion": 2,
+        "UserPoolId": {
+          "Ref": "DemoWebUiUserPoolA370D570",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolDomain",
+    },
+    "DemoWebUiUserPoolWebClient4518857E": {
+      "Properties": {
+        "AccessTokenValidity": 60,
+        "AllowedOAuthFlows": [
+          "code",
+        ],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthScopes": [
+          "openid",
+          "email",
+        ],
+        "CallbackURLs": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "https://",
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiDistribution72032FD5",
+                    "DomainName",
+                  ],
+                },
+                "/",
+              ],
+            ],
+          },
+        ],
+        "ClientName": "test-test-ldf-demo-web",
+        "ExplicitAuthFlows": [
+          "ALLOW_USER_SRP_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH",
+        ],
+        "GenerateSecret": false,
+        "IdTokenValidity": 60,
+        "LogoutURLs": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "https://",
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiDistribution72032FD5",
+                    "DomainName",
+                  ],
+                },
+                "/",
+              ],
+            ],
+          },
+        ],
+        "PreventUserExistenceErrors": "ENABLED",
+        "RefreshTokenValidity": 720,
+        "SupportedIdentityProviders": [
+          "COGNITO",
+        ],
+        "TokenValidityUnits": {
+          "AccessToken": "minutes",
+          "IdToken": "minutes",
+          "RefreshToken": "minutes",
+        },
+        "UserPoolId": {
+          "Ref": "DemoWebUiUserPoolA370D570",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolClient",
+    },
+    "DemoWebUiWebBucket8FFDB3E2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "aws-cdk:cr-owned:af567f55",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DemoWebUiWebBucketAutoDeleteObjectsCustomResource04D9BFC6": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "DemoWebUiWebBucketPolicyAB015757",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "DemoWebUiWebBucket8FFDB3E2",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DemoWebUiWebBucketPolicyAB015757": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "DemoWebUiWebBucket8FFDB3E2",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiWebBucket8FFDB3E2",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiWebBucket8FFDB3E2",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiWebBucket8FFDB3E2",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiWebBucket8FFDB3E2",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudfront::",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":distribution/",
+                        {
+                          "Ref": "DemoWebUiDistribution72032FD5",
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DemoWebUiWebBucket8FFDB3E2",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
     "GetRequestFunction66D99464": {
       "DependsOn": [
         "GetRequestFunctionServiceRoleDefaultPolicy612D5D46",
@@ -210,10 +1387,24 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "007aa1248cb0008e042edbb2727c18bec464f294097137c24b9cc335b6f1263c.zip",
+          "S3Key": "c2977599a65378a6bc6dbb3000fe53227da38f63546ea07e169e40653fed190d.zip",
         },
         "Environment": {
           "Variables": {
+            "CORS_ALLOW_ORIGIN": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Fn::GetAtt": [
+                      "DemoWebUiDistribution72032FD5",
+                      "DomainName",
+                    ],
+                  },
+                ],
+              ],
+            },
             "TABLE_NAME": {
               "Ref": "RequestsTable419243C7",
             },
@@ -290,6 +1481,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                     "Arn",
                   ],
                 },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
               ],
             },
             {
@@ -303,6 +1508,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                   "Fn::GetAtt": [
                     "RequestsTable419243C7",
                     "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
                   ],
                 },
               ],
@@ -320,6 +1539,176 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       "Type": "AWS::IAM::Policy",
     },
     "GetRequestLogGroupE2CF0805": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ListRequestsFunctionBF197FCE": {
+      "DependsOn": [
+        "ListRequestsFunctionServiceRoleDefaultPolicy95B969A4",
+        "ListRequestsFunctionServiceRole9DF81807",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "df7b19651e6363c4a14060ffade081a730e4beb3ffaebe69a29866daa57209fe.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "CORS_ALLOW_ORIGIN": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Fn::GetAtt": [
+                      "DemoWebUiDistribution72032FD5",
+                      "DomainName",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "TABLE_NAME": {
+              "Ref": "RequestsTable419243C7",
+            },
+          },
+        },
+        "FunctionName": "test-test-ldf-list-requests",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ListRequestsLogGroup36E49969",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "ListRequestsFunctionServiceRole9DF81807",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ListRequestsFunctionServiceRole9DF81807": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ListRequestsFunctionServiceRoleDefaultPolicy95B969A4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ListRequestsFunctionServiceRoleDefaultPolicy95B969A4",
+        "Roles": [
+          {
+            "Ref": "ListRequestsFunctionServiceRole9DF81807",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ListRequestsLogGroup36E49969": {
       "DeletionPolicy": "Delete",
       "Properties": {
         "RetentionInDays": 7,
@@ -394,6 +1783,60 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       "Type": "AWS::IAM::Role",
       "UpdateReplacePolicy": "Delete",
     },
+    "RequestsApiCors4xx0586F562": {
+      "Properties": {
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": {
+            "Fn::Join": [
+              "",
+              [
+                "'https://",
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiDistribution72032FD5",
+                    "DomainName",
+                  ],
+                },
+                "'",
+              ],
+            ],
+          },
+          "gatewayresponse.header.Vary": "'Origin'",
+        },
+        "ResponseType": "DEFAULT_4XX",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::GatewayResponse",
+    },
+    "RequestsApiCors5xxC72BD8BD": {
+      "Properties": {
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": {
+            "Fn::Join": [
+              "",
+              [
+                "'https://",
+                {
+                  "Fn::GetAtt": [
+                    "DemoWebUiDistribution72032FD5",
+                    "DomainName",
+                  ],
+                },
+                "'",
+              ],
+            ],
+          },
+          "gatewayresponse.header.Vary": "'Origin'",
+        },
+        "ResponseType": "DEFAULT_5XX",
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::GatewayResponse",
+    },
     "RequestsApiCreateRequestModel824F369C": {
       "Properties": {
         "ContentType": "application/json",
@@ -450,15 +1893,21 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       },
       "Type": "AWS::ApiGateway::Model",
     },
-    "RequestsApiDeploymentE3FB80368786f059a75eaf1220c18acb06c9a631": {
+    "RequestsApiDeploymentE3FB8036b9b7ebfcaa3f85fe98ad775bad962207": {
       "DependsOn": [
         "RequestsApiBodyValidatorA5AE366F",
+        "RequestsApiCors4xx0586F562",
+        "RequestsApiCors5xxC72BD8BD",
         "RequestsApiCreateRequestModel824F369C",
         "RequestsApiDecisionModelA3146ECD",
+        "RequestsApirequestsrequestIddecisionOPTIONS03486E92",
         "RequestsApirequestsrequestIddecisionPOST2CDA4DD9",
         "RequestsApirequestsrequestIddecision5353891D",
         "RequestsApirequestsrequestIdGETA915EAB1",
+        "RequestsApirequestsrequestIdOPTIONS4E9D1DBD",
         "RequestsApirequestsrequestId2455441A",
+        "RequestsApirequestsGET5737E811",
+        "RequestsApirequestsOPTIONS7941B5D5",
         "RequestsApirequestsPOST7EBDD91C",
         "RequestsApirequests1036C9DC",
       ],
@@ -488,7 +1937,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
           "Format": "{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}",
         },
         "DeploymentId": {
-          "Ref": "RequestsApiDeploymentE3FB80368786f059a75eaf1220c18acb06c9a631",
+          "Ref": "RequestsApiDeploymentE3FB8036b9b7ebfcaa3f85fe98ad775bad962207",
         },
         "MethodSettings": [
           {
@@ -522,6 +1971,168 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         },
       },
       "Type": "AWS::ApiGateway::Resource",
+    },
+    "RequestsApirequestsGET5737E811": {
+      "Properties": {
+        "AuthorizationType": "AWS_IAM",
+        "HttpMethod": "GET",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ListRequestsFunctionBF197FCE",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "RequestParameters": {
+          "method.request.querystring.status": false,
+        },
+        "RequestValidatorId": {
+          "Ref": "RequestsApiBodyValidatorA5AE366F",
+        },
+        "ResourceId": {
+          "Ref": "RequestsApirequests1036C9DC",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "RequestsApirequestsGETApiPermissionLambdaDurableFunctionsApprovalRequestsApi6C4DBA71GETrequests76926024": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ListRequestsFunctionBF197FCE",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/",
+              {
+                "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
+              },
+              "/GET/requests",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsGETApiPermissionTestLambdaDurableFunctionsApprovalRequestsApi6C4DBA71GETrequests936011C0": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ListRequestsFunctionBF197FCE",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:ap-northeast-1:123456789012:",
+              {
+                "Ref": "RequestsApi5EAF7131",
+              },
+              "/test-invoke-stage/GET/requests",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "RequestsApirequestsOPTIONS7941B5D5": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amz-Content-Sha256,Idempotency-Key'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Origin": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "'https://",
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiDistribution72032FD5",
+                          "DomainName",
+                        ],
+                      },
+                      "'",
+                    ],
+                  ],
+                },
+                "method.response.header.Access-Control-Max-Age": "'3600'",
+                "method.response.header.Vary": "'Origin'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Max-Age": true,
+              "method.response.header.Vary": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Ref": "RequestsApirequests1036C9DC",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
     },
     "RequestsApirequestsPOST7EBDD91C": {
       "Properties": {
@@ -745,6 +2356,64 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       },
       "Type": "AWS::Lambda::Permission",
     },
+    "RequestsApirequestsrequestIdOPTIONS4E9D1DBD": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amz-Content-Sha256,Idempotency-Key'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Origin": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "'https://",
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiDistribution72032FD5",
+                          "DomainName",
+                        ],
+                      },
+                      "'",
+                    ],
+                  ],
+                },
+                "method.response.header.Access-Control-Max-Age": "'3600'",
+                "method.response.header.Vary": "'Origin'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Max-Age": true,
+              "method.response.header.Vary": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Ref": "RequestsApirequestsrequestId2455441A",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
     "RequestsApirequestsrequestIddecision5353891D": {
       "Properties": {
         "ParentId": {
@@ -756,6 +2425,64 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         },
       },
       "Type": "AWS::ApiGateway::Resource",
+    },
+    "RequestsApirequestsrequestIddecisionOPTIONS03486E92": {
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amz-Content-Sha256,Idempotency-Key'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Origin": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "'https://",
+                      {
+                        "Fn::GetAtt": [
+                          "DemoWebUiDistribution72032FD5",
+                          "DomainName",
+                        ],
+                      },
+                      "'",
+                    ],
+                  ],
+                },
+                "method.response.header.Access-Control-Max-Age": "'3600'",
+                "method.response.header.Vary": "'Origin'",
+              },
+              "StatusCode": "204",
+            },
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }",
+          },
+          "Type": "MOCK",
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Max-Age": true,
+              "method.response.header.Vary": true,
+            },
+            "StatusCode": "204",
+          },
+        ],
+        "ResourceId": {
+          "Ref": "RequestsApirequestsrequestIddecision5353891D",
+        },
+        "RestApiId": {
+          "Ref": "RequestsApi5EAF7131",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
     },
     "RequestsApirequestsrequestIddecisionPOST2CDA4DD9": {
       "Properties": {
@@ -871,8 +2598,34 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
             "AttributeName": "requestId",
             "AttributeType": "S",
           },
+          {
+            "AttributeName": "status",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "createdAt",
+            "AttributeType": "S",
+          },
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "status-createdAt-index",
+            "KeySchema": [
+              {
+                "AttributeName": "status",
+                "KeyType": "HASH",
+              },
+              {
+                "AttributeName": "createdAt",
+                "KeyType": "RANGE",
+              },
+            ],
+            "Projection": {
+              "ProjectionType": "ALL",
+            },
+          },
+        ],
         "KeySchema": [
           {
             "AttributeName": "requestId",
@@ -901,10 +2654,27 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "8bddecb880777860be4982f05216f5459c898ebc0f3f06aaf8148e0c5cb72c38.zip",
+          "S3Key": "2dbb2dd79c7ef1ebf58a09ef078dcb69c47a0054239fb9d6ce5880e1db1a1bb3.zip",
         },
         "Environment": {
           "Variables": {
+            "CORS_ALLOW_ORIGIN": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Fn::GetAtt": [
+                      "DemoWebUiDistribution72032FD5",
+                      "DomainName",
+                    ],
+                  },
+                ],
+              ],
+            },
+            "TABLE_NAME": {
+              "Ref": "RequestsTable419243C7",
+            },
             "WORKFLOW_FUNCTION_ARN": {
               "Ref": "WorkflowLiveAliasACF3BD1F",
             },
@@ -971,6 +2741,68 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                 "Ref": "WorkflowLiveAliasACF3BD1F",
               },
             },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "RequestsTable419243C7",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -1002,10 +2834,24 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "7274a288bec9d773e2084dfe33c89e8ca34a4ff155a23e990e52c3b4e6bae3b7.zip",
+          "S3Key": "fc814495b8cef503f2109ad8e0cce6770c170bba82c772233ce88ba34871aec9.zip",
         },
         "Environment": {
           "Variables": {
+            "CORS_ALLOW_ORIGIN": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Fn::GetAtt": [
+                      "DemoWebUiDistribution72032FD5",
+                      "DomainName",
+                    ],
+                  },
+                ],
+              ],
+            },
             "TABLE_NAME": {
               "Ref": "RequestsTable419243C7",
             },
@@ -1086,6 +2932,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                     "Arn",
                   ],
                 },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
               ],
             },
             {
@@ -1099,6 +2959,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                   "Fn::GetAtt": [
                     "RequestsTable419243C7",
                     "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
                   ],
                 },
               ],
@@ -1363,7 +3237,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "8d543f8744718818061071930765ac00bd9d76351fa7ec0216f11de93dd578ce.zip",
+          "S3Key": "178c9b552b11b3e781596c07a34cf9a57608922b382d5a93aad35c4fbbd02547.zip",
         },
         "DeadLetterConfig": {
           "TargetArn": {
@@ -1380,7 +3254,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         },
         "Environment": {
           "Variables": {
-            "APPROVAL_TIMEOUT_HOURS": "48",
+            "APPROVAL_TIMEOUT_MINUTES": "2880",
             "APPROVAL_TOPIC_ARN": {
               "Ref": "ApprovalTopic1D517B4C",
             },
@@ -1408,7 +3282,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       },
       "Type": "AWS::Lambda::Function",
     },
-    "WorkflowFunctionCurrentVersion13EA5935d898970de8230ae3a388afe370e9f13d": {
+    "WorkflowFunctionCurrentVersion13EA593592f8b545d261b1cccb96d95e54349ab9": {
       "DeletionPolicy": "Retain",
       "Metadata": {
         "aws:cdk:do-not-refactor": true,
@@ -1487,6 +3361,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                     "Arn",
                   ],
                 },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
               ],
             },
             {
@@ -1500,6 +3388,20 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
                   "Fn::GetAtt": [
                     "RequestsTable419243C7",
                     "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "RequestsTable419243C7",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
                   ],
                 },
               ],
@@ -1544,7 +3446,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         },
         "FunctionVersion": {
           "Fn::GetAtt": [
-            "WorkflowFunctionCurrentVersion13EA5935d898970de8230ae3a388afe370e9f13d",
+            "WorkflowFunctionCurrentVersion13EA593592f8b545d261b1cccb96d95e54349ab9",
             "Version",
           ],
         },
@@ -1595,28 +3497,44 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Resource types and counts 
 {
   "AWS::ApiGateway::Account": 1,
   "AWS::ApiGateway::Deployment": 1,
-  "AWS::ApiGateway::Method": 3,
+  "AWS::ApiGateway::GatewayResponse": 2,
+  "AWS::ApiGateway::Method": 7,
   "AWS::ApiGateway::Model": 2,
   "AWS::ApiGateway::RequestValidator": 1,
   "AWS::ApiGateway::Resource": 3,
   "AWS::ApiGateway::RestApi": 1,
   "AWS::ApiGateway::Stage": 1,
+  "AWS::CloudFront::Distribution": 1,
+  "AWS::CloudFront::OriginAccessControl": 1,
+  "AWS::CloudFront::ResponseHeadersPolicy": 1,
   "AWS::CloudWatch::Alarm": 1,
+  "AWS::Cognito::IdentityPool": 1,
+  "AWS::Cognito::IdentityPoolRoleAttachment": 1,
+  "AWS::Cognito::ManagedLoginBranding": 1,
+  "AWS::Cognito::UserPool": 1,
+  "AWS::Cognito::UserPoolClient": 1,
+  "AWS::Cognito::UserPoolDomain": 1,
+  "AWS::Cognito::UserPoolGroup": 2,
   "AWS::DynamoDB::Table": 1,
   "AWS::Events::Rule": 1,
-  "AWS::IAM::Policy": 4,
-  "AWS::IAM::Role": 5,
+  "AWS::IAM::Policy": 8,
+  "AWS::IAM::Role": 12,
   "AWS::KMS::Alias": 1,
   "AWS::KMS::Key": 1,
   "AWS::Lambda::Alias": 1,
-  "AWS::Lambda::Function": 4,
-  "AWS::Lambda::Permission": 6,
+  "AWS::Lambda::Function": 7,
+  "AWS::Lambda::LayerVersion": 1,
+  "AWS::Lambda::Permission": 8,
   "AWS::Lambda::Version": 1,
-  "AWS::Logs::LogGroup": 5,
+  "AWS::Logs::LogGroup": 6,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
   "AWS::SNS::Subscription": 2,
   "AWS::SNS::Topic": 2,
   "AWS::SNS::TopicPolicy": 2,
   "AWS::SQS::Queue": 1,
   "AWS::SQS::QueuePolicy": 1,
+  "Custom::CDKBucketDeployment": 1,
+  "Custom::S3AutoDeleteObjects": 1,
 }
 `;

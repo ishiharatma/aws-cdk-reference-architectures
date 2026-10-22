@@ -9,7 +9,9 @@
 
 ワークフローはふつうの TypeScript の逐次コードで、Step Functions の状態機械定義はありません。代わりに、durable functions 固有の制約(決定性、qualified ARN、バージョン固定、冪等性)をコードとインフラの両方で守る必要があります。本ワークスペースはその守り方を示すことを目的にしています。
 
-> **ステータス:未デプロイ検証。** `cdk synth`(esbuild バンドルあり)、ユニットテスト、cdk-nag は通過していますが、実機へのデプロイ確認はまだ行っていません。`pages/patterns.json` では `draft: true` です。
+オプションの**デモ用 Web 画面**(Cognito マネージドログイン + CloudFront/S3)を使うと、2 人で申請者と承認者を分担してブラウザから操作できます。画面は同じ IAM 認証 API を SigV4 で呼ぶため、API の認可方式は変わりません。
+
+> **ステータス: 2026-10-21 にデプロイ検証済み**(ap-northeast-1、`aws-cdk-lib` 2.273.0)。[デプロイ検証の結果](#-デプロイ検証の結果)を参照。
 
 ## 📑 目次
 
@@ -22,8 +24,10 @@
 - [前提条件](#-前提条件)
 - [デプロイ手順](#-デプロイ手順)
 - [使い方](#使い方)
+- [デモ用 Web 画面](#️-デモ用-web-画面)
 - [テスト戦略](#-テスト戦略)
 - [運用](#-運用)
+- [デプロイ検証の結果](#-デプロイ検証の結果)
 - [クリーンアップ](#-クリーンアップ)
 - [参考資料](#-参考資料)
 
@@ -32,13 +36,16 @@
 ![アーキテクチャ図](overview.drawio.svg)
 
 ```text
-Client (SigV4 / IAM)
-  │
-  ▼
+Client (SigV4 / IAM)          ブラウザ (デモ画面, オプション)
+  │                             ├─ CloudFront (OAC) ─▶ S3: index.html / app.js / config.json
+  │                             ├─ Cognito ユーザープール (マネージドログイン, 認可コード + PKCE) ─▶ ID トークン
+  │                             └─ Cognito ID プール ─▶ グループに対応する IAM ロールの一時認証情報
+  ▼                             ▼ (SigV4, CORS は画面のオリジンのみ)
 API Gateway (REST, AWS_IAM, JSON Schema 検証, スロットリング)
   ├─ POST /requests                 → StartRequest ──Invoke(Event, DurableExecutionName)──▶ Workflow:live (durable)
   ├─ POST /requests/{id}/decision   → SubmitDecision ──SendDurableExecutionCallbackSuccess──▶ (待機中の実行が再開)
-  └─ GET  /requests/{id}            → GetRequest ──▶ DynamoDB (状態の射影)
+  ├─ GET  /requests/{id}            → GetRequest ──▶ DynamoDB (状態の射影)
+  └─ GET  /requests?status=…        → ListRequests ──▶ DynamoDB GSI status-createdAt (承認者の作業一覧)
 
 Workflow (durable function, alias: live)
   register-request ─▶ wait-for-approval (callback, 最大 48h, 待機中は課金なし) ─┬─ 承認 ─▶ fulfill-request ─▶ mark-completed
@@ -59,10 +66,12 @@ Workflow (durable function, alias: live)
 | `StartRequest` | 申請を受け付け、`DurableExecutionName` を付けて**非同期**で実行を開始する |
 | `SubmitDecision` | 承認・却下を受け付け、callback を完了させる |
 | `GetRequest` | DynamoDB から状態を返す。`GetDurableExecution` は使わない |
+| `ListRequests` | 承認者の作業一覧。指定した状態の新しい順 50 件を `status-createdAt-index` GSI から返す |
 | DynamoDB `requests` | 状態の射影と `callbackId` の保管場所 |
 | SNS(承認依頼 / アラート) | KMS カスタマー管理キーで暗号化 |
 | SQS DLQ | 失敗した実行の元イベントを保存する |
 | EventBridge ルール | この関数の異常終了だけを拾ってアラートを出す |
+| デモ用 Web 画面(`DemoWebUi` Construct、オプション) | Cognito ユーザープール(グループ `requesters` / `approvers`)+ ID プール、グループごとの IAM ロール、SPA 配信用の CloudFront + 非公開 S3 |
 
 ## 🔁 durable functions の仕組み(本構成に関係する部分)
 
@@ -75,7 +84,9 @@ Workflow (durable function, alias: live)
 
 ### 1. 非同期 invoke + `DurableExecutionName` で開始を冪等にする
 
-`StartRequest` は `InvocationType: 'Event'` と `DurableExecutionName: approval-<requestId>` を指定して起動します。同じ名前・同じペイロードの再送は既存の実行を返し、ペイロードが違えば `DurableExecutionAlreadyStartedException`(→ HTTP 409)になります。
+`StartRequest` は `InvocationType: 'Event'` と `DurableExecutionName: approval-<requestId>` を指定して起動します。同じ名前・同じペイロードの再送は既存の実行を返します。
+
+**ペイロードが違っても、非同期 invoke では拒否されません**(デプロイ検証で確認)。`Invoke` は 202 と既存の実行 ARN を返し、実行が終了した後でも同じです。新しいイベントは裏で `DurableExecutionAlreadyExists. An execution with this name already exists with different payload.` として失敗して DLQ に入り、DLQ アラームも発報します。`Event` の invoke では `DurableExecutionAlreadyStartedException` は発生しません。そのため `StartRequest` は先に状態の射影を読み、同じ request ID が別の件名・金額・申請者で存在すれば、invoke せずに HTTP 409 を返します。最初の step がアイテムを書き込む前(約 1 秒)に届いた食い違う再送だけは、引き続き DLQ に入ります。
 
 - クライアントは `Idempotency-Key` ヘッダーで request ID を指定できます(1〜55 文字の `[A-Za-z0-9_-]`。実行名の上限 64 文字から接頭辞 `approval-` を引いた長さ)。
 - **ペイロードにタイムスタンプを入れない**: 冪等性の判定はペイロードの一致で行われるため、再送でも同じバイト列になるように組み立てます。
@@ -113,6 +124,8 @@ step のデフォルトの実行保証は at-least-once per retry です(中断�
 
 承認者は request ID で決定を送ります。callback ID は DynamoDB にだけ保存し、GET の応答からは除外しています。SNS の通知文にも含めません。さらに、申請者本人による承認は 403 で拒否します(職務分掌)。
 
+呼び出し元の識別には IAM プリンシパルの ARN を使いますが、**Cognito ID プールの認証情報だけは Cognito の identity ID を使います**。ID プールのセッションは同じロールなら全員が同じ ARN(`assumed-role/<role>/CognitoIdentityCredentials`、実機で確認)になるため、ARN で比べるとそのロールの全ユーザーが同一人物として扱われてしまいます。
+
 ### 7. 失敗の検知は EventBridge と DLQ の 2 本立て
 
 非同期で起動した durable execution は、失敗しても Lambda が自動でリトライしません。
@@ -124,6 +137,16 @@ step のデフォルトの実行保証は at-least-once per retry です(中断�
 ### 8. `@aws-sdk/client-lambda` は関数に同梱する
 
 `StartRequest` と `SubmitDecision` は `bundleAwsSDK: true` を指定しています。`DurableExecutionName` や callback API に対応した SDK が runtime に入っているかは確認できていないためです(未確認)。durable execution SDK も、公式の推奨どおりデプロイパッケージに同梱し、メジャーバージョンを固定しています(`^2.7.1`)。
+
+### 9. デモ画面は Cognito オーソライザーを足さず、IAM 認証のまま使う
+
+ブラウザは Cognito の ID トークンを ID プールで IAM の一時認証情報に交換し、SigV4 で署名して API を呼びます。API とハンドラーは IAM クライアント向けのものをそのまま使います。
+
+- **グループごとのロール**: ID プールはトークンの `cognito:preferred_role` でロールを決めます(該当なしは Deny)。`requesters` のロールは `POST /requests` と `GET /requests/*`、`approvers` のロールは `GET /requests`、`GET /requests/*`、`POST /requests/*/decision` だけを呼べます。申請者が決定しようとすると、**コードが動く前に API Gateway が 403 を返します**。両方のグループに入ったユーザーには、ハンドラー側の判定が効きます。
+- **CORS は画面のオリジンだけ**: OPTIONS メソッド(認証なしのモック統合)、`DEFAULT_4XX` / `DEFAULT_5XX` のゲートウェイレスポンス、ハンドラーが返す `Access-Control-Allow-Origin`。ゲートウェイレスポンスがないと、IAM による拒否がブラウザでは中身の読めないネットワークエラーになります。
+- **ブラウザに秘密を置かない**: シークレットなしのアプリクライアント + 認可コード + PKCE、トークンは `sessionStorage`、CSP で接続先を API・Cognito Identity・Cognito ドメインに限定。
+- **一覧も最小権限**: 申請者は一覧を取得できません。画面は申請者が作成した ID を `localStorage` に持ち、`GET /requests/{id}` をポーリングします。
+- `demoWebUi.enabled: false` にすると、画面・Cognito・CORS のリソースはすべて作られません(ユニットテストで確認)。
 
 ## 🔀 Step Functions との比較
 
@@ -156,6 +179,8 @@ durable functions には、通常の Lambda 課金に加えて **durable operati
 
 そのほか、KMS カスタマー管理キー(月額の鍵料金)、API Gateway、DynamoDB(オンデマンド)、SNS がかかります。
 
+デモ画面を有効にすると、CloudFront と S3(小さなファイル数個)、**Essentials** プランの Cognito ユーザープール(月間アクティブユーザー単位の課金。[Cognito の料金](https://aws.amazon.com/cognito/pricing/)を参照。ここでは試算していません)、デプロイ時だけ動く BucketDeployment の Lambda が加わります。ID プール自体は無料です。
+
 ## 🔒 セキュリティに関する考慮事項
 
 ### 実装済み
@@ -165,16 +190,17 @@ durable functions には、通常の Lambda 課金に加えて **durable operati
 - API のハンドラーには `StopDurableExecution` / `GetDurableExecutionHistory` を付与していない。
 - SNS は KMS カスタマー管理キー(ローテーション有効)、SQS は SSE-SQS、どちらも TLS を強制。
 - callback ID は API 応答と通知文に含めない。申請者本人は承認できない。
+- デモ画面: ユーザーは管理者が作成(セルフサインアップなし)、12 文字以上のパスワードポリシー、シークレットなしの PKCE クライアント、ゲストアクセスなしの ID プール、この ID プールの `authenticated` な ID だけを信頼するグループ別 IAM ロール、CloudFront OAC 経由の非公開 S3、HTTPS リダイレクト、CSP / HSTS / X-Frame-Options ヘッダー。
 
 ### 意図的に対象外(環境ごとに追加)
 
 - WAF(リージョンの web ACL)。公開 API にする場合は追加する。
-- Cognito などのエンドユーザー認証。本構成は IAM プリンシパル(社内ツールやサービス)からの利用を想定している。
+- 本番向けのエンドユーザー認証。デモ画面のユーザープールは MFA なし・脅威保護(Plus プラン)なしで、ディストリビューションは既定の `*.cloudfront.net` 証明書を使う。実運用の前に MFA、ACM 証明書付きの独自ドメイン、CloudFront 用の WAF web ACL を追加する。
 - checkpoint データのカスタム暗号化(custom serdes)と durable execution データの CMK 暗号化。
 
 ### CDK Nag
 
-`test/compliance/cdk-nag.test.ts` で AwsSolutions を検査しています。抑制はすべて `appliesTo` で対象を絞り、理由を記載しています(AWS 管理ポリシー 3 種、callback 用リソースの `:*`、KMS の `GenerateDataKey*`、COG4、APIG3)。
+`test/compliance/cdk-nag.test.ts` で AwsSolutions を検査しています。抑制はすべて `appliesTo` で対象を絞り、理由を記載しています(AWS 管理ポリシー 3 種、callback 用リソースの `:*`、KMS の `GenerateDataKey*`、状態 GSI の `index/*`、COG4、APIG3)。デモ画面の分として、COG2 / COG8(MFA、Plus プラン)、S1、CFR1〜4、execute-api ARN の `{requestId}` 用ワイルドカード、aws-cdk-lib が生成する BucketDeployment の関数をリソース単位で抑制しています。
 
 ## 📋 前提条件
 
@@ -183,6 +209,7 @@ durable functions には、通常の Lambda 課金に加えて **durable operati
 - Node.js 22 以降、`aws-cdk-lib` 2.273.0 以降(`durableConfig`)
 - Docker は不要(ローカルの esbuild でバンドル)
 - API 呼び出し用に curl 7.75 以降(`--aws-sigv4`)と `jq`
+- `parameters/dev-params.ts`: `workflow.approvalTimeoutMinutes`(既定 `48 * 60`)と `demoWebUi.enabled`(既定 `true`)。Cognito ドメインのプレフィックスは既定で `<project>-<env>-ldf-<account>`。リージョン内で一意で、`aws`・`amazon`・`cognito` を含められないため、該当する場合は `demoWebUi.cognitoDomainPrefix` で指定する
 
 ## 🚀 デプロイ手順
 
@@ -200,7 +227,9 @@ npm run stage:deploy:all -w workspaces/lambda-durable-functions-approval
 
 承認依頼やアラートをメールで受け取る場合は、`parameters/dev-params.ts` の `approverEmails` / `alertEmails` を設定し、届いた確認メールで購読を承認してください。
 
-出力: `ApiUrl`、`WorkflowFunctionName`、`WorkflowAliasArn`、`RequestsTableName`、`WorkflowDlqUrl`。
+出力: `ApiUrl`、`WorkflowFunctionName`、`WorkflowAliasArn`、`RequestsTableName`、`WorkflowDlqUrl`。デモ画面を有効にした場合は `DemoWebUrl` と `DemoUserPoolId` も出力されます。
+
+> 既存のテーブルに状態 GSI を追加したとき、CloudFormation はインデックスが `ACTIVE` になる約 8 分前に `UPDATE_COMPLETE` を返しました。その間 `GET /requests` は `Cannot read from backfilling global secondary index`(HTTP 502)で失敗します。
 
 ## 使い方
 
@@ -225,16 +254,33 @@ curl -s "${SIGV4[@]}" -X POST "${API}requests/req-0001/decision" \
 aws lambda list-durable-executions-by-function --function-name "<WorkflowFunctionName>" --statuses RUNNING --profile ${PROJECT}-${ENV}
 ```
 
+## 🖥️ デモ用 Web 画面
+
+```bash
+# 申請者と承認者を 1 人ずつ作成する。パスワードはランダム生成して 1 度だけ表示し、メールは送らない
+./scripts/create-demo-users.sh <DemoUserPoolId> requester@example.com approver@example.com \
+  --profile ${PROJECT}-${ENV} --region ap-northeast-1
+```
+
+`DemoWebUrl` を 2 つのブラウザ(または通常ウィンドウとプライベートウィンドウ)で開き、それぞれのユーザーでサインインします。
+
+| 申請者 | 承認者 |
+|---|---|
+| 件名と金額(任意で `Idempotency-Key`)を入れて申請し、`受付 → 承認待ち → 決定受信 → 完了` と進む様子を確認する。「自分で承認してみる」で API Gateway の 403 を確認できる。 | 作業一覧に `WAITING_APPROVAL` の申請が並ぶ。コメントを付けて承認または却下する。2 回目の決定は 409。結果一覧で完了・却下・期限切れを確認できる。 |
+
+承認待ちの間、durable function は停止しており compute の課金はありません。`EXPIRED` の分岐を見たい場合は、`workflow.approvalTimeoutMinutes` を `2` にして再デプロイします。
+
 ## 🧪 テスト戦略
 
 | 種類 | ファイル | 内容 |
 |---|---|---|
 | ワークフロー | `test/unit/approval-workflow.test.ts` | `@aws/durable-execution-sdk-js-testing` の `LocalDurableTestRunner` で、本物のオーケストレーションコードをローカルで実行する(承認 / 却下 / 外部からの callback 失敗 / step のリトライ / replay で step が再実行されないこと / 不正な決定) |
-| スタック | `test/unit/lambda-durable-functions-approval-stack.test.ts` | `DurableConfig`、Version の `Retain`、エイリアス、IAM の範囲、EventBridge のパターンなど |
+| スタック | `test/unit/lambda-durable-functions-approval-stack.test.ts` | `DurableConfig`、Version の `Retain`、エイリアス、IAM の範囲、EventBridge のパターン、状態 GSI など |
+| デモ画面 | `test/unit/demo-web-ui.test.ts` | 管理者作成のみのユーザープール、PKCE クライアント、Deny 付きのトークンによるロールマッピング、グループ別ロールと execute-api の範囲、OAC、CSP、CORS(プリフライト、ゲートウェイレスポンス、ハンドラーのヘッダー)、無効時に何も作られないこと |
 | スナップショット | `test/snapshot/` | テンプレート全体とリソース数 |
 | コンプライアンス | `test/compliance/cdk-nag.test.ts` | AwsSolutions |
 
-**制約**: testing SDK 1.3.x の `LocalDurableTestRunner` は callback のタイムアウトを発火させません。そのため期限切れの分岐は、`CallbackTimeoutError` を返すスタブの context で検証しています。SDK の `waitForCallback` が `CallbackTimeoutError` をそのまま再スローすることはソースで確認済みですが、実機での確認はデプロイ検証の項目として残っています。
+**制約**: testing SDK 1.3.x の `LocalDurableTestRunner` は callback のタイムアウトを発火させません。そのため期限切れの分岐は、`CallbackTimeoutError` を返すスタブの context で検証しています。実機ではデプロイ検証で確認済みで、タイムアウトを 2 分にすると、待機開始のちょうど 2 分後に `EXPIRED` になりました。
 
 ```bash
 cd infrastructure/workspaces/lambda-durable-functions-approval
@@ -247,6 +293,30 @@ npx jest
 - **古いバージョンの削除**: `ListDurableExecutionsByFunction` で RUNNING の実行がないことを確認してから削除します。保持しているバージョンはコード保存領域のクォータを消費します。
 - **再処理**: DLQ の元イベントを確認し、原因を直してから再投入します。同じ `DurableExecutionName` は保持期間中は再利用できないため、再処理では別の request ID を使います。
 - **関数の削除**: CloudFormation は実行中の durable execution の完了を最長 1 時間待ち、その後タイムアウトします(`aws-cdk-lib` の README による)。削除前に実行を停止してください。
+- **停止した実行**: `StopDurableExecution` は step を実行せずに実行を終わらせるため、DynamoDB のアイテムは最後の状態(例: `WAITING_APPROVAL`)のまま残り、承認者の一覧にも出続けます。決定しようとすると 409 です。手動で停止したときは、アイテムを更新または削除してください。
+- **`ErrorCode` 400 の DLQ メッセージ**: `DurableExecutionAlreadyExists ... different payload` で拒否されたイベントは、request ID を違う body で再利用したもので、ワークフローの失敗ではありません。確認したら削除します。
+
+## ✅ デプロイ検証の結果
+
+2026-10-21 に ap-northeast-1 で、2 つの IAM プリンシパルと 2 人のデモユーザー(ID プールの認証情報)を使って確認しました。
+
+| 確認項目 | 結果 |
+|---|---|
+| 署名なしのリクエスト | 403 `Missing Authentication Token` |
+| body の検証(負の金額、余分なプロパティ) | API Gateway のモデルで 400 |
+| 申請 → `WAITING_APPROVAL` | 約 1 秒。実行履歴は `register-request`、`wait-for-approval`(callback + submitter step)の後 `InvocationCompleted`(停止) |
+| 同じキー・同じ body の再送 | 202、同じ実行 ARN、DLQ には何も入らない |
+| 同じキー・違う body の再送 | 修正前: 202 + 既存 ARN、DLQ に `DurableExecutionAlreadyExists ... different payload` のイベント。修正後: 409 |
+| 申請者本人による承認 | IAM プリンシパル: ハンドラーが 403。デモユーザー: API Gateway が 403(ロールに権限なし) |
+| 承認 / 却下 | 202 → 約 3 秒で `COMPLETED`(`fulfillmentId` 付き)/ `REJECTED` |
+| 2 回目の決定 | 409 |
+| 承認期限(2 分) | 待機開始の 2 分後に `EXPIRED` |
+| 待機中の実行への `StopDurableExecution` | `STOPPED`。EventBridge ルールが 1 回マッチしてアラートトピックへ配信、元イベントは DLQ へ。DynamoDB のアイテムは `WAITING_APPROVAL` のまま(運用を参照) |
+| ID プールの認証情報 | どのユーザーでも ARN は `assumed-role/<グループのロール>/CognitoIdentityCredentials`。API は代わりに `cognito-identity:<identity id>` を記録する |
+| CORS | プリフライトは画面のオリジン付きで 204。2xx・4xx(IAM による拒否を含む)・5xx のすべてに `Access-Control-Allow-Origin` が付く |
+| CloudFront | 200、CSP・HSTS・`X-Frame-Options: DENY` 付き |
+
+コマンドラインでは確認できなかったもの: マネージドログインの画面そのもの(JavaScript で描画されるため curl では操作できない)。サインイン後のトークン → ID プール → API の経路は、同じアプリクライアントで発行したトークンで確認しました。
 
 ## 🧹 クリーンアップ
 
@@ -258,7 +328,7 @@ aws lambda stop-durable-execution --durable-execution-arn "<arn>" --profile ${PR
 npm run stage:destroy:all -w workspaces/lambda-durable-functions-approval
 ```
 
-未確認: `removalPolicy: RETAIN` を付けた `AWS::Lambda::Version` が、スタック削除時に関数と一緒に消えるかどうか。デプロイ検証で確認します。残った場合は `aws lambda delete-function` で関数ごと削除してください。
+`removalPolicy: RETAIN` を付けた `AWS::Lambda::Version` は、関数より長く残ることはありません。デプロイ検証では `cdk destroy` で関数と発行済みの 3 バージョンが削除され、`<project>-<env>-ldf` で始まるリソース(Lambda、DynamoDB、Cognito、CloudFront、SQS、SNS、ロググループ、IAM ロール)は残りませんでした。
 
 ## 📚 参考資料
 

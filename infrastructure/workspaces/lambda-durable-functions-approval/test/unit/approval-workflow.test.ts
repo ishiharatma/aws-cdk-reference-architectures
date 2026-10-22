@@ -35,7 +35,7 @@ function makeDeps(overrides: Partial<WorkflowDeps> = {}) {
     repository,
     notifyApprovers: jest.fn().mockResolvedValue(undefined),
     fulfill: jest.fn().mockResolvedValue('ful-req-001'),
-    approvalTimeoutHours: 48,
+    approvalTimeoutMinutes: 48 * 60,
     ...overrides,
   };
   return { deps, repository };

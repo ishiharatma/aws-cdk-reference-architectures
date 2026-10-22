@@ -94,12 +94,34 @@ describe('LambdaDurableFunctionsApprovalStack', () => {
   });
 
   describe('API', () => {
-    test('every method requires IAM authorization', () => {
-      const methods = template.findResources('AWS::ApiGateway::Method');
-      expect(Object.keys(methods)).toHaveLength(3);
-      for (const method of Object.values(methods)) {
+    test('every non-preflight method requires IAM authorization', () => {
+      const methods = Object.values(template.findResources('AWS::ApiGateway::Method'));
+      const actual = methods.filter((m) => m.Properties.HttpMethod !== 'OPTIONS');
+      expect(actual).toHaveLength(4);
+      for (const method of actual) {
         expect(method.Properties.AuthorizationType).toBe('AWS_IAM');
       }
+    });
+
+    test('the work list reads a status GSI', () => {
+      template.hasResourceProperties('AWS::DynamoDB::Table', {
+        GlobalSecondaryIndexes: [
+          Match.objectLike({
+            IndexName: 'status-createdAt-index',
+            KeySchema: [
+              { AttributeName: 'status', KeyType: 'HASH' },
+              { AttributeName: 'createdAt', KeyType: 'RANGE' },
+            ],
+          }),
+        ],
+      });
+    });
+
+    test('the starter can read the projection to detect a reused Idempotency-Key', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        FunctionName: 'test-test-ldf-start-request',
+        Environment: { Variables: Match.objectLike({ TABLE_NAME: Match.anyValue() }) },
+      });
     });
 
     test('request bodies are validated by JSON schema models', () => {
@@ -161,7 +183,7 @@ describe('LambdaDurableFunctionsApprovalStack', () => {
           workflow: {
             executionTimeoutDays: 1,
             retentionDays: 14,
-            approvalTimeoutHours: 48,
+            approvalTimeoutMinutes: 48 * 60,
             invocationTimeoutSeconds: 60,
           },
         })

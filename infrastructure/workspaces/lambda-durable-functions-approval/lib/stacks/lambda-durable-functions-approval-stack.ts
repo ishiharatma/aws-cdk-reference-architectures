@@ -17,6 +17,8 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
+import { DemoWebUi } from '../constructs/demo-web-ui';
+import { STATUS_INDEX_NAME } from '../../src/shared/types';
 
 /** Properties for {@link LambdaDurableFunctionsApprovalStack}. */
 export interface LambdaDurableFunctionsApprovalStackProps extends cdk.StackProps {
@@ -33,6 +35,7 @@ export interface LambdaDurableFunctionsApprovalStackProps extends cdk.StackProps
  *     POST /requests                  -> StartRequest  --async invoke (live alias, execution name)--> Workflow (durable)
  *     POST /requests/{id}/decision    -> SubmitDecision --SendDurableExecutionCallbackSuccess------> Workflow resumes
  *     GET  /requests/{id}             -> GetRequest    -> DynamoDB (status projection)
+ *     GET  /requests?status=          -> ListRequests  -> DynamoDB status GSI (approvers' work list)
  *
  *   Workflow: register -> waitForCallback (SNS to approvers, up to N hours, no compute) -> fulfill / reject / expire
  *   Ops: EventBridge "Durable Execution Status Change" (FAILED/TIMED_OUT/STOPPED) + DLQ -> alert topic
@@ -44,6 +47,8 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
   public readonly workflowAlias: lambda.IAlias;
   /** IAM-authorized REST API. */
   public readonly api: apigateway.IRestApi;
+  /** Demo web UI, when `demoWebUi.enabled`. */
+  public readonly demoWebUi?: DemoWebUi;
 
   /** Creates the approval workflow resources. */
   constructor(scope: Construct, id: string, props: LambdaDurableFunctionsApprovalStackProps) {
@@ -54,9 +59,9 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
     const namePrefix = `${project}-${environment}-ldf`;
     const srcDir = path.join(__dirname, '..', '..', 'src');
 
-    if (params.workflow.executionTimeoutDays * 24 <= params.workflow.approvalTimeoutHours) {
+    if (params.workflow.executionTimeoutDays * 24 * 60 <= params.workflow.approvalTimeoutMinutes) {
       throw new Error(
-        'workflow.executionTimeoutDays must be longer than workflow.approvalTimeoutHours'
+        'workflow.executionTimeoutDays must be longer than workflow.approvalTimeoutMinutes'
       );
     }
 
@@ -68,6 +73,13 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy,
+    });
+    // The approvers' work list. Demo-scale: one partition per status value.
+    requestsTable.addGlobalSecondaryIndex({
+      indexName: STATUS_INDEX_NAME,
+      partitionKey: { name: 'status', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
     });
 
     // ---- Notifications -------------------------------------------------------
@@ -151,7 +163,7 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
       environment: {
         TABLE_NAME: requestsTable.tableName,
         APPROVAL_TOPIC_ARN: approvalTopic.topicArn,
-        APPROVAL_TIMEOUT_HOURS: String(params.workflow.approvalTimeoutHours),
+        APPROVAL_TIMEOUT_MINUTES: String(params.workflow.approvalTimeoutMinutes),
       },
       // An execution resumes on the version it started on, possibly days later. Keep old
       // versions when a deploy publishes a new one, or their in-flight executions break.
@@ -176,10 +188,15 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
       handler: 'handler',
       bundling: bundleAwsSdk,
       timeout: cdk.Duration.seconds(10),
-      environment: { WORKFLOW_FUNCTION_ARN: this.workflowAlias.functionArn },
+      environment: {
+        WORKFLOW_FUNCTION_ARN: this.workflowAlias.functionArn,
+        TABLE_NAME: requestsTable.tableName,
+      },
       logGroup: makeLogGroup('StartRequest'),
     });
     this.workflowAlias.grantInvoke(startRequestFn);
+    // Read-only: detects a reused Idempotency-Key before invoking (the workflow owns all writes).
+    requestsTable.grants.readData(startRequestFn);
 
     const submitDecisionFn = new lambdaNodejs.NodejsFunction(this, 'SubmitDecisionFunction', {
       ...commonProps,
@@ -211,6 +228,17 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
       logGroup: makeLogGroup('GetRequest'),
     });
     requestsTable.grants.readData(getRequestFn);
+
+    const listRequestsFn = new lambdaNodejs.NodejsFunction(this, 'ListRequestsFunction', {
+      ...commonProps,
+      functionName: `${namePrefix}-list-requests`,
+      entry: path.join(srcDir, 'handlers', 'list-requests.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      environment: { TABLE_NAME: requestsTable.tableName },
+      logGroup: makeLogGroup('ListRequests'),
+    });
+    requestsTable.grants.readData(listRequestsFn);
 
     // ---- REST API (IAM auth) ---------------------------------------------------
     const accessLogGroup = makeLogGroup('ApiAccess');
@@ -263,6 +291,10 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
     });
 
     const requests = api.root.addResource('requests');
+    requests.addMethod('GET', new apigateway.LambdaIntegration(listRequestsFn), {
+      requestValidator: bodyValidator,
+      requestParameters: { 'method.request.querystring.status': false },
+    });
     requests.addMethod('POST', new apigateway.LambdaIntegration(startRequestFn), {
       requestValidator: bodyValidator,
       requestModels: { 'application/json': createRequestModel },
@@ -272,12 +304,56 @@ export class LambdaDurableFunctionsApprovalStack extends cdk.Stack {
     request.addMethod('GET', new apigateway.LambdaIntegration(getRequestFn), {
       requestValidator: bodyValidator,
     });
-    request
-      .addResource('decision')
-      .addMethod('POST', new apigateway.LambdaIntegration(submitDecisionFn), {
-        requestValidator: bodyValidator,
-        requestModels: { 'application/json': decisionModel },
+    const decision = request.addResource('decision');
+    decision.addMethod('POST', new apigateway.LambdaIntegration(submitDecisionFn), {
+      requestValidator: bodyValidator,
+      requestModels: { 'application/json': decisionModel },
+    });
+
+    // ---- Demo web UI (optional) ------------------------------------------------------
+    if (params.demoWebUi?.enabled) {
+      const demo = new DemoWebUi(this, 'DemoWebUi', {
+        namePrefix,
+        api,
+        approvalTimeoutMinutes: params.workflow.approvalTimeoutMinutes,
+        cognitoDomainPrefix:
+          params.demoWebUi.cognitoDomainPrefix ?? `${namePrefix}-${this.account}`,
+        removalPolicy,
+        autoDeleteObjects: isAutoDeleteObject,
       });
+      this.demoWebUi = demo;
+
+      // CORS for the UI origin only. Preflight (OPTIONS) is unauthenticated by design; the
+      // actual calls stay IAM-authorized.
+      const corsOptions: apigateway.CorsOptions = {
+        allowOrigins: [demo.origin],
+        allowHeaders: [
+          ...apigateway.Cors.DEFAULT_HEADERS,
+          'X-Amz-Content-Sha256',
+          'Idempotency-Key',
+        ],
+        allowMethods: ['GET', 'POST', 'OPTIONS'],
+        maxAge: cdk.Duration.hours(1),
+      };
+      [requests, request, decision].forEach((resource) => resource.addCorsPreflight(corsOptions));
+      // IAM denials (403) and validation errors (400) are produced by API Gateway, not by a
+      // handler; without these headers the browser hides them as network errors.
+      for (const [id, type] of [
+        ['Cors4xx', apigateway.ResponseType.DEFAULT_4XX],
+        ['Cors5xx', apigateway.ResponseType.DEFAULT_5XX],
+      ] as const) {
+        api.addGatewayResponse(id, {
+          type,
+          responseHeaders: {
+            'Access-Control-Allow-Origin': `'${demo.origin}'`,
+            Vary: "'Origin'",
+          },
+        });
+      }
+      [startRequestFn, submitDecisionFn, getRequestFn, listRequestsFn].forEach((fn) =>
+        fn.addEnvironment('CORS_ALLOW_ORIGIN', demo.origin)
+      );
+    }
 
     // ---- Operations ------------------------------------------------------------
     // The trailing ':' keeps the prefix from also matching e.g. "<name>-v2".

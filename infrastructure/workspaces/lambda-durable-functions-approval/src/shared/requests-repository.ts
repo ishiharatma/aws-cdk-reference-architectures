@@ -3,8 +3,10 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { STATUS_INDEX_NAME } from './types';
 import type {
   ApprovalDecision,
   ApprovalRequestInput,
@@ -49,6 +51,22 @@ export class RequestsRepository {
       new GetCommand({ TableName: this.tableName, Key: { requestId } })
     );
     return res.Item as RequestItem | undefined;
+  }
+
+  /** Newest requests in one status (including the internal callback ID). */
+  async listByStatus(status: RequestStatus, limit: number): Promise<RequestItem[]> {
+    const res = await this.doc.send(
+      new QueryCommand({
+        TableName: this.tableName,
+        IndexName: STATUS_INDEX_NAME,
+        KeyConditionExpression: '#status = :status',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':status': status },
+        ScanIndexForward: false,
+        Limit: limit,
+      })
+    );
+    return (res.Items ?? []) as RequestItem[];
   }
 
   /** Insert the request once; a replayed or retried step finds it already there. */
