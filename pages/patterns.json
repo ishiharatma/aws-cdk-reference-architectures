@@ -772,5 +772,26 @@
       "devto":"https://dev.to/aws-builders/testing-the-aws-waf-mitigations-for-php2shell-on-both-cloudfront-and-an-alb-28ng",
       "zenn": "https://zenn.dev/issy/articles/aws-waf-php2shell-mitigation"
     }
+  },
+  {
+    "id": "ecs-gateway-shared-ingress",
+    "title": "Amazon ECS Gateway: shared ingress owned by the platform team, opted into by services",
+    "description": "Two Amazon ECS Gateways (internet-facing with WAF, access logs and its own inbound security group; internal) are associated with one cluster, and Fargate services opt in with a gateway connector only. ECS provisions the shared ALBs, per-service ACM certificates, *.ecs.<region>.on.aws hostnames, listener rules and target groups. Written with CfnResource because aws-cdk-lib has no L1 yet.",
+    "image": "ecs-gateway-shared-ingress/overview.drawio.svg",
+    "tags": [
+      "CDK",
+      "TypeScript",
+      "ECS",
+      "ECS Gateway",
+      "Fargate",
+      "ALB",
+      "AWS WAF",
+      "ACM"
+    ],
+    "link": "ecs-gateway-shared-ingress",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-23",
+    "articles": {}
   }
 ]
