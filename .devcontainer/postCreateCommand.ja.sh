@@ -15,9 +15,9 @@ git config --global core.filemode false
 
 # AWS SSOログインとget-caller-identityのエイリアス設定
 # 基本コマンド（デフォルトプロファイル用）
-echo 'alias awslogin="aws sso login && echo \"現在の認証情報:\" && aws sts get-caller-identity"' >> ~/.bashrc
+echo 'alias awslogin="aws sso login && echo \"現在の認証情報:\" && aws sts get-caller-identity --no-cli-pager"' >> ~/.bashrc
 #echo 'alias awslogin="aws sso login && echo \"現在の認証情報:\" && aws sts get-caller-identity"' >> ~/.zshrc
-echo 'alias awsid="aws sts get-caller-identity"' >> ~/.bashrc
+echo 'alias awsid="aws sts get-caller-identity --no-cli-pager"' >> ~/.bashrc
 #echo 'alias awsid="aws sts get-caller-identity"' >> ~/.zshrc
 
 # NPM関連のエイリアス
@@ -34,7 +34,7 @@ awsloginp() {
     echo "使用法: awsloginp <プロファイル名>"
     return 1
   fi
-  aws sso login --profile "$1" && echo "現在の認証情報 ($1):" && aws sts get-caller-identity --profile "$1"
+  aws sso login --profile "$1" && echo "現在の認証情報 ($1):" && aws sts get-caller-identity --profile "$1" --no-cli-pager
 }
 
 # プロファイル指定可能なAWS認証情報確認関数
@@ -43,7 +43,7 @@ awsidp() {
     echo "使用法: awsidp <プロファイル名>"
     return 1
   fi
-  aws sts get-caller-identity --profile "$1"
+  aws sts get-caller-identity --profile "$1" --no-cli-pager
 }
 
 # エイリアスのTipsを表示する関数

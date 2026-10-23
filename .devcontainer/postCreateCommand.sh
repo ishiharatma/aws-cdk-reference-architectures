@@ -15,10 +15,10 @@ git config --global core.filemode false
 
 # AWS SSO login and get-caller-identity alias setup
 # Basic commands (for default profile)
-echo 'alias awslogin="aws login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.bashrc
-echo 'alias awsid="aws sts get-caller-identity"' >> ~/.bashrc
+echo 'alias awslogin="aws login && echo \"Current credentials:\" && aws sts get-caller-identity --no-cli-pager"' >> ~/.bashrc
+echo 'alias awsid="aws sts get-caller-identity --no-cli-pager"' >> ~/.bashrc
 
-echo 'alias ssologin="aws sso login && echo \"Current credentials:\" && aws sts get-caller-identity"' >> ~/.bashrc
+echo 'alias ssologin="aws sso login && echo \"Current credentials:\" && aws sts get-caller-identity --no-cli-pager"' >> ~/.bashrc
 
 # NPM-related alias
 echo 'alias npmfl="npm run format && npm run lint:fix"' >> ~/.bashrc
@@ -34,7 +34,7 @@ awsloginp() {
     echo "Usage: awsloginp <profile-name>"
     return 1
   fi
-  aws login --profile "$1" && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1"
+  aws login --profile "$1" --no-cli-pager && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1" --no-cli-pager
 }
 
 ssologinp() {
@@ -42,7 +42,7 @@ ssologinp() {
     echo "Usage: ssologinp <profile-name>"
     return 1
   fi
-  aws sso login --profile "$1" && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1"
+  aws sso login --profile "$1" --no-cli-pager && echo "Current credentials ($1):" && aws sts get-caller-identity --profile "$1" --no-cli-pager
 }
 
 # AWS credentials check function with profile option
@@ -51,7 +51,7 @@ awsidp() {
     echo "Usage: awsidp <profile-name>"
     return 1
   fi
-  aws sts get-caller-identity --profile "$1"
+  aws sts get-caller-identity --profile "$1" --no-cli-pager
 }
 
 # Switch role and save config
@@ -113,7 +113,7 @@ swrole() {
   echo "✅ Config saved to profile: $profile_name"
   echo ""
   echo "Testing config..."
-  aws sts get-caller-identity --profile "$profile_name"
+  aws sts get-caller-identity --profile "$profile_name" --no-cli-pager
 
   if [ $? -eq 0 ]; then
     echo ""
@@ -142,7 +142,7 @@ swcre() {
 
   # Assume role and get credentials
   local assume_output
-  assume_output=$(aws sts assume-role --role-arn "$role_arn" --role-session-name "$session_name" --profile "$source_profile" 2>&1)
+  assume_output=$(aws sts assume-role --role-arn "$role_arn" --role-session-name "$session_name" --profile "$source_profile" --no-cli-pager 2>&1)
 
   if [ $? -ne 0 ]; then
     echo "Error: Failed to assume role"
@@ -196,7 +196,7 @@ swcre() {
   echo "✅ Credentials saved to profile: $profile_name"
   echo ""
   echo "Testing credentials..."
-  aws sts get-caller-identity --profile "$profile_name"
+  aws sts get-caller-identity --profile "$profile_name" --no-cli-pager
 
   if [ $? -eq 0 ]; then
     echo ""
@@ -245,7 +245,7 @@ awslogout() {
   local profile_name="${1:-awslogin}"
 
   echo "Logging out from profile: $profile_name"
-  aws logout --profile "$profile_name"
+  aws logout --profile "$profile_name" --no-cli-pager
 
   if [ $? -eq 0 ]; then
     echo ""
