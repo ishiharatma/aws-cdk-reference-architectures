@@ -1,0 +1,2137 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AppStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "InternalApiServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "InternalApiService07FA3EF2",
+          "Name",
+        ],
+      },
+    },
+    "OrdersServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OrdersServiceE6DC1A4C",
+          "Name",
+        ],
+      },
+    },
+    "ProbeFunctionName": {
+      "Value": {
+        "Ref": "ProbeFunctionD0DC4D31",
+      },
+    },
+    "WebServiceName": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WebService5EA589E6",
+          "Name",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "InternalApiService07FA3EF2": {
+      "DependsOn": [
+        "InternalApiServiceTaskDefTaskRole2CEB55B7",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100,
+          "Strategy": "ROLLING",
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "GatewayConnectors": [
+          {
+            "Filters": {
+              "AccessTypes": [
+                "PRIVATE",
+              ],
+            },
+            "HealthCheck": {
+              "HealthCheckIntervalSeconds": 10,
+              "HealthCheckPath": "/",
+              "HealthCheckTimeoutSeconds": 5,
+              "HealthyThresholdCount": 2,
+              "Matcher": {
+                "HttpCode": "200",
+              },
+              "UnhealthyThresholdCount": 3,
+            },
+            "PortName": "web",
+          },
+        ],
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "InternalApiServiceSecurityGroupD5C246A6",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+              },
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+              },
+            ],
+          },
+        },
+        "ServiceName": "test-test-ecsgw-internal-api",
+        "TaskDefinition": {
+          "Ref": "InternalApiServiceTaskDef4390AA37",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "InternalApiServiceLogGroupF073B056": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/test-test-ecsgw-internal-api",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "InternalApiServiceSecurityGroupD5C246A6": {
+      "Properties": {
+        "GroupDescription": "test-test-ecsgw-internal-api tasks (ingress is managed by the ECS gateway)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "InternalApiServiceTaskDef4390AA37": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "cat > /etc/nginx/conf.d/default.conf <<EOF
+server {
+  listen 80;
+  location / {
+    default_type application/json;
+    return 200 '{"service":"$SERVICE","version":"$VERSION","task":"$(hostname)","host":"\\$host","testHeader":"\\$http_x_test_traffic"}\\n';
+  }
+}
+EOF
+exec nginx -g 'daemon off;'",
+            ],
+            "EntryPoint": [
+              "/bin/sh",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "SERVICE",
+                "Value": "internal-api",
+              },
+              {
+                "Name": "VERSION",
+                "Value": "v1",
+              },
+            ],
+            "Essential": true,
+            "Image": "public.ecr.aws/nginx/nginx:stable",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "InternalApiServiceLogGroupF073B056",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "internal-api",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "AppProtocol": "http",
+                "ContainerPort": 80,
+                "Name": "web",
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "InternalApiServiceTaskDefExecutionRoleC2BC6650",
+            "Arn",
+          ],
+        },
+        "Family": "test-test-ecsgw-internal-api",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "InternalApiServiceTaskDefTaskRole2CEB55B7",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "InternalApiServiceTaskDefExecutionRoleC2BC6650": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "InternalApiServiceTaskDefExecutionRoleDefaultPolicy1CCF7169": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "InternalApiServiceLogGroupF073B056",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "InternalApiServiceTaskDefExecutionRoleDefaultPolicy1CCF7169",
+        "Roles": [
+          {
+            "Ref": "InternalApiServiceTaskDefExecutionRoleC2BC6650",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "InternalApiServiceTaskDefTaskRole2CEB55B7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "OrdersServiceE6DC1A4C": {
+      "DependsOn": [
+        "OrdersServiceTaskDefTaskRole018C7AF9",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100,
+          "Strategy": "ROLLING",
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "GatewayConnectors": [
+          {
+            "Filters": {
+              "AccessTypes": [
+                "PUBLIC",
+              ],
+            },
+            "HealthCheck": {
+              "HealthCheckIntervalSeconds": 10,
+              "HealthCheckPath": "/",
+              "HealthCheckTimeoutSeconds": 5,
+              "HealthyThresholdCount": 2,
+              "Matcher": {
+                "HttpCode": "200",
+              },
+              "UnhealthyThresholdCount": 3,
+            },
+            "PortName": "web",
+          },
+        ],
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "OrdersServiceSecurityGroup25F1C44E",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+              },
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+              },
+            ],
+          },
+        },
+        "ServiceName": "test-test-ecsgw-orders",
+        "TaskDefinition": {
+          "Ref": "OrdersServiceTaskDef0F5493C1",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "OrdersServiceLogGroupD073FE2D": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/test-test-ecsgw-orders",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "OrdersServiceSecurityGroup25F1C44E": {
+      "Properties": {
+        "GroupDescription": "test-test-ecsgw-orders tasks (ingress is managed by the ECS gateway)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "OrdersServiceTaskDef0F5493C1": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "cat > /etc/nginx/conf.d/default.conf <<EOF
+server {
+  listen 80;
+  location / {
+    default_type application/json;
+    return 200 '{"service":"$SERVICE","version":"$VERSION","task":"$(hostname)","host":"\\$host","testHeader":"\\$http_x_test_traffic"}\\n';
+  }
+}
+EOF
+exec nginx -g 'daemon off;'",
+            ],
+            "EntryPoint": [
+              "/bin/sh",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "SERVICE",
+                "Value": "orders",
+              },
+              {
+                "Name": "VERSION",
+                "Value": "v1",
+              },
+            ],
+            "Essential": true,
+            "Image": "public.ecr.aws/nginx/nginx:stable",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "OrdersServiceLogGroupD073FE2D",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "orders",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "AppProtocol": "http",
+                "ContainerPort": 80,
+                "Name": "web",
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "OrdersServiceTaskDefExecutionRole7129507C",
+            "Arn",
+          ],
+        },
+        "Family": "test-test-ecsgw-orders",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "OrdersServiceTaskDefTaskRole018C7AF9",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "OrdersServiceTaskDefExecutionRole7129507C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "OrdersServiceTaskDefExecutionRoleDefaultPolicy6C876140": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "OrdersServiceLogGroupD073FE2D",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "OrdersServiceTaskDefExecutionRoleDefaultPolicy6C876140",
+        "Roles": [
+          {
+            "Ref": "OrdersServiceTaskDefExecutionRole7129507C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "OrdersServiceTaskDefTaskRole018C7AF9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ProbeFunctionD0DC4D31": {
+      "DependsOn": [
+        "ProbeFunctionServiceRole14E761DC",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Description": "Calls ECS gateway hostnames from inside the VPC (internal gateway verification)",
+        "FunctionName": "test-test-ecsgw-probe",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ProbeLogGroup0FDE4778",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ProbeFunctionServiceRole14E761DC",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 60,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "ProbeFunctionSecurityGroup9C526D9E",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+            },
+            {
+              "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ProbeFunctionSecurityGroup9C526D9E": {
+      "Properties": {
+        "GroupDescription": "Automatic security group for Lambda Function AppProbeFunctionE30FD205",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "ProbeFunctionServiceRole14E761DC": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ProbeLogGroup0FDE4778": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/test-test-ecsgw-probe",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WebService5EA589E6": {
+      "DependsOn": [
+        "WebServiceTaskDefTaskRole39B734D2",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "BakeTimeInMinutes": 1,
+          "CanaryConfiguration": {
+            "CanaryBakeTimeInMinutes": 5,
+            "CanaryPercent": 10,
+          },
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 100,
+          "Strategy": "CANARY",
+        },
+        "DeploymentController": {
+          "Type": "ECS",
+        },
+        "DesiredCount": 2,
+        "EnableECSManagedTags": false,
+        "GatewayConnectors": [
+          {
+            "Filters": {
+              "AccessTypes": [
+                "PUBLIC",
+              ],
+            },
+            "HealthCheck": {
+              "HealthCheckIntervalSeconds": 10,
+              "HealthCheckPath": "/",
+              "HealthCheckTimeoutSeconds": 5,
+              "HealthyThresholdCount": 2,
+              "Matcher": {
+                "HttpCode": "200",
+              },
+              "UnhealthyThresholdCount": 3,
+            },
+            "PortName": "web",
+          },
+        ],
+        "LaunchType": "FARGATE",
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "WebServiceSecurityGroupE736A6BB",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+              },
+              {
+                "Fn::ImportValue": "Platform:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+              },
+            ],
+          },
+        },
+        "ServiceName": "test-test-ecsgw-web",
+        "TaskDefinition": {
+          "Ref": "WebServiceTaskDef0DAE0F9A",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "WebServiceLogGroup6F16EA2A": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/test-test-ecsgw-web",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WebServiceSecurityGroupE736A6BB": {
+      "Properties": {
+        "GroupDescription": "test-test-ecsgw-web tasks (ingress is managed by the ECS gateway)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "Platform:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "WebServiceTaskDef0DAE0F9A": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "cat > /etc/nginx/conf.d/default.conf <<EOF
+server {
+  listen 80;
+  location / {
+    default_type application/json;
+    return 200 '{"service":"$SERVICE","version":"$VERSION","task":"$(hostname)","host":"\\$host","testHeader":"\\$http_x_test_traffic"}\\n';
+  }
+}
+EOF
+exec nginx -g 'daemon off;'",
+            ],
+            "EntryPoint": [
+              "/bin/sh",
+              "-c",
+            ],
+            "Environment": [
+              {
+                "Name": "SERVICE",
+                "Value": "web",
+              },
+              {
+                "Name": "VERSION",
+                "Value": "v1",
+              },
+            ],
+            "Essential": true,
+            "Image": "public.ecr.aws/nginx/nginx:stable",
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "WebServiceLogGroup6F16EA2A",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "web",
+              },
+            },
+            "Name": "app",
+            "PortMappings": [
+              {
+                "AppProtocol": "http",
+                "ContainerPort": 80,
+                "Name": "web",
+                "Protocol": "tcp",
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "WebServiceTaskDefExecutionRole9E63B6B2",
+            "Arn",
+          ],
+        },
+        "Family": "test-test-ecsgw-web",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "RuntimePlatform": {
+          "CpuArchitecture": "ARM64",
+          "OperatingSystemFamily": "LINUX",
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "WebServiceTaskDefTaskRole39B734D2",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "WebServiceTaskDefExecutionRole9E63B6B2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WebServiceTaskDefExecutionRoleDefaultPolicyF65F7670": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WebServiceLogGroup6F16EA2A",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WebServiceTaskDefExecutionRoleDefaultPolicyF65F7670",
+        "Roles": [
+          {
+            "Ref": "WebServiceTaskDefExecutionRole9E63B6B2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WebServiceTaskDefTaskRole39B734D2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`AppStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::EC2::SecurityGroup": 4,
+  "AWS::ECS::Service": 3,
+  "AWS::ECS::TaskDefinition": 3,
+  "AWS::IAM::Policy": 3,
+  "AWS::IAM::Role": 7,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 4,
+}
+`;
+
+exports[`PlatformStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "AlbAccessLogBucketName": {
+      "Value": {
+        "Ref": "AlbAccessLogBucket2FC90506",
+      },
+    },
+    "ClusterName": {
+      "Value": {
+        "Ref": "ClusterEB0386A7",
+      },
+    },
+    "ExportsOutputRefClusterEB0386A796A0E3FE": {
+      "Export": {
+        "Name": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
+      },
+      "Value": {
+        "Ref": "ClusterEB0386A7",
+      },
+    },
+    "ExportsOutputRefVpc8378EB38272D6E3A": {
+      "Export": {
+        "Name": "Platform:ExportsOutputRefVpc8378EB38272D6E3A",
+      },
+      "Value": {
+        "Ref": "Vpc8378EB38",
+      },
+    },
+    "ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373": {
+      "Export": {
+        "Name": "Platform:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+      },
+      "Value": {
+        "Ref": "VpcprivateSubnet1SubnetCEAD3716",
+      },
+    },
+    "ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D": {
+      "Export": {
+        "Name": "Platform:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+      },
+      "Value": {
+        "Ref": "VpcprivateSubnet2Subnet2DE7549C",
+      },
+    },
+    "PrivateGatewayArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrivateGateway81215152",
+          "Arn",
+        ],
+      },
+    },
+    "PublicGatewayArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PublicGateway3D8F1654",
+          "Arn",
+        ],
+      },
+    },
+    "TestTrafficHeader": {
+      "Value": "x-test-traffic: canary",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AlbAccessLogBucket2FC90506": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 30,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlbAccessLogBucketAutoDeleteObjectsCustomResourceD7FCC72B": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "AlbAccessLogBucketPolicy5067FD6E",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "AlbAccessLogBucket2FC90506",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlbAccessLogBucketPolicy5067FD6E": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "AlbAccessLogBucket2FC90506",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AlbAccessLogBucket2FC90506",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AlbAccessLogBucket2FC90506",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AlbAccessLogBucket2FC90506",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AlbAccessLogBucket2FC90506",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:PutObject",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "logdelivery.elasticloadbalancing.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "AlbAccessLogBucket2FC90506",
+                        "Arn",
+                      ],
+                    },
+                    "/gateway-public/AWSLogs/123456789012/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:PutObject",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::582318560864:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "AlbAccessLogBucket2FC90506",
+                        "Arn",
+                      ],
+                    },
+                    "/gateway-public/AWSLogs/123456789012/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "ClusterEB0386A7": {
+      "Properties": {
+        "ClusterName": "test-test-ecsgw-cluster",
+        "ClusterSettings": [
+          {
+            "Name": "containerInsights",
+            "Value": "enabled",
+          },
+        ],
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "AlbAccessLogBucket2FC90506",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:",
+                          {
+                            "Ref": "AWS::Partition",
+                          },
+                          ":ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "Vpc8378EB38",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "GatewayInfrastructureRole85337E1E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Assumed by Amazon ECS to manage the ALBs, rules, target groups, security groups and certificates of the gateways",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonECSInfrastructureRoleForGatewayHostSharedALB",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "test-test-ecsgw-gateway-infra",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PrivateGateway81215152": {
+      "DependsOn": [
+        "GatewayInfrastructureRole85337E1E",
+      ],
+      "Properties": {
+        "Configuration": {
+          "HostSharedAlb": {
+            "HttpDesync": "defensive",
+            "MaxAlbCount": 2,
+            "NetworkConfiguration": {
+              "IpAddressType": "ipv4",
+              "Subnets": [
+                {
+                  "Ref": "VpcprivateSubnet1SubnetCEAD3716",
+                },
+                {
+                  "Ref": "VpcprivateSubnet2Subnet2DE7549C",
+                },
+              ],
+            },
+            "Scheme": "internal",
+            "TestTrafficRules": {
+              "Header": {
+                "Name": "x-test-traffic",
+                "Values": [
+                  "canary",
+                ],
+              },
+            },
+          },
+        },
+        "DeletionProtection": false,
+        "GatewayName": "test-test-ecsgw-private",
+        "InfrastructureRoleArn": {
+          "Fn::GetAtt": [
+            "GatewayInfrastructureRole85337E1E",
+            "Arn",
+          ],
+        },
+        "PropagateTags": "NONE",
+      },
+      "Type": "AWS::ECS::Gateway",
+    },
+    "PrivateGatewayClusterAssociation50E48C60": {
+      "Properties": {
+        "Cluster": {
+          "Fn::GetAtt": [
+            "ClusterEB0386A7",
+            "Arn",
+          ],
+        },
+        "Gateway": {
+          "Fn::GetAtt": [
+            "PrivateGateway81215152",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::GatewayClusterAssociations",
+    },
+    "PublicGateway3D8F1654": {
+      "DependsOn": [
+        "AlbAccessLogBucketAutoDeleteObjectsCustomResourceD7FCC72B",
+        "AlbAccessLogBucketPolicy5067FD6E",
+        "AlbAccessLogBucket2FC90506",
+        "GatewayInfrastructureRole85337E1E",
+      ],
+      "Properties": {
+        "Configuration": {
+          "HostSharedAlb": {
+            "AccessLogs": {
+              "Destination": {
+                "S3": {
+                  "Bucket": {
+                    "Ref": "AlbAccessLogBucket2FC90506",
+                  },
+                  "Prefix": "gateway-public",
+                },
+              },
+            },
+            "HttpDesync": "defensive",
+            "MaxAlbCount": 2,
+            "NetworkConfiguration": {
+              "InboundSecurityGroup": {
+                "Fn::GetAtt": [
+                  "PublicGatewayInboundSecurityGroup5F86F21F",
+                  "GroupId",
+                ],
+              },
+              "IpAddressType": "ipv4",
+              "Subnets": [
+                {
+                  "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+                },
+                {
+                  "Ref": "VpcpublicSubnet2SubnetE34B022A",
+                },
+              ],
+            },
+            "Scheme": "internet-facing",
+            "TestTrafficRules": {
+              "Header": {
+                "Name": "x-test-traffic",
+                "Values": [
+                  "canary",
+                ],
+              },
+            },
+            "WebACLArn": {
+              "Fn::GetAtt": [
+                "PublicGatewayWebAcl",
+                "Arn",
+              ],
+            },
+          },
+        },
+        "DeletionProtection": false,
+        "GatewayName": "test-test-ecsgw-public",
+        "InfrastructureRoleArn": {
+          "Fn::GetAtt": [
+            "GatewayInfrastructureRole85337E1E",
+            "Arn",
+          ],
+        },
+        "PropagateTags": "NONE",
+      },
+      "Type": "AWS::ECS::Gateway",
+    },
+    "PublicGatewayClusterAssociation1B0EDEC9": {
+      "Properties": {
+        "Cluster": {
+          "Fn::GetAtt": [
+            "ClusterEB0386A7",
+            "Arn",
+          ],
+        },
+        "Gateway": {
+          "Fn::GetAtt": [
+            "PublicGateway3D8F1654",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::GatewayClusterAssociations",
+    },
+    "PublicGatewayInboundSecurityGroup5F86F21F": {
+      "Properties": {
+        "GroupDescription": "Public gateway ALBs: HTTPS from the allowed client IPs only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "203.0.113.10/32",
+            "Description": "client 203.0.113.10",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "PublicGatewayWebAcl": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Name": "test-test-ecsgw-public",
+        "Rules": [
+          {
+            "Name": "AWSManagedRulesCommonRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 1,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-ecsgw-AWSManagedRulesCommonRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 2,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesKnownBadInputsRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-ecsgw-AWSManagedRulesKnownBadInputsRuleSet",
+              "SampledRequestsEnabled": true,
+            },
+          },
+          {
+            "Action": {
+              "Block": {},
+            },
+            "Name": "RateLimitPerIp",
+            "Priority": 3,
+            "Statement": {
+              "RateBasedStatement": {
+                "AggregateKeyType": "IP",
+                "Limit": 1000,
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "test-test-ecsgw-rate",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "REGIONAL",
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "test-test-ecsgw-public",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.94.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcRestrictDefaultSecurityGroupCustomResourceC73DA2BE": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcprivateSubnet1DefaultRouteB506891A": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcpublicSubnet1NATGatewayA036E8A6",
+        },
+        "RouteTableId": {
+          "Ref": "VpcprivateSubnet1RouteTable1979EACB",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcprivateSubnet1RouteTable1979EACB": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/privateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcprivateSubnet1RouteTableAssociationEEBD93CE": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcprivateSubnet1RouteTable1979EACB",
+        },
+        "SubnetId": {
+          "Ref": "VpcprivateSubnet1SubnetCEAD3716",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcprivateSubnet1SubnetCEAD3716": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.94.4.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/privateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcprivateSubnet2DefaultRouteBAC3C1C3": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcpublicSubnet1NATGatewayA036E8A6",
+        },
+        "RouteTableId": {
+          "Ref": "VpcprivateSubnet2RouteTable4D0FFC8C",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcprivateSubnet2RouteTable4D0FFC8C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/privateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcprivateSubnet2RouteTableAssociationB691E645": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcprivateSubnet2RouteTable4D0FFC8C",
+        },
+        "SubnetId": {
+          "Ref": "VpcprivateSubnet2Subnet2DE7549C",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcprivateSubnet2Subnet2DE7549C": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.94.8.0/22",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/privateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet1DefaultRouteB88F9E93": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet1EIP411541E6": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcpublicSubnet1NATGatewayA036E8A6": {
+      "DependsOn": [
+        "VpcpublicSubnet1DefaultRouteB88F9E93",
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcpublicSubnet1EIP411541E6",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcpublicSubnet1RouteTable15C15F8E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet1RouteTable15C15F8E",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet1Subnet2BB74ED7",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet1Subnet2BB74ED7": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.94.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcpublicSubnet2DefaultRoute732F0BEB": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcpublicSubnet2RouteTableC5A6DF77",
+        },
+        "SubnetId": {
+          "Ref": "VpcpublicSubnet2SubnetE34B022A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcpublicSubnet2RouteTableC5A6DF77": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcpublicSubnet2SubnetE34B022A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.94.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/publicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcrejectFlowLogABDB0FF3": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "VpcrejectIAMRole2385EA76",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "VpcrejectLogGroup31CBB986",
+        },
+        "ResourceId": {
+          "Ref": "Vpc8378EB38",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/reject",
+          },
+        ],
+        "TrafficType": "REJECT",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "VpcrejectIAMRole2385EA76": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/reject",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcrejectIAMRoleDefaultPolicy0CF79674": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "VpcrejectLogGroup31CBB986",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcrejectIAMRoleDefaultPolicy0CF79674",
+        "Roles": [
+          {
+            "Ref": "VpcrejectIAMRole2385EA76",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcrejectLogGroup31CBB986": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 731,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Platform/Vpc/reject",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`PlatformStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::FlowLog": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::NatGateway": 1,
+  "AWS::EC2::Route": 4,
+  "AWS::EC2::RouteTable": 4,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 4,
+  "AWS::EC2::SubnetRouteTableAssociation": 4,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::ECS::Cluster": 1,
+  "AWS::ECS::Gateway": 2,
+  "AWS::ECS::GatewayClusterAssociations": 2,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 4,
+  "AWS::Lambda::Function": 2,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::WAFv2::WebACL": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+  "Custom::VpcRestrictDefaultSG": 1,
+}
+`;

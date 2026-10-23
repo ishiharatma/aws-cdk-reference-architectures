@@ -50,6 +50,7 @@ checked `aws fis list-actions`).
 - [lambda-durable-functions.md](lambda-durable-functions.md) — Lambda durable functions, deploy-verified: async start with a reused name + different payload returns 202 and lands in the DLQ (`DurableExecutionAlreadyExists`), callback timeout on AWS vs the local runner, `StopDurableExecution` side effects, what a suspended execution's history looks like
 - [aws-waf-body-inspection.md](aws-waf-body-inspection.md) — AWS WAF body inspection measured on CloudFront vs ALB: exact 8 / 16 / 64 KB boundaries (`CONTINUE` is blind past them, `MATCH` size rule closes it), ALB Web ACL behind CloudFront re-blocks what CloudFront allowed, COUNT-inserted headers reach the origin, case-sensitive matches, rate-rule lag, ALB→Lambda 413 before WAF
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
+- [ecs-gateway.md](ecs-gateway.md) — Amazon ECS Gateway: no CDK L1 (CfnResource + GatewayConnectors override), `PropagateTags: NONE` or ACM rejects the `aws:cloudformation:*` tags and routes hang, the hidden per-service security group, 300 s deregistration delay, test-header CANARY measurements, timings
 
 ## Convention: when and how to add to this directory
 
