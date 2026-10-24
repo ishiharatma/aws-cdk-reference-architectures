@@ -793,5 +793,35 @@
     "level": 300,
     "date": "2026-10-23",
     "articles": {}
+  },
+  {
+    "id": "aws-environment-report",
+    "title": "AWS Environment Report — Monthly Diagram with Cost and Security Overlays",
+    "description": "A monthly pipeline for a single account: EventBridge Scheduler starts a Step Functions workflow that waits for CUR to be finalized, collects AWS Config, Resource Explorer, CUR 2.0, Security Hub CSPM, GuardDuty, IAM Access Analyzer and Inspector in parallel with read-only Lambdas (each source reports OK / PARTIAL / DISABLED / DENIED / ERROR instead of failing the run), and builds a draw.io-editable SVG + PNG diagram with automatic layout, per-resource cost and finding badges, an HTML report and a Bedrock summary of aggregates only. Reports go to a KMS-encrypted S3 bucket and are announced on Slack / Teams webhooks kept in Secrets Manager. Draft until deploy-verified.",
+    "image": "aws-environment-report/overview.drawio.svg",
+    "tags": [
+      "CDK",
+      "TypeScript",
+      "Python",
+      "Step Functions",
+      "EventBridge Scheduler",
+      "AWS Config",
+      "Resource Explorer",
+      "CUR",
+      "Security Hub",
+      "GuardDuty",
+      "Access Analyzer",
+      "Inspector",
+      "Bedrock",
+      "S3",
+      "Secrets Manager",
+      "draw.io"
+    ],
+    "link": "aws-environment-report",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-24",
+    "draft": true,
+    "articles": {}
   }
 ]
