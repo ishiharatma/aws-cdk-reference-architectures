@@ -305,3 +305,22 @@ on a table with a handful of items. Queries during that window fail with
 through API Gateway). Confirmed with
 `aws dynamodb describe-table --query 'Table.GlobalSecondaryIndexes[].{s:IndexStatus,b:Backfilling}'`.
 Wait for `ACTIVE` before smoke-testing a new query path, or treat that error as retryable.
+
+## Resource Explorer: `ListResources` is authorized by `resource-explorer-2:Search`
+
+Found while deploy-verifying `aws-environment-report` (ap-northeast-1, October 2026). A Lambda
+role with `resource-explorer-2:GetIndex`, `GetDefaultView` and `ListResources` calls
+`ListResources` and gets `AccessDeniedException: ... is not authorized to perform:
+resource-explorer-2:Search on resource: arn:aws:resource-explorer-2:<region>:<account>:view/...`.
+The [API reference](https://docs.aws.amazon.com/resource-explorer/latest/apireference/API_ListResources.html)
+lists `resource-explorer-2:Search` as the minimum permission for `ListResources`; the action name
+in the policy does not match the API name. Grant `resource-explorer-2:Search` (scoped to the view
+ARN if you want). `cdk synth` and IAM unit tests don't catch this; only a real call does.
+
+## Lambda Python base image: no CJK font package, so cairosvg PNGs drop Japanese text
+
+Found in `aws-environment-report` (October 2026). `public.ecr.aws/lambda/python:3.12` (Amazon
+Linux 2023) has `dejavu-sans-fonts`, but `dnf list available` has no Noto CJK / IPA font
+package. SVG text rendered to PNG with cairosvg then shows Japanese characters as blanks
+(no error). Bundle a CJK font file (e.g. Noto Sans JP) into the image if PNG output needs
+Japanese; the SVG itself is unaffected because viewers use their own fonts.

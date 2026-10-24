@@ -117,7 +117,7 @@ def build(event, store, bedrock=None, locale="ja", model_id="", summary_enabled=
         regions = ", ".join(sorted(inv.regions)) or "-"
         subtitle = f"Regions: {regions}. Generated {now.strftime('%Y-%m-%d %H:%M UTC')} from AWS Config" + (
             " + CUR" if cost_raw else "") + (" + security findings" if findings else "")
-        svg, stats = render(inv, title, subtitle)
+        svg, stats = render(inv, title, subtitle, show_cost=cost_raw is not None)
         files["diagram.drawio.svg"] = svg.encode("utf-8")
         cfg = source(sources, "config")
         diagram = {"status": cfg["status"], "nodes": stats["nodes"], "overlaps": stats["overlaps"]}

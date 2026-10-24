@@ -96,6 +96,15 @@ def test_svg_is_valid_and_editable():
     assert "resIcon=mxgraph.aws4.ec2" in html.unescape(m.group(1))
 
 
+def test_svg_without_cost_data_has_no_cost_labels():
+    # Container titles only: per-icon cost labels are already hidden when the cost is zero.
+    svg, _ = render(inventory(), "Title", "Sub", show_cost=False)
+    assert "— $" not in svg
+    assert "Top 10% cost" not in svg
+    with_cost, _ = render(inventory(), "Title", "Sub")
+    assert "— $" in with_cost
+
+
 def test_build_writes_manifest_last_and_summary_payload():
     store = fx.MemoryStore({
         "raw/2026-09/config.json": {"items": fx.config_items()},

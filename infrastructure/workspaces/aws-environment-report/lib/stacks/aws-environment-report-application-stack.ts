@@ -132,7 +132,8 @@ export class AwsEnvironmentReportApplicationStack extends cdk.Stack {
         actions: [
           'resource-explorer-2:GetIndex',
           'resource-explorer-2:GetDefaultView',
-          'resource-explorer-2:ListResources',
+          // The ListResources API is authorized by the Search action on the view.
+          'resource-explorer-2:Search',
         ],
         resources: ['*'],
       })
