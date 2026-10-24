@@ -3,7 +3,8 @@ import json
 import re
 import xml.etree.ElementTree as ET
 
-from app.diagram import Box, Leaf, build_tree, find_overlaps, render
+from app.catalog import CATALOG
+from app.diagram import GROUP_GLYPHS, GROUP_STYLES, ICONS, Box, Leaf, build_tree, find_overlaps, render
 from app.handler import build, previous_month
 from app.inventory import build_inventory
 from app.summary import mask
@@ -94,6 +95,18 @@ def test_svg_is_valid_and_editable():
     assert stats["overlaps"] == 0
     assert "<script>" not in svg  # resource names are escaped
     assert "resIcon=mxgraph.aws4.ec2" in html.unescape(m.group(1))
+
+
+def test_every_drawn_type_and_group_badge_has_a_static_icon():
+    # A missing entry falls back to a colored square with a short code.
+    assert {spec.icon for spec in CATALOG.values()} - set(ICONS) == set()
+    assert set(GROUP_GLYPHS.values()) - set(ICONS) == set()
+
+
+def test_subnet_groups_use_draw_io_icon_names():
+    # draw.io has no group_public_subnet / group_private_subnet stencil.
+    for kind in ("public", "private"):
+        assert "grIcon=mxgraph.aws4.group_security_group;" in GROUP_STYLES[kind]
 
 
 def test_svg_without_cost_data_has_no_cost_labels():

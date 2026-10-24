@@ -210,7 +210,7 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 ## ⚙️ カスタマイズと拡張
 
 - **描画するリソースタイプ**: `src/report-builder/app/catalog.py`の`CATALOG`に追加します。追加しないタイプも、インベントリ表では件数が出ます
-- **静的プレビューのアイコン**: `app/assets/icons.json`には、このリポジトリの既存の`overview.drawio.svg`から抽出した実物のアイコンを入れています。収録していないサービスは、色付きの四角+略称で表示します(draw.ioで開けば`resIcon`の正式なアイコンで表示されます)
+- **静的プレビューのアイコン**: `app/assets/icons.json`には、`CATALOG`の全タイプとRegion / VPC / サブネットのグループバッジのアイコンを収録しています。出典は、このリポジトリの既存の`overview.drawio.svg`と、公式の[AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)(2026年7月版)です。`CATALOG`にアイコンなしでタイプを追加すると色付きの四角+略称で表示されますが(draw.ioでは`resIcon`の正式なアイコンで表示)、その場合はテストが失敗します
 - **公開経路**(未実装): `delivery.mode`に`internal-alb` / `cloudfront`を追加する想定です。どちらも公開用の別バケットを使います。CloudFrontの場合はWAFとLambda@Edge(us-east-1)による認証が必要です
 - **データの流れの矢印**(未実装): 現在は収容関係だけを描いています。EventBridgeルールのターゲット、Lambdaのイベントソースマッピングなどから、必要な流れだけを追加してください
 
@@ -230,6 +230,7 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 | Bedrock(`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`。`OK`以外のデータソースが欠けていることを要約に明記 |
 | `force`なし / `{}`での再実行 | `SKIP`(「report for this month already exists」)。`{}`はAsia/Tokyoでの前月に解決 |
 | Webhook | 初期値のシークレット → スキップ。`http://`のURL → 理由付きでスキップし、URL自体はCloudWatch Logsに出ない |
+| アイコン | ECRとInternet GatewayがHTML / PNGで色付きの四角になっていた(静的アイコン未収録)。`CATALOG`の全アイコンを収録した。全名前をdraw.ioのAWS4ステンシル(v24.7.17)と照合した結果、`group_public_subnet` / `group_private_subnet`は存在しなかったため、リポジトリ内の他の図と同じ`group_security_group`に修正 |
 
 既知の制約: PNGはDejaVu Sansで描画するため、CJKのグリフがなく、`diagram.png`では日本語のリソース名が空白になります(draw.io形式のSVGは影響を受けません)。Lambdaのベースイメージが使うAmazon Linux 2023のリポジトリにはCJKフォントのパッケージがないため、必要ならNoto Sans JPなどのフォントをイメージに同梱してください。
 
@@ -240,8 +241,7 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 1. **CURの確定判定**: `bill_invoice_id`が確定前は空で、確定後に入るという前提です。実データで確認してから運用してください
 2. **CURのパス構成**: `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`を前提にしています
 3. **指摘の実データ**: Security Hub CSPM、GuardDuty、Inspectorは「未有効」の経路だけを確認しました。指摘を読み取る経路は未確認です
-4. **draw.ioのアイコン名**: リポジトリ内の既存図で使われていない`resIcon`名(`rds`、`aurora`、`elasticache`、`eks`、`elastic_file_system`、`route_53`、`kinesis_data_streams`、`auto_scaling2`)は未確認です。`ecr`、`group_public_subnet` / `group_private_subnet`は実行で出力されましたが、確認したのは静的PNGだけで、draw.ioで開いての確認はしていません
-5. **Bedrockのモデル ID**: 検証アカウントには`jp.anthropic.claude-sonnet-4-6`がありましたが、利用するアカウントで必ず確認してください
+4. **Bedrockのモデル ID**: 検証アカウントには`jp.anthropic.claude-sonnet-4-6`がありましたが、利用するアカウントで必ず確認してください
 
 ## 📚 参考資料
 

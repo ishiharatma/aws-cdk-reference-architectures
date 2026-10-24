@@ -324,3 +324,24 @@ Linux 2023) has `dejavu-sans-fonts`, but `dnf list available` has no Noto CJK / 
 package. SVG text rendered to PNG with cairosvg then shows Japanese characters as blanks
 (no error). Bundle a CJK font file (e.g. Noto Sans JP) into the image if PNG output needs
 Japanese; the SVG itself is unaffected because viewers use their own fonts.
+
+## draw.io AWS4: there is no `group_public_subnet` / `group_private_subnet` stencil
+
+Found in `aws-environment-report` (October 2026). draw.io's AWS4 library has no subnet-specific
+group icon; its "Public subnet" / "Private subnet" groups are
+`shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group` (the lock), told apart
+only by `strokeColor` / `fillColor`. Every subnet in this repo's `overview.drawio.svg` files uses
+that form. An unknown `grIcon` / `resIcon` name gives no error; draw.io just draws no icon.
+
+To check a name before using it, download draw.io's stencil file
+(`https://cdn.jsdelivr.net/gh/jgraph/drawio@v24.7.17/src/main/webapp/stencils/aws4.xml`) and
+look for `<shape name="...">`: the stencil name is the style name with `_` replaced by a space
+(`internet_gateway` → `internet gateway`).
+
+For a static (non-draw.io) rendering of a service that has no example in this repo, the official
+[AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) package has plain SVGs
+(no `<defs>` or CSS): `Architecture-Service-Icons_*/Arch_*/48/Arch_<Service>_48.svg` (64×64,
+colored square + white glyph, the same look as a draw.io `resourceIcon`),
+`Resource-Icons_*/Res_*/Res_<Resource>_48.svg` (48×48, colored line icon, the look of a
+fixed draw.io shape such as `internet_gateway`), and `Architecture-Group-Icons_*` (40×40
+group badges). The zip URL changes with each release; take it from that page.

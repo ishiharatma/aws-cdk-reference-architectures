@@ -43,9 +43,9 @@ GROUP_POINTS = (
     "pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;"
 )
 # group_aws_cloud_alt / group_region / group_vpc / group_availability_zone styles are
-# taken verbatim from this repo's own overview.drawio.svg files. The subnet group
-# icons (group_public_subnet / group_private_subnet) are draw.io's standard names
-# but are not used anywhere else in the repo yet.
+# taken verbatim from this repo's own overview.drawio.svg files. draw.io has no
+# dedicated subnet group icon: its Public/Private subnet groups use
+# group_security_group (the lock), told apart by color.
 GROUP_STYLES = {
     "cloud": GROUP_POINTS + "grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;",
@@ -55,12 +55,19 @@ GROUP_STYLES = {
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;",
     "az": GROUP_POINTS + "grIcon=mxgraph.aws4.group_availability_zone;strokeColor=#147EBA;fillColor=none;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=1;",
-    "public": GROUP_POINTS + "grIcon=mxgraph.aws4.group_public_subnet;strokeColor=#7AA116;fillColor=#F2F6E8;"
+    "public": GROUP_POINTS + "grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fillColor=#F2F6E8;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;",
-    "private": GROUP_POINTS + "grIcon=mxgraph.aws4.group_private_subnet;strokeColor=#00A4A6;fillColor=#E6F6F7;"
+    "private": GROUP_POINTS + "grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=#E6F6F7;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=0;",
     "lane": "rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#5A6472;verticalAlign=top;align=left;"
     "spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#5A6472;dashed=1;",
+}
+# Static-preview badge glyphs (white, from the official AWS group icons in icons.json).
+GROUP_GLYPHS = {
+    "region": "group_region",
+    "vpc": "group_vpc",
+    "public": "group_public_subnet",
+    "private": "group_private_subnet",
 }
 STATIC_GROUP = {  # stroke, fill, dashed, title color
     "cloud": ("#232F3E", "none", False, "#232F3E"),
@@ -373,9 +380,14 @@ class Renderer:
             title_x = b.x + 32
         elif b.kind == "lane":
             title_x = b.x + 12
-        else:
-            self.svg.append(f'<rect x="{b.x:.1f}" y="{b.y:.1f}" width="24" height="24" fill="{stroke}"/>')
+        elif b.kind in GROUP_GLYPHS:
+            # Badge filled with the group color plus the official white glyph, as draw.io draws grIcon.
+            glyph = ICONS[GROUP_GLYPHS[b.kind]]
+            self.svg.append(f'<rect x="{b.x:.1f}" y="{b.y:.1f}" width="24" height="24" fill="{stroke}"/>'
+                            f'<g transform="translate({b.x:.1f},{b.y:.1f}) scale({24 / glyph["w"]:.4f})">{glyph["markup"]}</g>')
             title_x = b.x + 32
+        else:  # Availability Zone: AWS draws it as a dashed box without an icon
+            title_x = b.x + 10
         self.svg.append(f'<text x="{title_x:.1f}" y="{b.y + 17:.1f}" class="groupTitle" fill="{title_color}">{esc(b.title)}</text>')
         self.vertex(b.x, b.y, b.w, b.h, esc(b.title), GROUP_STYLES[b.kind])
 

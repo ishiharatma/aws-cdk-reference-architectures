@@ -111,7 +111,7 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 ## ⚙️ Customization
 
 - Drawn resource types: `CATALOG` in `src/report-builder/app/catalog.py` (undrawn types still appear in the inventory table)
-- Static-preview icons: `app/assets/icons.json` holds real icons extracted from this repo's own `overview.drawio.svg` files; other services show as a colored square with a short code (draw.io renders the real `resIcon`)
+- Static-preview icons: `app/assets/icons.json` holds a real icon for every type in `CATALOG` and the Region / VPC / subnet group badges, taken from this repo's own `overview.drawio.svg` files or the official [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) package (July 2026 release). A type added to `CATALOG` without an icon shows as a colored square with a short code (draw.io still renders the real `resIcon`); a test fails in that case
 - Delivery (not implemented): `internal-alb` / `cloudfront` modes with a separate publish bucket; CloudFront needs WAF and Lambda@Edge (us-east-1) authentication
 - Data-flow arrows (not implemented): only containment is drawn today
 
@@ -131,6 +131,7 @@ One deployment to a single account (`ap-northeast-1`, targets `us-east-1` + `ap-
 | Bedrock (`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`; the summary called out every non-`OK` source |
 | Re-run without `force` / with `{}` | `SKIP` ("report for this month already exists"); `{}` resolved to the previous month in Asia/Tokyo |
 | Webhook | Default secret → skipped; `http://` URL → skipped with reason, the URL itself not in CloudWatch Logs |
+| Icons | ECR and Internet Gateway showed as colored squares in the HTML/PNG (no static icon bundled). Every `CATALOG` icon is now bundled. Checking all names against draw.io's AWS4 stencils (v24.7.17) found `group_public_subnet` / `group_private_subnet` do not exist; subnets now use `group_security_group` like the rest of this repo |
 
 Known limitation: the PNG uses DejaVu Sans, which has no CJK glyphs, so Japanese resource names render as blanks in `diagram.png` (the draw.io SVG is unaffected). The Amazon Linux 2023 repositories used by the Lambda base image have no CJK font package; bundle a font such as Noto Sans JP in the image if you need it.
 
@@ -139,8 +140,7 @@ Known limitation: the PNG uses DejaVu Sans, which has no CJK glyphs, so Japanese
 1. CUR finalization detection via `bill_invoice_id` (blank until final)
 2. The CUR path layout `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`
 3. Reading actual findings from Security Hub CSPM, GuardDuty and Inspector (only their "not enabled" path was exercised)
-4. draw.io icon names not used elsewhere in this repo (`rds`, `aurora`, `elasticache`, `eks`, `elastic_file_system`, `route_53`, `kinesis_data_streams`, `auto_scaling2`), and `ecr` / `group_public_subnet` / `group_private_subnet` when opened in draw.io (they were emitted in the real run but only checked in the static PNG)
-5. The Bedrock model ID in your own account (`jp.anthropic.claude-sonnet-4-6` existed in the test account)
+4. The Bedrock model ID in your own account (`jp.anthropic.claude-sonnet-4-6` existed in the test account)
 
 ## 📚 References
 
