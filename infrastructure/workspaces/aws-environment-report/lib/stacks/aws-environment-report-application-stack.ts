@@ -208,13 +208,14 @@ export class AwsEnvironmentReportApplicationStack extends cdk.Stack {
     if (summary.enabled) {
       // Cross-region inference profiles route to foundation models in other
       // Regions (or an empty Region for global.*), so the foundation-model
-      // Region is wildcarded; the inference profile stays in this Region.
+      // Region is wildcarded; only the configured inference profile in this
+      // Region is allowed.
       buildReportFunction.addToRolePolicy(
         new iam.PolicyStatement({
           actions: ['bedrock:InvokeModel'],
           resources: [
             `arn:${cdk.Aws.PARTITION}:bedrock:*::foundation-model/*`,
-            `arn:${cdk.Aws.PARTITION}:bedrock:${this.region}:${this.account}:inference-profile/*`,
+            `arn:${cdk.Aws.PARTITION}:bedrock:${this.region}:${this.account}:inference-profile/${summary.bedrockModelId}`,
           ],
         })
       );
