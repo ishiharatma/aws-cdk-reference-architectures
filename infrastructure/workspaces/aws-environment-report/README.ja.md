@@ -119,7 +119,14 @@ CURのリソースIDとConfigの識別子(ARN、リソースID、末尾ID)を突
 - ✅ 通知とBedrockには集計値だけを渡す。Bedrockへの入力では、ARNと12桁のアカウントIDをマスクする
 - ✅ HTMLと構成図に入る値(リソース名、タグ、指摘のタイトル)はすべてエスケープ
 - ⚠️ 個別の指摘(リソースIDを含む)は、S3の`index.html` / `report.json`にだけ出力します。公開経路を追加する場合は、認証のない公開CloudFrontにしないでください
-- ⚠️ `test/compliance`(cdk-nag)のスイートはまだありません
+- ✅ Bedrockの`InvokeModel`は、デプロイ先リージョンの設定済み推論プロファイル(`summary.bedrockModelId`)だけに限定。リージョンをワイルドカードにしているのは、クロスリージョン推論に必要な基盤モデルのARNだけ
+- ✅ `test/compliance/cdk-nag.test.ts`でAwsSolutionsパックに準拠。抑制しているルールと理由は次のとおり
+  - `S1`(レポートバケットのアクセスログ): アクセスはこのパイプラインのロールに限定。オブジェクト単位の監査はアカウント全体のCloudTrail S3データイベントで行う
+  - `SMG4`(シークレットのローテーション): Webhook URLはSlack / Teamsが発行するもので、AWSではローテーションできない
+  - `IAM4`: 関数自身のログ出力用の`AWSLambdaBasicExecutionRole`
+  - `IAM5`: バケットのプレフィックス、KMSキー、自身の関数に限定されたCDKのgrantのワイルドカード、CURエクスポートのプレフィックス、リソース単位の権限がない読み取り系APIの`Resource: *`、上記の基盤モデルのリージョンのワイルドカード
+  - `L1`: 実機検証したランタイムであるNode.js 22を使用
+  - `SF1`: コストや指摘件数をCloudWatch Logsに残さないため、Step Functionsのログは実行データなしの`ERROR`レベル
 
 ## 💰 コスト
 
@@ -194,8 +201,10 @@ PROJECT=myproj ENV=dev npm run stage:destroy:all
 ## 🧪 テスト戦略
 
 ```sh
-# CDK と TypeScript Lambda(Jest)
+# CDK と TypeScript Lambda(Jest): unit、snapshot、cdk-nag
 npm test
+# テンプレートを意図して変更したとき(アセットのハッシュはマスク済み)
+npm run test:snapshot:update
 
 # レポート生成(Python。cairosvgはPNGの生成にlibcairoが必要)
 cd src/report-builder
@@ -204,6 +213,8 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 ```
 
 - `test/unit/aws-environment-report.test.ts`: パラメータの検証(`us-east-1`必須など)、バケット設定、IAMが読み取り系アクションだけであること、CURへのアクセスがプレフィックスに限定されていること、全コレクターの`Catch`、スケジュール
+- `test/snapshot/snapshot.test.ts`: Data / Applicationスタックのテンプレート全体と、リソース種別ごとの件数
+- `test/compliance/cdk-nag.test.ts`: AwsSolutionsパック(抑制理由は[セキュリティ考慮事項](#-セキュリティ考慮事項))
 - `test/unit/lambda-logic.test.ts`: Preflightの判定、タイムゾーンでの前月計算、エラーから状態への変換、Configレコーダーの判定、CURの集計、Webhookのスキップ条件、深刻度の変換、通知のペイロード
 - `src/report-builder/tests`: 配置、コストの突き合わせ(ボリュームをインスタンスに加算)、指摘の付与、×Nの集約、重なりがないこと、SVGがdraw.ioで開ける形式であること、エスケープ、`manifest.json`を最後に書くこと
 

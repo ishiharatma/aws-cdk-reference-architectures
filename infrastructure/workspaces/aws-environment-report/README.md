@@ -56,7 +56,14 @@ Every source reports `OK`, `PARTIAL`, `DISABLED` (service not enabled), `DENIED`
 - ✅ Notifications and Bedrock get aggregates only; ARNs and 12-digit account IDs are masked in the Bedrock input
 - ✅ Every account-derived value in the HTML and the diagram is escaped
 - ⚠️ Individual findings (with resource IDs) are only in `index.html` / `report.json` in S3. Do not publish them through an unauthenticated CloudFront distribution
-- ⚠️ No `test/compliance` (cdk-nag) suite yet
+- ✅ Bedrock `InvokeModel` is limited to the configured inference profile (`summary.bedrockModelId`) in the deploy Region; only the foundation-model ARN keeps a Region wildcard, which cross-region inference requires
+- ✅ `test/compliance/cdk-nag.test.ts` passes the AwsSolutions pack. Suppressions and their reasons:
+  - `S1` (report bucket access logs): access is limited to this pipeline's roles; object-level auditing belongs to account-wide CloudTrail S3 data events
+  - `SMG4` (secret rotation): webhook URLs are issued by Slack / Teams and cannot be rotated by AWS
+  - `IAM4`: `AWSLambdaBasicExecutionRole` for the functions' own logs
+  - `IAM5`: CDK grant wildcards scoped to the bucket prefixes, the KMS key and the pipeline's own functions; the CUR export prefix; `Resource: *` for read-only collector APIs without resource-level permissions; the foundation-model Region wildcard above
+  - `L1`: Node.js 22, the runtime the pattern was deploy-verified with
+  - `SF1`: Step Functions logs stay at `ERROR` without execution data so cost figures and finding counts are not copied to CloudWatch Logs
 
 ## 💰 Cost
 
@@ -102,7 +109,8 @@ Clean up with `PROJECT=myproj ENV=dev npm run stage:destroy:all`.
 ## 🧪 Testing
 
 ```sh
-npm test                                   # CDK + TypeScript Lambdas (Jest)
+npm test                                   # CDK + TypeScript Lambdas (Jest): unit, snapshot, cdk-nag
+npm run test:snapshot:update               # after an intended template change (asset hashes are masked)
 cd src/report-builder                      # report builder (Python; PNG needs libcairo)
 python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 .venv/bin/python -m pytest -q tests

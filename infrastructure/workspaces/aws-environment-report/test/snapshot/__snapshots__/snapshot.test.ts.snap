@@ -1,0 +1,2222 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ApplicationStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "StateMachineArn": {
+      "Value": {
+        "Ref": "StateMachine2E01A3A5",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "BuildReportFunction01B1FC87": {
+      "DependsOn": [
+        "BuildReportFunctionServiceRoleDefaultPolicy826932DA",
+        "BuildReportFunctionServiceRoleFE567F68",
+      ],
+      "Properties": {
+        "Architectures": [
+          "x86_64",
+        ],
+        "Code": {
+          "ImageUri": {
+            "Fn::Sub": "123456789012.dkr.ecr.ap-northeast-1.\${AWS::URLSuffix}/cdk-hnb659fds-container-assets-123456789012-ap-northeast-1:ASSET_HASH",
+          },
+        },
+        "Environment": {
+          "Variables": {
+            "BEDROCK_MODEL_ID": "jp.anthropic.claude-sonnet-4-6",
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "LOCALE": "ja",
+            "SUMMARY_ENABLED": "true",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-build-report",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "BuildReportLogGroupA4625B5B",
+          },
+        },
+        "MemorySize": 2048,
+        "PackageType": "Image",
+        "Role": {
+          "Fn::GetAtt": [
+            "BuildReportFunctionServiceRoleFE567F68",
+            "Arn",
+          ],
+        },
+        "Timeout": 600,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "BuildReportFunctionServiceRoleDefaultPolicy826932DA": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:DescribeKey",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/reports/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Decrypt",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": "bedrock:InvokeModel",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:*::foundation-model/*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":bedrock:ap-northeast-1:123456789012:inference-profile/jp.anthropic.claude-sonnet-4-6",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "BuildReportFunctionServiceRoleDefaultPolicy826932DA",
+        "Roles": [
+          {
+            "Ref": "BuildReportFunctionServiceRoleFE567F68",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "BuildReportFunctionServiceRoleFE567F68": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BuildReportLogGroupA4625B5B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CollectConfigFunctionC321D48B": {
+      "DependsOn": [
+        "CollectConfigFunctionServiceRoleDefaultPolicyC6CA9620",
+        "CollectConfigFunctionServiceRole95903510",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-collect-config",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CollectConfigLogGroup57B8C056",
+          },
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "CollectConfigFunctionServiceRole95903510",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CollectConfigFunctionServiceRole95903510": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CollectConfigFunctionServiceRoleDefaultPolicyC6CA9620": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/raw/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Decrypt",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": [
+                "config:DescribeConfigurationRecorders",
+                "config:DescribeConfigurationRecorderStatus",
+                "config:SelectResourceConfig",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CollectConfigFunctionServiceRoleDefaultPolicyC6CA9620",
+        "Roles": [
+          {
+            "Ref": "CollectConfigFunctionServiceRole95903510",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CollectConfigLogGroup57B8C056": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CollectCostFunction74AF6EEE": {
+      "DependsOn": [
+        "CollectCostFunctionServiceRoleDefaultPolicy49EA968F",
+        "CollectCostFunctionServiceRoleE28C70B0",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-collect-cost",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CollectCostLogGroup8E47204C",
+          },
+        },
+        "MemorySize": 2048,
+        "Role": {
+          "Fn::GetAtt": [
+            "CollectCostFunctionServiceRoleE28C70B0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CollectCostFunctionServiceRoleDefaultPolicy49EA968F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/raw/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Decrypt",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "cur/cur2/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::test-cur-bucket",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::test-cur-bucket/cur/cur2/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CollectCostFunctionServiceRoleDefaultPolicy49EA968F",
+        "Roles": [
+          {
+            "Ref": "CollectCostFunctionServiceRoleE28C70B0",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CollectCostFunctionServiceRoleE28C70B0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CollectCostLogGroup8E47204C": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CollectResourceExplorerFunction01C7F92D": {
+      "DependsOn": [
+        "CollectResourceExplorerFunctionServiceRoleDefaultPolicyC658DEC6",
+        "CollectResourceExplorerFunctionServiceRole38481967",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-collect-resource-explorer",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CollectResourceExplorerLogGroupD0D8071F",
+          },
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "CollectResourceExplorerFunctionServiceRole38481967",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CollectResourceExplorerFunctionServiceRole38481967": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CollectResourceExplorerFunctionServiceRoleDefaultPolicyC658DEC6": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/raw/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Decrypt",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": [
+                "resource-explorer-2:GetIndex",
+                "resource-explorer-2:GetDefaultView",
+                "resource-explorer-2:Search",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CollectResourceExplorerFunctionServiceRoleDefaultPolicyC658DEC6",
+        "Roles": [
+          {
+            "Ref": "CollectResourceExplorerFunctionServiceRole38481967",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CollectResourceExplorerLogGroupD0D8071F": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CollectSecurityFunction82E067C6": {
+      "DependsOn": [
+        "CollectSecurityFunctionServiceRoleDefaultPolicyD7C4E35B",
+        "CollectSecurityFunctionServiceRoleB5E6EE04",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-collect-security",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "CollectSecurityLogGroup973EDCBB",
+          },
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "CollectSecurityFunctionServiceRoleB5E6EE04",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CollectSecurityFunctionServiceRoleB5E6EE04": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CollectSecurityFunctionServiceRoleDefaultPolicyD7C4E35B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/raw/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Decrypt",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": [
+                "securityhub:DescribeHub",
+                "securityhub:GetFindings",
+                "guardduty:ListDetectors",
+                "guardduty:GetDetector",
+                "guardduty:ListFindings",
+                "guardduty:GetFindings",
+                "access-analyzer:ListAnalyzers",
+                "access-analyzer:ListFindings",
+                "inspector2:BatchGetAccountStatus",
+                "inspector2:ListFindings",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CollectSecurityFunctionServiceRoleDefaultPolicyD7C4E35B",
+        "Roles": [
+          {
+            "Ref": "CollectSecurityFunctionServiceRoleB5E6EE04",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CollectSecurityLogGroup973EDCBB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DailySchedule68BF5767": {
+      "Properties": {
+        "Description": "Daily in the month-start window; the state machine builds the report once CUR is finalized",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "Name": "TestProject-test-environment-report",
+        "ScheduleExpression": "cron(0 9 3-10 * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Ref": "StateMachine2E01A3A5",
+          },
+          "Input": "{}",
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget6258ef6CC3E773",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "NotifyFunction0D8C391B": {
+      "DependsOn": [
+        "NotifyFunctionServiceRoleDefaultPolicy412CC480",
+        "NotifyFunctionServiceRoleDF25A23A",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+            "WEBHOOK_SECRET_ARN": {
+              "Fn::ImportValue": "Data:ExportsOutputRefWebhookSecretF21E29CC379AA9FE",
+            },
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-notify",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "NotifyLogGroup55CD50C6",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "NotifyFunctionServiceRoleDF25A23A",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "NotifyFunctionServiceRoleDF25A23A": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "NotifyFunctionServiceRoleDefaultPolicy412CC480": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputRefWebhookSecretF21E29CC379AA9FE",
+              },
+            },
+            {
+              "Action": "kms:Decrypt",
+              "Condition": {
+                "StringEquals": {
+                  "kms:ViaService": "secretsmanager.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "NotifyFunctionServiceRoleDefaultPolicy412CC480",
+        "Roles": [
+          {
+            "Ref": "NotifyFunctionServiceRoleDF25A23A",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "NotifyLogGroup55CD50C6": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "PreflightFunctionFE5444B3": {
+      "DependsOn": [
+        "PreflightFunctionServiceRoleDefaultPolicyCAC4EAFD",
+        "PreflightFunctionServiceRoleFFD15514",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": {
+              "Fn::ImportValue": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+            },
+            "CUR_BUCKET": "test-cur-bucket",
+            "CUR_EXPORT_NAME": "cur2",
+            "CUR_PREFIX": "cur",
+            "FINALIZE_DEADLINE_DAY": "10",
+            "MAX_FINDINGS_PER_SOURCE": "1000",
+            "TARGET_REGIONS": "us-east-1,ap-northeast-1",
+            "TIME_ZONE": "Asia/Tokyo",
+          },
+        },
+        "FunctionName": "TestProject-test-envreport-preflight",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PreflightLogGroup4FA27B4E",
+          },
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "PreflightFunctionServiceRoleFFD15514",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "PreflightFunctionServiceRoleDefaultPolicyCAC4EAFD": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::ImportValue": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+                      },
+                      "/reports/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:DescribeKey",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::ImportValue": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+              },
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "cur/cur2/*",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::test-cur-bucket",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::test-cur-bucket/cur/cur2/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "PreflightFunctionServiceRoleDefaultPolicyCAC4EAFD",
+        "Roles": [
+          {
+            "Ref": "PreflightFunctionServiceRoleFFD15514",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "PreflightFunctionServiceRoleFFD15514": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PreflightLogGroup4FA27B4E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SchedulerRoleForTarget6258ef6CC3E773": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget6258efDefaultPolicy964C27D6": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "StateMachine2E01A3A5",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget6258efDefaultPolicy964C27D6",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTarget6258ef6CC3E773",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "StateMachine2E01A3A5": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "StateMachineRoleDefaultPolicyDF1E6607",
+        "StateMachineRoleB840431D",
+      ],
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Join": [
+            "",
+            [
+              "{"StartAt":"Preflight","States":{"Preflight":{"Next":"ShouldRun","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "PreflightFunctionFE5444B3",
+                  "Arn",
+                ],
+              },
+              "","Payload":{"input.$":"$"}}},"ShouldRun":{"Type":"Choice","Choices":[{"Variable":"$.action","StringEquals":"RUN","Next":"Collect"}],"Default":"Skipped"},"Skipped":{"Type":"Succeed"},"Collect":{"Type":"Parallel","ResultPath":"$.collectors","Next":"BuildReport","Branches":[{"StartAt":"Collect config","States":{"Collect config":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"Next":"Collect config failed"}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "CollectConfigFunctionC321D48B",
+                  "Arn",
+                ],
+              },
+              "","Payload":{"targetMonth.$":"$.targetMonth"}}},"Collect config failed":{"Type":"Pass","Parameters":{"collector":"config","source":"config","status":"ERROR","message.$":"$.Error"},"End":true}}},{"StartAt":"Collect resource-explorer","States":{"Collect resource-explorer":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"Next":"Collect resource-explorer failed"}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "CollectResourceExplorerFunction01C7F92D",
+                  "Arn",
+                ],
+              },
+              "","Payload":{"targetMonth.$":"$.targetMonth"}}},"Collect resource-explorer failed":{"Type":"Pass","Parameters":{"collector":"resource-explorer","source":"resource-explorer","status":"ERROR","message.$":"$.Error"},"End":true}}},{"StartAt":"Collect cost","States":{"Collect cost":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"Next":"Collect cost failed"}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "CollectCostFunction74AF6EEE",
+                  "Arn",
+                ],
+              },
+              "","Payload":{"targetMonth.$":"$.targetMonth"}}},"Collect cost failed":{"Type":"Pass","Parameters":{"collector":"cost","source":"cost","status":"ERROR","message.$":"$.Error"},"End":true}}},{"StartAt":"Collect security","States":{"Collect security":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Catch":[{"ErrorEquals":["States.ALL"],"Next":"Collect security failed"}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "CollectSecurityFunction82E067C6",
+                  "Arn",
+                ],
+              },
+              "","Payload":{"targetMonth.$":"$.targetMonth"}}},"Collect security failed":{"Type":"Pass","Parameters":{"collector":"security","source":"security","status":"ERROR","message.$":"$.Error"},"End":true}}}]},"BuildReport":{"Next":"Notify","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "BuildReportFunction01B1FC87",
+                  "Arn",
+                ],
+              },
+              "","Payload.$":"$"}},"Notify":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","OutputPath":"$.Payload","Resource":"arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":states:::lambda:invoke","Parameters":{"FunctionName":"",
+              {
+                "Fn::GetAtt": [
+                  "NotifyFunction0D8C391B",
+                  "Arn",
+                ],
+              },
+              "","Payload.$":"$"}}},"TimeoutSeconds":3600}",
+            ],
+          ],
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "StateMachineLogGroup15B91BCB",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+          ],
+          "IncludeExecutionData": false,
+          "Level": "ERROR",
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "StateMachineRoleB840431D",
+            "Arn",
+          ],
+        },
+        "StateMachineName": "TestProject-test-environment-report",
+        "StateMachineType": "STANDARD",
+        "TracingConfiguration": {
+          "Enabled": true,
+        },
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StateMachineLogGroup15B91BCB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/vendedlogs/states/TestProject-test-environment-report",
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "StateMachineRoleB840431D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "StateMachineRoleDefaultPolicyDF1E6607": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "PreflightFunctionFE5444B3",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "PreflightFunctionFE5444B3",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BuildReportFunction01B1FC87",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BuildReportFunction01B1FC87",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "NotifyFunction0D8C391B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "NotifyFunction0D8C391B",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CollectConfigFunctionC321D48B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CollectConfigFunctionC321D48B",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CollectResourceExplorerFunction01C7F92D",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CollectResourceExplorerFunction01C7F92D",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CollectCostFunction74AF6EEE",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CollectCostFunction74AF6EEE",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CollectSecurityFunction82E067C6",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CollectSecurityFunction82E067C6",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+                "xray:GetSamplingRules",
+                "xray:GetSamplingTargets",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "StateMachineRoleDefaultPolicyDF1E6607",
+        "Roles": [
+          {
+            "Ref": "StateMachineRoleB840431D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ApplicationStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 9,
+  "AWS::IAM::Role": 9,
+  "AWS::Lambda::Function": 7,
+  "AWS::Logs::LogGroup": 8,
+  "AWS::Scheduler::Schedule": 1,
+  "AWS::StepFunctions::StateMachine": 1,
+}
+`;
+
+exports[`DataStack Snapshot Complete CloudFormation template snapshot 1`] = `
+{
+  "Outputs": {
+    "ExportsOutputFnGetAttKey961B73FDArn5A860C43": {
+      "Export": {
+        "Name": "Data:ExportsOutputFnGetAttKey961B73FDArn5A860C43",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Key961B73FD",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1": {
+      "Export": {
+        "Name": "Data:ExportsOutputFnGetAttReportBucket577F0FCDArnAAF17EC1",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "ReportBucket577F0FCD",
+          "Arn",
+        ],
+      },
+    },
+    "ExportsOutputRefReportBucket577F0FCD6AF1549B": {
+      "Export": {
+        "Name": "Data:ExportsOutputRefReportBucket577F0FCD6AF1549B",
+      },
+      "Value": {
+        "Ref": "ReportBucket577F0FCD",
+      },
+    },
+    "ExportsOutputRefWebhookSecretF21E29CC379AA9FE": {
+      "Export": {
+        "Name": "Data:ExportsOutputRefWebhookSecretF21E29CC379AA9FE",
+      },
+      "Value": {
+        "Ref": "WebhookSecretF21E29CC",
+      },
+    },
+    "ReportBucketName": {
+      "Value": {
+        "Ref": "ReportBucket577F0FCD",
+      },
+    },
+    "WebhookSecretName": {
+      "Value": {
+        "Fn::Join": [
+          "-",
+          [
+            {
+              "Fn::Select": [
+                0,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "WebhookSecretF21E29CC",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                1,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "WebhookSecretF21E29CC",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                2,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "WebhookSecretF21E29CC",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "WebhookSecretF21E29CC",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    "-",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "WebhookSecretF21E29CC",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET_HASH.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "ReportBucket577F0FCD",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Key961B73FD": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Encrypts the environment report bucket and webhook secret",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "kms:ViaService": "secretsmanager.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:CreateGrant",
+                "kms:DescribeKey",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "kms:ViaService": "secretsmanager.ap-northeast-1.amazonaws.com",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "KeyAlias910D852D": {
+      "Properties": {
+        "AliasName": "alias/TestProject-test-environment-report",
+        "TargetKeyId": {
+          "Fn::GetAtt": [
+            "Key961B73FD",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::KMS::Alias",
+    },
+    "ReportBucket577F0FCD": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "BucketKeyEnabled": true,
+              "ServerSideEncryptionByDefault": {
+                "KMSMasterKeyID": {
+                  "Fn::GetAtt": [
+                    "Key961B73FD",
+                    "Arn",
+                  ],
+                },
+                "SSEAlgorithm": "aws:kms",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 90,
+              "Id": "expire-raw",
+              "Prefix": "raw/",
+              "Status": "Enabled",
+            },
+            {
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7,
+              },
+              "Id": "expire-noncurrent",
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 30,
+              },
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ReportBucketAutoDeleteObjectsCustomResource7FAF98BE": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "ReportBucketPolicyA15D85AD",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "ReportBucket577F0FCD",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ReportBucketPolicyA15D85AD": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "ReportBucket577F0FCD",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ReportBucket577F0FCD",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ReportBucket577F0FCD",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ReportBucket577F0FCD",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ReportBucket577F0FCD",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "WebhookSecretF21E29CC": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Slack / Teams webhook URLs for the environment report. Edit by hand; the default sends nothing.",
+        "KmsKeyId": {
+          "Fn::GetAtt": [
+            "Key961B73FD",
+            "Arn",
+          ],
+        },
+        "Name": "TestProject-test-environment-report-webhooks",
+        "SecretString": "{"webhooks":[{"type":"slack","url":"REPLACE_WITH_WEBHOOK_URL"},{"type":"teams","url":"REPLACE_WITH_WEBHOOK_URL"}]}",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`DataStack Snapshot Resource types and counts 1`] = `
+{
+  "AWS::IAM::Role": 1,
+  "AWS::KMS::Alias": 1,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SecretsManager::Secret": 1,
+  "Custom::S3AutoDeleteObjects": 1,
+}
+`;

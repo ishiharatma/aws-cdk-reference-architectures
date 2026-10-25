@@ -1,41 +1,13 @@
-import * as path from 'path';
-import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
-import { Environment } from '@common/parameters/environments';
-import { loadCdkContext } from '@common/test-helpers/test-context';
-import { AwsEnvironmentReportDataStack } from 'lib/stacks/aws-environment-report-data-stack';
-import { AwsEnvironmentReportApplicationStack } from 'lib/stacks/aws-environment-report-application-stack';
 import { validateParams } from 'lib/helpers/validate-params';
-import { EnvParams, params } from 'parameters/environments';
+import { EnvParams } from 'parameters/environments';
 import { DEFAULT_WEBHOOK_SECRET } from 'src/lambda/common/webhook-config';
-import 'test/parameters';
+import { buildStacks, envName, projectName, testParams } from 'test/helpers/stack';
 
-const defaultEnv = { account: '123456789012', region: 'ap-northeast-1' };
-const projectName = 'TestProject';
-const envName: Environment = Environment.TEST;
-
-if (!params[envName]) {
-  throw new Error(`No parameters found for environment: ${envName}`);
-}
-const envParams = params[envName];
-const baseContext = loadCdkContext(path.resolve(__dirname, '../../cdk.json'));
+const envParams = testParams();
 
 function synth(p: EnvParams = envParams) {
-  const app = new cdk.App({ context: baseContext });
-  const common = {
-    project: projectName,
-    environment: envName,
-    env: defaultEnv,
-    isAutoDeleteObject: true,
-    params: p,
-  };
-  const data = new AwsEnvironmentReportDataStack(app, 'Data', common);
-  const application = new AwsEnvironmentReportApplicationStack(app, 'Application', {
-    ...common,
-    bucket: data.bucket,
-    key: data.key,
-    webhookSecret: data.webhookSecret,
-  });
+  const { data, application } = buildStacks({ params: p });
   return { data: Template.fromStack(data), application: Template.fromStack(application) };
 }
 
@@ -148,6 +120,21 @@ describe('AwsEnvironmentReportApplicationStack', () => {
         ]),
       }),
     });
+  });
+
+  test('limits Bedrock to the configured inference profile', () => {
+    const statements = Object.values(application.findResources('AWS::IAM::Policy')).flatMap(
+      (p) =>
+        (
+          p as {
+            Properties: { PolicyDocument: { Statement: { Action: unknown; Resource: unknown }[] } };
+          }
+        ).Properties.PolicyDocument.Statement
+    );
+    const bedrock = statements.find((s) => s.Action === 'bedrock:InvokeModel');
+    const profile = JSON.stringify(bedrock?.Resource);
+    expect(profile).toContain(`:inference-profile/${envParams.summary.bedrockModelId}`);
+    expect(profile).not.toContain('inference-profile/*');
   });
 
   test('limits CUR bucket access to the export prefix', () => {
