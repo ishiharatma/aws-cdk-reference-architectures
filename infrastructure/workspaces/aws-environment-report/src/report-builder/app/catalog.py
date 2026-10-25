@@ -7,9 +7,10 @@ would bury the diagram).
 `icon` is the draw.io AWS4 name used in the editable model. Names with
 `shape: "fixed"` are standalone shapes (`shape=mxgraph.aws4.<icon>`), the rest
 are `resourceIcon` cells (`resIcon=mxgraph.aws4.<icon>`). The static preview
-uses the real icon path from assets/icons.json when one is bundled, and a
-colored square with a short code otherwise (draw.io still renders the real
-icon from the model).
+uses the icon from assets/icons.json (official AWS Architecture Icons, or
+icons extracted from this repo's overview.drawio.svg files) and falls back to a
+colored square with a short code for a name missing there (draw.io still
+renders the real icon from the model).
 """
 from dataclasses import dataclass
 
@@ -52,7 +53,7 @@ CATALOG = {
     "AWS::EC2::NatGateway": TypeSpec("NAT Gateway", "nat_gateway", NETWORK, "NAT", "fixed"),
     "AWS::EC2::InternetGateway": TypeSpec("Internet Gateway", "internet_gateway", NETWORK, "IGW", "fixed"),
     "AWS::EC2::VPCEndpoint": TypeSpec("VPC Endpoint", "endpoints", NETWORK, "VPCE", "fixed"),
-    "AWS::EC2::TransitGateway": TypeSpec("Transit Gateway", "transit_gateway", NETWORK, "TGW", "fixed"),
+    "AWS::EC2::TransitGateway": TypeSpec("Transit Gateway", "transit_gateway", NETWORK, "TGW"),
     "AWS::ElasticLoadBalancingV2::LoadBalancer": TypeSpec("Load Balancer", "application_load_balancer", NETWORK, "ELB", "fixed"),
     "AWS::CloudFront::Distribution": TypeSpec("CloudFront", "cloudfront", NETWORK, "CF"),
     "AWS::Route53::HostedZone": TypeSpec("Route 53", "route_53", NETWORK, "R53"),

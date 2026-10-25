@@ -43,9 +43,9 @@ GROUP_POINTS = (
     "pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;"
 )
 # group_aws_cloud_alt / group_region / group_vpc / group_availability_zone styles are
-# taken verbatim from this repo's own overview.drawio.svg files. The subnet group
-# icons (group_public_subnet / group_private_subnet) are draw.io's standard names
-# but are not used anywhere else in the repo yet.
+# taken verbatim from this repo's own overview.drawio.svg files. draw.io has no
+# dedicated subnet group icon: its Public/Private subnet groups use
+# group_security_group (the lock), told apart by color.
 GROUP_STYLES = {
     "cloud": GROUP_POINTS + "grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;",
@@ -55,12 +55,19 @@ GROUP_STYLES = {
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;",
     "az": GROUP_POINTS + "grIcon=mxgraph.aws4.group_availability_zone;strokeColor=#147EBA;fillColor=none;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=1;",
-    "public": GROUP_POINTS + "grIcon=mxgraph.aws4.group_public_subnet;strokeColor=#7AA116;fillColor=#F2F6E8;"
+    "public": GROUP_POINTS + "grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fillColor=#F2F6E8;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;",
-    "private": GROUP_POINTS + "grIcon=mxgraph.aws4.group_private_subnet;strokeColor=#00A4A6;fillColor=#E6F6F7;"
+    "private": GROUP_POINTS + "grIcon=mxgraph.aws4.group_security_group;strokeColor=#00A4A6;fillColor=#E6F6F7;"
     "verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=0;",
     "lane": "rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#5A6472;verticalAlign=top;align=left;"
     "spacingLeft=10;spacingTop=6;fontSize=12;fontStyle=1;fontColor=#5A6472;dashed=1;",
+}
+# Static-preview badge glyphs (white, from the official AWS group icons in icons.json).
+GROUP_GLYPHS = {
+    "region": "group_region",
+    "vpc": "group_vpc",
+    "public": "group_public_subnet",
+    "private": "group_private_subnet",
 }
 STATIC_GROUP = {  # stroke, fill, dashed, title color
     "cloud": ("#232F3E", "none", False, "#232F3E"),
@@ -221,13 +228,20 @@ def _cost_total(resources):
     return sum(r.cost for r in resources)
 
 
-def build_tree(inv):
-    """Returns (root Box, list of empty VPC ids not drawn)."""
+def build_tree(inv, show_cost=True):
+    """Returns (root Box, list of empty VPC ids not drawn).
+
+    Without cost data (`show_cost=False`) container titles carry no "$0.00/mo"
+    suffix, which would otherwise read as a real zero cost.
+    """
+    def per_month(resources):
+        return f" — {money(_cost_total(resources))}/mo" if show_cost else ""
+
     cloud = Box("cloud", "AWS Cloud", layout="column")
     empty_vpcs = []
     if inv.global_resources:
         cloud.children.append(
-            Box("lane", f"Global — {money(_cost_total(inv.global_resources))}/mo",
+            Box("lane", f"Global{per_month(inv.global_resources)}",
                 leaves_for(inv.global_resources), cols=WIDE_GRID_COLS)
         )
     for region_name in sorted(inv.regions):
@@ -240,7 +254,7 @@ def build_tree(inv):
                 empty_vpcs.append(f"{region_name}/{vpc.vpc_id}")
                 continue
             region_resources.extend(vpc_resources)
-            vpc_box = Box("vpc", f"{vpc.name} ({vpc.cidr}) — {money(_cost_total(vpc_resources))}/mo", layout="column")
+            vpc_box = Box("vpc", f"{vpc.name} ({vpc.cidr}){per_month(vpc_resources)}", layout="column")
             if vpc.resources:
                 vpc_box.children.append(Box("lane", "VPC-wide (spans subnets)", leaves_for(vpc.resources), cols=WIDE_GRID_COLS))
             azs = {}
@@ -260,11 +274,11 @@ def build_tree(inv):
             region_box.children.append(vpc_box)
         if region.resources:
             region_box.children.append(
-                Box("lane", f"Regional services (outside VPC) — {money(_cost_total(region.resources))}/mo",
+                Box("lane", f"Regional services (outside VPC){per_month(region.resources)}",
                     leaves_for(region.resources), cols=WIDE_GRID_COLS)
             )
         if region_box.children:
-            region_box.title = f"Region {region_name} — {money(_cost_total(region_resources))}/mo"
+            region_box.title = f"Region {region_name}{per_month(region_resources)}"
             cloud.children.append(region_box)
     return cloud, empty_vpcs
 
@@ -366,9 +380,14 @@ class Renderer:
             title_x = b.x + 32
         elif b.kind == "lane":
             title_x = b.x + 12
-        else:
-            self.svg.append(f'<rect x="{b.x:.1f}" y="{b.y:.1f}" width="24" height="24" fill="{stroke}"/>')
+        elif b.kind in GROUP_GLYPHS:
+            # Badge filled with the group color plus the official white glyph, as draw.io draws grIcon.
+            glyph = ICONS[GROUP_GLYPHS[b.kind]]
+            self.svg.append(f'<rect x="{b.x:.1f}" y="{b.y:.1f}" width="24" height="24" fill="{stroke}"/>'
+                            f'<g transform="translate({b.x:.1f},{b.y:.1f}) scale({24 / glyph["w"]:.4f})">{glyph["markup"]}</g>')
             title_x = b.x + 32
+        else:  # Availability Zone: AWS draws it as a dashed box without an icon
+            title_x = b.x + 10
         self.svg.append(f'<text x="{title_x:.1f}" y="{b.y + 17:.1f}" class="groupTitle" fill="{title_color}">{esc(b.title)}</text>')
         self.vertex(b.x, b.y, b.w, b.h, esc(b.title), GROUP_STYLES[b.kind])
 
@@ -402,9 +421,9 @@ class Renderer:
                         f"ellipse;whiteSpace=wrap;html=1;fillColor={color};strokeColor=#ffffff;fontColor=#ffffff;fontSize=10;fontStyle=1;")
 
 
-def render(inv, title, subtitle):
-    """Returns (svg text, stats dict)."""
-    root, empty_vpcs = build_tree(inv)
+def render(inv, title, subtitle, show_cost=True):
+    """Returns (svg text, stats dict). `show_cost=False` drops cost labels and the cost legend."""
+    root, empty_vpcs = build_tree(inv, show_cost)
     leaves = [n for n in root.walk() if isinstance(n, Leaf)]
     assign_tiers(leaves)
 
@@ -427,7 +446,7 @@ def render(inv, title, subtitle):
         ("high", "Top 10% cost"), ("mid", "Next 20% cost"), ("low", "Other costed resources"),
     ]
     lx = 30
-    for tier, text in legend:
+    for tier, text in legend if show_cost else []:
         fill, stroke = TIER_STYLE[tier]
         r.svg.append(f'<rect x="{lx}" y="{legend_y}" width="18" height="14" rx="3" fill="{fill}" stroke="{stroke}"/>'
                      f'<text class="legend" x="{lx + 24}" y="{legend_y + 11}">{esc(text)}</text>')
@@ -441,7 +460,8 @@ def render(inv, title, subtitle):
         r.vertex(lx + 1, legend_y - 1, 16, 16, "", f"ellipse;html=1;fillColor={color};strokeColor=none;")
         r.text(lx + 22, legend_y - 3, 200, 20, esc(text), 11)
         lx += 230
-    note = (f"Costs: CUR unblended, per resource. Not drawn: {inv.not_drawn} recorded items of undrawn types"
+    note = (("Costs: CUR unblended, per resource. " if show_cost else "Costs: not available (CUR not used). ")
+            + f"Not drawn: {inv.not_drawn} recorded items of undrawn types"
             + (f"; empty VPCs: {len(empty_vpcs)}" if empty_vpcs else "")
             + f". Groups of more than {AGG_THRESHOLD} of one type are merged into one ×N icon.")
     r.svg.append(f'<text class="legend" x="30" y="{legend_y + 44}">{esc(note)}</text>')

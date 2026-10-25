@@ -305,3 +305,67 @@ on a table with a handful of items. Queries during that window fail with
 through API Gateway). Confirmed with
 `aws dynamodb describe-table --query 'Table.GlobalSecondaryIndexes[].{s:IndexStatus,b:Backfilling}'`.
 Wait for `ACTIVE` before smoke-testing a new query path, or treat that error as retryable.
+
+## Resource Explorer: `ListResources` is authorized by `resource-explorer-2:Search`
+
+Found while deploy-verifying `aws-environment-report` (ap-northeast-1, October 2026). A Lambda
+role with `resource-explorer-2:GetIndex`, `GetDefaultView` and `ListResources` calls
+`ListResources` and gets `AccessDeniedException: ... is not authorized to perform:
+resource-explorer-2:Search on resource: arn:aws:resource-explorer-2:<region>:<account>:view/...`.
+The [API reference](https://docs.aws.amazon.com/resource-explorer/latest/apireference/API_ListResources.html)
+lists `resource-explorer-2:Search` as the minimum permission for `ListResources`; the action name
+in the policy does not match the API name. Grant `resource-explorer-2:Search` (scoped to the view
+ARN if you want). `cdk synth` and IAM unit tests don't catch this; only a real call does.
+
+## Lambda Python base image: no CJK font package, so cairosvg PNGs drop Japanese text
+
+Found in `aws-environment-report` (October 2026). `public.ecr.aws/lambda/python:3.12` (Amazon
+Linux 2023) has `dejavu-sans-fonts`, but `dnf list available` has no Noto CJK / IPA font
+package. SVG text rendered to PNG with cairosvg then shows Japanese characters as blanks
+(no error). Bundle a CJK font file (e.g. Noto Sans JP) into the image if PNG output needs
+Japanese; the SVG itself is unaffected because viewers use their own fonts.
+
+## draw.io AWS4: there is no `group_public_subnet` / `group_private_subnet` stencil
+
+Found in `aws-environment-report` (October 2026). draw.io's AWS4 library has no subnet-specific
+group icon; its "Public subnet" / "Private subnet" groups are
+`shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group` (the lock), told apart
+only by `strokeColor` / `fillColor`. Every subnet in this repo's `overview.drawio.svg` files uses
+that form. An unknown `grIcon` / `resIcon` name gives no error; draw.io just draws no icon.
+
+To check a name before using it, download draw.io's stencil file
+(`https://cdn.jsdelivr.net/gh/jgraph/drawio@v24.7.17/src/main/webapp/stencils/aws4.xml`) and
+look for `<shape name="...">`: the stencil name is the style name with `_` replaced by a space
+(`internet_gateway` → `internet gateway`).
+
+For a static (non-draw.io) rendering of a service that has no example in this repo, the official
+[AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) package has plain SVGs
+(no `<defs>` or CSS): `Architecture-Service-Icons_*/Arch_*/48/Arch_<Service>_48.svg` (64×64,
+colored square + white glyph, the same look as a draw.io `resourceIcon`),
+`Resource-Icons_*/Res_*/Res_<Resource>_48.svg` (48×48, colored line icon, the look of a
+fixed draw.io shape such as `internet_gateway`), and `Architecture-Group-Icons_*` (40×40
+group badges). The zip URL changes with each release; take it from that page.
+
+## GuardDuty sample findings are marked only inside `Service.AdditionalInfo.Value`
+
+Found while deploy-verifying `aws-environment-report` (October 2026). Findings created by
+`CreateSampleFindings` (or "Generate sample findings" in the console) have ordinary titles
+and severities (e.g. CRITICAL "Potential credential compromise of IAMUser/john_doe"); the
+console's `[SAMPLE]` prefix is not in the API. The only marker is `"sample": true` inside
+the JSON string `Service.AdditionalInfo.Value`, and `ListFindings` rejects
+`service.additionalInfo.sample` as a criterion (`BadRequestException ... findingCriteria has an
+invalid value`). Filter after `GetFindings`, or anything that reads findings (reports, LLM
+summaries) will present the samples as real incidents. One `CreateSampleFindings` call made
+479 findings per Region.
+
+## Security Hub CSPM / Inspector finding fields seen in a real account (October 2026)
+
+- After the 2025 rename to "Security Hub CSPM", CSPM control findings still have
+  `ProductName = "Security Hub"`, `CompanyName = "AWS"` and `GeneratorId = "security-control/<ID>"`.
+  Findings imported from AWS Config rules have `ProductName = "Config"`.
+- Enabling FSBP took ~8 minutes to reach `READY`; FAILED control findings grew from ~12 to ~46
+  per Region over the next hour.
+- Inspector `resources[].id` names the scanned artifact, not the resource AWS Config records:
+  `arn:aws:ecr:<region>:<acct>:repository/<repo>/sha256:<digest>` for an ECR image and
+  `arn:aws:lambda:<region>:<acct>:function:<name>:$LATEST` for Lambda. Strip the digest / the
+  qualifier to match the Config ARN of the repository / function.

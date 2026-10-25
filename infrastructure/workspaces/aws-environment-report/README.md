@@ -4,7 +4,7 @@
 
 ![Level 300](https://img.shields.io/badge/Level-300-blue?style=flat-square)
 
-> **Draft (not deploy-verified).** Unit tests on synthetic data, `cdk synth` and a visual check of the rendered PNG are done. It has not been deployed to an AWS account or run against real data yet. See [Not yet verified](#-not-yet-verified).
+> **Draft (deploy-verified except CUR, 2026-10-25).** Deployed to a real account and run end to end with AWS Config, Resource Explorer, Security Hub CSPM, GuardDuty, Inspector, IAM Access Analyzer and Bedrock. CUR has not been read from real data yet. See [Observed results](#-observed-results-2026-10-24) and [Not yet verified](#-not-yet-verified).
 
 ## Introduction
 
@@ -48,7 +48,7 @@ Every source reports `OK`, `PARTIAL`, `DISABLED` (service not enabled), `DENIED`
 
 ## 🔒 Security Considerations
 
-- ✅ Collector IAM is limited to the read APIs they call; a test asserts that every granted collector action is `Describe*` / `Get*` / `List*` / `Select*` / `BatchGet*`
+- ✅ Collector IAM is limited to the read APIs they call; a test asserts that every granted collector action is `Describe*` / `Get*` / `List*` / `Select*` / `BatchGet*`, plus `resource-explorer-2:Search` (the action that authorizes `ListResources`)
 - ✅ CUR access is read-only and limited to `<prefix>/<exportName>/`
 - ✅ Report bucket: SSE-KMS, public access blocked, SSL enforced, versioned; `raw/` expires after `retention.rawDays`
 - ✅ Step Functions logs at `ERROR` level without execution data
@@ -79,7 +79,7 @@ No figures are given here because they depend heavily on Region and account size
    # in infrastructure/workspaces/aws-environment-report
    npm install
    PROJECT=myproj ENV=dev npm run bootstrap   # once per account/Region
-   PROJECT=myproj ENV=dev npm run deploy:all
+   PROJECT=myproj ENV=dev npm run stage:deploy:all   # cdk deploy '**' (--all does not expand into the Stage)
    ```
 
 3. Edit the secret `<project>-<env>-environment-report-webhooks` by hand. Its default **sends nothing**:
@@ -97,7 +97,7 @@ No figures are given here because they depend heavily on Region and account size
      --input '{"targetMonth":"2026-09","force":true}'
    ```
 
-Clean up with `PROJECT=myproj ENV=dev npm run destroy:all`.
+Clean up with `PROJECT=myproj ENV=dev npm run stage:destroy:all`.
 
 ## 🧪 Testing
 
@@ -111,18 +111,39 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 ## ⚙️ Customization
 
 - Drawn resource types: `CATALOG` in `src/report-builder/app/catalog.py` (undrawn types still appear in the inventory table)
-- Static-preview icons: `app/assets/icons.json` holds real icons extracted from this repo's own `overview.drawio.svg` files; other services show as a colored square with a short code (draw.io renders the real `resIcon`)
+- Static-preview icons: `app/assets/icons.json` holds a real icon for every type in `CATALOG` and the Region / VPC / subnet group badges, taken from this repo's own `overview.drawio.svg` files or the official [AWS Architecture Icons](https://aws.amazon.com/architecture/icons/) package (July 2026 release). A type added to `CATALOG` without an icon shows as a colored square with a short code (draw.io still renders the real `resIcon`); a test fails in that case
 - Delivery (not implemented): `internal-alb` / `cloudfront` modes with a separate publish bucket; CloudFront needs WAF and Lambda@Edge (us-east-1) authentication
 - Data-flow arrows (not implemented): only containment is drawn today
 
+## 🔬 Observed results (2026-10-24 / 2026-10-25)
+
+Deployments to a single account (`ap-northeast-1`, targets `us-east-1` + `ap-northeast-1`). AWS Config, an ACCOUNT Access Analyzer and, on the second day, Security Hub CSPM (FSBP only), GuardDuty (with sample findings) and Inspector (Lambda + ECR) were enabled only for the test and disabled afterwards; CUR was not configured.
+
+| Item | Result |
+|---|---|
+| Container image build (`dnf install cairo dejavu-sans-fonts` on `public.ecr.aws/lambda/python:3.12`) | Built and ran; PNG rendered |
+| AWS Config (588 items in two Regions) | `OK`; diagram with 19 nodes, 0 overlaps |
+| Resource Explorer | `DENIED` on the first run: `ListResources` is authorized by **`resource-explorer-2:Search`**, not `ListResources`. Fixed; `OK` after redeploy, coverage gaps listed |
+| Security Hub CSPM not enabled | `DescribeHub` throws `InvalidAccessException` → `DISABLED` (as assumed) |
+| GuardDuty / Inspector not enabled | No detector / `BatchGetAccountStatus` = `DISABLED` → `DISABLED` |
+| IAM Access Analyzer | `OK`, 12 findings (5 public Lambda = HIGH, 7 external IAM role = MEDIUM); HIGH badge on the Lambda icon |
+| CUR not configured | Preflight `NOT_CONFIGURED` → runs immediately. The diagram showed `$0.00/mo` on every container; fixed so cost labels and the cost legend are omitted without CUR data |
+| Bedrock (`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`; the summary called out every non-`OK` source |
+| Re-run without `force` / with `{}` | `SKIP` ("report for this month already exists"); `{}` resolved to the previous month in Asia/Tokyo |
+| Webhook | Default secret → skipped; `http://` URL → skipped with reason, the URL itself not in CloudWatch Logs |
+| Security Hub CSPM (FSBP, about one hour after enabling) | `OK`, 95 FAILED control findings. CSPM control findings still carry `ProductName = "Security Hub"` (`GeneratorId` `security-control/...`), so the filter holds; imported `Config` and custom (`Default`) findings are excluded as intended |
+| GuardDuty sample findings | `CreateSampleFindings` made 479 per Region, and the Bedrock summary treated `IAMUser/john_doe` as the top incident. Samples are marked only by `"sample": true` inside `Service.AdditionalInfo.Value` (`ListFindings` cannot filter on it), so the collector now drops them and reports `excluded N sample findings` in the Region message |
+| Inspector (136 findings) | Resource IDs are the scanned artifact: `.../repository/<repo>/sha256:<digest>` for an ECR image, `...:function:<name>:$LATEST` for Lambda. They matched no Config resource (107 of 243 findings placed); they are now mapped to the repository / function (243 of 243) |
+| Icons | ECR and Internet Gateway showed as colored squares in the HTML/PNG (no static icon bundled). Every `CATALOG` icon is now bundled. Checking all names against draw.io's AWS4 stencils (v24.7.17) found `group_public_subnet` / `group_private_subnet` do not exist; subnets now use `group_security_group` like the rest of this repo |
+
+Known limitation: the PNG uses DejaVu Sans, which has no CJK glyphs, so Japanese resource names render as blanks in `diagram.png` (the draw.io SVG is unaffected). The Amazon Linux 2023 repositories used by the Lambda base image have no CJK font package; bundle a font such as Noto Sans JP in the image if you need it.
+
 ## ⚠️ Not yet verified
 
-1. The container image build (`dnf install cairo dejavu-sans-fonts`); a PNG failure only drops the PNG, SVG and HTML are still written
-2. The exception names used for "not enabled" (e.g. `InvalidAccessException` for Security Hub); unexpected names show up as `ERROR`
-3. CUR finalization detection via `bill_invoice_id` (blank until final)
-4. The CUR path layout `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`
-5. draw.io icon names not used elsewhere in this repo (`rds`, `aurora`, `elasticache`, `eks`, `ecr`, `elastic_file_system`, `route_53`, `kinesis_data_streams`, `auto_scaling2`) and the subnet group icons (`group_public_subnet` / `group_private_subnet`)
-6. The Bedrock model ID `jp.anthropic.claude-sonnet-4-6` in your account
+1. CUR finalization detection via `bill_invoice_id` (blank until final)
+2. The CUR path layout `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`
+3. Real (non-sample) GuardDuty findings: only sample findings were available, so their resource mapping is untested
+4. The Bedrock model ID in your own account (`jp.anthropic.claude-sonnet-4-6` existed in the test account)
 
 ## 📚 References
 

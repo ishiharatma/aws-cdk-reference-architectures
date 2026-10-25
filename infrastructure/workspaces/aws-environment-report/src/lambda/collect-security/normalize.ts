@@ -38,6 +38,22 @@ export function accessAnalyzerSeverity(isPublic: boolean | undefined): Severity 
   return isPublic ? 'HIGH' : 'MEDIUM';
 }
 
+/**
+ * GuardDuty sample findings (CreateSampleFindings / "Generate sample findings")
+ * are marked only by `"sample": true` inside Service.AdditionalInfo.Value, a
+ * JSON string; ListFindings cannot filter on it.
+ */
+export function isGuardDutySample(additionalInfo: { Value?: string } | undefined): boolean {
+  if (!additionalInfo?.Value) {
+    return false;
+  }
+  try {
+    return (JSON.parse(additionalInfo.Value) as { sample?: unknown }).sample === true;
+  } catch {
+    return false;
+  }
+}
+
 const ID_PATTERNS = [
   /^arn:aws[a-z-]*:/,
   /^i-[0-9a-f]{8,17}$/,

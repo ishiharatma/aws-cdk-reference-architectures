@@ -4,7 +4,7 @@
 
 ![Level 300](https://img.shields.io/badge/Level-300-blue?style=flat-square)
 
-> **Draft(実機デプロイ未検証)。** 合成データでのユニットテスト、`cdk synth`、構成図のPNG目視確認までは実施済みです。AWSアカウントへのデプロイと実データでの動作確認はまだ行っていません。未検証の項目は[未検証事項](#-未検証事項)にまとめています。
+> **Draft(CUR以外は実機で検証済み、2026-10-25)。** 実アカウントにデプロイし、AWS Config、Resource Explorer、Security Hub CSPM、GuardDuty、Inspector、IAM Access Analyzer、Bedrockを使って最後まで実行しました。CURは実データでは未確認です。[実機検証の結果](#-実機検証の結果2026-10-24)と[未検証事項](#-未検証事項)を参照してください。
 
 ## はじめに
 
@@ -31,6 +31,7 @@ DevOps Agentに環境調査を任せる構成に対して、このパターン�
 - [デプロイ手順](#-デプロイ手順)
 - [テスト戦略](#-テスト戦略)
 - [カスタマイズと拡張](#️-カスタマイズと拡張)
+- [実機検証の結果](#-実機検証の結果2026-10-24)
 - [未検証事項](#-未検証事項)
 - [参考資料](#-参考資料)
 
@@ -110,7 +111,7 @@ CURのリソースIDとConfigの識別子(ARN、リソースID、末尾ID)を突
 
 ## 🔒 セキュリティ考慮事項
 
-- ✅ コレクターのIAMは、呼び出す読み取りAPI(`Describe*` / `Get*` / `List*` / `Select*` / `BatchGet*`)だけに限定。テストで書き込み系のアクションがないことを確認
+- ✅ コレクターのIAMは、呼び出す読み取りAPI(`Describe*` / `Get*` / `List*` / `Select*` / `BatchGet*`、および`ListResources`の認可に使われる`resource-explorer-2:Search`)だけに限定。テストで書き込み系のアクションがないことを確認
 - ✅ CURバケットへのアクセスは `<prefix>/<exportName>/` 配下の読み取りだけ
 - ✅ レポートバケットはSSE-KMS、パブリックアクセスブロック、SSL必須、バージョニング有効。`raw/`は`retention.rawDays`で失効
 - ✅ Step Functionsのログは`ERROR`レベルで、実行データは含めない(コストや指摘の件数をCloudWatch Logsに残さないため)
@@ -157,7 +158,7 @@ CURのリソースIDとConfigの識別子(ARN、リソースID、末尾ID)を突
 # infrastructure/workspaces/aws-environment-report で実行
 npm install
 PROJECT=myproj ENV=dev npm run bootstrap   # アカウント/リージョンごとに一度だけ
-PROJECT=myproj ENV=dev npm run deploy:all
+PROJECT=myproj ENV=dev npm run stage:deploy:all   # cdk deploy '**'(--allではStage内のスタックが展開されない)
 ```
 
 ### 3. Webhookの設定(手動)
@@ -185,7 +186,7 @@ aws stepfunctions start-execution \
 ### クリーンアップ
 
 ```sh
-PROJECT=myproj ENV=dev npm run destroy:all
+PROJECT=myproj ENV=dev npm run stage:destroy:all
 ```
 
 バケット、KMSキー、シークレットの`RemovalPolicy`は`isAutoDeleteObject`に従います(本番以外は削除、本番は保持)。
@@ -209,20 +210,41 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 ## ⚙️ カスタマイズと拡張
 
 - **描画するリソースタイプ**: `src/report-builder/app/catalog.py`の`CATALOG`に追加します。追加しないタイプも、インベントリ表では件数が出ます
-- **静的プレビューのアイコン**: `app/assets/icons.json`には、このリポジトリの既存の`overview.drawio.svg`から抽出した実物のアイコンを入れています。収録していないサービスは、色付きの四角+略称で表示します(draw.ioで開けば`resIcon`の正式なアイコンで表示されます)
+- **静的プレビューのアイコン**: `app/assets/icons.json`には、`CATALOG`の全タイプとRegion / VPC / サブネットのグループバッジのアイコンを収録しています。出典は、このリポジトリの既存の`overview.drawio.svg`と、公式の[AWS Architecture Icons](https://aws.amazon.com/architecture/icons/)(2026年7月版)です。`CATALOG`にアイコンなしでタイプを追加すると色付きの四角+略称で表示されますが(draw.ioでは`resIcon`の正式なアイコンで表示)、その場合はテストが失敗します
 - **公開経路**(未実装): `delivery.mode`に`internal-alb` / `cloudfront`を追加する想定です。どちらも公開用の別バケットを使います。CloudFrontの場合はWAFとLambda@Edge(us-east-1)による認証が必要です
 - **データの流れの矢印**(未実装): 現在は収容関係だけを描いています。EventBridgeルールのターゲット、Lambdaのイベントソースマッピングなどから、必要な流れだけを追加してください
+
+## 🔬 実機検証の結果(2026-10-24 / 2026-10-25)
+
+1つのアカウント(`ap-northeast-1`にデプロイ、対象は`us-east-1`と`ap-northeast-1`)で実行しました。AWS Config、ACCOUNTタイプのAccess Analyzer、2日目はSecurity Hub CSPM(FSBPのみ)、GuardDuty(サンプル指摘を生成)、Inspector(LambdaとECR)を検証のためだけに有効化し、終了後に無効化しました。CURは設定していません。
+
+| 項目 | 結果 |
+|---|---|
+| コンテナイメージのビルド(`public.ecr.aws/lambda/python:3.12`で`dnf install cairo dejavu-sans-fonts`) | ビルド・実行とも成功し、PNGも生成 |
+| AWS Config(2リージョンで588件) | `OK`。構成図は19ノード、重なり0 |
+| Resource Explorer | 初回は`DENIED`。`ListResources`の認可は`ListResources`ではなく **`resource-explorer-2:Search`** で行われるため。修正後の再デプロイで`OK`になり、網羅性の差分も出力 |
+| Security Hub CSPM未有効 | `DescribeHub`が`InvalidAccessException`を返し、想定どおり`DISABLED` |
+| GuardDuty / Inspector未有効 | ディテクターなし / `BatchGetAccountStatus`が`DISABLED`で、`DISABLED` |
+| IAM Access Analyzer | `OK`、12件(パブリックなLambda 5件 = HIGH、外部アクセスのあるIAMロール7件 = MEDIUM)。LambdaのアイコンにHIGHのバッジを表示 |
+| CUR未設定 | Preflightは`NOT_CONFIGURED`で即実行。構成図の全コンテナに`$0.00/mo`が出ていたため、コストデータがないときはコスト表示と凡例を出さないよう修正 |
+| Bedrock(`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`。`OK`以外のデータソースが欠けていることを要約に明記 |
+| `force`なし / `{}`での再実行 | `SKIP`(「report for this month already exists」)。`{}`はAsia/Tokyoでの前月に解決 |
+| Webhook | 初期値のシークレット → スキップ。`http://`のURL → 理由付きでスキップし、URL自体はCloudWatch Logsに出ない |
+| Security Hub CSPM(FSBP、有効化から約1時間後) | `OK`、FAILEDのコントロール指摘95件。CSPMのコントロール指摘は今も`ProductName = "Security Hub"`(`GeneratorId`は`security-control/...`)で、絞り込みは正しい。取り込まれた`Config`やカスタム(`Default`)の指摘は想定どおり除外 |
+| GuardDutyのサンプル指摘 | `CreateSampleFindings`でリージョンごとに479件生成され、Bedrockの要約が`IAMUser/john_doe`を最優先のインシデントとして扱った。サンプルの印は`Service.AdditionalInfo.Value`内の`"sample": true`だけで`ListFindings`では絞り込めないため、コレクターで除外し、リージョンのメッセージに`excluded N sample findings`と残すよう修正 |
+| Inspector(136件) | リソースIDはスキャン対象そのもので、ECRイメージは`.../repository/<repo>/sha256:<digest>`、Lambdaは`...:function:<name>:$LATEST`。Configのリソースと一致せず、図に付いたのは243件中107件だった。リポジトリ / 関数に対応付けるよう修正し、243件すべてが付くようになった |
+| アイコン | ECRとInternet GatewayがHTML / PNGで色付きの四角になっていた(静的アイコン未収録)。`CATALOG`の全アイコンを収録した。全名前をdraw.ioのAWS4ステンシル(v24.7.17)と照合した結果、`group_public_subnet` / `group_private_subnet`は存在しなかったため、リポジトリ内の他の図と同じ`group_security_group`に修正 |
+
+既知の制約: PNGはDejaVu Sansで描画するため、CJKのグリフがなく、`diagram.png`では日本語のリソース名が空白になります(draw.io形式のSVGは影響を受けません)。Lambdaのベースイメージが使うAmazon Linux 2023のリポジトリにはCJKフォントのパッケージがないため、必要ならNoto Sans JPなどのフォントをイメージに同梱してください。
 
 ## ⚠️ 未検証事項
 
 実機で確認するまでは、次の項目を前提として扱わないでください。
 
-1. **コンテナイメージのビルド**: この環境にはDockerがないため、`Dockerfile`(`dnf install cairo dejavu-sans-fonts`)のビルドは未確認です。ビルドに失敗した場合でも、PNGが作れないだけでSVGとHTMLは出力される作りにしています
-2. **「無効」を表す例外名**: Security Hub未有効時の`InvalidAccessException`などは、実アカウントで確認していません。想定と違う例外名なら`ERROR`として表示されます
-3. **CURの確定判定**: `bill_invoice_id`が確定前は空で、確定後に入るという前提です。実データで確認してから運用してください
-4. **CURのパス構成**: `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`を前提にしています
-5. **draw.ioのアイコン名**: リポジトリ内の既存図で使われていない`resIcon`名(`rds`、`aurora`、`elasticache`、`eks`、`ecr`、`elastic_file_system`、`route_53`、`kinesis_data_streams`、`auto_scaling2`)と、サブネットのグループアイコン(`group_public_subnet` / `group_private_subnet`)は未確認です
-6. **Bedrockのモデル ID**: `jp.anthropic.claude-sonnet-4-6`は既存ワークスペースと同じ値ですが、利用するアカウントで必ず確認してください
+1. **CURの確定判定**: `bill_invoice_id`が確定前は空で、確定後に入るという前提です。実データで確認してから運用してください
+2. **CURのパス構成**: `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`を前提にしています
+3. **GuardDutyの実際の指摘**: 確認できたのはサンプル指摘だけで、実際の指摘(サンプル以外)のリソースへの対応付けは未確認です
+4. **Bedrockのモデル ID**: 検証アカウントには`jp.anthropic.claude-sonnet-4-6`がありましたが、利用するアカウントで必ず確認してください
 
 ## 📚 参考資料
 

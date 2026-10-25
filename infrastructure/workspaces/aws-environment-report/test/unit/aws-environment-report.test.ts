@@ -134,8 +134,20 @@ describe('AwsEnvironmentReportApplicationStack', () => {
       );
     expect(actions.length).toBeGreaterThan(0);
     for (const action of actions) {
-      expect(action).toMatch(/:(Describe|Get|List|Select|BatchGet)/);
+      expect(action).toMatch(/:(Describe|Get|List|Select|BatchGet|Search$)/);
     }
+  });
+
+  test('grants Search for Resource Explorer ListResources', () => {
+    application.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: Match.objectLike({
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Action: Match.arrayWith(['resource-explorer-2:Search']),
+          }),
+        ]),
+      }),
+    });
   });
 
   test('limits CUR bucket access to the export prefix', () => {

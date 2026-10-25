@@ -3,7 +3,8 @@ import json
 import re
 import xml.etree.ElementTree as ET
 
-from app.diagram import Box, Leaf, build_tree, find_overlaps, render
+from app.catalog import CATALOG
+from app.diagram import GROUP_GLYPHS, GROUP_STYLES, ICONS, Box, Leaf, build_tree, find_overlaps, render
 from app.handler import build, previous_month
 from app.inventory import build_inventory
 from app.summary import mask
@@ -58,6 +59,25 @@ def test_findings_are_attached_to_resources():
     assert inv.findings_placed == 3
 
 
+def test_inspector_artifacts_are_attached_to_their_parent_resource():
+    repo = f"arn:aws:ecr:{fx.R}:{fx.ACCOUNT}:repository/team/app"
+    fn = f"arn:aws:lambda:{fx.R}:{fx.ACCOUNT}:function:worker"
+    items = [
+        fx.ci("AWS::ECR::Repository", "team/app", arn=repo),
+        fx.ci("AWS::Lambda::Function", "worker", arn=fn),
+    ]
+    # Resource IDs as Inspector reports them (observed in a real account).
+    findings = [
+        {"source": "inspector", "severity": "HIGH", "resourceIds": [f"{repo}/sha256:{'ab' * 32}"]},
+        {"source": "inspector", "severity": "LOW", "resourceIds": [f"{fn}:$LATEST"]},
+    ]
+    inv = build_inventory(items, None, findings)
+    res = all_resources(inv)
+    assert res["team/app"].findings == {"HIGH": 1}
+    assert res["worker"].findings == {"LOW": 1}
+    assert inv.findings_placed == 2
+
+
 def test_aggregation_and_empty_vpc():
     inv = inventory()
     root, empty = build_tree(inv)
@@ -94,6 +114,27 @@ def test_svg_is_valid_and_editable():
     assert stats["overlaps"] == 0
     assert "<script>" not in svg  # resource names are escaped
     assert "resIcon=mxgraph.aws4.ec2" in html.unescape(m.group(1))
+
+
+def test_every_drawn_type_and_group_badge_has_a_static_icon():
+    # A missing entry falls back to a colored square with a short code.
+    assert {spec.icon for spec in CATALOG.values()} - set(ICONS) == set()
+    assert set(GROUP_GLYPHS.values()) - set(ICONS) == set()
+
+
+def test_subnet_groups_use_draw_io_icon_names():
+    # draw.io has no group_public_subnet / group_private_subnet stencil.
+    for kind in ("public", "private"):
+        assert "grIcon=mxgraph.aws4.group_security_group;" in GROUP_STYLES[kind]
+
+
+def test_svg_without_cost_data_has_no_cost_labels():
+    # Container titles only: per-icon cost labels are already hidden when the cost is zero.
+    svg, _ = render(inventory(), "Title", "Sub", show_cost=False)
+    assert "— $" not in svg
+    assert "Top 10% cost" not in svg
+    with_cost, _ = render(inventory(), "Title", "Sub")
+    assert "— $" in with_cost
 
 
 def test_build_writes_manifest_last_and_summary_payload():
