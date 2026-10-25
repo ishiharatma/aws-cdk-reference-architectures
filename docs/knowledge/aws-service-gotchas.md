@@ -345,3 +345,27 @@ colored square + white glyph, the same look as a draw.io `resourceIcon`),
 `Resource-Icons_*/Res_*/Res_<Resource>_48.svg` (48×48, colored line icon, the look of a
 fixed draw.io shape such as `internet_gateway`), and `Architecture-Group-Icons_*` (40×40
 group badges). The zip URL changes with each release; take it from that page.
+
+## GuardDuty sample findings are marked only inside `Service.AdditionalInfo.Value`
+
+Found while deploy-verifying `aws-environment-report` (October 2026). Findings created by
+`CreateSampleFindings` (or "Generate sample findings" in the console) have ordinary titles
+and severities (e.g. CRITICAL "Potential credential compromise of IAMUser/john_doe"); the
+console's `[SAMPLE]` prefix is not in the API. The only marker is `"sample": true` inside
+the JSON string `Service.AdditionalInfo.Value`, and `ListFindings` rejects
+`service.additionalInfo.sample` as a criterion (`BadRequestException ... findingCriteria has an
+invalid value`). Filter after `GetFindings`, or anything that reads findings (reports, LLM
+summaries) will present the samples as real incidents. One `CreateSampleFindings` call made
+479 findings per Region.
+
+## Security Hub CSPM / Inspector finding fields seen in a real account (October 2026)
+
+- After the 2025 rename to "Security Hub CSPM", CSPM control findings still have
+  `ProductName = "Security Hub"`, `CompanyName = "AWS"` and `GeneratorId = "security-control/<ID>"`.
+  Findings imported from AWS Config rules have `ProductName = "Config"`.
+- Enabling FSBP took ~8 minutes to reach `READY`; FAILED control findings grew from ~12 to ~46
+  per Region over the next hour.
+- Inspector `resources[].id` names the scanned artifact, not the resource AWS Config records:
+  `arn:aws:ecr:<region>:<acct>:repository/<repo>/sha256:<digest>` for an ECR image and
+  `arn:aws:lambda:<region>:<acct>:function:<name>:$LATEST` for Lambda. Strip the digest / the
+  qualifier to match the Config ARN of the repository / function.

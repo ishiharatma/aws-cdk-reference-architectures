@@ -8,6 +8,7 @@ import {
   dedupeFindings,
   extractResourceIds,
   guardDutySeverity,
+  isGuardDutySample,
 } from 'src/lambda/collect-security/normalize';
 import { slackPayload, summaryLines, teamsPayload, ReportSummary } from 'src/lambda/notify/payload';
 
@@ -183,6 +184,18 @@ describe('security normalization', () => {
       'LOW',
       'INFORMATIONAL',
     ]);
+  });
+
+  test('detects GuardDuty sample findings from AdditionalInfo', () => {
+    // Shape observed on findings created by CreateSampleFindings.
+    const sample = {
+      Value: '{"threatListName":"GeneratedFindingThreatListName","sample":true}',
+      Type: 'default',
+    };
+    expect(isGuardDutySample(sample)).toBe(true);
+    expect(isGuardDutySample({ Value: '{"sample":false}' })).toBe(false);
+    expect(isGuardDutySample({ Value: 'not json' })).toBe(false);
+    expect(isGuardDutySample(undefined)).toBe(false);
   });
 
   test('extracts ARNs and IDs from nested resource details', () => {

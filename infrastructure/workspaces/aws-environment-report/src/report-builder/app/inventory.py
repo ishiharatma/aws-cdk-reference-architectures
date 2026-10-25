@@ -4,6 +4,7 @@ Placement comes from the configuration items themselves (vpcId / subnetId
 fields), not from AWS Config relationships, so it does not depend on which
 relationship types a given resource type happens to record.
 """
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -224,9 +225,22 @@ def build_inventory(config_items, cost=None, findings=None):
     return inv
 
 
+# Inspector names the scanned artifact, not the resource Config records:
+# an ECR image (".../repository/<repo>/sha256:<digest>") or a qualified Lambda
+# ARN ("...:function:<name>:$LATEST"). Both map to their parent resource.
+_ARTIFACT_PARENTS = (
+    re.compile(r"^(arn:aws[a-z-]*:ecr:[^:]+:\d+:repository/.+)/sha256:[0-9a-f]+$"),
+    re.compile(r"^(arn:aws[a-z-]*:lambda:[^:]+:\d+:function:[^:]+):[^:]+$"),
+)
+
+
 def _lookup(inv, identifier):
     if identifier in inv.by_identifier:
         return inv.by_identifier[identifier]
+    for pattern in _ARTIFACT_PARENTS:
+        m = pattern.match(identifier)
+        if m and m.group(1) in inv.by_identifier:
+            return inv.by_identifier[m.group(1)]
     # CUR and some findings use an ARN where Config has the bare ID (or vice versa).
     for sep in ("/", ":"):
         tail = identifier.rsplit(sep, 1)[-1]

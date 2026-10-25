@@ -59,6 +59,25 @@ def test_findings_are_attached_to_resources():
     assert inv.findings_placed == 3
 
 
+def test_inspector_artifacts_are_attached_to_their_parent_resource():
+    repo = f"arn:aws:ecr:{fx.R}:{fx.ACCOUNT}:repository/team/app"
+    fn = f"arn:aws:lambda:{fx.R}:{fx.ACCOUNT}:function:worker"
+    items = [
+        fx.ci("AWS::ECR::Repository", "team/app", arn=repo),
+        fx.ci("AWS::Lambda::Function", "worker", arn=fn),
+    ]
+    # Resource IDs as Inspector reports them (observed in a real account).
+    findings = [
+        {"source": "inspector", "severity": "HIGH", "resourceIds": [f"{repo}/sha256:{'ab' * 32}"]},
+        {"source": "inspector", "severity": "LOW", "resourceIds": [f"{fn}:$LATEST"]},
+    ]
+    inv = build_inventory(items, None, findings)
+    res = all_resources(inv)
+    assert res["team/app"].findings == {"HIGH": 1}
+    assert res["worker"].findings == {"LOW": 1}
+    assert inv.findings_placed == 2
+
+
 def test_aggregation_and_empty_vpc():
     inv = inventory()
     root, empty = build_tree(inv)

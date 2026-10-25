@@ -4,7 +4,7 @@
 
 ![Level 300](https://img.shields.io/badge/Level-300-blue?style=flat-square)
 
-> **Draft (partially deploy-verified, 2026-10-24).** Deployed to a real account and run end to end with AWS Config, Resource Explorer, IAM Access Analyzer and Bedrock. CUR, Security Hub CSPM findings, GuardDuty findings and Inspector findings have not been read from real data yet. See [Observed results](#-observed-results-2026-10-24) and [Not yet verified](#-not-yet-verified).
+> **Draft (deploy-verified except CUR, 2026-10-25).** Deployed to a real account and run end to end with AWS Config, Resource Explorer, Security Hub CSPM, GuardDuty, Inspector, IAM Access Analyzer and Bedrock. CUR has not been read from real data yet. See [Observed results](#-observed-results-2026-10-24) and [Not yet verified](#-not-yet-verified).
 
 ## Introduction
 
@@ -115,9 +115,9 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 - Delivery (not implemented): `internal-alb` / `cloudfront` modes with a separate publish bucket; CloudFront needs WAF and Lambda@Edge (us-east-1) authentication
 - Data-flow arrows (not implemented): only containment is drawn today
 
-## 🔬 Observed results (2026-10-24)
+## 🔬 Observed results (2026-10-24 / 2026-10-25)
 
-One deployment to a single account (`ap-northeast-1`, targets `us-east-1` + `ap-northeast-1`). AWS Config and an ACCOUNT Access Analyzer were enabled only for the test; CUR was not configured.
+Deployments to a single account (`ap-northeast-1`, targets `us-east-1` + `ap-northeast-1`). AWS Config, an ACCOUNT Access Analyzer and, on the second day, Security Hub CSPM (FSBP only), GuardDuty (with sample findings) and Inspector (Lambda + ECR) were enabled only for the test and disabled afterwards; CUR was not configured.
 
 | Item | Result |
 |---|---|
@@ -131,6 +131,9 @@ One deployment to a single account (`ap-northeast-1`, targets `us-east-1` + `ap-
 | Bedrock (`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`; the summary called out every non-`OK` source |
 | Re-run without `force` / with `{}` | `SKIP` ("report for this month already exists"); `{}` resolved to the previous month in Asia/Tokyo |
 | Webhook | Default secret → skipped; `http://` URL → skipped with reason, the URL itself not in CloudWatch Logs |
+| Security Hub CSPM (FSBP, about one hour after enabling) | `OK`, 95 FAILED control findings. CSPM control findings still carry `ProductName = "Security Hub"` (`GeneratorId` `security-control/...`), so the filter holds; imported `Config` and custom (`Default`) findings are excluded as intended |
+| GuardDuty sample findings | `CreateSampleFindings` made 479 per Region, and the Bedrock summary treated `IAMUser/john_doe` as the top incident. Samples are marked only by `"sample": true` inside `Service.AdditionalInfo.Value` (`ListFindings` cannot filter on it), so the collector now drops them and reports `excluded N sample findings` in the Region message |
+| Inspector (136 findings) | Resource IDs are the scanned artifact: `.../repository/<repo>/sha256:<digest>` for an ECR image, `...:function:<name>:$LATEST` for Lambda. They matched no Config resource (107 of 243 findings placed); they are now mapped to the repository / function (243 of 243) |
 | Icons | ECR and Internet Gateway showed as colored squares in the HTML/PNG (no static icon bundled). Every `CATALOG` icon is now bundled. Checking all names against draw.io's AWS4 stencils (v24.7.17) found `group_public_subnet` / `group_private_subnet` do not exist; subnets now use `group_security_group` like the rest of this repo |
 
 Known limitation: the PNG uses DejaVu Sans, which has no CJK glyphs, so Japanese resource names render as blanks in `diagram.png` (the draw.io SVG is unaffected). The Amazon Linux 2023 repositories used by the Lambda base image have no CJK font package; bundle a font such as Noto Sans JP in the image if you need it.
@@ -139,7 +142,7 @@ Known limitation: the PNG uses DejaVu Sans, which has no CJK glyphs, so Japanese
 
 1. CUR finalization detection via `bill_invoice_id` (blank until final)
 2. The CUR path layout `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`
-3. Reading actual findings from Security Hub CSPM, GuardDuty and Inspector (only their "not enabled" path was exercised)
+3. Real (non-sample) GuardDuty findings: only sample findings were available, so their resource mapping is untested
 4. The Bedrock model ID in your own account (`jp.anthropic.claude-sonnet-4-6` existed in the test account)
 
 ## 📚 References

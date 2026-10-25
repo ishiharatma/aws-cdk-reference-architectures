@@ -4,7 +4,7 @@
 
 ![Level 300](https://img.shields.io/badge/Level-300-blue?style=flat-square)
 
-> **Draft(一部を実機で検証済み、2026-10-24)。** 実アカウントにデプロイし、AWS Config、Resource Explorer、IAM Access Analyzer、Bedrockを使って最後まで実行しました。CUR、Security Hub CSPM・GuardDuty・Inspectorの指摘の読み取りは、実データでは未確認です。[実機検証の結果](#-実機検証の結果2026-10-24)と[未検証事項](#-未検証事項)を参照してください。
+> **Draft(CUR以外は実機で検証済み、2026-10-25)。** 実アカウントにデプロイし、AWS Config、Resource Explorer、Security Hub CSPM、GuardDuty、Inspector、IAM Access Analyzer、Bedrockを使って最後まで実行しました。CURは実データでは未確認です。[実機検証の結果](#-実機検証の結果2026-10-24)と[未検証事項](#-未検証事項)を参照してください。
 
 ## はじめに
 
@@ -214,9 +214,9 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 - **公開経路**(未実装): `delivery.mode`に`internal-alb` / `cloudfront`を追加する想定です。どちらも公開用の別バケットを使います。CloudFrontの場合はWAFとLambda@Edge(us-east-1)による認証が必要です
 - **データの流れの矢印**(未実装): 現在は収容関係だけを描いています。EventBridgeルールのターゲット、Lambdaのイベントソースマッピングなどから、必要な流れだけを追加してください
 
-## 🔬 実機検証の結果(2026-10-24)
+## 🔬 実機検証の結果(2026-10-24 / 2026-10-25)
 
-1つのアカウント(`ap-northeast-1`にデプロイ、対象は`us-east-1`と`ap-northeast-1`)で実行しました。AWS ConfigとACCOUNTタイプのAccess Analyzerは検証のためだけに有効化し、CURは設定していません。
+1つのアカウント(`ap-northeast-1`にデプロイ、対象は`us-east-1`と`ap-northeast-1`)で実行しました。AWS Config、ACCOUNTタイプのAccess Analyzer、2日目はSecurity Hub CSPM(FSBPのみ)、GuardDuty(サンプル指摘を生成)、Inspector(LambdaとECR)を検証のためだけに有効化し、終了後に無効化しました。CURは設定していません。
 
 | 項目 | 結果 |
 |---|---|
@@ -230,6 +230,9 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 | Bedrock(`jp.anthropic.claude-sonnet-4-6`) | `summaryStatus: OK`。`OK`以外のデータソースが欠けていることを要約に明記 |
 | `force`なし / `{}`での再実行 | `SKIP`(「report for this month already exists」)。`{}`はAsia/Tokyoでの前月に解決 |
 | Webhook | 初期値のシークレット → スキップ。`http://`のURL → 理由付きでスキップし、URL自体はCloudWatch Logsに出ない |
+| Security Hub CSPM(FSBP、有効化から約1時間後) | `OK`、FAILEDのコントロール指摘95件。CSPMのコントロール指摘は今も`ProductName = "Security Hub"`(`GeneratorId`は`security-control/...`)で、絞り込みは正しい。取り込まれた`Config`やカスタム(`Default`)の指摘は想定どおり除外 |
+| GuardDutyのサンプル指摘 | `CreateSampleFindings`でリージョンごとに479件生成され、Bedrockの要約が`IAMUser/john_doe`を最優先のインシデントとして扱った。サンプルの印は`Service.AdditionalInfo.Value`内の`"sample": true`だけで`ListFindings`では絞り込めないため、コレクターで除外し、リージョンのメッセージに`excluded N sample findings`と残すよう修正 |
+| Inspector(136件) | リソースIDはスキャン対象そのもので、ECRイメージは`.../repository/<repo>/sha256:<digest>`、Lambdaは`...:function:<name>:$LATEST`。Configのリソースと一致せず、図に付いたのは243件中107件だった。リポジトリ / 関数に対応付けるよう修正し、243件すべてが付くようになった |
 | アイコン | ECRとInternet GatewayがHTML / PNGで色付きの四角になっていた(静的アイコン未収録)。`CATALOG`の全アイコンを収録した。全名前をdraw.ioのAWS4ステンシル(v24.7.17)と照合した結果、`group_public_subnet` / `group_private_subnet`は存在しなかったため、リポジトリ内の他の図と同じ`group_security_group`に修正 |
 
 既知の制約: PNGはDejaVu Sansで描画するため、CJKのグリフがなく、`diagram.png`では日本語のリソース名が空白になります(draw.io形式のSVGは影響を受けません)。Lambdaのベースイメージが使うAmazon Linux 2023のリポジトリにはCJKフォントのパッケージがないため、必要ならNoto Sans JPなどのフォントをイメージに同梱してください。
@@ -240,7 +243,7 @@ python3 -m venv .venv && .venv/bin/pip install cairosvg==2.7.1 pytest
 
 1. **CURの確定判定**: `bill_invoice_id`が確定前は空で、確定後に入るという前提です。実データで確認してから運用してください
 2. **CURのパス構成**: `<prefix>/<exportName>/data/BILLING_PERIOD=YYYY-MM/*.parquet`を前提にしています
-3. **指摘の実データ**: Security Hub CSPM、GuardDuty、Inspectorは「未有効」の経路だけを確認しました。指摘を読み取る経路は未確認です
+3. **GuardDutyの実際の指摘**: 確認できたのはサンプル指摘だけで、実際の指摘(サンプル以外)のリソースへの対応付けは未確認です
 4. **Bedrockのモデル ID**: 検証アカウントには`jp.anthropic.claude-sonnet-4-6`がありましたが、利用するアカウントで必ず確認してください
 
 ## 📚 参考資料

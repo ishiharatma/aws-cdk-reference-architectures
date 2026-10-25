@@ -30,6 +30,7 @@ import {
   dedupeFindings,
   extractResourceIds,
   guardDutySeverity,
+  isGuardDutySample,
   labelSeverity,
 } from './normalize';
 
@@ -120,12 +121,18 @@ const guardDuty: RegionCollector = async (region, max) => {
   } while (token);
 
   const findings: NormalizedFinding[] = [];
+  let samples = 0;
   const limited = ids.slice(0, max);
   for (let i = 0; i < limited.length; i += 50) {
     const res = await client.send(
       new GetGdFindingsCommand({ DetectorId: detectorId, FindingIds: limited.slice(i, i + 50) })
     );
     for (const f of res.Findings ?? []) {
+      // Sample findings describe made-up resources; reporting them reads as a real incident.
+      if (isGuardDutySample(f.Service?.AdditionalInfo)) {
+        samples++;
+        continue;
+      }
       findings.push({
         source: 'guardduty',
         region,
@@ -138,7 +145,18 @@ const guardDuty: RegionCollector = async (region, max) => {
       });
     }
   }
-  return { result: capped(region, ids.length, max), findings };
+  const result = capped(region, ids.length, max);
+  return {
+    result: samples
+      ? {
+          ...result,
+          message: [result.message, `excluded ${samples} sample findings`]
+            .filter(Boolean)
+            .join('; '),
+        }
+      : result,
+    findings,
+  };
 };
 
 const accessAnalyzer: RegionCollector = async (region, max) => {
