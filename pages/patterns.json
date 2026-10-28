@@ -823,5 +823,27 @@
     "date": "2026-10-24",
     "draft": true,
     "articles": {}
+  },
+  {
+    "id": "ecs-fargate-spot-capacity-provider",
+    "title": "ECS capacity provider strategy: FARGATE base + FARGATE_SPOT weight with AZ rebalancing",
+    "description": "One Fargate service keeps a base of on-demand FARGATE tasks and weights the rest towards FARGATE_SPOT, spreads tasks evenly over three AZs with AZ rebalancing set explicitly, and drains on SIGTERM within the 2-minute Spot warning. Spot interruptions, stopped tasks and service actions are recorded through EventBridge. Deploy-verified: AZ rebalancing starts about 15 minutes after the steady state and is judged per capacity provider.",
+    "image": "ecs-fargate-spot-capacity-provider/overview.drawio.svg",
+    "tags": [
+      "CDK",
+      "TypeScript",
+      "ECS",
+      "Fargate",
+      "Fargate Spot",
+      "Capacity Provider",
+      "ALB",
+      "EventBridge",
+      "Cost Optimization"
+    ],
+    "link": "ecs-fargate-spot-capacity-provider",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-28",
+    "articles": {}
   }
 ]

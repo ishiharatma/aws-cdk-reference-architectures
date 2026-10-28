@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFormation template snapshot 1`] = `
 {
@@ -586,6 +586,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "TaskDefTaskRole1EDB4A67",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Ref": "ClusterEB0386A7",
         },

@@ -121,6 +121,9 @@ export class EcsBlueGreenNativeVsCodedeployStack extends cdk.Stack {
       securityGroups: [serviceSecurityGroup],
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
       assignPublicIp: true,
+      // Set explicitly: the service default only applies at creation. Accepted for both the ECS
+      // (native blue/green) and the CODE_DEPLOY controller (checked with CreateService).
+      availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
     };
 
     // ---------------------------------------------------------------------------------------------

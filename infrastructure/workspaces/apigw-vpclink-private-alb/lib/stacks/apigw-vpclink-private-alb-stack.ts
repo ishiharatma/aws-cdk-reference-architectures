@@ -115,6 +115,8 @@ export class ApigwVpclinkPrivateAlbStack extends cdk.Stack {
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       circuitBreaker: { rollback: true },
       minHealthyPercent: 100,
+      // Set explicitly: the service default only applies at creation (see ecs-fargate-spot-capacity-provider).
+      availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
     });
 
     const alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {

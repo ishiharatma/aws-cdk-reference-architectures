@@ -95,6 +95,8 @@ export class GatewayConnectedService extends Construct {
         stepPercent: service.canary.stepPercent,
         stepBakeTime: cdk.Duration.minutes(service.canary.bakeMinutes),
       },
+      // Set explicitly: the service default only applies at creation (see ecs-fargate-spot-capacity-provider).
+      availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
     });
 
     // AWS::ECS::Service.GatewayConnectors has no L2/L1 property in aws-cdk-lib yet.

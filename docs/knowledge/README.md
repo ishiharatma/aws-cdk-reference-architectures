@@ -51,6 +51,7 @@ checked `aws fis list-actions`).
 - [aws-waf-body-inspection.md](aws-waf-body-inspection.md) — AWS WAF body inspection measured on CloudFront vs ALB: exact 8 / 16 / 64 KB boundaries (`CONTINUE` is blind past them, `MATCH` size rule closes it), ALB Web ACL behind CloudFront re-blocks what CloudFront allowed, COUNT-inserted headers reach the origin, case-sensitive matches, rate-rule lag, ALB→Lambda 413 before WAF
 - [deploy-verification-workflow.md](deploy-verification-workflow.md) — the end-to-end procedure this repo uses to deploy-verify a new or previously-`draft` architecture (deploy → verify for real → destroy → document)
 - [ecs-gateway.md](ecs-gateway.md) — Amazon ECS Gateway: no CDK L1 (CfnResource + GatewayConnectors override), `PropagateTags: NONE` or ACM rejects the `aws:cloudformation:*` tags and routes hang, the hidden per-service security group, 300 s deregistration delay, test-header CANARY measurements, timings
+- [ecs-fargate-spot-capacity-provider.md](ecs-fargate-spot-capacity-provider.md) — ECS FARGATE + FARGATE_SPOT strategy measured: AZ rebalancing default (docs disagree; `maximumPercent` 100 silently disables it; CDK omits the property), rebalancing starts ~15 min after steady state and works per capacity provider (4/2/3 total left alone), scale-in by total per AZ, a full subnet is retried with backoff instead of avoided, StopTask drain timeline, the missing service → capacity provider association dependency that breaks `cdk destroy`, EventBridge patterns
 
 ## Convention: when and how to add to this directory
 

@@ -113,7 +113,16 @@ jobs:
         id: set
         run: |
           set -euo pipefail
-          LIST="${{ steps.detect.outputs.list }}"
+          # Keep only real npm workspaces: directories holding just a diagram
+          # (planned patterns) or deleted in this PR have no package.json.
+          LIST=""
+          for ws in ${{ steps.detect.outputs.list }}; do
+            if [ -f "${{ env.WORKSPACES_DIR }}/$ws/package.json" ]; then
+              LIST="$LIST $ws"
+            else
+              echo "Skipping $ws (no package.json)"
+            fi
+          done
           if [ -z "$(echo "$LIST" | tr -d '[:space:]')" ]; then
             echo "has-changes=false" >> "$GITHUB_OUTPUT"
             echo "workspaces=[]" >> "$GITHUB_OUTPUT"
