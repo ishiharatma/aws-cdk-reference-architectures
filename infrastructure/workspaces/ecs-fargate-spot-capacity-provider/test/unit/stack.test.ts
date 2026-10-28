@@ -1,5 +1,5 @@
 import { Annotations, Match, Template } from 'aws-cdk-lib/assertions';
-import { ServiceParams } from 'parameters/environments';
+import { CapacityProviderStrategyParams, ServiceParams } from 'parameters/environments';
 import { splitByStrategy, validateServiceParams } from 'lib/constructs/mixed-capacity-service';
 import { buildStack, clientIp, testParams } from '../helpers/stack';
 
@@ -276,6 +276,22 @@ describe('splitByStrategy', () => {
     [9, { FARGATE: 4, FARGATE_SPOT: 5 }],
   ])('base 2 / weights 1:3 with %i tasks', (count, expected) => {
     expect(splitByStrategy(strategies, count)).toEqual(expected);
+  });
+
+  // Measured on ECS: FARGATE base 1 weight 1 + FARGATE_SPOT weight k, desired raised one task at a time.
+  const measured: Record<number, [number, number][]> = {
+    3: [[2, 1], [2, 2], [2, 3], [2, 4]],
+    6: [[1, 2], [1, 3], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], [2, 9], [3, 9], [3, 10], [3, 11]],
+    11: [[1, 2], [1, 3], [1, 4], [1, 5], [2, 5], [2, 6], [2, 7], [2, 8], [2, 9], [2, 10], [2, 11], [2, 12]],
+  };
+  test.each(Object.entries(measured))('reproduces the measured splits for base 1, weights 1:%s', (k, rows) => {
+    const strategy: CapacityProviderStrategyParams[] = [
+      { capacityProvider: 'FARGATE', base: 1, weight: 1 },
+      { capacityProvider: 'FARGATE_SPOT', weight: Number(k) },
+    ];
+    rows.forEach(([onDemand, spot], i) => {
+      expect(splitByStrategy(strategy, 3 + i)).toEqual({ FARGATE: onDemand, FARGATE_SPOT: spot });
+    });
   });
 
   test('all-Spot strategy puts every task on FARGATE_SPOT', () => {

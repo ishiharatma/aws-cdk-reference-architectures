@@ -47,6 +47,25 @@ Sources:
   API (`AmazonECS` in ap-northeast-1 lists only `APN1-Fargate-vCPU-Hours:perCPU` $0.05056 and
   `APN1-Fargate-GB-Hours` $0.00553 for x86 Linux).
 
+## How base and weight split the tasks (measured, 24 points)
+
+Temporary cluster, services with `FARGATE base 1, weight 1` + `FARGATE_SPOT weight k`, desired raised
+3 → 14 one step at a time:
+
+| Desired | 3 | 4 | 5 | 6 | 7 | 8–11 | 12 | 13 | 14 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `1:6` on-demand / Spot | 1/2 | 1/3 | 2/3 | 2/4 | 2/5 | 2/6–9 | 3/9 | 3/10 | 3/11 |
+| `1:11` on-demand / Spot | 1/2 | 1/3 | 1/4 | 1/5 | 2/5 | 2/6–9 | 2/10 | 2/11 | 2/12 |
+| `1:3` on-demand / Spot | 2/1 | 2/2 | 2/3 | 2/4 | | | | | |
+
+- Rule that reproduces every point: `on-demand = base + round((desired − base) × w_od / (w_od + w_spot))`,
+  ties (exact .5) going to the provider listed first (`FARGATE`). Largest-remainder allocation of the
+  weighted part gives the same result.
+- Consequence: the first extra on-demand task comes at `base + ceil((k + 1) / 2)` (half an interval
+  early), then one every `k + 1` tasks. Weights cannot express a hard threshold.
+- Each provider is spread on its own, so `FARGATE 1 + FARGATE_SPOT 1` does not guarantee two AZs;
+  `FARGATE_SPOT 2` does (while Spot is available), `FARGATE base 2` does even without Spot.
+
 ## AZ rebalancing timing (measured)
 
 Service events after the scale-in above (desired 6, imbalance 1/2/3):

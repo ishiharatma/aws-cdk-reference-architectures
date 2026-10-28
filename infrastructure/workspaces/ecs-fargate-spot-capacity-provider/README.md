@@ -75,6 +75,39 @@ The base is the floor the service keeps when Spot capacity disappears: "Fargate 
 | stg | `FARGATE base 1` + `FARGATE_SPOT weight 3` | Production-like mix at lower cost |
 | prd | `FARGATE base N` + `FARGATE weight 1` + `FARGATE_SPOT weight 1–3` | `N` covers the minimum load; the weight decides how much of the peak may be interrupted |
 
+#### Smallest strategies that keep two AZs
+
+Because each provider is spread on its own, `FARGATE 1 + FARGATE_SPOT 1` can land both tasks in one AZ and neither provider looks unbalanced. Costs: 0.25 vCPU / 0.5 GB, ap-northeast-1, Spot at 70% off.
+
+| Tasks | Normal | Spot capacity gone | Monthly |
+| --- | --- | --- | --- |
+| `FARGATE_SPOT` × 2 | 2 AZs (the two Spot tasks are spread) | 0 tasks | ~$6.7 |
+| `FARGATE` 1 + `FARGATE_SPOT` 1 | not guaranteed (may share an AZ) | 1 task, 1 AZ | ~$14.6 |
+| `FARGATE` 1 + `FARGATE_SPOT` 2 | 2+ AZs (Spot alone covers two) | 1 task, 1 AZ | ~$18.0 |
+| `FARGATE` 2 | 2 AZs | 2 AZs | ~$22.5 |
+
+- dev: `FARGATE_SPOT` × 2 is AZ-redundant while Spot is available.
+- Cheapest "two AZs normally, never zero tasks": `FARGATE base 1` + `FARGATE_SPOT` with desired 3.
+- "Two AZs even without Spot": `FARGATE base 2`.
+
+#### Scale on Spot first, add on-demand every N tasks
+
+Measured on ECS (desired 3 → 14, one step at a time, `FARGATE base 1, weight 1` + `FARGATE_SPOT weight k`):
+
+| Desired | 3 | 4 | 5 | 6 | 7 | 8–11 | 12 | 13 | 14 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `1:6` on-demand / Spot | 1/2 | 1/3 | **2**/3 | 2/4 | 2/5 | 2/6–9 | **3**/9 | 3/10 | 3/11 |
+| `1:11` on-demand / Spot | 1/2 | 1/3 | 1/4 | 1/5 | **2**/5 | 2/6–9 | 2/10 | 2/11 | 2/12 |
+| `1:3` on-demand / Spot | **2**/1 | 2/2 | 2/3 | 2/4 | | | | | |
+
+The split follows `on-demand = base + round((desired − base) / (k + 1))`, with a tie going to `FARGATE` (`splitByStrategy()` reproduces all 24 measured points). So with `base B` and `1:k`:
+
+- the first extra on-demand task comes at `desired = B + ceil((k + 1) / 2)`, then one more every `k + 1` tasks;
+- `1+2 → 1+3 → 2+3` (3 → 4 → 5 tasks) is `1:6`; `1:3` already gives 2 on-demand at 3 tasks;
+- the share of Spot at the top of the range approaches `k / (k + 1)` (1:6 ≈ 86%, 1:11 ≈ 92%).
+
+Weights are proportional, so "Spot only up to 20 tasks, then on-demand" cannot be expressed. For a hard threshold, keep `FARGATE weight 0` (on-demand stays at `base`, all scaling on Spot) and raise `base` by changing the parameter, or run a second on-demand service.
+
 The strategy lives in `parameters/<env>-params.ts`, so each environment chooses its own mix without code changes. `validateServiceParams()` rejects at synth time: a duplicated provider, a base on two providers, no positive weight, `stopTimeout > 120`, `drainSeconds >= stopTimeout`, a deregistration delay of 120 s or more, AZ rebalancing with `maxHealthyPercent <= 100`, and a desired count outside the scaling range.
 
 ### 2. AZ rebalancing: set it explicitly
