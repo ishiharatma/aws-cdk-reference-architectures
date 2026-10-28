@@ -12,6 +12,40 @@
 - Visual Studio Code + Dev Containers拡張機能
 - プロジェクトのルートディレクトリ直下に、`.aws/config`ファイルが配置されていること
 
+## セットアップ (Setup)
+
+このリポジトリを、プロジェクトのルートディレクトリで `.devcontainer` という名前で clone します。`.aws/` ディレクトリは、同じくプロジェクトのルートに `.devcontainer` と並べて配置します:
+
+```text
+your-project/
+├── .aws/
+│   └── config          # .devcontainer/config.sample からコピー
+├── .devcontainer/      # このリポジトリ
+└── ...
+```
+
+```bash
+cd your-project
+git clone https://github.com/ishiharatma/devcontainer-aws-cdk-typescript.git .devcontainer
+mkdir -p .aws
+cp .devcontainer/config.sample .aws/config
+```
+
+`.aws/config` を開き、SSO の start URL、アカウント、ロールを環境に合わせて編集してください。
+
+### 構成の選択 (Choose a Configuration)
+
+| 構成 | 利用する場面 |
+| ---- | ------------ |
+| `.devcontainer/nonProxy/devcontainer.json` | インターネットへ直接接続できる環境 |
+| `.devcontainer/withProxy/devcontainer.json` | 社内プロキシ経由で接続する環境 |
+
+`withProxy` を使う場合は、`.devcontainer/withProxy/YourRootCA.cer` を所属組織のルート CA 証明書に置き換えてください。
+
+VS Code でプロジェクトを開き、**Dev Containers: Reopen in Container** を実行します。VS Code が構成を選択するよう求めた場合は、上の表から選んでください。
+
+> `.devcontainer/` は独自の `.git` ディレクトリを持つため、プロジェクトからはネストされたリポジトリとして扱われます。プロジェクトの `.gitignore` に `.devcontainer/` を追加するか、サブモジュールとして管理するかは運用方針に合わせて決めてください。
+
 ## 含まれるツール (Included Tools)
 
 - **Node.js & NPM**: JavaScript/TypeScript実行環境
@@ -21,8 +55,14 @@
 - **AWS CLI**: AWSリソース管理用コマンドラインツール
 - **AWS Session Manager Plugin**: EC2インスタンスへの安全な接続
 - **AWS CDK**: Infrastructure as Codeフレームワーク
+- **CDKD**: CDKデプロイ用CLI (`cdkd`)
+- **cdklocal (aws-cdk-local)**: LocalStack向けCDKラッパー
+- **delstack**: CloudFormationスタックの削除ツール
 - **Docker CLI**: コンテナ管理・実行
 - **UV & UVX**: 高速パッケージマネージャー
+- **Python 3 & Graphviz**: Python実行環境と図生成用の `dot`
+- **Amazon Q CLI & Kiro CLI**: AIコーディング支援ツール
+- **Claude Code**: Claude Code CLI。コンテナ作成時に、プロジェクトの `.claude/settings.json` に記載されたプラグインをインストールします
 
 ## AWS認証・アクセス (AWS Authentication)
 
@@ -35,9 +75,15 @@
   - `awslogin`: デフォルトプロファイルでAWS SSOログイン
   - `awsid`: 現在の認証情報確認
   - `awsloginp <プロファイル名>`: 指定プロファイルでログイン
+  - `ssologinp <プロファイル名>`: 指定プロファイルでSSOログイン
   - `awsidp <プロファイル名>`: 指定プロファイルの認証情報確認
+  - `swrole`: ロールを切り替えて設定を保存
+  - `swcre`: ロールを切り替えて認証情報を保存
+  - `clearrole`: プロファイルからAssumeしたロールの認証情報を削除
+  - `awslogout`: AWSからログアウトし、必要に応じて認証情報を削除
 - NPM関連
   - `npmfl`: フォーマットとLint修正を実行
+  - `cdksynth`: npm 経由で `cdk synth` を実行
 
 ### 使用例
 
@@ -72,6 +118,8 @@ awsidp prd-admin
    - Git: ソースコード版管理用（最新版がソースからビルドされています）
    - AWS CLI & 関連ツール: AWS開発用
    - Docker CLI: コンテナ管理用
+   - Python 3 & Graphviz: スクリプト作成と図生成用
+   - Claude Code: AI支援開発用
 
 ## トラブルシューティング (Troubleshooting)
 
@@ -106,7 +154,11 @@ git --version
 aws --version
 session-manager-plugin --version
 cdk --version
+cdkd --version
 docker --version
 uv --version
 uvx --version
+python3 --version
+dot -V
+claude --version
 ```

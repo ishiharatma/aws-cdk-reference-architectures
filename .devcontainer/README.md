@@ -12,6 +12,40 @@ This dev container includes all the tools needed for CDK infrastructure setup an
 - Visual Studio Code + Dev Containers extension
 - `.aws/config` file must be placed in the project root directory
 
+## Setup
+
+Clone this repository into `.devcontainer` in your project root. The `.aws/` directory stays beside it at the project root:
+
+```text
+your-project/
+├── .aws/
+│   └── config          # copied from .devcontainer/config.sample
+├── .devcontainer/      # this repository
+└── ...
+```
+
+```bash
+cd your-project
+git clone https://github.com/ishiharatma/devcontainer-aws-cdk-typescript.git .devcontainer
+mkdir -p .aws
+cp .devcontainer/config.sample .aws/config
+```
+
+Edit `.aws/config` for your SSO start URL, accounts, and roles.
+
+### Choose a Configuration
+
+| Configuration | Use when |
+| ------------- | -------- |
+| `.devcontainer/nonProxy/devcontainer.json` | You connect to the internet directly |
+| `.devcontainer/withProxy/devcontainer.json` | You connect through a corporate proxy |
+
+For `withProxy`, replace `.devcontainer/withProxy/YourRootCA.cer` with your organization's root CA certificate.
+
+Open the project in VS Code and run **Dev Containers: Reopen in Container**. If VS Code asks which configuration to use, select one from the table above.
+
+> `.devcontainer/` has its own `.git` directory, so Git treats it as a nested repository in your project. Add `.devcontainer/` to your project's `.gitignore` or manage it as a submodule, depending on your policy.
+
 ## Included Tools
 
 - **Node.js & NPM**: JavaScript/TypeScript runtime environment
@@ -21,8 +55,14 @@ This dev container includes all the tools needed for CDK infrastructure setup an
 - **AWS CLI**: Command-line tool for AWS resource management
 - **AWS Session Manager Plugin**: Secure connection to EC2 instances
 - **AWS CDK**: Infrastructure as Code framework
+- **CDKD**: CDK deployment CLI (`cdkd`)
+- **cdklocal (aws-cdk-local)**: CDK wrapper for LocalStack
+- **delstack**: Deletes CloudFormation stacks
 - **Docker CLI**: Container management and execution
 - **UV & UVX**: Fast package manager
+- **Python 3 & Graphviz**: Python runtime and `dot` for diagrams
+- **Amazon Q CLI & Kiro CLI**: AI coding assistants
+- **Claude Code**: Claude Code CLI. Plugins listed in your project's `.claude/settings.json` are installed on container creation
 
 ## AWS Authentication and Access
 
@@ -35,9 +75,15 @@ The container includes the following convenient AWS and NPM-related aliases:
   - `awslogin`: AWS SSO login with default profile
   - `awsid`: Check current authentication credentials
   - `awsloginp <profile-name>`: Login with specified profile
+  - `ssologinp <profile-name>`: SSO login with specified profile
   - `awsidp <profile-name>`: Check credentials for specified profile
+  - `swrole`: Switch role and save the config
+  - `swcre`: Switch role and save the credentials
+  - `clearrole`: Clear assumed role credentials from the profile
+  - `awslogout`: Log out from AWS and optionally clear credentials
 - NPM related
   - `npmfl`: Run formatting and lint fixes
+  - `cdksynth`: Run `cdk synth` via npm
 
 ### Usage Examples
 
@@ -72,6 +118,8 @@ awsidp prd-admin
    - Git: For source code management (latest version built from source)
    - AWS CLI & related tools: For AWS development
    - Docker CLI: For container management
+   - Python 3 & Graphviz: For scripting and diagram generation
+   - Claude Code: For AI-assisted development
 
 ## Troubleshooting
 
@@ -106,7 +154,11 @@ git --version
 aws --version
 session-manager-plugin --version
 cdk --version
+cdkd --version
 docker --version
 uv --version
 uvx --version
+python3 --version
+dot -V
+claude --version
 ```
