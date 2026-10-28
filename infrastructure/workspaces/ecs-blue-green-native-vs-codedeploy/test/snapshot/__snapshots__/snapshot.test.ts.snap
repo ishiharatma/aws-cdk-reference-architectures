@@ -572,6 +572,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "codedeployTaskDefTaskRoleC450CA1F",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Ref": "ClusterEB0386A7",
         },
@@ -1015,6 +1016,7 @@ exports[`Stack Snapshot Tests CloudFormation Template Snapshots Complete CloudFo
         "nativeTaskDefTaskRoleAF9FF922",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Ref": "ClusterEB0386A7",
         },

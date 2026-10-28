@@ -335,9 +335,28 @@ describe("EcsFargateAlbStack Fine-grained Assertions", () => {
             });
         });
 
-        test("should use FARGATE launch type", () => {
+        test("should run on FARGATE_SPOT through a capacity provider strategy (fargateSpotWeight only)", () => {
             stackTemplate.hasResourceProperties("AWS::ECS::Service", {
-                LaunchType: "FARGATE",
+                CapacityProviderStrategy: [{ CapacityProvider: "FARGATE_SPOT", Base: 1, Weight: 1 }],
+                LaunchType: Match.absent(),
+            });
+        });
+
+        test("should register FARGATE and FARGATE_SPOT with the cluster", () => {
+            stackTemplate.hasResourceProperties("AWS::ECS::ClusterCapacityProviderAssociations", {
+                CapacityProviders: Match.arrayEquals(["FARGATE", "FARGATE_SPOT"]),
+            });
+        });
+
+        test("should depend on the capacity provider association (create and delete order)", () => {
+            const [associationId] = Object.keys(stackTemplate.findResources("AWS::ECS::ClusterCapacityProviderAssociations"));
+            const [service] = Object.values(stackTemplate.findResources("AWS::ECS::Service"));
+            expect(service.DependsOn).toContain(associationId);
+        });
+
+        test("should enable AZ rebalancing explicitly", () => {
+            stackTemplate.hasResourceProperties("AWS::ECS::Service", {
+                AvailabilityZoneRebalancing: "ENABLED",
             });
         });
 

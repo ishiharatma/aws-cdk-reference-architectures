@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AppStack Snapshot Complete CloudFormation template snapshot 1`] = `
 {
@@ -46,6 +46,7 @@ exports[`AppStack Snapshot Complete CloudFormation template snapshot 1`] = `
         "InternalApiServiceTaskDefTaskRole2CEB55B7",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
         },
@@ -289,6 +290,7 @@ exec nginx -g 'daemon off;'",
         "OrdersServiceTaskDefTaskRole018C7AF9",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
         },
@@ -649,6 +651,7 @@ exec nginx -g 'daemon off;'",
         "WebServiceTaskDefTaskRole39B734D2",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Fn::ImportValue": "Platform:ExportsOutputRefClusterEB0386A796A0E3FE",
         },

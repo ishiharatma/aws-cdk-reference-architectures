@@ -319,6 +319,8 @@ export class AppStack extends cdk.Stack {
             propagateTags: ecs.PropagatedTagSource.SERVICE,
             circuitBreaker: { rollback: true },
             deploymentController: { type: ecs.DeploymentControllerType.ECS },
+            // Set explicitly: the service default only applies at creation (see ecs-fargate-spot-capacity-provider).
+            availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
         });
         this.ecsService.attachToApplicationTargetGroup(targetGroup);
         // FIS targets ECS tasks by this tag propagated from the service

@@ -429,6 +429,7 @@ exports[`FIS Chaos Scenario Stack Snapshots AppStack Complete CloudFormation tem
         "TaskRole30FC0FBB",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
         "Cluster": {
           "Ref": "EcsCluster97242B84",
         },

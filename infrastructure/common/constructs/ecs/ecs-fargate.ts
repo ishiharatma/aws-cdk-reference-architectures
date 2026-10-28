@@ -391,6 +391,9 @@ export class EcsFargateConstruct extends Construct {
                     }
                 },
                 containerInsightsV2: config.createConfig?.enabledContainerInsight,
+                // Registers FARGATE and FARGATE_SPOT so that services can name them in a capacity
+                // provider strategy (a strategy naming an unregistered provider fails at CreateService).
+                enableFargateCapacityProviders: true,
             });
         }
     }
@@ -406,7 +409,7 @@ export class EcsFargateConstruct extends Construct {
         config:EcsFargateCreateConfig, taskDefinition: ecs.FargateTaskDefinition,
         securityGroups: ec2.ISecurityGroup[],
         vpcSubnets: ec2.SubnetSelection) : ecs.FargateService {
-        return new ecs.FargateService(this, id, {
+        const service = new ecs.FargateService(this, id, {
             cluster,
             platformVersion: ecs.FargatePlatformVersion.VERSION1_4,
             desiredCount: config.desiredCount,
@@ -422,7 +425,15 @@ export class EcsFargateConstruct extends Construct {
             taskDefinition,
             enableExecuteCommand: true,
             healthCheckGracePeriod: cdk.Duration.seconds(120),
+            // Set explicitly: the service default only applies at creation, and a service created
+            // while the default was DISABLED keeps DISABLED on later updates.
+            availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
         });
+        // A service with a capacity provider strategy must be created after, and deleted before, the
+        // cluster's ClusterCapacityProviderAssociations; otherwise `cdk destroy` fails with
+        // "The specified capacity provider is in use and cannot be removed".
+        service.node.addDependency(cluster);
+        return service;
     }
     /**
      * Configure Capacity Provider Strategies
@@ -432,10 +443,13 @@ export class EcsFargateConstruct extends Construct {
      */
     private _configurationCapacityProviderStrategies(fargateWeight?: number,  fargateSpotWeight?: number) : ecs.CapacityProviderStrategy[] | undefined {
         // Configure Capacity Provider Strategies
-        // Both weights must be defined to use capacity providers
-        if (fargateWeight == null || fargateSpotWeight == null) {
+        // No weight at all: launch type FARGATE. A weight that is left out counts as 0, so
+        // `{ fargateSpotWeight: 1 }` alone means FARGATE_SPOT only.
+        if (fargateWeight == null && fargateSpotWeight == null) {
             return undefined;
         }
+        fargateWeight = fargateWeight ?? 0;
+        fargateSpotWeight = fargateSpotWeight ?? 0;
         // Check validation
         const validation = this._validateCapacityProviderParams(fargateWeight, fargateSpotWeight);
         if (!validation.isValid) {
@@ -452,7 +466,8 @@ export class EcsFargateConstruct extends Construct {
                 weight: fargateSpotWeight,
             }];
         }
-        // Use both FARGATE and FARGATE_SPOT
+        // Use both FARGATE and FARGATE_SPOT. Only one provider may have a base: keep at least one
+        // task on FARGATE, because Fargate does not replace missing Spot capacity with on-demand.
         return [{
             capacityProvider: 'FARGATE',
             base: 1,
@@ -460,7 +475,6 @@ export class EcsFargateConstruct extends Construct {
         },
         {
             capacityProvider: 'FARGATE_SPOT',
-            base: 1,
             weight: fargateSpotWeight,
         }];
     }
@@ -484,6 +498,9 @@ export class EcsFargateConstruct extends Construct {
         }
         if (!Number.isInteger(fargateWeight)) {
             errors.push('fargateWeight must be an integer.');
+        }
+        if (!Number.isInteger(fargateSpotWeight)) {
+            errors.push('fargateSpotWeight must be an integer.');
         }
         if (fargateWeight ===0 && fargateSpotWeight ===0) {
             errors.push('Both fargateWeight and fargateSpotWeight cannot be 0.');

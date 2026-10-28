@@ -212,6 +212,8 @@ export class KeycloakStack extends cdk.Stack {
       securityGroups: [props.keycloakEcsSg],
       circuitBreaker: { rollback: true },
       enableExecuteCommand: true,
+      // Set explicitly: the service default only applies at creation (see ecs-fargate-spot-capacity-provider).
+      availabilityZoneRebalancing: ecs.AvailabilityZoneRebalancing.ENABLED,
     });
     service.attachToApplicationTargetGroup(tg);
 

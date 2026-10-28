@@ -244,6 +244,16 @@ ecsFargateConfig: {
 
 > **Fargate Spot節約効果**: 標準Fargateと比較して最大70%のコスト削減。フォールトトレラントなワークロードに最適です。
 
+weight からキャパシティプロバイダー戦略への変換（`common/constructs/ecs/ecs-fargate.ts`）。省略した weight は 0 として扱います。クラスターには `FARGATE` と `FARGATE_SPOT` を登録し、サービスはその関連付けに依存させています（そうしないと `cdk destroy` が「capacity provider is in use」で失敗する）。AZ 再配置は `ENABLED` を明示しています。
+
+| パラメーター | 戦略 |
+| --- | --- |
+| 指定なし、`fargateWeight` のみ、または `fargateSpotWeight: 0` | 起動タイプ `FARGATE`（戦略なし） |
+| `fargateSpotWeight` のみ（または `fargateWeight: 0`） | `FARGATE_SPOT` base 1、weight = `fargateSpotWeight`（すべて Spot） |
+| 両方が 0 より大きい | `FARGATE` base 1、weight = `fargateWeight` + `FARGATE_SPOT` weight = `fargateSpotWeight` |
+
+2026 年 10 月より前は、`fargateSpotWeight` だけでは戦略が作られず（オンデマンドの Fargate で動いていた）、両方を指定すると両方のプロバイダーに base が付いて ECS に拒否される状態でした。base・weight・AZ 再配置の関係は [ecs-fargate-spot-capacity-provider](../ecs-fargate-spot-capacity-provider/README.ja.md) を参照してください。
+
 ### 4. オートスケーリング設定
 
 CPUとメモリ使用率に基づく自動スケーリング：

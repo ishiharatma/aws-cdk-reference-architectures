@@ -242,6 +242,16 @@ ecsFargateConfig: {
 
 > **Fargate Spot Savings**: Up to 70% cost reduction compared to standard Fargate. Best for fault-tolerant workloads.
 
+How the weights become a capacity provider strategy (`common/constructs/ecs/ecs-fargate.ts`). A weight that is left out counts as 0; the cluster registers `FARGATE` and `FARGATE_SPOT`, the service depends on that association (otherwise `cdk destroy` fails with "capacity provider is in use"), and AZ rebalancing is set to `ENABLED`.
+
+| Parameters | Strategy |
+| --- | --- |
+| none, `fargateWeight` only, or `fargateSpotWeight: 0` | launch type `FARGATE` (no strategy) |
+| `fargateSpotWeight` only (or `fargateWeight: 0`) | `FARGATE_SPOT` base 1, weight = `fargateSpotWeight` (all Spot) |
+| both above 0 | `FARGATE` base 1, weight = `fargateWeight` + `FARGATE_SPOT` weight = `fargateSpotWeight` |
+
+Before 2026-10, `fargateSpotWeight` alone produced no strategy (the service ran on on-demand Fargate), and both weights put a base on both providers, which ECS rejects. See [ecs-fargate-spot-capacity-provider](../ecs-fargate-spot-capacity-provider/) for how base, weight and AZ rebalancing interact.
+
 ### 4. Auto-Scaling Configuration
 
 Automatic scaling based on CPU and memory utilization:

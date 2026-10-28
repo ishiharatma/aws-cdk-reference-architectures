@@ -1255,6 +1255,19 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
       },
       "Type": "AWS::ECS::Cluster",
     },
+    "EcsFargateClusterFFFA90D2": {
+      "Properties": {
+        "CapacityProviders": [
+          "FARGATE",
+          "FARGATE_SPOT",
+        ],
+        "Cluster": {
+          "Ref": "EcsFargateCluster64F91B93",
+        },
+        "DefaultCapacityProviderStrategy": [],
+      },
+      "Type": "AWS::ECS::ClusterCapacityProviderAssociations",
+    },
     "EcsFargateCpuUtilizationAlarmE79497E3": {
       "Properties": {
         "AlarmDescription": "Alarm if CPU utilization exceeds 80% for 5 minutes",
@@ -1478,10 +1491,20 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
       "DependsOn": [
         "AlbHttpListener5EF99D8D",
         "AlbHttpListenerTargetGroup0Container1GroupD9DC4018",
+        "EcsFargateClusterFFFA90D2",
+        "EcsFargateCluster64F91B93",
         "EcsFargateTaskDef0TaskRoleDefaultPolicy9B982688",
         "EcsFargateTaskDef0TaskRole87999761",
       ],
       "Properties": {
+        "AvailabilityZoneRebalancing": "ENABLED",
+        "CapacityProviderStrategy": [
+          {
+            "Base": 1,
+            "CapacityProvider": "FARGATE_SPOT",
+            "Weight": 1,
+          },
+        ],
         "Cluster": {
           "Ref": "EcsFargateCluster64F91B93",
         },
@@ -1505,7 +1528,6 @@ exports[`Stack Snapshot Tests EcsFargateAlbStack Snapshot should match snapshot 
         "EnableECSManagedTags": false,
         "EnableExecuteCommand": true,
         "HealthCheckGracePeriodSeconds": 120,
-        "LaunchType": "FARGATE",
         "LoadBalancers": [
           {
             "ContainerName": "backend",
