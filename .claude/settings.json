@@ -2,8 +2,8 @@
   "extraKnownMarketplaces": {
     "agent-skills-private": {
       "source": {
-        "source": "url",
-        "url": "https://github.com/ishiharatma/agent-skills-private.git"
+        "source": "github",
+        "repo": "ishiharatma/agent-skills-private"
       }
     },
     "agent-toolkit-for-aws": {
@@ -13,27 +13,27 @@
       }
     }
   },
-  "enabledPlugins": [
-    { "marketplace": "agent-skills-private", "plugin": "cdk-testing" },
-    { "marketplace": "agent-skills-private", "plugin": "cdk-ts-dev-guide" },
-    { "marketplace": "agent-skills-private", "plugin": "cdk-spec-writing" },
-    { "marketplace": "agent-skills-private", "plugin": "codecommit-pr" },
-    { "marketplace": "agent-skills-private", "plugin": "cicd-buildspec" },
-    { "marketplace": "agent-skills-private", "plugin": "metrics-reporter" },
-    { "marketplace": "agent-skills-private", "plugin": "metrics-logger" },
-    { "marketplace": "agent-skills-private", "plugin": "article-writer" },
-    { "marketplace": "agent-skills-private", "plugin": "article-proofreader" },
-    { "marketplace": "agent-skills-private", "plugin": "aws-mcp" },
-    { "marketplace": "agent-skills-private", "plugin": "aws-icon-diagram" },
-    { "marketplace": "agent-skills-private", "plugin": "claudeception" },
-    { "marketplace": "agent-skills-private", "plugin": "show-me" },
-    { "marketplace": "agent-skills-private", "plugin": "cdk-configuration-wiring-review" },
-    { "marketplace": "agent-skills-private", "plugin": "cloudformation-deploy-constraint-review" },
-    { "marketplace": "agent-skills-private", "plugin": "iac-secret-boundary" },
-    { "marketplace": "agent-skills-private", "plugin": "nag-suppression-review" },
-    { "marketplace": "agent-skills-private", "plugin": "spec-readability-review" },
-    { "marketplace": "agent-toolkit-for-aws", "plugin": "aws-core" }
-  ],
+  "enabledPlugins": {
+    "cdk-testing@agent-skills-private": true,
+    "cdk-ts-dev-guide@agent-skills-private": true,
+    "cdk-spec-writing@agent-skills-private": true,
+    "codecommit-pr@agent-skills-private": true,
+    "cicd-buildspec@agent-skills-private": true,
+    "metrics-reporter@agent-skills-private": true,
+    "metrics-logger@agent-skills-private": true,
+    "article-writer@agent-skills-private": true,
+    "article-proofreader@agent-skills-private": true,
+    "aws-mcp@agent-skills-private": true,
+    "aws-icon-diagram@agent-skills-private": true,
+    "claudeception@agent-skills-private": true,
+    "show-me@agent-skills-private": true,
+    "cdk-configuration-wiring-review@agent-skills-private": true,
+    "cloudformation-deploy-constraint-review@agent-skills-private": true,
+    "iac-secret-boundary@agent-skills-private": true,
+    "nag-suppression-review@agent-skills-private": true,
+    "spec-readability-review@agent-skills-private": true,
+    "aws-core@agent-toolkit-for-aws": true
+  },
   "permissions": {
     "allow": [
       "Bash(python3 -c ' *)",
