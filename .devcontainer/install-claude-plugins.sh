@@ -22,20 +22,31 @@ fi
 mkdir -p ~/.ssh
 ssh-keygen -F github.com >/dev/null 2>&1 || ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts 2>/dev/null
 
+# enabledPlugins accepts both the Claude Code format ({"plugin@marketplace": true})
+# and the legacy list format ([{plugin, marketplace}]) this repository used before.
 node -e '
 const s = require("./'"$SETTINGS"'");
-for (const [name, m] of Object.entries(s.extraKnownMarketplaces || {})) {
+const known = s.extraKnownMarketplaces || {};
+for (const [name, m] of Object.entries(known)) {
   const src = m.source || {};
   console.log(`M\t${name}\t${src.source === "github" ? src.repo : src.url}`);
 }
-for (const p of s.enabledPlugins || []) console.log(`P\t${p.plugin}\t${p.marketplace}`);
+const ep = s.enabledPlugins || {};
+const plugins = Array.isArray(ep)
+  ? ep.map((p) => [p.plugin, p.marketplace])
+  : Object.entries(ep).filter(([, on]) => on === true).map(([id]) => id.split("@"));
+// The official marketplace is not declared in extraKnownMarketplaces; register it if referenced.
+if (!known["claude-plugins-official"] && plugins.some(([, m]) => m === "claude-plugins-official")) {
+  console.log("M\tclaude-plugins-official\tanthropics/claude-plugins-official");
+}
+for (const [plugin, marketplace] of plugins) console.log(`P\t${plugin}\t${marketplace}`);
 ' | while IFS=$'\t' read -r kind a b; do
     if [ "$kind" = "M" ]; then
         echo "Adding marketplace: $a ($b)"
-        claude plugin marketplace add "$b" || echo "⚠️ Failed to add marketplace $a (check SSH agent / ssh -T git@github.com)"
+        claude plugin marketplace add "$b" </dev/null || echo "⚠️ Failed to add marketplace $a (check SSH agent / ssh -T git@github.com)"
     else
         echo "Installing plugin: $a@$b"
-        claude plugin install "$a@$b" || echo "⚠️ Failed to install $a@$b"
+        claude plugin install "$a@$b" </dev/null || echo "⚠️ Failed to install $a@$b"
     fi
 done
 exit 0
