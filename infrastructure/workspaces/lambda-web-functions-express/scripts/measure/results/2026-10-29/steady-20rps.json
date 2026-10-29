@@ -1,0 +1,224 @@
+{
+ "args": {
+  "profile": "drillexercises-dev",
+  "region": "ap-northeast-1",
+  "url": "https://d2a9l4o8ak3t2c.cloudfront.net/todos",
+  "function": "drillexercises-dev-lwf-todos",
+  "endpoint": "dev",
+  "rps": 20.0,
+  "minutes": 6.0,
+  "metrics_delay_s": 180
+ },
+ "start": "2026-10-29T15:53:05.193958+00:00",
+ "end": "2026-10-29T16:00:05.186846+00:00",
+ "load": {
+  "sent": 7200,
+  "byStatus": {
+   "200": 7200
+  },
+  "p50S": 0.028,
+  "p99S": 0.057
+ },
+ "metrics": {
+  "envs": [
+   {
+    "dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": "drillexercises-dev-lwf-todos"
+     },
+     {
+      "Name": "EndpointName",
+      "Value": "dev"
+     },
+     {
+      "Name": "ExecutionRegion",
+      "Value": "ap-northeast-1"
+     }
+    ],
+    "points": [
+     [
+      "15:54",
+      1.0
+     ],
+     [
+      "15:55",
+      1.0
+     ],
+     [
+      "15:56",
+      1.0
+     ],
+     [
+      "15:57",
+      1.0
+     ],
+     [
+      "15:58",
+      2.0
+     ],
+     [
+      "15:59",
+      2.0
+     ],
+     [
+      "16:00",
+      2.0
+     ]
+    ]
+   }
+  ],
+  "memMax": [
+   {
+    "dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": "drillexercises-dev-lwf-todos"
+     }
+    ],
+    "points": [
+     [
+      "15:54",
+      169.0
+     ],
+     [
+      "15:55",
+      267.0
+     ],
+     [
+      "15:57",
+      326.0
+     ],
+     [
+      "15:58",
+      166.0
+     ],
+     [
+      "15:59",
+      431.0
+     ],
+     [
+      "16:01",
+      431.0
+     ]
+    ]
+   }
+  ],
+  "cpuS": [
+   {
+    "dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": "drillexercises-dev-lwf-todos"
+     }
+    ],
+    "points": [
+     [
+      "15:54",
+      247.0
+     ],
+     [
+      "15:55",
+      3439.0
+     ],
+     [
+      "15:57",
+      5562.0
+     ],
+     [
+      "15:58",
+      336.0
+     ],
+     [
+      "15:59",
+      7815.0
+     ],
+     [
+      "16:01",
+      2582.0
+     ]
+    ]
+   }
+  ],
+  "activeS": [
+   {
+    "dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": "drillexercises-dev-lwf-todos"
+     }
+    ],
+    "points": [
+     [
+      "15:54",
+      449.0
+     ],
+     [
+      "15:55",
+      59944.0
+     ],
+     [
+      "15:57",
+      120000.0
+     ],
+     [
+      "15:58",
+      441.0
+     ],
+     [
+      "15:59",
+      179992.0
+     ],
+     [
+      "16:01",
+      239999.0
+     ]
+    ]
+   }
+  ],
+  "requests": [
+   {
+    "dimensions": [
+     {
+      "Name": "FunctionName",
+      "Value": "drillexercises-dev-lwf-todos"
+     },
+     {
+      "Name": "EndpointName",
+      "Value": "dev"
+     }
+    ],
+    "points": [
+     [
+      "15:54",
+      1096.0
+     ],
+     [
+      "15:55",
+      1200.0
+     ],
+     [
+      "15:56",
+      1201.0
+     ],
+     [
+      "15:57",
+      1200.0
+     ],
+     [
+      "15:58",
+      1200.0
+     ],
+     [
+      "15:59",
+      1200.0
+     ],
+     [
+      "16:00",
+      103.0
+     ]
+    ]
+   }
+  ]
+ }
+}

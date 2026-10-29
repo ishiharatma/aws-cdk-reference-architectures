@@ -93,7 +93,12 @@ describe('Express app (runs unchanged on Web Functions)', () => {
     test('stream emits server-sent events', async () => {
       const res = await request(app).get('/debug/stream').query({ count: 3, intervalMs: 0 });
       expect(res.headers['content-type']).toContain('text/event-stream');
-      expect(res.text.match(/^data: /gm)).toHaveLength(3);
+      expect(res.text.match(/^id: /gm)).toHaveLength(3);
+    });
+
+    test('stream ends with a terminal done event', async () => {
+      const res = await request(app).get('/debug/stream').query({ count: 2, intervalMs: 0 });
+      expect(res.text.trimEnd().endsWith('event: done\ndata: {"count":2}')).toBe(true);
     });
 
     test('background returns 202 before the work finishes', async () => {

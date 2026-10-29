@@ -195,11 +195,24 @@ API Gateway がない分、入力検証・CORS・セキュリティヘッダー�
 
 LWA 側の 500 は、Lambda のスロットリングに対する API Gateway の応答です。このアカウントの **Event Functions の上限は同時実行 10**(同期呼び出しは毎秒約 100)で、**Web Functions は別のクォータ**(`GetWebAccountSettings` で `maxTotalArmVCpus` 200、`maxTotalRateLimit` 10,000 RPS)です。計測期間のリクエストあたりのコンピュートは、Web Functions が CPU 2.5 ms、Event Function が課金対象の実行時間 15.6 ms でした。100 万リクエストあたりでは、Web Function が約 **$0.45**(リクエスト + CPU + メモリ。同時 50 の試験後にアイドルで残った 29 環境分を含む)、Event Function は **$0.25 に API Gateway の $4.25 が加わります**。差は API Gateway をなくしたことによるもので、コンピュートが安いからではありません。
 
+### 新しい関数へのバーストと、クライアント再試行の効果(2026-10-29、各 3 試行)
+
+試行ごとに新しい Web Function を作り(学習した上限はゼロまで縮退しても残るため)、2 秒待ちの 100 並列を `maxEnvironments` 3、`rateLimit` 100 で繰り返し送りました。署名付きリクエストでエンドポイントを直接呼んでいます。手順と生データは [`scripts/measure/`](scripts/measure/) にあります。
+
+| 関数の作成からの経過 | 約 0 秒 | 約 11 秒 | 約 21 秒 | 約 31 秒 | 約 40 秒 |
+|---|---|---|---|---|---|
+| 再試行なし:100 件中の 200(1 環境あたり同時) | 6(2) | 6(2) | 24(8〜10) | 60(20〜21) | 計測なし |
+| 再試行あり:100 件中の 200(1 環境あたり同時) | 16〜17(2) | 50〜56(8) | 90〜95(20) | 95〜99(30〜31) | 100(33〜36) |
+
+- 開始時の動的上限は、新しい 7 関数すべてで **1 環境あたり同時 2** でした。
+- 指数バックオフ + フルジッター(最大 6 回)で、8 バーストの合計成功は 200〜218/800 から 657〜661/800 になりました。代わりに最初のバーストでは試行が **5.7 倍**(100 件に 570 回)になり、その一部が `rateLimit` による 429 `EndpointRequestThrottle` になりました。`rateLimit` は再試行分も見込んで決めます。
+- 10 分アイドル(`EndpointActiveEnvironments` のデータ点なし)の後のバーストは 30/100 で、開始時の 6/100 には戻りませんでした。
+
 ### その他の確認結果
 
 | 確認内容 | 結果 |
 |-------|--------|
-| `timeoutSeconds` を超える SSE(1 秒間隔で 40 イベント、タイムアウト 30 秒) | **30 イベントで途中終了し、HTTP 200 のまま正常にストリームが終わった**(curl の終了コード 0)。クライアントには区別できない。`timeoutSeconds`(と CloudFront の `readTimeout`)を最長のストリームより長くする |
+| `timeoutSeconds` を超える SSE(1 秒間隔で 40 イベント、タイムアウト 30 秒) | **30 イベントで途中終了し、HTTP 200 のまま正常にストリームが終わった**(curl の終了コード 0)。クライアントには区別できない。`timeoutSeconds`(と CloudFront の `readTimeout`)を最長のストリームより長くし、ストリームの最後に `event: done` を送ってクライアントで欠落を検知する(途切れ 4/4、正常終了 4/4 を判別。[`sse-check.mjs`](scripts/measure/sse-check.mjs)) |
 | ログ到着までの遅延(`ingestionTime − timestamp`) | `.local` は 2.8〜9.0 秒、本体のロググループは 7.1〜15.4 秒 |
 | `server.close()` による `SIGTERM` 処理 | `platform.spinDownReport` が **25〜60 ms で success** |
 | アカウントのクォータ(`GetWebAccountSettings`) | `maxTotalArmVCpus` 200、`maxTotalRateLimit` 10,000。ドキュメントの既定値(2,000 / 100,000)より低い。負荷試験の前に確認する |

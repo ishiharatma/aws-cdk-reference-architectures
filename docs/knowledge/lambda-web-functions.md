@@ -117,6 +117,42 @@ Take-away: `maxEnvironments × maxConcurrencyPerEnvironment` is a ceiling, not t
 a cold burst gets. Small `maxEnvironments` + bursty clients = 429s; retry 429/503 with
 backoff or leave `maxEnvironments` generous.
 
+### Cold dynamic limit and client retries (2026-10-29, 3 trials per mode)
+
+Each trial used a **brand-new** Web Function (bursts of 100 parallel 2 s waits, `maxEnvironments` 3,
+`rateLimit` 100, signed requests straight to the `IamAuth` endpoint). A new function is needed for
+every cold trial: per the scaling docs, Lambda keeps what it learned after the endpoint scales to
+zero — verified: after 10 min with no `EndpointActiveEnvironments` datapoints, a burst got 30/100
+(10 in flight per env), not the starting 6/100. Scripts and raw data:
+[`scripts/measure/`](../../infrastructure/workspaces/lambda-web-functions-express/scripts/measure/).
+
+| Seconds since the function became active | ~0 | ~11 | ~16 | ~21 | ~31 | ~40 |
+|---|---|---|---|---|---|---|
+| No retry: HTTP 200 per 100 (in flight per env) | 6 (2) | 6 (2) | 24 (8–10) | 24 (8–10) | 60 (20–21) | not run |
+| Retry: HTTP 200 per 100 (in flight per env) | 16–17 (2) | 50–56 (8) | — | 90–95 (20) | 95–99 (30–31) | 100 (33–36) |
+
+- The starting limit was **2 in flight per environment** in all 7 new functions; it rose in steps
+  (2 → 8–10 → 20 → 30–36). Runs with sustained load (retries) reached the next step sooner
+  (20 at ~21 s vs 8–10 without retries), so learning tracks load, not only wall time.
+- Retries (full jitter, base 0.2 s, cap 5 s, max 6 attempts) raised the 8-burst total from
+  200–218/800 to 657–661/800, at the cost of p99 2.0 s → 7.7 s in the first bursts and **5.7×
+  attempts in the first burst** (570 for 100 requests). The extra attempts hit `rateLimit` 100:
+  20–41 final 429s were `Platform.EndpointRequestThrottle`, and 503 load shedding (no
+  `lambda-web-error-type`) appeared only in retry runs. Size `rateLimit` for retry traffic too.
+- `CreateWebFunction` with `revisionConfig` + `endpointConfig` gives an Active endpoint in ~10 s.
+
+### Environments kept under steady traffic (CloudFront → `/todos`, 6 min each)
+
+| Rate | `EndpointActiveEnvironments` | `EnvironmentMaxMemoryUsage` | Errors / p99 |
+|---|---|---|---|
+| 2 req/s | 1 | 183–206 MB | 0 / 61 ms |
+| 20 req/s | 1, then 2 after ~4 min | up to 431 MB | 0 / 57 ms |
+
+A two-point fit of `EnvironmentCPUTime` gives ~2.0 ms CPU per request plus ~7.4 ms CPU per
+environment-second of idle time (billed as vCPU-seconds). `EnvironmentCPUTime` and
+`EnvironmentActiveTime` are reported in **milliseconds** (120,000 per 2-minute point = 1
+environment).
+
 ## Head-to-head with API Gateway + Event Function (Lambda Web Adapter)
 
 Same account, same client in Japan, closed-loop load, 30 s after 10 s warm-up, `/todos` scanning
@@ -135,19 +171,32 @@ Same account, same client in Japan, closed-loop load, 30 s after 10 s warm-up, `
 - Compute per request: 2.5 ms CPU (Web Function) vs 15.6 ms billed duration (Event Function).
   Per 1M requests ≈ $0.45 (Web Function incl. memory of idle environments) vs $0.25 (Event
   Function) + $4.25 (API Gateway REST). The saving is API Gateway, not compute.
+- Estimate with the steady-load inputs (`scripts/measure/cost_model.py`, list prices 2026-10-29):
+  against **REST** API the saving is large, but against **HTTP API ($1.29/M)** or **CloudFront +
+  Function URL** it mostly disappears — CloudFront's own $1.20/M HTTPS request fee is about what
+  API Gateway HTTP API costs. For a 15.6 ms CRUD request, Web Functions + CloudFront never gets
+  cheaper than CloudFront + Function URL + Event Function; the crossover appears only as
+  requests wait longer (~2.7M req/month at 500 ms, ~0.6M at 2 s), because waiting is billed as
+  GB-seconds on Event Functions but not as vCPU-seconds on Web Functions.
 
 ## Observability
 
 - **Log delivery delay** (`ingestionTime − timestamp`): `.local` 2.8–9.0 s, main group
   7.1–15.4 s. Querying right after a request can return nothing.
-- **The main log group can be recreated after `cdk destroy`.** An environment outlived the
-  deleted function and logged `platform.invokeSummary` ~2.5 min later; its replicated copy
-  recreated `/aws/lambda/web/<name>` (no retention) ~3 min after `DELETE_COMPLETE`. Seen in one
-  of three teardowns. Re-check ~10 min after destroy and delete it.
+- **Deleting a Web Function does not stop its environments at once, and their last log lines
+  recreate the log groups.** First seen once in three `cdk destroy` runs (`platform.invokeSummary`
+  ~2.5 min later recreated `/aws/lambda/web/<name>` ~3 min after `DELETE_COMPLETE`). On
+  2026-10-29, deleting 8 functions via the API right after load recreated `/aws/lambda/web/<name>`
+  and/or `<name>.local` (no retention) for **7 of 8 functions**, within about a minute. Sweep the
+  log groups again a few minutes after deleting, or own them in the stack.
 - **`SIGTERM` handling**: with `server.close()` in a `SIGTERM` handler, `platform.spinDownReport`
   was `success` in 25–60 ms (`platform.spinDownStart` → report).
 - **SSE beyond `timeoutSeconds`** (40 events at 1 s, timeout 30 s, through CloudFront): 30
   events, **HTTP 200, clean end of stream, curl exit 0** — truncation is invisible to the client.
+  Fix: end every stream with an explicit terminal event (`event: done`) and treat its absence as
+  truncation — verified on 2026-10-29: 4/4 truncated streams detected at 30.1 s and 4/4 complete
+  streams (~5.1 s) recognized
+  ([`sse-check.mjs`](../../infrastructure/workspaces/lambda-web-functions-express/scripts/measure/sse-check.mjs)).
 
 - **The `<log-group>.local` group outlives the stack.** The service creates it on first use
   with no retention, so after `cdk destroy` it remained (never-expire). Declare it in the
