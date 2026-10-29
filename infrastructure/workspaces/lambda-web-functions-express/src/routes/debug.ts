@@ -71,7 +71,13 @@ router.get('/cpu', (req: Request, res: Response) => {
   res.json({ burnedMs: ms, ...snapshot() });
 });
 
-/** Server-Sent Events: chunks must reach the client incrementally. */
+/**
+ * Server-Sent Events: chunks must reach the client incrementally.
+ *
+ * The stream ends with an explicit `event: done`. When the revision's timeoutSeconds
+ * cuts a stream short, the client still sees HTTP 200 and a clean end of stream, so
+ * the missing terminal event is the only way for it to tell truncation from completion.
+ */
 router.get('/stream', async (req: Request, res: Response) => {
   const count = clamp(req.query.count, 50, 10);
   const intervalMs = clamp(req.query.intervalMs, 2_000, 500);
@@ -86,6 +92,7 @@ router.get('/stream', async (req: Request, res: Response) => {
     res.write(`id: ${i}\ndata: ${JSON.stringify({ seq: i, at: new Date().toISOString() })}\n\n`);
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
+  res.write(`event: done\ndata: ${JSON.stringify({ count })}\n\n`);
   res.end();
 });
 

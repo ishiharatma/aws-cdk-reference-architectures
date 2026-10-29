@@ -726,7 +726,7 @@ exports[`LambdaWebFunctionsExpressStack Snapshot Complete CloudFormation templat
           "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
         ],
         "SourceObjectKeys": [
-          "a0c4d6b257437130b1671b673e46f91156feaf37abfc86f4f7cb78e3858cd9a9.zip",
+          "e33ae489d550b232282b3ae63f92c891baf7f34891acf841f58ce82c09541692.zip",
         ],
         "WaitForDistributionInvalidation": true,
       },

@@ -195,11 +195,24 @@ From the `AWS/Lambda/Web` CloudWatch metrics for a 5-minute window dominated by 
 
 The LWA 500s are API Gateway's answer to Lambda throttling: this account's **Event Functions limit is 10 concurrent executions** (and ~100 synchronous invokes per second), while **Web Functions have their own quotas** (`maxTotalArmVCpus` 200, `maxTotalRateLimit` 10,000 RPS from `GetWebAccountSettings`). Over the benchmark window, compute per request was 2.5 ms of CPU on Web Functions versus 15.6 ms of billed duration on the Event Function. Per million requests that is about **$0.45** for the Web Function (requests + CPU + memory, including the 29 environments left idle after the 50-concurrent run) versus **$0.25 for the Event Function plus $4.25 for API Gateway** — the saving comes from dropping API Gateway, not from cheaper compute.
 
+### Bursts on a new function, and what client retries change (2026-10-29, 3 trials each)
+
+Every trial used a new Web Function (the learned limit survives scale to zero) and sent bursts of 100 parallel 2-second waits with `maxEnvironments` 3 and `rateLimit` 100, signed, straight to the endpoint. Procedure and raw data: [`scripts/measure/`](scripts/measure/).
+
+| Seconds since the function became active | ~0 | ~11 | ~21 | ~31 | ~40 |
+|---|---|---|---|---|---|
+| No retry: 200s out of 100 (in flight per environment) | 6 (2) | 6 (2) | 24 (8–10) | 60 (20–21) | not run |
+| Retry: 200s out of 100 (in flight per environment) | 16–17 (2) | 50–56 (8) | 90–95 (20) | 95–99 (30–31) | 100 (33–36) |
+
+- The starting dynamic limit was **2 in flight per environment** on all 7 new functions.
+- Exponential backoff with full jitter (max 6 attempts) raised the 8-burst total from 200–218/800 to 657–661/800. The price: **5.7× attempts** in the first burst (570 for 100 requests), some of which became 429 `EndpointRequestThrottle` from `rateLimit`. Size `rateLimit` with retries in mind.
+- After 10 minutes idle (no `EndpointActiveEnvironments` datapoints) a burst got 30/100, not the starting 6/100.
+
 ### Other behavior verified
 
 | Check | Result |
 |-------|--------|
-| SSE longer than `timeoutSeconds` (40 events at 1 s, timeout 30 s) | **cut after 30 events with HTTP 200 and a clean end of stream** (curl exit 0) — the client cannot tell. Set `timeoutSeconds` (and CloudFront `readTimeout`) above the longest stream |
+| SSE longer than `timeoutSeconds` (40 events at 1 s, timeout 30 s) | **cut after 30 events with HTTP 200 and a clean end of stream** (curl exit 0) — the client cannot tell. Set `timeoutSeconds` (and CloudFront `readTimeout`) above the longest stream, and end streams with `event: done` so the client can detect a missing end (4/4 truncated and 4/4 complete streams told apart, [`sse-check.mjs`](scripts/measure/sse-check.mjs)) |
 | Log delivery delay (`ingestionTime − timestamp`) | `.local` group 2.8–9.0 s, main group 7.1–15.4 s |
 | `SIGTERM` with `server.close()` | `platform.spinDownReport` **success in 25–60 ms** |
 | Account quotas (`GetWebAccountSettings`) | `maxTotalArmVCpus` 200, `maxTotalRateLimit` 10,000 — lower than the documented defaults (2,000 / 100,000); check before load testing |

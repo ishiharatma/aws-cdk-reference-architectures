@@ -1,0 +1,881 @@
+{
+  "startedAt": "2026-10-29T15:36:20+0000",
+  "args": {
+    "profile": "drillexercises-dev",
+    "region": "ap-northeast-1",
+    "code_dir": "cdk.out/asset.e33ae489d550b232282b3ae63f92c891baf7f34891acf841f58ce82c09541692",
+    "modes": "none,retry",
+    "trials": 3,
+    "bursts": 8,
+    "parallel": 100,
+    "sleep_ms": 2000,
+    "gap_s": 3,
+    "max_environments": 3,
+    "rate_limit": 100,
+    "max_attempts": 6,
+    "backoff_base_s": 0.2,
+    "backoff_cap_s": 5,
+    "idle_recheck_minutes": 0,
+    "out": "/tmp/claude-1000/-workspaces-aws-cdk-reference-architectures/7e6b0fac-3cf7-4fa8-bfa6-3dd37b1dc3f4/scratchpad/main"
+  },
+  "trials": [
+    {
+      "mode": "none",
+      "trial": 1,
+      "function": "lwf-m-c223dd-none-1",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 94,
+            "200": 6
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.94,
+          "p99S": 3.056,
+          "maxS": 3.056
+        },
+        {
+          "burst": "2",
+          "atS": 6.1,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 6,
+            "429 Platform.EndpointMaxEnvThrottle": 94
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.02,
+          "p99S": 2.034,
+          "maxS": 2.034
+        },
+        {
+          "burst": "3",
+          "atS": 11.1,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 94,
+            "200": 6
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.026,
+          "p99S": 2.029,
+          "maxS": 2.029
+        },
+        {
+          "burst": "4",
+          "atS": 16.1,
+          "requests": 100,
+          "ok": 26,
+          "okFirstTry": 26,
+          "finalByStatus": {
+            "200": 26,
+            "429 Platform.EndpointMaxEnvThrottle": 74
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 10,
+          "p50S": 2.021,
+          "p99S": 2.026,
+          "maxS": 2.026
+        },
+        {
+          "burst": "5",
+          "atS": 21.2,
+          "requests": 100,
+          "ok": 26,
+          "okFirstTry": 26,
+          "finalByStatus": {
+            "200": 26,
+            "429 Platform.EndpointMaxEnvThrottle": 74
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 10,
+          "p50S": 2.026,
+          "p99S": 2.033,
+          "maxS": 2.033
+        },
+        {
+          "burst": "6",
+          "atS": 26.2,
+          "requests": 100,
+          "ok": 26,
+          "okFirstTry": 26,
+          "finalByStatus": {
+            "200": 26,
+            "429 Platform.EndpointMaxEnvThrottle": 74
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 10,
+          "p50S": 2.019,
+          "p99S": 2.025,
+          "maxS": 2.025
+        },
+        {
+          "burst": "7",
+          "atS": 31.2,
+          "requests": 100,
+          "ok": 61,
+          "okFirstTry": 61,
+          "finalByStatus": {
+            "200": 61,
+            "429 Platform.EndpointMaxEnvThrottle": 39
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 21,
+          "p50S": 2.027,
+          "p99S": 2.065,
+          "maxS": 2.066
+        },
+        {
+          "burst": "8",
+          "atS": 36.3,
+          "requests": 100,
+          "ok": 61,
+          "okFirstTry": 61,
+          "finalByStatus": {
+            "200": 61,
+            "429 Platform.EndpointMaxEnvThrottle": 39
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 21,
+          "p50S": 2.022,
+          "p99S": 2.03,
+          "maxS": 2.064
+        }
+      ]
+    },
+    {
+      "mode": "none",
+      "trial": 2,
+      "function": "lwf-m-c223dd-none-2",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 94,
+            "200": 6
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.667,
+          "p99S": 2.713,
+          "maxS": 2.713
+        },
+        {
+          "burst": "2",
+          "atS": 5.7,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 6,
+            "429 Platform.EndpointMaxEnvThrottle": 94
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.022,
+          "p99S": 2.026,
+          "maxS": 2.026
+        },
+        {
+          "burst": "3",
+          "atS": 10.7,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 6,
+            "429 Platform.EndpointMaxEnvThrottle": 94
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.028,
+          "p99S": 2.032,
+          "maxS": 2.032
+        },
+        {
+          "burst": "4",
+          "atS": 15.8,
+          "requests": 100,
+          "ok": 24,
+          "okFirstTry": 24,
+          "finalByStatus": {
+            "200": 24,
+            "429 Platform.EndpointMaxEnvThrottle": 76
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.022,
+          "p99S": 2.025,
+          "maxS": 2.025
+        },
+        {
+          "burst": "5",
+          "atS": 20.8,
+          "requests": 100,
+          "ok": 24,
+          "okFirstTry": 24,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 76,
+            "200": 24
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.025,
+          "p99S": 2.03,
+          "maxS": 2.03
+        },
+        {
+          "burst": "6",
+          "atS": 25.8,
+          "requests": 100,
+          "ok": 24,
+          "okFirstTry": 24,
+          "finalByStatus": {
+            "200": 24,
+            "429 Platform.EndpointMaxEnvThrottle": 76
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.021,
+          "p99S": 2.032,
+          "maxS": 2.032
+        },
+        {
+          "burst": "7",
+          "atS": 30.9,
+          "requests": 100,
+          "ok": 60,
+          "okFirstTry": 60,
+          "finalByStatus": {
+            "200": 60,
+            "429 Platform.EndpointMaxEnvThrottle": 40
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.031,
+          "p99S": 2.037,
+          "maxS": 2.037
+        },
+        {
+          "burst": "8",
+          "atS": 35.9,
+          "requests": 100,
+          "ok": 60,
+          "okFirstTry": 60,
+          "finalByStatus": {
+            "200": 60,
+            "429 Platform.EndpointMaxEnvThrottle": 40
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.035,
+          "p99S": 2.045,
+          "maxS": 2.045
+        }
+      ]
+    },
+    {
+      "mode": "none",
+      "trial": 3,
+      "function": "lwf-m-c223dd-none-3",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 94,
+            "200": 6
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.762,
+          "p99S": 2.787,
+          "maxS": 2.787
+        },
+        {
+          "burst": "2",
+          "atS": 5.8,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 6,
+            "429 Platform.EndpointMaxEnvThrottle": 94
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.021,
+          "p99S": 2.026,
+          "maxS": 2.026
+        },
+        {
+          "burst": "3",
+          "atS": 10.8,
+          "requests": 100,
+          "ok": 6,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 6,
+            "429 Platform.EndpointMaxEnvThrottle": 94
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 2.024,
+          "p99S": 2.031,
+          "maxS": 2.031
+        },
+        {
+          "burst": "4",
+          "atS": 15.9,
+          "requests": 100,
+          "ok": 22,
+          "okFirstTry": 22,
+          "finalByStatus": {
+            "200": 22,
+            "429 Platform.EndpointMaxEnvThrottle": 78
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.02,
+          "p99S": 2.027,
+          "maxS": 2.027
+        },
+        {
+          "burst": "5",
+          "atS": 20.9,
+          "requests": 100,
+          "ok": 22,
+          "okFirstTry": 22,
+          "finalByStatus": {
+            "200": 22,
+            "429 Platform.EndpointMaxEnvThrottle": 78
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.024,
+          "p99S": 2.031,
+          "maxS": 2.031
+        },
+        {
+          "burst": "6",
+          "atS": 25.9,
+          "requests": 100,
+          "ok": 22,
+          "okFirstTry": 22,
+          "finalByStatus": {
+            "200": 22,
+            "429 Platform.EndpointMaxEnvThrottle": 78
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 2.021,
+          "p99S": 2.023,
+          "maxS": 2.023
+        },
+        {
+          "burst": "7",
+          "atS": 31.0,
+          "requests": 100,
+          "ok": 58,
+          "okFirstTry": 58,
+          "finalByStatus": {
+            "200": 58,
+            "429 Platform.EndpointMaxEnvThrottle": 42
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.031,
+          "p99S": 2.067,
+          "maxS": 2.068
+        },
+        {
+          "burst": "8",
+          "atS": 36.0,
+          "requests": 100,
+          "ok": 58,
+          "okFirstTry": 58,
+          "finalByStatus": {
+            "200": 58,
+            "429 Platform.EndpointMaxEnvThrottle": 42
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.02,
+          "p99S": 2.035,
+          "maxS": 2.037
+        }
+      ]
+    },
+    {
+      "mode": "retry",
+      "trial": 1,
+      "function": "lwf-m-c223dd-retry-1",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 16,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointRequestThrottle": 35,
+            "200": 16,
+            "429 Platform.EndpointMaxEnvThrottle": 48,
+            "503": 1
+          },
+          "attemptsTotal": 570,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 5.314,
+          "p99S": 7.743,
+          "maxS": 7.743
+        },
+        {
+          "burst": "2",
+          "atS": 10.8,
+          "requests": 100,
+          "ok": 56,
+          "okFirstTry": 22,
+          "finalByStatus": {
+            "429 Platform.EndpointRequestThrottle": 20,
+            "200": 56,
+            "429 Platform.EndpointMaxEnvThrottle": 24
+          },
+          "attemptsTotal": 483,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 4.37,
+          "p99S": 7.155,
+          "maxS": 7.206
+        },
+        {
+          "burst": "3",
+          "atS": 21.0,
+          "requests": 100,
+          "ok": 90,
+          "okFirstTry": 58,
+          "finalByStatus": {
+            "200": 90,
+            "429 Platform.EndpointMaxEnvThrottle": 9,
+            "429 Platform.EndpointRequestThrottle": 1
+          },
+          "attemptsTotal": 299,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.031,
+          "p99S": 6.297,
+          "maxS": 6.853
+        },
+        {
+          "burst": "4",
+          "atS": 30.8,
+          "requests": 100,
+          "ok": 99,
+          "okFirstTry": 91,
+          "finalByStatus": {
+            "200": 99,
+            "429 Platform.EndpointMaxEnvThrottle": 1
+          },
+          "attemptsTotal": 141,
+          "environments": 3,
+          "maxInFlight": 31,
+          "p50S": 2.05,
+          "p99S": 4.728,
+          "maxS": 4.964
+        },
+        {
+          "burst": "5",
+          "atS": 38.8,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 91,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 143,
+          "environments": 3,
+          "maxInFlight": 33,
+          "p50S": 2.027,
+          "p99S": 5.458,
+          "maxS": 6.694
+        },
+        {
+          "burst": "6",
+          "atS": 48.5,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.033,
+          "p99S": 2.046,
+          "maxS": 2.047
+        },
+        {
+          "burst": "7",
+          "atS": 53.6,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.022,
+          "p99S": 2.029,
+          "maxS": 2.031
+        },
+        {
+          "burst": "8",
+          "atS": 58.7,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.026,
+          "p99S": 2.035,
+          "maxS": 2.037
+        }
+      ]
+    },
+    {
+      "mode": "retry",
+      "trial": 2,
+      "function": "lwf-m-c223dd-retry-2",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 17,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 17,
+            "429 Platform.EndpointRequestThrottle": 41,
+            "429 Platform.EndpointMaxEnvThrottle": 40,
+            "503": 2
+          },
+          "attemptsTotal": 570,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 5.351,
+          "p99S": 7.85,
+          "maxS": 7.85
+        },
+        {
+          "burst": "2",
+          "atS": 10.9,
+          "requests": 100,
+          "ok": 50,
+          "okFirstTry": 21,
+          "finalByStatus": {
+            "200": 50,
+            "429 Platform.EndpointMaxEnvThrottle": 35,
+            "429 Platform.EndpointRequestThrottle": 14,
+            "503": 1
+          },
+          "attemptsTotal": 485,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 4.263,
+          "p99S": 7.511,
+          "maxS": 7.511
+        },
+        {
+          "burst": "3",
+          "atS": 21.4,
+          "requests": 100,
+          "ok": 92,
+          "okFirstTry": 58,
+          "finalByStatus": {
+            "200": 92,
+            "429 Platform.EndpointMaxEnvThrottle": 7,
+            "429 Platform.EndpointRequestThrottle": 1
+          },
+          "attemptsTotal": 302,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.036,
+          "p99S": 6.422,
+          "maxS": 6.772
+        },
+        {
+          "burst": "4",
+          "atS": 31.2,
+          "requests": 100,
+          "ok": 98,
+          "okFirstTry": 90,
+          "finalByStatus": {
+            "200": 98,
+            "429 Platform.EndpointMaxEnvThrottle": 2
+          },
+          "attemptsTotal": 149,
+          "environments": 3,
+          "maxInFlight": 31,
+          "p50S": 2.037,
+          "p99S": 5.802,
+          "maxS": 5.922
+        },
+        {
+          "burst": "5",
+          "atS": 40.1,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 90,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 134,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.026,
+          "p99S": 3.74,
+          "maxS": 5.089
+        },
+        {
+          "burst": "6",
+          "atS": 48.2,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.026,
+          "p99S": 2.038,
+          "maxS": 2.041
+        },
+        {
+          "burst": "7",
+          "atS": 53.3,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.022,
+          "p99S": 2.027,
+          "maxS": 2.029
+        },
+        {
+          "burst": "8",
+          "atS": 58.3,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.021,
+          "p99S": 2.032,
+          "maxS": 2.033
+        }
+      ]
+    },
+    {
+      "mode": "retry",
+      "trial": 3,
+      "function": "lwf-m-c223dd-retry-3",
+      "bursts": [
+        {
+          "burst": "1",
+          "atS": 0.0,
+          "requests": 100,
+          "ok": 16,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "429 Platform.EndpointMaxEnvThrottle": 43,
+            "429 Platform.EndpointRequestThrottle": 41,
+            "200": 16
+          },
+          "attemptsTotal": 570,
+          "environments": 3,
+          "maxInFlight": 2,
+          "p50S": 5.208,
+          "p99S": 7.503,
+          "maxS": 7.503
+        },
+        {
+          "burst": "2",
+          "atS": 10.5,
+          "requests": 100,
+          "ok": 53,
+          "okFirstTry": 6,
+          "finalByStatus": {
+            "200": 53,
+            "429 Platform.EndpointRequestThrottle": 20,
+            "429 Platform.EndpointMaxEnvThrottle": 26,
+            "503": 1
+          },
+          "attemptsTotal": 500,
+          "environments": 3,
+          "maxInFlight": 8,
+          "p50S": 4.488,
+          "p99S": 6.993,
+          "maxS": 7.185
+        },
+        {
+          "burst": "3",
+          "atS": 20.7,
+          "requests": 100,
+          "ok": 95,
+          "okFirstTry": 58,
+          "finalByStatus": {
+            "200": 95,
+            "429 Platform.EndpointMaxEnvThrottle": 5
+          },
+          "attemptsTotal": 299,
+          "environments": 3,
+          "maxInFlight": 20,
+          "p50S": 2.036,
+          "p99S": 6.855,
+          "maxS": 6.913
+        },
+        {
+          "burst": "4",
+          "atS": 30.6,
+          "requests": 100,
+          "ok": 95,
+          "okFirstTry": 90,
+          "finalByStatus": {
+            "200": 95,
+            "429 Platform.EndpointMaxEnvThrottle": 5
+          },
+          "attemptsTotal": 148,
+          "environments": 3,
+          "maxInFlight": 30,
+          "p50S": 2.04,
+          "p99S": 4.796,
+          "maxS": 6.373
+        },
+        {
+          "burst": "5",
+          "atS": 40.0,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 90,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 131,
+          "environments": 3,
+          "maxInFlight": 36,
+          "p50S": 2.04,
+          "p99S": 3.086,
+          "maxS": 3.567
+        },
+        {
+          "burst": "6",
+          "atS": 46.6,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.025,
+          "p99S": 2.031,
+          "maxS": 2.036
+        },
+        {
+          "burst": "7",
+          "atS": 51.7,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.023,
+          "p99S": 2.034,
+          "maxS": 2.037
+        },
+        {
+          "burst": "8",
+          "atS": 56.7,
+          "requests": 100,
+          "ok": 100,
+          "okFirstTry": 100,
+          "finalByStatus": {
+            "200": 100
+          },
+          "attemptsTotal": 100,
+          "environments": 3,
+          "maxInFlight": 34,
+          "p50S": 2.023,
+          "p99S": 2.031,
+          "maxS": 2.032
+        }
+      ]
+    }
+  ]
+}
