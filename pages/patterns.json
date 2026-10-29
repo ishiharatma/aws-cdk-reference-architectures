@@ -845,5 +845,27 @@
     "level": 300,
     "date": "2026-10-28",
     "articles": {}
+  },
+  {
+    "id": "eks-managed-node-group-vs-auto-mode",
+    "title": "EKS basics: managed node group + AWS Load Balancer Controller vs EKS Auto Mode",
+    "description": "The same web app behind an Ingress-created ALB on two EKS 1.36 clusters in one VPC, built with aws-eks-v2: a managed node group with the AWS Load Balancer Controller installed by Helm and authenticated with EKS Pod Identity, and an EKS Auto Mode cluster with an IngressClass + IngressClassParams for its managed ALB controller. Deploy-verified: what each stack owns, Auto Mode starting one node per AZ for a strict zone spread, 7 pods stuck Pending on the node group at 30 replicas, empty Auto Mode nodes removed within 65-91 s, zero errors in a rolling restart, and access entries rejecting a path-less SSO role ARN.",
+    "image": "eks-managed-node-group-vs-auto-mode/overview.drawio.svg",
+    "tags": [
+      "CDK",
+      "TypeScript",
+      "EKS",
+      "Kubernetes",
+      "EKS Auto Mode",
+      "Managed Node Group",
+      "AWS Load Balancer Controller",
+      "Pod Identity",
+      "ALB"
+    ],
+    "link": "eks-managed-node-group-vs-auto-mode",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-10-29",
+    "articles": {}
   }
 ]
