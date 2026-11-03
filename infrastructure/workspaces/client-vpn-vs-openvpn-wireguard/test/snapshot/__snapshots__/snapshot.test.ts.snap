@@ -1,0 +1,2466 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot clientSimulator: complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Verification harness: remote client in an unrelated VPC",
+  "Outputs": {
+    "ClientSimulatorInstanceId": {
+      "Value": {
+        "Ref": "InstanceC1063A87d3ccc47faad4ef5b",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "InstanceC1063A87d3ccc47faad4ef5b": {
+      "DependsOn": [
+        "RoleDefaultPolicy5FFB7DAB",
+        "Role1ABCC5F0",
+        "VpcPublicSubnet1DefaultRoute3DA9E72A",
+        "VpcPublicSubnet1RouteTableAssociation97140677",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "InstanceInstanceProfileAB5AEF02",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.micro",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "InstanceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "InstanceLaunchTemplateFB1C3D8B",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Fn::GetAtt": [
+                  "SgD4954771",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetId": {
+              "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/ClientSimulator/Instance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+retry() { for i in $(seq 1 10); do "$@" && return 0; sleep 15; done; return 1; }
+retry apt-get -o DPkg::Lock::Timeout=600 update
+retry apt-get -o DPkg::Lock::Timeout=600 install -y openvpn wireguard-tools jq bc
+retry snap install aws-cli --classic
+cat > /etc/vpn-test.env <<'EOF'
+REGION=ap-northeast-1
+PREFIX=/test/test/vpn
+EOF
+cat > /usr/local/bin/vpn-test <<'SHEOF'
+#!/bin/bash
+# Runs on the client simulator (as root, through SSM Run Command).
+#
+#   vpn-test <client-vpn|openvpn|wireguard> <client1|client2> [blob_mb] [runs] [wg_mtu|auto]
+#
+# Brings up one tunnel, waits until the private target answers, measures ping RTT and HTTP
+# throughput through the tunnel, then tears the tunnel down. Prints one "RESULT ..." line.
+set -uo pipefail
+source /etc/vpn-test.env   # REGION, PREFIX
+
+METHOD=\${1:?method}
+CLIENT=\${2:?client}
+BLOB_MB=\${3:-100}
+RUNS=\${4:-3}
+# WireGuard only. "auto" lets wg-quick derive it from the route MTU (9001 on EC2 -> 8921).
+WG_MTU=\${5:-1420}
+[ "$WG_MTU" = auto ] && WG_MTU=""
+CONNECT_TIMEOUT=60
+WORK=/run/vpn-test
+mkdir -p "$WORK" && chmod 700 "$WORK"
+AWS=/snap/bin/aws
+
+param() { $AWS ssm get-parameter --region "$REGION" --name "$PREFIX/$1" --query Parameter.Value --output text; }
+TARGET=$(param target/private-ip)
+BUNDLE=$($AWS secretsmanager get-secret-value --region "$REGION" --secret-id "$PREFIX/clients/$CLIENT" --query SecretString --output text)
+field() { echo "$BUNDLE" | jq -r ".$1"; }
+
+inline_credentials() {
+  echo "<ca>"; field ca; echo "</ca>"
+  echo "<cert>"; field cert; echo "</cert>"
+  echo "<key>"; field key; echo "</key>"
+}
+
+start_tunnel() {
+  case "$METHOD" in
+    client-vpn)
+      local endpoint
+      endpoint=$(param client-vpn/endpoint-id)
+      # The exported profile already carries the CA; only the client certificate and key are added.
+      # Piped through cat on purpose: the snap build of AWS CLI v2 writes nothing when its stdout is
+      # redirected straight to a file under SSM Run Command (observed on Ubuntu 24.04, CLI 2.35).
+      $AWS ec2 export-client-vpn-client-configuration --region "$REGION" \\
+        --client-vpn-endpoint-id "$endpoint" --output text 2> "$WORK/export.err" | cat > "$WORK/vpn.ovpn"
+      if ! grep -q '^remote ' "$WORK/vpn.ovpn"; then
+        echo "export-client-vpn-client-configuration failed: $(cat "$WORK/export.err")" > "$WORK/openvpn.log"
+        return 1
+      fi
+      { echo "<cert>"; field cert; echo "</cert>"; echo "<key>"; field key; echo "</key>"; } >> "$WORK/vpn.ovpn"
+      openvpn --config "$WORK/vpn.ovpn" --daemon --writepid "$WORK/openvpn.pid" --log "$WORK/openvpn.log"
+      ;;
+    openvpn)
+      {
+        echo "client"
+        echo "dev tun"
+        echo "proto udp"
+        echo "remote $(param openvpn/public-ip) 1194"
+        echo "nobind"
+        echo "remote-cert-tls server"
+        echo "data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305"
+        echo "verb 3"
+        inline_credentials
+      } > "$WORK/vpn.ovpn"
+      openvpn --config "$WORK/vpn.ovpn" --daemon --writepid "$WORK/openvpn.pid" --log "$WORK/openvpn.log"
+      ;;
+    wireguard)
+      umask 077
+      cat > /etc/wireguard/wgtest.conf <<EOF
+[Interface]
+PrivateKey = $(field wgPrivateKey)
+Address = $(field wgAddress)
+\${WG_MTU:+MTU = $WG_MTU}
+
+[Peer]
+PublicKey = $(param wireguard/server-public-key)
+Endpoint = $(param wireguard/public-ip):51820
+AllowedIPs = $(param target/vpc-cidr)
+PersistentKeepalive = 25
+EOF
+      wg-quick up wgtest > "$WORK/wg.log" 2>&1
+      ;;
+    *) echo "unknown method $METHOD" >&2; exit 2 ;;
+  esac
+}
+
+stop_tunnel() {
+  if [ -f "$WORK/openvpn.pid" ]; then kill "$(cat "$WORK/openvpn.pid")" 2>/dev/null; sleep 2; rm -f "$WORK/openvpn.pid"; fi
+  if ip link show wgtest >/dev/null 2>&1; then wg-quick down wgtest >/dev/null 2>&1; fi
+  rm -f /etc/wireguard/wgtest.conf "$WORK/vpn.ovpn"
+}
+trap stop_tunnel EXIT
+stop_tunnel
+
+START=$(date +%s.%N)
+start_tunnel || true
+CONNECTED=false
+for i in $(seq 1 $((CONNECT_TIMEOUT * 2))); do
+  if WHOAMI=$(curl -s --max-time 1 "http://$TARGET/whoami"); then CONNECTED=true; break; fi
+  # Client VPN rejections (connect handler / auth) make openvpn exit: stop waiting early.
+  # (The daemon writes its pid file shortly after start, so a missing file counts only after ~5 s.)
+  if [ "$METHOD" != wireguard ] && [ "$i" -gt 10 ] && \\
+     { [ ! -f "$WORK/openvpn.pid" ] || ! kill -0 "$(cat "$WORK/openvpn.pid")" 2>/dev/null; }; then break; fi
+  sleep 0.5
+done
+END=$(date +%s.%N)
+CONNECT_S=$(echo "$END - $START" | bc)
+
+if [ "$CONNECTED" != true ]; then
+  echo "RESULT method=$METHOD client=$CLIENT status=failed waited_s=$CONNECT_S"
+  echo "--- client log (tail) ---"
+  if [ -f "$WORK/openvpn.log" ]; then tail -n 15 "$WORK/openvpn.log"; fi
+  if ip link show wgtest >/dev/null 2>&1; then wg show wgtest; fi
+  exit 0
+fi
+
+RTT=$(ping -c 20 -i 0.2 -q "$TARGET" | awk -F'/' '/^rtt/ {print $5}')
+SPEEDS=()
+for _ in $(seq 1 "$RUNS"); do
+  BPS=$(curl -s -o /dev/null --max-time 120 -w '%{speed_download}' "http://$TARGET/blob?mb=$BLOB_MB")
+  SPEEDS+=("$(echo "scale=1; $BPS * 8 / 1000000" | bc)")
+done
+REMOTE=$(echo "$WHOAMI" | jq -r .remote_addr)
+TUN_IF=$(ip route get "$TARGET" | awk '{for (i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}')
+MTU=$(cat "/sys/class/net/$TUN_IF/mtu")
+echo "RESULT method=$METHOD client=$CLIENT status=connected connect_s=$CONNECT_S rtt_avg_ms=$RTT" \\
+  "throughput_mbps=$(IFS=,; echo "\${SPEEDS[*]}") target_saw=$REMOTE tun_if=$TUN_IF mtu=$MTU"
+SHEOF
+chmod 755 /usr/local/bin/vpn-test",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "InstanceInstanceProfileAB5AEF02": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "Role1ABCC5F0",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "InstanceLaunchTemplateFB1C3D8B": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "InstanceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "Role1ABCC5F0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "VPN client simulator: Session Manager and client bundles",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "RoleDefaultPolicy5FFB7DAB": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":secretsmanager:ap-northeast-1:123456789012:secret:/test/test/vpn/clients/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/vpn/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "ec2:ExportClientVpnClientConfiguration",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ec2:ap-northeast-1:123456789012:client-vpn-endpoint/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "RoleDefaultPolicy5FFB7DAB",
+        "Roles": [
+          {
+            "Ref": "Role1ABCC5F0",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "SgD4954771": {
+      "Properties": {
+        "GroupDescription": "VPN client simulator (outbound only)",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.200.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/ClientSimulator/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/ClientSimulator/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcPublicSubnet1DefaultRoute3DA9E72A": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1RouteTable6C95E38E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/ClientSimulator/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation97140677": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet5C2D37C4": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.200.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/ClientSimulator/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot clientSimulator: resource types and counts 1`] = `
+{
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::Route": 1,
+  "AWS::EC2::RouteTable": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 1,
+  "AWS::EC2::SubnetRouteTableAssociation": 1,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 1,
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot clientVpn: complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Method A: AWS Client VPN (managed, mutual TLS, connect handler)",
+  "Outputs": {
+    "ClientVpnEndpointId": {
+      "Value": {
+        "Ref": "EndpointEEF1FD8F",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValuetesttestvpnacmservercertarnC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/test/test/vpn/acm/server-cert-arn",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ConnectHandler2FFD52D8": {
+      "DependsOn": [
+        "ConnectHandlerServiceRole7E4A9B1F",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "ASSET",
+        },
+        "Environment": {
+          "Variables": {
+            "DENIED_COMMON_NAMES": "["client2.vpn.internal"]",
+          },
+        },
+        "FunctionName": "AWSClientVPN-test-test-connect-handler",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ConnectHandlerLogGroupE27C4693",
+          },
+        },
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "ConnectHandlerServiceRole7E4A9B1F",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 10,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "ConnectHandlerLogGroupE27C4693": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ConnectHandlerServiceRole7E4A9B1F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ConnectionLogGroup71AFA7A2": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EndpointAssociation086C11203": {
+      "Properties": {
+        "ClientVpnEndpointId": {
+          "Ref": "EndpointEEF1FD8F",
+        },
+        "SubnetId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940",
+        },
+      },
+      "Type": "AWS::EC2::ClientVpnTargetNetworkAssociation",
+    },
+    "EndpointAssociation1384F49BA": {
+      "Properties": {
+        "ClientVpnEndpointId": {
+          "Ref": "EndpointEEF1FD8F",
+        },
+        "SubnetId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3",
+        },
+      },
+      "Type": "AWS::EC2::ClientVpnTargetNetworkAssociation",
+    },
+    "EndpointAuthorizeAll68072213": {
+      "Properties": {
+        "AuthorizeAllGroups": true,
+        "ClientVpnEndpointId": {
+          "Ref": "EndpointEEF1FD8F",
+        },
+        "TargetNetworkCidr": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396",
+        },
+      },
+      "Type": "AWS::EC2::ClientVpnAuthorizationRule",
+    },
+    "EndpointEEF1FD8F": {
+      "Properties": {
+        "AuthenticationOptions": [
+          {
+            "MutualAuthentication": {
+              "ClientRootCertificateChainArn": {
+                "Ref": "SsmParameterValuetesttestvpnacmservercertarnC96584B6F00A464EAD1953AFF4B05118Parameter",
+              },
+            },
+            "Type": "certificate-authentication",
+          },
+        ],
+        "ClientCidrBlock": "10.120.0.0/22",
+        "ClientConnectOptions": {
+          "Enabled": true,
+          "LambdaFunctionArn": {
+            "Fn::GetAtt": [
+              "ConnectHandler2FFD52D8",
+              "Arn",
+            ],
+          },
+        },
+        "ClientLoginBannerOptions": {
+          "BannerText": "Authorized use only. Connections are logged.",
+          "Enabled": true,
+        },
+        "ConnectionLogOptions": {
+          "CloudwatchLogGroup": {
+            "Ref": "ConnectionLogGroup71AFA7A2",
+          },
+          "Enabled": true,
+        },
+        "Description": "test-test Client VPN (mutual TLS)",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointSg9223A863",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServerCertificateArn": {
+          "Ref": "SsmParameterValuetesttestvpnacmservercertarnC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "SessionTimeoutHours": 8,
+        "SplitTunnel": true,
+        "TransportProtocol": "udp",
+        "VpcId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+        "VpnPort": 443,
+      },
+      "Type": "AWS::EC2::ClientVpnEndpoint",
+    },
+    "EndpointIdParam28ED0BD5": {
+      "Properties": {
+        "Name": "/test/test/vpn/client-vpn/endpoint-id",
+        "Type": "String",
+        "Value": {
+          "Ref": "EndpointEEF1FD8F",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "EndpointSg9223A863": {
+      "Properties": {
+        "GroupDescription": "AWS Client VPN endpoint network interfaces",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": {
+              "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396",
+            },
+            "Description": "HTTP to the target",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": {
+              "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396",
+            },
+            "Description": "ICMP to the target",
+            "FromPort": -1,
+            "IpProtocol": "icmp",
+            "ToPort": -1,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "TargetFromClientVpnHttp": {
+      "Properties": {
+        "Description": "HTTP from AWS Client VPN",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EndpointSg9223A863",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "TargetFromClientVpnIcmp": {
+      "Properties": {
+        "Description": "ICMP from AWS Client VPN",
+        "FromPort": -1,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "icmp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EndpointSg9223A863",
+            "GroupId",
+          ],
+        },
+        "ToPort": -1,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot clientVpn: resource types and counts 1`] = `
+{
+  "AWS::EC2::ClientVpnAuthorizationRule": 1,
+  "AWS::EC2::ClientVpnEndpoint": 1,
+  "AWS::EC2::ClientVpnTargetNetworkAssociation": 2,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroupIngress": 2,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 2,
+  "AWS::SSM::Parameter": 1,
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot openVpn: complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Method B: OpenVPN community server on EC2",
+  "Outputs": {
+    "OpenVpnInstanceId": {
+      "Value": {
+        "Ref": "ServerInstanceE518391B0391264863d1ef0a",
+      },
+    },
+    "OpenVpnPublicIp": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ServerEip6B1852E2",
+          "PublicIp",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "PublicIpParam5F470ECF": {
+      "Properties": {
+        "Name": "/test/test/vpn/openvpn/public-ip",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "ServerEip6B1852E2",
+            "PublicIp",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "ServerEip6B1852E2": {
+      "Properties": {
+        "Domain": "vpc",
+        "InstanceId": {
+          "Ref": "ServerInstanceE518391B0391264863d1ef0a",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-vpn-openvpn-OpenVPN",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "ServerInstanceE518391B0391264863d1ef0a": {
+      "DependsOn": [
+        "ServerRoleDefaultPolicy02C1A355",
+        "ServerRoleB6C85082",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "ServerInstanceInstanceProfile5CC6E324",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.micro",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "InstanceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "ServerInstanceLaunchTemplate84166CF6",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ServerSg777E31FB",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": true,
+        "SubnetId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/OpenVpn/Server/Instance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash
+# OpenVPN community server bootstrap (Ubuntu 24.04). Placeholders @@...@@ are filled by CDK.
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+# The Elastic IP replaces the launch-time public IP a few seconds after boot, which drops any
+# connection in flight; retry every network step instead of failing the whole bootstrap.
+retry() { for i in $(seq 1 10); do "$@" && return 0; sleep 15; done; return 1; }
+
+REGION='ap-northeast-1'
+SECRET_ID='/test/test/vpn/openvpn/server'
+PORT='1194'
+TUNNEL_NETWORK='10.121.0.0'
+TUNNEL_NETMASK='255.255.255.0'
+TUNNEL_CIDR='10.121.0.0/24'
+VPC_NETWORK='10.110.0.0'
+VPC_NETMASK='255.255.0.0'
+LOG_GROUP='",
+                {
+                  "Ref": "ServerLogGroup8435EA51",
+                },
+                "'
+
+retry apt-get -o DPkg::Lock::Timeout=600 update
+retry apt-get -o DPkg::Lock::Timeout=600 install -y openvpn jq
+retry snap install aws-cli --classic
+
+# ---- certificates (created by setup-pki.sh; never part of the template) ----
+# 755: the worker re-reads crl.pem as "nobody" after dropping privileges; only key.pem is 600.
+install -d -m 755 /etc/openvpn/server
+# No xtrace while key material is in variables (it would land in cloud-init-output.log).
+set +x
+SECRET_JSON=$(/snap/bin/aws secretsmanager get-secret-value --region "$REGION" --secret-id "$SECRET_ID" --query SecretString --output text)
+for f in ca cert key crl; do
+  echo "$SECRET_JSON" | jq -r ".$f" > "/etc/openvpn/server/$f.pem"
+done
+chmod 600 /etc/openvpn/server/key.pem
+# The CRL is read by the unprivileged worker after the privilege drop.
+chmod 644 /etc/openvpn/server/crl.pem
+unset SECRET_JSON
+set -x
+
+install -d /var/log/openvpn
+cat > /etc/openvpn/server/server.conf <<EOF
+port $PORT
+proto udp
+dev tun
+topology subnet
+server $TUNNEL_NETWORK $TUNNEL_NETMASK
+# Split tunnel: only the VPC is routed through the VPN (same as Client VPN split-tunnel).
+push "route $VPC_NETWORK $VPC_NETMASK"
+ca /etc/openvpn/server/ca.pem
+cert /etc/openvpn/server/cert.pem
+key /etc/openvpn/server/key.pem
+dh none
+ecdh-curve prime256v1
+tls-version-min 1.2
+data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305
+remote-cert-tls client
+# Revocation: OpenVPN rejects every client once the CRL passes its nextUpdate, so it must be renewed.
+crl-verify /etc/openvpn/server/crl.pem
+keepalive 10 60
+user nobody
+group nogroup
+persist-key
+persist-tun
+explicit-exit-notify 1
+status /var/log/openvpn/status.log 30
+log-append /var/log/openvpn/server.log
+verb 3
+EOF
+
+# ---- forwarding + source NAT: VPC resources see the server's private IP, no route table changes ----
+cat > /etc/sysctl.d/90-vpn-forward.conf <<'EOF'
+net.ipv4.ip_forward = 1
+EOF
+sysctl --system
+cat > /usr/local/sbin/vpn-nat.sh <<EOF
+#!/bin/bash
+IFACE=\\$(ip route show default | awk '{print \\$5; exit}')
+iptables -t nat -C POSTROUTING -s $TUNNEL_CIDR -o "\\$IFACE" -j MASQUERADE 2>/dev/null || \\
+  iptables -t nat -A POSTROUTING -s $TUNNEL_CIDR -o "\\$IFACE" -j MASQUERADE
+EOF
+chmod 755 /usr/local/sbin/vpn-nat.sh
+cat > /etc/systemd/system/vpn-nat.service <<'EOF'
+[Unit]
+Description=Source NAT for VPN clients
+After=network-online.target
+Before=openvpn-server@server.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vpn-nat.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# ---- connection log shipping (OpenVPN writes connect / disconnect / TLS errors to server.log) ----
+retry curl -fsSL -o /tmp/cwagent.deb https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+dpkg -i /tmp/cwagent.deb
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF
+{
+  "agent": { "region": "$REGION" },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/openvpn/server.log", "log_group_name": "$LOG_GROUP", "log_stream_name": "{instance_id}/server.log" }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+systemctl daemon-reload
+systemctl enable --now vpn-nat.service
+systemctl enable --now openvpn-server@server.service
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \\
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+",
+              ],
+            ],
+          },
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "ServerInstanceInstanceProfile5CC6E324": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "ServerRoleB6C85082",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "ServerInstanceLaunchTemplate84166CF6": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "InstanceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "ServerLogGroup8435EA51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ServerRoleB6C85082": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "OpenVPN server: Session Manager, key material and log shipping",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ServerRoleDefaultPolicy02C1A355": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":secretsmanager:ap-northeast-1:123456789012:secret:/test/test/vpn/openvpn/server-??????",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ServerLogGroup8435EA51",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ServerLogGroup8435EA51",
+                          "Arn",
+                        ],
+                      },
+                      ":log-stream:*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ServerRoleDefaultPolicy02C1A355",
+        "Roles": [
+          {
+            "Ref": "ServerRoleB6C85082",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ServerSg777E31FB": {
+      "Properties": {
+        "GroupDescription": "OpenVPN server",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "OpenVPN clients",
+            "FromPort": 1194,
+            "IpProtocol": "udp",
+            "ToPort": 1194,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "TargetFromOpenVpnHttp": {
+      "Properties": {
+        "Description": "HTTP from OpenVPN",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ServerSg777E31FB",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "TargetFromOpenVpnIcmp": {
+      "Properties": {
+        "Description": "ICMP from OpenVPN",
+        "FromPort": -1,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "icmp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ServerSg777E31FB",
+            "GroupId",
+          ],
+        },
+        "ToPort": -1,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot openVpn: resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroupIngress": 2,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SSM::Parameter": 1,
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot target: complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Target VPC and private web server reachable only through a VPN",
+  "Outputs": {
+    "ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "TargetSgDDA7E1B5",
+          "GroupId",
+        ],
+      },
+    },
+    "ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Vpc8378EB38",
+          "CidrBlock",
+        ],
+      },
+    },
+    "ExportsOutputRefVpc8378EB38272D6E3A": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputRefVpc8378EB38272D6E3A",
+      },
+      "Value": {
+        "Ref": "Vpc8378EB38",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet1Subnet536B997A",
+      },
+    },
+    "ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3",
+      },
+      "Value": {
+        "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+      },
+    },
+    "ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456": {
+      "Export": {
+        "Name": "test-test-vpn-target:ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456",
+      },
+      "Value": {
+        "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+      },
+    },
+    "TargetPrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [
+          "TargetServer262C31C8550ce542590a3498",
+          "PrivateIp",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "FlowLogGroup3E25AA51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "TargetPrivateIpParam8D7490DD": {
+      "Properties": {
+        "Name": "/test/test/vpn/target/private-ip",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "TargetServer262C31C8550ce542590a3498",
+            "PrivateIp",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "TargetServer262C31C8550ce542590a3498": {
+      "DependsOn": [
+        "TargetServerInstanceRole66891EB5",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "TargetServerInstanceProfile7C272DF4",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "TargetServerLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "TargetServerLaunchTemplate4B606B07",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "TargetSgDDA7E1B5",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet536B997A",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/TargetServer",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "#!/bin/bash
+set -euxo pipefail
+install -d /opt/target
+cat > /opt/target/app.py <<'PYEOF'
+"""Private web server used as the connection target of the three VPN methods.
+
+GET /whoami      -> JSON with the source address the server saw (shows each VPN's SNAT)
+GET /blob?mb=N   -> N MiB of zeros, used to measure throughput through the tunnel
+"""
+
+import json
+import socket
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
+
+CHUNK = b"\\0" * (1024 * 1024)
+MAX_MB = 1024
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):  # noqa: N802 (http.server naming)
+        url = urlparse(self.path)
+        if url.path == "/blob":
+            mb = min(int(parse_qs(url.query).get("mb", ["10"])[0]), MAX_MB)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Length", str(mb * len(CHUNK)))
+            self.end_headers()
+            for _ in range(mb):
+                self.wfile.write(CHUNK)
+            return
+        body = json.dumps(
+            {
+                "hostname": socket.gethostname(),
+                "remote_addr": self.client_address[0],
+                "path": url.path,
+            }
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+if __name__ == "__main__":
+    ThreadingHTTPServer(("0.0.0.0", 80), Handler).serve_forever()
+PYEOF
+cat > /etc/systemd/system/target-web.service <<'EOF'
+[Unit]
+Description=VPN comparison target web server
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/target/app.py
+Restart=always
+DynamicUser=yes
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable --now target-web.service",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "TargetServerInstanceProfile7C272DF4": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "TargetServerInstanceRole66891EB5",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "TargetServerInstanceRole66891EB5": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/TargetServer",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TargetServerLaunchTemplate4B606B07": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "TargetServerLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "TargetSgDDA7E1B5": {
+      "Properties": {
+        "GroupDescription": "Private web server reachable only through a VPN",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "TargetVpcCidrParamD5162CA4": {
+      "Properties": {
+        "Name": "/test/test/vpn/target/vpc-cidr",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "Vpc8378EB38",
+            "CidrBlock",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.110.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcAllFlowLog8F670CAE": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "VpcAllIAMRole8BEDC5BF",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "FlowLogGroup3E25AA51",
+        },
+        "ResourceId": {
+          "Ref": "Vpc8378EB38",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/All",
+          },
+        ],
+        "TrafficType": "ALL",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "VpcAllIAMRole8BEDC5BF": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/All",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcAllIAMRoleDefaultPolicyCF72AD1C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FlowLogGroup3E25AA51",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcAllIAMRoleDefaultPolicyCF72AD1C",
+        "Roles": [
+          {
+            "Ref": "VpcAllIAMRole8BEDC5BF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation70C59FA6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet536B997A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1RouteTableB2C5B500": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1Subnet536B997A": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.110.2.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2RouteTableA678073B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociationA89CAD56": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet3788AAA1": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.110.3.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute3DA9E72A": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1RouteTable6C95E38E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation97140677": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet5C2D37C4": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.110.0.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute97F91067": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2RouteTable94F7E489": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationDD5762D8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet691E08A3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet691E08A3": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.110.1.0/24",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Target/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot target: resource types and counts 1`] = `
+{
+  "AWS::EC2::FlowLog": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::InternetGateway": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::Route": 2,
+  "AWS::EC2::RouteTable": 4,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 4,
+  "AWS::EC2::SubnetRouteTableAssociation": 4,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCGatewayAttachment": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SSM::Parameter": 2,
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot wireGuard: complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Method C: WireGuard server on EC2",
+  "Outputs": {
+    "WireGuardInstanceId": {
+      "Value": {
+        "Ref": "ServerInstanceE518391B735f49746b6828ba",
+      },
+    },
+    "WireGuardPublicIp": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ServerEip6B1852E2",
+          "PublicIp",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "PublicIpParam5F470ECF": {
+      "Properties": {
+        "Name": "/test/test/vpn/wireguard/public-ip",
+        "Type": "String",
+        "Value": {
+          "Fn::GetAtt": [
+            "ServerEip6B1852E2",
+            "PublicIp",
+          ],
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "ServerEip6B1852E2": {
+      "Properties": {
+        "Domain": "vpc",
+        "InstanceId": {
+          "Ref": "ServerInstanceE518391B735f49746b6828ba",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-vpn-wireguard-WireGuard",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "ServerInstanceE518391B735f49746b6828ba": {
+      "DependsOn": [
+        "ServerRoleDefaultPolicy02C1A355",
+        "ServerRoleB6C85082",
+      ],
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 8,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "ServerInstanceInstanceProfile5CC6E324",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t4g.nano",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "InstanceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "ServerInstanceLaunchTemplate84166CF6",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ServerSg777E31FB",
+              "GroupId",
+            ],
+          },
+        ],
+        "SourceDestCheck": true,
+        "SubnetId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpcPublicSubnet1Subnet5C2D37C4FFA2B456",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/WireGuard/Server/Instance",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash
+# WireGuard server bootstrap (Ubuntu 24.04, in-kernel WireGuard). Placeholders @@...@@ are filled by CDK.
+set -euxo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+# The Elastic IP replaces the launch-time public IP a few seconds after boot, which drops any
+# connection in flight; retry every network step instead of failing the whole bootstrap.
+retry() { for i in $(seq 1 10); do "$@" && return 0; sleep 15; done; return 1; }
+
+REGION='ap-northeast-1'
+SECRET_ID='/test/test/vpn/wireguard/server'
+PEERS_PARAM='/test/test/vpn/wireguard/peers'
+PORT='51820'
+SERVER_ADDRESS='10.122.0.1/24'
+TUNNEL_CIDR='10.122.0.0/24'
+LOG_GROUP='",
+                {
+                  "Ref": "ServerLogGroup8435EA51",
+                },
+                "'
+
+retry apt-get -o DPkg::Lock::Timeout=600 update
+retry apt-get -o DPkg::Lock::Timeout=600 install -y wireguard-tools jq
+retry snap install aws-cli --classic
+
+cat > /etc/sysctl.d/90-vpn-forward.conf <<'EOF'
+net.ipv4.ip_forward = 1
+EOF
+sysctl --system
+
+# ---- render /etc/wireguard/wg0.conf from Secrets Manager (server key) and SSM (peer list) ----
+cat > /usr/local/sbin/wg-render.sh <<EOF
+#!/bin/bash
+# Re-run to apply peer additions / removals: wg-render.sh && wg syncconf wg0 <(wg-quick strip wg0)
+set -euo pipefail
+umask 077
+IFACE=\\$(ip route show default | awk '{print \\$5; exit}')
+PRIVATE_KEY=\\$(/snap/bin/aws secretsmanager get-secret-value --region $REGION --secret-id $SECRET_ID --query SecretString --output text | jq -r .privateKey)
+PEERS=\\$(/snap/bin/aws ssm get-parameter --region $REGION --name $PEERS_PARAM --query Parameter.Value --output text)
+{
+  echo "[Interface]"
+  echo "Address = $SERVER_ADDRESS"
+  echo "ListenPort = $PORT"
+  echo "PrivateKey = \\$PRIVATE_KEY"
+  # wg-quick would derive 8921 from the 9001-byte jumbo MTU of the ENI, but the internet path is
+  # 1500 bytes: tunnel packets then get fragmented and throughput drops ~30x. 1420 = 1500 - 80.
+  echo "MTU = 1420"
+  # Source NAT so VPC resources see the server's private IP; no route table changes needed.
+  echo "PostUp = iptables -t nat -A POSTROUTING -s $TUNNEL_CIDR -o \\$IFACE -j MASQUERADE"
+  echo "PostDown = iptables -t nat -D POSTROUTING -s $TUNNEL_CIDR -o \\$IFACE -j MASQUERADE"
+  echo "\\$PEERS" | jq -r '.[] | "\\n# \\(.name)\\n[Peer]\\nPublicKey = \\(.publicKey)\\nAllowedIPs = \\(.address)"'
+} > /etc/wireguard/wg0.conf
+echo "\\$PEERS" | jq -r '.[] | "\\(.publicKey) \\(.name)"' > /etc/wireguard/peer-names
+EOF
+chmod 700 /usr/local/sbin/wg-render.sh
+/usr/local/sbin/wg-render.sh
+systemctl enable --now wg-quick@wg0
+
+# ---- WireGuard has no connection log: record per-peer handshake state every minute ----
+install -d /var/log/wireguard
+cat > /usr/local/sbin/wg-peer-log.sh <<'EOF'
+#!/bin/bash
+# One line per peer: time, peer name, endpoint, seconds since last handshake, rx/tx bytes.
+NOW=$(date +%s)
+wg show wg0 dump | tail -n +2 | while read -r pub _psk endpoint _ips handshake rx tx _ka; do
+  name=$(awk -v k="$pub" '$1==k {print $2}' /etc/wireguard/peer-names)
+  if [ "$handshake" = "0" ]; then age=never; else age=$((NOW - handshake)); fi
+  echo "$(date -u +%FT%TZ) peer=\${name:-unknown} endpoint=$endpoint handshake_age_s=$age rx=$rx tx=$tx"
+done >> /var/log/wireguard/peers.log
+EOF
+chmod 755 /usr/local/sbin/wg-peer-log.sh
+cat > /etc/systemd/system/wg-peer-log.service <<'EOF'
+[Unit]
+Description=Record WireGuard peer state
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wg-peer-log.sh
+EOF
+cat > /etc/systemd/system/wg-peer-log.timer <<'EOF'
+[Unit]
+Description=Record WireGuard peer state every minute
+
+[Timer]
+OnCalendar=minutely
+
+[Install]
+WantedBy=timers.target
+EOF
+
+retry curl -fsSL -o /tmp/cwagent.deb https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+dpkg -i /tmp/cwagent.deb
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF
+{
+  "agent": { "region": "$REGION" },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/wireguard/peers.log", "log_group_name": "$LOG_GROUP", "log_stream_name": "{instance_id}/peers.log" }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+systemctl daemon-reload
+systemctl enable --now wg-peer-log.timer
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \\
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+",
+              ],
+            ],
+          },
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "ServerInstanceInstanceProfile5CC6E324": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "ServerRoleB6C85082",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "ServerInstanceLaunchTemplate84166CF6": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "InstanceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "ServerLogGroup8435EA51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ServerRoleB6C85082": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "WireGuard server: Session Manager, key material and log shipping",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ServerRoleDefaultPolicy02C1A355": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":secretsmanager:ap-northeast-1:123456789012:secret:/test/test/vpn/wireguard/server-??????",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "ssm:GetParameter",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ssm:ap-northeast-1:123456789012:parameter/test/test/vpn/wireguard/peers",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ServerLogGroup8435EA51",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ServerLogGroup8435EA51",
+                          "Arn",
+                        ],
+                      },
+                      ":log-stream:*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ServerRoleDefaultPolicy02C1A355",
+        "Roles": [
+          {
+            "Ref": "ServerRoleB6C85082",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ServerSg777E31FB": {
+      "Properties": {
+        "GroupDescription": "WireGuard server",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "WireGuard clients",
+            "FromPort": 51820,
+            "IpProtocol": "udp",
+            "ToPort": 51820,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputRefVpc8378EB38272D6E3A",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "TargetFromWireGuardHttp": {
+      "Properties": {
+        "Description": "HTTP from WireGuard",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ServerSg777E31FB",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "TargetFromWireGuardIcmp": {
+      "Properties": {
+        "Description": "ICMP from WireGuard",
+        "FromPort": -1,
+        "GroupId": {
+          "Fn::ImportValue": "test-test-vpn-target:ExportsOutputFnGetAttTargetSgDDA7E1B5GroupId83FF14C3",
+        },
+        "IpProtocol": "icmp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ServerSg777E31FB",
+            "GroupId",
+          ],
+        },
+        "ToPort": -1,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`ClientVpnVsOpenvpnWireguardStage Snapshot wireGuard: resource types and counts 1`] = `
+{
+  "AWS::EC2::EIP": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::SecurityGroupIngress": 2,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SSM::Parameter": 1,
+}
+`;

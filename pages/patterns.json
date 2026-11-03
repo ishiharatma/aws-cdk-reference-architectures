@@ -867,5 +867,28 @@
     "level": 300,
     "date": "2026-10-29",
     "articles": {}
+  },
+  {
+    "id": "client-vpn-vs-openvpn-wireguard",
+    "title": "Remote-access VPN: AWS Client VPN vs OpenVPN vs WireGuard on EC2",
+    "description": "One private web server in a NAT-less VPC reached three ways: AWS Client VPN with mutual TLS and a client connect handler Lambda, an OpenVPN community server and a WireGuard server on EC2, each in its own stack, with keys created outside CloudFormation (ACM, Secrets Manager, Parameter Store). Deploy-verified from a client in an unrelated VPC: Client VPN associations take 7 min 17 s, 170-248 vs 272-471 vs 1,674-2,248 Mbit/s, WireGuard drops to 41-81 Mbit/s with wg-quick's MTU 8921 on EC2, three ways a revoked user is rejected, and a Client VPN connection log that arrives ~26 minutes late.",
+    "image": "client-vpn-vs-openvpn-wireguard/overview.drawio.svg",
+    "tags": [
+      "CDK",
+      "TypeScript",
+      "Client VPN",
+      "OpenVPN",
+      "WireGuard",
+      "VPN",
+      "EC2",
+      "ACM",
+      "Lambda",
+      "Secrets Manager"
+    ],
+    "link": "client-vpn-vs-openvpn-wireguard",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-11-03",
+    "articles": {}
   }
 ]
