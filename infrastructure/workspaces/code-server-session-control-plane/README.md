@@ -16,6 +16,8 @@ What this architecture demonstrates:
 - Turning a token in an HttpOnly cookie into the `X-aws-proxy-auth` header and origin with Lambda@Edge, routing per session with no state and no secret
 - Handing a user without AWS credentials a Session Manager port forward that the control plane opened
 - How to design execution roles and secrets when the user has a terminal
+- `git clone` and `git push` to several named CodeCommit repositories with role credentials
+- A NAT instance to keep verification cheap, switchable with a NAT Gateway by parameter
 - End-to-end verification on real AWS on 2026-11-05, including sign-in and the IDE in a real browser. The defects it found are listed under [Deployment Verification](#-deployment-verification)
 
 ## 📑 Table of Contents
@@ -56,7 +58,8 @@ There are three ways in, all behind the same control plane.
 | Stack | Contents | How to omit |
 | --- | --- | --- |
 | `Microvm` | MicroVM image, build role, execution role, log group | Required |
-| `Ec2` | VPC, NAT Gateway, launch template, instance role | Remove `params.ec2` |
+| `Ec2` | VPC, NAT Gateway or NAT instance, launch template, instance role | Remove `params.ec2` |
+| `CodeCommit` | Repositories owned by this application; deleted with the stack | Leave `managedRepositoryNames` empty |
 | `ControlPlane` | Cognito, HTTP API, Lambda, DynamoDB, EC2 sweeper | Required |
 | `BrowserAccess` and `edge-lambda-stack-*` | CloudFront, Lambda@Edge (us-east-1), CloudFront Functions | `browserAccess: false` |
 
@@ -128,7 +131,11 @@ A MicroVM has an idle policy and a maximum lifetime; EC2 has neither. `sweep-ec2
 
 A signed-in user can start compute that costs money. `create-session` checks `maxActiveSessionsPerOwner` (default 2) against live state rather than DynamoDB records. Requests within a very short window could exceed it, which is acceptable for guarding against runaway cost.
 
-### 9. Well-Architected Framework Alignment
+### 9. Reach CodeCommit with role credentials, and set the author from Cognito
+
+The Git credential helper is scoped to `git-codecommit.*.amazonaws.com`, so credentials for other Git hosts are untouched. The role allows only `GitPull` and `GitPush` on the repositories in `codeCommit`. The role is shared by all sessions, so **every user reaches every listed repository with the same rights**. The commit author is set to the Cognito address automatically, but users can change it, so it does not prove identity.
+
+### 10. Well-Architected Framework Alignment
 
 | Pillar | How this pattern addresses it |
 | --- | --- |
@@ -147,12 +154,14 @@ Unit prices vary by Region. These US East (N. Virginia) list prices are for comp
 | --- | --- | --- |
 | MicroVM (arm64, 1 vCPU and 2 GiB basis) | About $0.126 per running hour; snapshots $0.08 per GB-month while suspended | Per session |
 | EC2 `t4g.medium` | $0.0336 per hour; 30 GiB gp3 $2.4 per month | Per session |
-| NAT Gateway | $0.045 per hour (about $32.85 per month) + $0.045 per GB | **Always, when `ec2` is enabled** |
+| NAT Gateway (`natType: 'gateway'`) | $0.045 per hour (about $32.85 per month) + $0.045 per GB | **Always, when `ec2` is enabled** |
+| NAT instance (`natType: 'instance'`) | `t4g.micro` $0.0084 per hour (about $6.1 per month) + public IPv4 about $3.65 per month | **Always, when `ec2` is enabled** |
+| CodeCommit | Within the free tier for up to 5 active users | When repositories are used |
 | Lambda@Edge | $0.60 per million requests + $0.00005001 per GB-second | Every Path B HTTP request |
 | CloudFront | Within the free tier for personal use | Path B |
 | HTTP API, Lambda, DynamoDB, Cognito | Close to zero for a small team | Always |
 
-With no sessions running, a MicroVM-only deployment (`ec2` and `browserAccess` removed) has almost no fixed cost. Keeping EC2 adds the NAT Gateway's fixed cost.
+With no sessions running, a MicroVM-only deployment (`ec2` and `browserAccess` removed) has almost no fixed cost. Keeping EC2 adds a fixed NAT cost. A NAT instance saves over $20 per month in a verification environment.
 
 What to tune:
 
@@ -168,6 +177,7 @@ What to tune:
 - VM isolation per session, compute per user
 - A Cognito JWT on every session operation; self sign-up disabled
 - Another user's session is always 404
+- CodeCommit access limited to `GitPull` and `GitPush` on the listed repositories
 - MicroVM tokens limited to one MicroVM and one port, for at most 60 minutes
 - Cookie with the `__Host-` prefix, `Secure`, `HttpOnly`, `SameSite=Strict`
 - Lambda@Edge validates the endpoint form and does not forward the cookie to code-server
@@ -253,6 +263,17 @@ node session.mjs stop
 
 The relay renews its token 5 minutes before expiry, so keep that terminal open while working. The first EC2 boot takes about 100 seconds to install code-server.
 
+### CodeCommit
+
+Run ordinary Git commands in the code-server terminal, with no password or key. In a new browser, first choose **Trust Folder & Continue** in VS Code.
+
+```sh
+git clone https://git-codecommit.<region>.amazonaws.com/v1/repos/<repository>
+cd <repository>
+git add . && git commit -m "..."
+git push origin HEAD:main
+```
+
 ### Claude Code
 
 Open the Claude Code panel or run `claude` in the terminal. It uses Amazon Bedrock and the models in `parameters/dev-params.ts`.
@@ -284,6 +305,28 @@ const devParams: EnvParams = {
   browserAccess: false, // no CloudFront or Lambda@Edge
 };
 ```
+
+### Choose CodeCommit repositories
+
+```typescript
+codeCommit: {
+  repositoryNames: ['team-app', 'team-infra'],   // existing; only access is granted
+  managedRepositoryNames: ['sandbox'],           // created by the stacks and deleted with them
+},
+```
+
+Repositories must be in the deployment's account and Region. Repositories in `managedRepositoryNames` are deleted with their contents when the stack is deleted (when `isAutoDeleteObject` is set). List anything you want to keep in `repositoryNames`.
+
+### Switch the NAT
+
+```typescript
+ec2: {
+  natType: 'instance',          // default is 'gateway'
+  natInstanceType: 't4g.micro', // the default; use an arm64 size
+},
+```
+
+A NAT instance is cheaper, but it is a single point of failure that you patch yourself. Use it for verification and `gateway` for shared environments. `t4g.nano` does not work (see the defect below). Changing the size later does not rerun UserData, so go back through `gateway` to rebuild it.
 
 ### Disable Claude Code or change the model
 
@@ -322,6 +365,15 @@ Deployed to a development account in ap-northeast-1 and us-east-1 on 2026-11-05,
 | Page load to a terminated MicroVM (invalid token) | 302 to the portal and the cookie cleared |
 | Sweep | No action before the deadline; terminates when `ExpiresAt` is in the past |
 
+**CodeCommit and NAT switching**
+
+| Check | Result |
+| --- | --- |
+| MicroVM terminal (real browser) | `git clone` and `git push` succeed; push took 2 seconds |
+| Commit author | `verify@example.com`, `verify` (the Cognito address) |
+| A repository not listed | Refused with `fatal: unable to access` |
+| `natType` switching | `instance` → `gateway` → `instance` by stack update; the update to `gateway` took 185 seconds |
+
 **Token expiry (measured with a 1-minute token)**
 
 | Elapsed | New requests | Open WebSocket |
@@ -338,7 +390,9 @@ Defects found on real AWS and fixed:
 3. **`ec2:CreateTags` is also needed on the volume.** Stack tags propagate into the launch template's tag specifications, so `RunInstances` tags the volume too. Allowing only the instance gives `UnauthorizedOperation`.
 4. **`session-manager-plugin` outlived the client.** After stopping the client the plugin stayed and held the port. Signals are now forwarded.
 
-Not confirmed: expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
+5. **A `t4g.nano` NAT instance does not work as a NAT.** On 512 MiB, the boot-time `yum install iptables-services` is `Killed` and `iptables` is never installed. The stack succeeds and routes look healthy, but private subnets cannot get out and EC2 never registers with Session Manager. The default is now `t4g.micro`.
+
+Not confirmed: CodeCommit from EC2 through the NAT instance, Git from the VS Code Source Control panel, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
 
 ## 🔧 Troubleshooting
 
@@ -371,6 +425,14 @@ The per-user limit. Check with `session.mjs list` and `stop` what you do not nee
 ### A check script does not reproduce page-load behavior
 
 Node.js `fetch` overwrites `sec-fetch-mode` with `cors`. To test a page load, use `curl -H 'Sec-Fetch-Mode: navigate'` or a real browser.
+
+### EC2 does not register with Session Manager (NAT instance)
+
+Check the NAT instance console output (`aws ec2 get-console-output`) for `Killed` or `iptables: command not found`. Either means the NAT setup ran out of memory. Set `natInstanceType` to `t4g.micro` or larger and rebuild the instance.
+
+### `git clone` fails with `unable to access`
+
+Check that the repository is in the `codeCommit` parameters. CodeCommit settings apply to sessions started after the update; end and restart older sessions.
 
 ### Claude Code asks you to sign in, or Bedrock refuses
 

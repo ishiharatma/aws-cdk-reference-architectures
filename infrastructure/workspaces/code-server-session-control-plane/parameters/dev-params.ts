@@ -9,8 +9,13 @@ const devParams: EnvParams = {
     baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1',
     baseImageVersion: '1',
   },
-  ec2: {},
+  // A NAT instance keeps a verification environment cheap; use 'gateway' for anything shared.
+  ec2: { natType: 'instance' },
   controlPlane: {},
+  codeCommit: {
+    // Created for verification and deleted with the stacks. List existing repositories in repositoryNames.
+    managedRepositoryNames: ['code-server-sessions-demo'],
+  },
 };
 
 params[Environment.DEVELOPMENT] = devParams;

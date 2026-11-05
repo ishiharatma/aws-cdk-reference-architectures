@@ -309,6 +309,72 @@ exports[`Snapshot browserAccess template 1`] = `
 }
 `;
 
+exports[`Snapshot codeCommit resource counts 1`] = `
+{
+  "AWS::CodeCommit::Repository": 1,
+}
+`;
+
+exports[`Snapshot codeCommit template 1`] = `
+{
+  "Outputs": {
+    "CloneUrl0": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Repository0313B33B9",
+          "CloneUrlHttp",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Repository0313B33B9": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RepositoryDescription": "Reachable from code-server sessions",
+        "RepositoryName": "managed-a",
+      },
+      "Type": "AWS::CodeCommit::Repository",
+      "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
 exports[`Snapshot controlPlane resource counts 1`] = `
 {
   "AWS::ApiGatewayV2::Api": 1,
@@ -871,7 +937,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "340e3b11ef473cadbda91299ea2b892f967993a3ba6a4a301619a902df8d283e.zip",
+          "S3Key": "12e60dcb0498432b432666679c792663864aa8cc60a3a371c29b50efac9dcfd4.zip",
         },
         "Environment": {
           "Variables": {
@@ -2764,6 +2830,52 @@ exports[`Snapshot ec2 template 1`] = `
               ],
               "Sid": "ClaudeCodeBedrockInvoke",
             },
+            {
+              "Action": [
+                "codecommit:GitPull",
+                "codecommit:GitPush",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-a",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-b",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:managed-a",
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "CodeCommitGitAccess",
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -2824,6 +2936,7 @@ exports[`Snapshot ec2 template 1`] = `
           "InstanceType": "t4g.medium",
           "MetadataOptions": {
             "HttpTokens": "required",
+            "InstanceMetadataTags": "enabled",
           },
           "SecurityGroupIds": [
             {
@@ -2861,6 +2974,11 @@ curl -fsSL https://github.com/coder/code-server/releases/download/v4.141.0/code-
 mkdir -p /opt/code-server && tar -xzf /tmp/code-server.tgz -C /opt/code-server --strip-components=1
 ln -sf /opt/code-server/bin/code-server /usr/local/bin/code-server
 install -d -o ec2-user -g ec2-user /home/ec2-user/project
+git config --system 'credential.https://git-codecommit.*.amazonaws.com.helper' '!aws codecommit credential-helper $@'
+git config --system 'credential.https://git-codecommit.*.amazonaws.com.useHttpPath' true
+TOKEN=$(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+GIT_EMAIL=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/GitEmail || true)
+if [ -n "$GIT_EMAIL" ]; then git config --system user.email "$GIT_EMAIL"; git config --system user.name "\${GIT_EMAIL%%@*}"; fi
 dnf install -y nodejs22 nodejs22-npm
 npm install -g @anthropic-ai/claude-code
 sudo -u ec2-user HOME=/home/ec2-user /usr/local/bin/code-server --install-extension Anthropic.claude-code
@@ -3350,7 +3468,7 @@ exports[`Snapshot microvm template 1`] = `
           ],
         },
         "CodeArtifact": {
-          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/c6c64e4a5b658c91bf2a8870658c82d44f095d76c6edb848b51e62d3811596a6.zip",
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/8fc38352406be488bf7f95d74cf9ad3cf5dd6a96312b687488727cbcf38274fc.zip",
         },
         "CpuConfigurations": [
           {
@@ -3374,12 +3492,12 @@ exports[`Snapshot microvm template 1`] = `
         ],
         "EnvironmentVariables": [
           {
-            "Key": "CLAUDE_CODE_USE_BEDROCK",
-            "Value": "1",
+            "Key": "SESSION_REGION",
+            "Value": "ap-northeast-1",
           },
           {
-            "Key": "BEDROCK_REGION",
-            "Value": "ap-northeast-1",
+            "Key": "CLAUDE_CODE_USE_BEDROCK",
+            "Value": "1",
           },
           {
             "Key": "BEDROCK_SMOKE_CHECK",
@@ -3506,6 +3624,52 @@ exports[`Snapshot microvm template 1`] = `
                 },
               ],
               "Sid": "ClaudeCodeBedrockInvoke",
+            },
+            {
+              "Action": [
+                "codecommit:GitPull",
+                "codecommit:GitPush",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-a",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-b",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:managed-a",
+                    ],
+                  ],
+                },
+              ],
+              "Sid": "CodeCommitGitAccess",
             },
             {
               "Action": [

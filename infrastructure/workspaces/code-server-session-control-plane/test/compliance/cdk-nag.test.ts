@@ -22,6 +22,8 @@ const suppressions = [
   { id: 'AwsSolutions-COG8', reason: 'The Plus feature plan is a per-MAU cost the operator opts into per environment.' },
   { id: 'AwsSolutions-VPC7', reason: 'VPC Flow Logs are an environment-specific cost tradeoff left to the operator (README).' },
   { id: 'AwsSolutions-EC23', reason: 'The instance security group has no inbound rules at all.' },
+  { id: 'AwsSolutions-EC28', reason: 'The optional NAT instance is stateless forwarding for verification environments; detailed monitoring is not worth its cost there.' },
+  { id: 'AwsSolutions-EC29', reason: 'The optional NAT instance is single by design and disposable; the README recommends natType gateway for shared environments.' },
   { id: 'AwsSolutions-CFR1', reason: 'Geo restriction depends on where the users are; left to the operator.' },
   { id: 'AwsSolutions-CFR2', reason: 'AWS WAF on the distribution is an environment-specific addition (README).' },
   { id: 'AwsSolutions-CFR3', reason: 'CloudFront access logging is an environment-specific addition (README).' },
@@ -31,7 +33,7 @@ const suppressions = [
 describe('CDK Nag AwsSolutions Pack', () => {
   const app = new cdk.App();
   const stacks = buildStacks(app);
-  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess];
+  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess, stacks.codeCommit];
   all.forEach((stack) => NagSuppressions.addStackSuppressions(stack, suppressions, true));
   cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
   app.synth();

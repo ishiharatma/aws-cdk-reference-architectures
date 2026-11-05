@@ -18,6 +18,11 @@ RUN curl -fsSL "https://github.com/coder/code-server/releases/download/v${CODE_S
     && tar -xzf /tmp/code-server.tgz -C /opt/code-server --strip-components=1 \
     && rm /tmp/code-server.tgz
 
+# AWS CLI v2: Git's credential helper for CodeCommit, using the MicroVM execution role.
+RUN case "${TARGETARCH}" in arm64) A=aarch64 ;; *) A=x86_64 ;; esac \
+    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${A}.zip" -o /tmp/awscli.zip \
+    && unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install && rm -rf /tmp/aws /tmp/awscli.zip
+
 # Claude Code CLI; the VS Code extension is installed below as the runtime user. Bedrock settings
 # arrive as image environment variables (CLAUDE_CODE_USE_BEDROCK, ANTHROPIC_MODEL, ...).
 RUN npm install -g @anthropic-ai/claude-code
@@ -29,6 +34,9 @@ RUN mkdir -p /home/node/project && chown -R node:node /home/node /opt/launcher
 USER node
 RUN HOME=/home/node /opt/code-server/bin/code-server --install-extension Anthropic.claude-code
 ENV HOME=/home/node
+# Scoped to CodeCommit hosts so credentials for other Git hosts stay untouched.
+RUN git config --global 'credential.https://git-codecommit.*.amazonaws.com.helper' '!aws codecommit credential-helper $@' \
+    && git config --global 'credential.https://git-codecommit.*.amazonaws.com.useHttpPath' true
 # Public port (lifecycle hooks + reverse proxy) -- must equal Hooks.port in the stack.
 # Not named PORT: code-server reads $PORT and would bind to it, overriding --bind-addr.
 ENV LAUNCHER_PORT=8080

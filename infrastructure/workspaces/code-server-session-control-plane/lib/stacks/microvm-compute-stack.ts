@@ -8,6 +8,7 @@ import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
 import { claudeInvokePolicy, resolveBedrock } from 'lib/shared/claude-bedrock';
+import { accessibleRepositoryNames, codeCommitPolicy } from 'lib/shared/code-commit';
 
 /**
  *
@@ -64,6 +65,8 @@ export class MicrovmComputeStack extends cdk.Stack {
 
     const bedrock = resolveBedrock(params.bedrock);
     if (bedrock.enabled) executionRole.addToPolicy(claudeInvokePolicy(this, bedrock));
+    const repositories = accessibleRepositoryNames(params.codeCommit);
+    if (repositories.length > 0) executionRole.addToPolicy(codeCommitPolicy(this, repositories));
     this.executionRole = executionRole;
 
     const imageLogGroup = new logs.LogGroup(this, 'MicrovmImageLogGroup', {
@@ -88,15 +91,17 @@ export class MicrovmComputeStack extends cdk.Stack {
       codeArtifact: { uri: imageAsset.s3ObjectUrl },
       cpuConfigurations: [{ architecture: image.architecture ?? 'ARM_64' }],
       egressNetworkConnectors: [this.egressConnectorArn],
-      environmentVariables: bedrock.enabled
-        ? [
-            { key: 'CLAUDE_CODE_USE_BEDROCK', value: '1' },
-            { key: 'BEDROCK_REGION', value: this.region },
-            { key: 'BEDROCK_SMOKE_CHECK', value: bedrock.smokeCheck ? '1' : '0' },
-            { key: 'ANTHROPIC_MODEL', value: bedrock.modelId },
-            { key: 'ANTHROPIC_SMALL_FAST_MODEL', value: bedrock.smallFastModelId },
-          ]
-        : [],
+      environmentVariables: [
+        { key: 'SESSION_REGION', value: this.region },
+        ...(bedrock.enabled
+          ? [
+              { key: 'CLAUDE_CODE_USE_BEDROCK', value: '1' },
+              { key: 'BEDROCK_SMOKE_CHECK', value: bedrock.smokeCheck ? '1' : '0' },
+              { key: 'ANTHROPIC_MODEL', value: bedrock.modelId },
+              { key: 'ANTHROPIC_SMALL_FAST_MODEL', value: bedrock.smallFastModelId },
+            ]
+          : []),
+      ],
       hooks: {
         microvmHooks: {
           run: 'ENABLED',

@@ -5,6 +5,7 @@ import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
 import { claudeInvokePolicy, claudeSettings, resolveBedrock } from 'lib/shared/claude-bedrock';
+import { accessibleRepositoryNames, codeCommitPolicy } from 'lib/shared/code-commit';
 
 /**
  *
@@ -23,7 +24,7 @@ const CODE_SERVER_PORT = 8080;
  *
  * Instances sit in private subnets with no inbound rule at all, and code-server binds to loopback.
  * The only way in is a Session Manager port forward, opened by the control plane for the owner.
- * The NAT Gateway carries the install, Open VSX and Session Manager traffic.
+ * The NAT Gateway or NAT instance (`ec2.natType`) carries the install, Open VSX and Session Manager traffic.
  */
 export class Ec2ComputeStack extends cdk.Stack {
   public readonly launchTemplate: ec2.ILaunchTemplate;
@@ -41,14 +42,25 @@ export class Ec2ComputeStack extends cdk.Stack {
     const ec2Params = params.ec2 ?? {};
     const codeServerVersion = params.codeServerVersion ?? '4.141.0';
 
+    const natInstanceProvider = ec2Params.natType === 'instance'
+      ? ec2.NatProvider.instanceV2({
+          instanceType: new ec2.InstanceType(ec2Params.natInstanceType ?? 't4g.micro'),
+          machineImage: ec2.MachineImage.latestAmazonLinux2023({ cpuType: ec2.AmazonLinuxCpuType.ARM_64 }),
+          defaultAllowedTraffic: ec2.NatTrafficDirection.OUTBOUND_ONLY,
+        })
+      : undefined;
+
     const vpc = new ec2.Vpc(this, 'Vpc', {
       maxAzs: 2,
       natGateways: 1,
+      ...(natInstanceProvider ? { natGatewayProvider: natInstanceProvider } : {}),
       subnetConfiguration: [
         { name: 'public', subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 },
         { name: 'private', subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, cidrMask: 24 },
       ],
     });
+    // OUTBOUND_ONLY admits nothing by default, so the private subnets have to be let in to be forwarded.
+    natInstanceProvider?.connections.allowFrom(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.allTraffic(), 'Traffic to forward from this VPC');
     this.subnetIds = vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds;
 
     const securityGroup = new ec2.SecurityGroup(this, 'InstanceSecurityGroup', {
@@ -65,6 +77,8 @@ export class Ec2ComputeStack extends cdk.Stack {
 
     const bedrock = resolveBedrock(params.bedrock);
     if (bedrock.enabled) instanceRole.addToPolicy(claudeInvokePolicy(this, bedrock));
+    const repositories = accessibleRepositoryNames(params.codeCommit);
+    if (repositories.length > 0) instanceRole.addToPolicy(codeCommitPolicy(this, repositories));
     this.instanceRole = instanceRole;
 
     const userData = ec2.UserData.forLinux();
@@ -75,6 +89,13 @@ export class Ec2ComputeStack extends cdk.Stack {
       'mkdir -p /opt/code-server && tar -xzf /tmp/code-server.tgz -C /opt/code-server --strip-components=1',
       'ln -sf /opt/code-server/bin/code-server /usr/local/bin/code-server',
       'install -d -o ec2-user -g ec2-user /home/ec2-user/project',
+      // Git signs in to CodeCommit with the instance role; other Git hosts keep their own credentials.
+      "git config --system 'credential.https://git-codecommit.*.amazonaws.com.helper' '!aws codecommit credential-helper $@'",
+      "git config --system 'credential.https://git-codecommit.*.amazonaws.com.useHttpPath' true",
+      // Commit author: the owner's sign-in address, set as an instance tag by the control plane.
+      'TOKEN=$(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60")',
+      'GIT_EMAIL=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/GitEmail || true)',
+      'if [ -n "$GIT_EMAIL" ]; then git config --system user.email "$GIT_EMAIL"; git config --system user.name "${GIT_EMAIL%%@*}"; fi',
     );
     if (bedrock.enabled) {
       // Claude Code CLI + VS Code extension (Open VSX), both reading ~/.claude/settings.json.
@@ -112,6 +133,7 @@ export class Ec2ComputeStack extends cdk.Stack {
       securityGroup,
       role: this.instanceRole,
       requireImdsv2: true,
+      instanceMetadataTags: true,
       userData,
       blockDevices: [
         {

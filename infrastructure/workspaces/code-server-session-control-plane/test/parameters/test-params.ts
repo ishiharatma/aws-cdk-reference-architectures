@@ -15,6 +15,10 @@ const testParams: EnvParams = {
   },
   ec2: {},
   controlPlane: {},
+  codeCommit: {
+    repositoryNames: ['existing-a', 'existing-b'],
+    managedRepositoryNames: ['managed-a'],
+  },
 };
 
 // Register in the params object

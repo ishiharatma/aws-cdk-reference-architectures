@@ -207,4 +207,10 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
 - **A spawned `session-manager-plugin` outlives its parent** and holds the local port, so forward signals to it.
 - **Stack tags reach `ec2.LaunchTemplate` tag specifications**, so `RunInstances` from that template also needs `ec2:CreateTags` on `volume/*`, or it fails with `UnauthorizedOperation`.
 
+## CodeCommit from a MicroVM (verified 2026-11-05)
+
+- **`aws codecommit credential-helper` works with the MicroVM execution role** over `INTERNET_EGRESS`: `git clone` and `git push` succeeded with no key or password, and a repository outside the role's policy gives `fatal: unable to access`. Scope the helper with `credential.https://git-codecommit.*.amazonaws.com.helper` so other Git hosts are unaffected.
+- **`runHookPayload` can carry per-user Git identity.** Set `user.email` in the `/run` hook; without it, `git commit` fails in a fresh image.
+- **VS Code shows a trust prompt in a new browser before opening a terminal**, which also blocks browser automation waiting on `.xterm`.
+
 See also [network-firewall-inspection.md](network-firewall-inspection.md) for the routing recipe.
