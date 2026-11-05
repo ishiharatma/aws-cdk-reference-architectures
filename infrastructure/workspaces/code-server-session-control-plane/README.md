@@ -486,6 +486,7 @@ Defects found on real AWS and fixed:
 5. **A `t4g.nano` NAT instance does not work as a NAT.** On 512 MiB, the boot-time `yum install iptables-services` is `Killed` and `iptables` is never installed. The stack succeeds and routes look healthy, but private subnets cannot get out and EC2 never registers with Session Manager. The default is now `t4g.micro`.
 
 6. **code-server missed its start wait in the closed network.** Running two AWS CLI processes at once on a 1 vCPU MicroVM pushed it past the 20-second wait, `/run` returned 500 and the MicroVM ended. Package setup now runs after code-server, and `/validate` runs code-server and the AWS CLI so they are prefetched; the IDE now appears in 9 to 17 seconds. The `/run` timeout is capped at 60 seconds.
+7. **Removing the EC2 stack gave 500 to users with an EC2 session on record.** The permission to ask EC2 about that record was gone, so listing and starting sessions failed with `UnauthorizedOperation`. A record now reads as terminated when EC2 is not deployed.
 
 Not confirmed: Git from the VS Code Source Control panel, the on-screen effect of disabling downloads, actual alarm and budget notifications, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
 
