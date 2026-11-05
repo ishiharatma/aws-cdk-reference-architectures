@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { randomUUID } from 'node:crypto';
 import { isEc2Enabled, readState, startCompute } from './lib/compute';
-import { getOwnerId, jsonResponse, parseBody } from './lib/http';
+import { getOwnerEmail, getOwnerId, jsonResponse, parseBody } from './lib/http';
 import { listOwnedSessions, putSession, updateSessionState } from './lib/session-store';
 
 const MAX_ACTIVE_SESSIONS = Number(process.env.MAX_ACTIVE_SESSIONS_PER_OWNER ?? '2');
@@ -37,7 +37,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   const sessionId = randomUUID();
   const now = new Date();
   const expiresAt = Math.floor(now.getTime() / 1000) + SESSION_RECORD_TTL_DAYS * 24 * 60 * 60;
-  const started = await startCompute(compute, sessionId, ownerId, expiresAt);
+  const started = await startCompute(compute, sessionId, ownerId, expiresAt, getOwnerEmail(event));
 
   await putSession({
     sessionId,

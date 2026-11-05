@@ -10,6 +10,18 @@ export interface Ec2Params {
   readonly volumeSizeGiB?: number;
   /** A running instance is stopped this many hours after its last start. @default 8 */
   readonly maxRunningHours?: number;
+  /**
+   * Outbound path of the private subnets. 'gateway' is managed and scales by itself; 'instance' costs
+   * far less but is one instance you patch, with no failover and a burst-limited network.
+   * @default 'gateway'
+   */
+  readonly natType?: 'gateway' | 'instance';
+  /**
+   * Used only when natType is 'instance'; must be arm64 for the default image. Do not use a nano size:
+   * the boot-time package install runs out of memory on 512 MiB and NAT is never configured.
+   * @default 't4g.micro'
+   */
+  readonly natInstanceType?: string;
 }
 
 /**
@@ -44,6 +56,16 @@ export interface ControlPlaneParams {
 }
 
 /**
+ * CodeCommit repositories reachable from sessions, in the deployment's account and Region.
+ */
+export interface CodeCommitParams {
+  /** Existing repositories. The stacks only grant access to them. @default [] */
+  readonly repositoryNames?: string[];
+  /** Repositories this application creates, and deletes along with its stacks. @default [] */
+  readonly managedRepositoryNames?: string[];
+}
+
+/**
  *
  */
 export interface BedrockParams {
@@ -65,6 +87,7 @@ export interface EnvParams extends EnvironmentConfig {
   readonly ec2?: Ec2Params;
   readonly controlPlane?: ControlPlaneParams;
   readonly bedrock?: BedrockParams;
+  readonly codeCommit?: CodeCommitParams;
   /** Publish the browser-only access path (CloudFront + Lambda@Edge in us-east-1). @default true */
   readonly browserAccess?: boolean;
   /** code-server release used by both compute types. @default '4.141.0' */

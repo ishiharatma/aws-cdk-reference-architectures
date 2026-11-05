@@ -25,6 +25,14 @@ export function getOwnerId(event: APIGatewayProxyEventV2WithJWTAuthorizer): stri
 }
 
 /**
+ * The caller's sign-in address, used as the commit author inside the session.
+ */
+export function getOwnerEmail(event: APIGatewayProxyEventV2WithJWTAuthorizer): string | undefined {
+  const email = event.requestContext.authorizer?.jwt?.claims?.email;
+  return typeof email === 'string' ? email : undefined;
+}
+
+/**
  * Parses a JSON request body, returning an empty object when it is absent or malformed.
  */
 export function parseBody(event: APIGatewayProxyEventV2WithJWTAuthorizer): Record<string, unknown> {

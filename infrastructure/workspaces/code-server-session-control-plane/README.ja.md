@@ -16,6 +16,8 @@
 - HttpOnly Cookie のトークンを Lambda@Edge で `X-aws-proxy-auth` ヘッダーとオリジンに変換し、状態もシークレットも持たずにセッション単位でルーティングする方法
 - AWS 認証情報を持たないユーザーへ、コントロールプレーンが開いた Session Manager のポートフォワードを渡す方法
 - 利用者がターミナルを持つ環境で、実行ロールとシークレットをどう設計するか
+- 指定した複数の CodeCommit リポジトリへ、ロールの権限で `git clone` と `git push` する方法
+- 検証環境の費用を抑える NAT インスタンスと、NAT Gateway のパラメータでの切り替え
 - 2026-11-05 に実機でエンドツーエンドの検証を実施。実ブラウザでのログインと IDE の表示を含む。見つかって直した不具合は[実機デプロイ検証](#-実機デプロイ検証)にまとめている
 
 ## 📑 目次
@@ -56,7 +58,8 @@
 | スタック | 内容 | 省略方法 |
 | --- | --- | --- |
 | `Microvm` | MicroVM イメージ、ビルドロール、実行ロール、ロググループ | 必須 |
-| `Ec2` | VPC、NAT Gateway、起動テンプレート、インスタンスロール | `params.ec2` を削除 |
+| `Ec2` | VPC、NAT Gateway または NAT インスタンス、起動テンプレート、インスタンスロール | `params.ec2` を削除 |
+| `CodeCommit` | このアプリが所有するリポジトリ。スタックと一緒に削除される | `managedRepositoryNames` を空にする |
 | `ControlPlane` | Cognito、HTTP API、Lambda、DynamoDB、EC2 のスイープ | 必須 |
 | `BrowserAccess` と `edge-lambda-stack-*` | CloudFront、Lambda@Edge(us-east-1)、CloudFront Functions | `browserAccess: false` |
 
@@ -128,7 +131,11 @@ MicroVM にはアイドルポリシーと最大寿命がありますが、EC2 �
 
 サインインしたユーザーは費用のかかるコンピュートを起動できます。`create-session` は `maxActiveSessionsPerOwner`(既定2)を、DynamoDB の記録ではなく実際の状態で確認します。ごく短い間に同時にリクエストすると超える可能性はありますが、費用の暴走を防ぐ用途には十分です。
 
-### 9. Well-Architected Framework との対応
+### 9. CodeCommit はロールの権限で接続し、作成者は Cognito から設定する
+
+Git の認証ヘルパーを `git-codecommit.*.amazonaws.com` に限定して設定するので、ほかの Git ホストの認証には影響しません。権限は `codeCommit` に書いたリポジトリの `GitPull` と `GitPush` だけです。ロールは全セッションで共通なので、**許可したリポジトリには全ユーザーが同じ権限で接続できます**。コミットの作成者には Cognito のメールアドレスが自動で入りますが、利用者は変更できるので、本人確認にはなりません。
+
+### 10. Well-Architected Framework との対応
 
 | 柱 | このパターンの対応 |
 | --- | --- |
@@ -147,12 +154,14 @@ MicroVM にはアイドルポリシーと最大寿命がありますが、EC2 �
 | --- | --- | --- |
 | MicroVM(arm64、1 vCPU、2 GiB 基準) | 実行1時間で約 $0.126、サスペンド中はスナップショットが 1 GB 月 $0.08 | セッションごと |
 | EC2 `t4g.medium` | 1時間 $0.0336、gp3 30 GiB で 月 $2.4 | セッションごと |
-| NAT Gateway | 1時間 $0.045(月 約 $32.85)+ 1 GB あたり $0.045 | **`ec2` を有効にすると常時** |
+| NAT Gateway(`natType: 'gateway'`) | 1時間 $0.045(月 約 $32.85)+ 1 GB あたり $0.045 | **`ec2` を有効にすると常時** |
+| NAT インスタンス(`natType: 'instance'`) | `t4g.micro` 1時間 $0.0084(月 約 $6.1)+ パブリック IPv4 月 約 $3.65 | **`ec2` を有効にすると常時** |
+| CodeCommit | 5アクティブユーザーまで無料枠の範囲で利用可能 | リポジトリを使うとき |
 | Lambda@Edge | 100万リクエスト $0.60 + GB 秒 $0.00005001 | 方式 B の全 HTTP リクエスト |
 | CloudFront | 個人利用なら無料枠に収まる | 方式 B |
 | HTTP API、Lambda、DynamoDB、Cognito | 少人数ならほぼゼロ | 常時 |
 
-セッションを起動しない限り、MicroVM のみの構成(`ec2` と `browserAccess` を外す)の固定費はほぼゼロです。EC2 版を残すと、NAT Gateway の固定費が加わります。
+セッションを起動しない限り、MicroVM のみの構成(`ec2` と `browserAccess` を外す)の固定費はほぼゼロです。EC2 版を残すと、NAT の固定費が加わります。検証環境では NAT インスタンスで月 $20 以上抑えられます。
 
 コストの調整先:
 
@@ -168,6 +177,7 @@ MicroVM にはアイドルポリシーと最大寿命がありますが、EC2 �
 - セッションごとの VM 分離、ユーザー単位のコンピュート
 - すべてのセッション操作に Cognito JWT を要求。セルフサインアップは無効
 - 他のユーザーのセッションは常に 404
+- CodeCommit の権限は指定したリポジトリの `GitPull` と `GitPush` だけ
 - MicroVM トークンは1つの MicroVM の1ポートに限定、有効期間は最大60分
 - Cookie は `__Host-` プレフィックス、`Secure`、`HttpOnly`、`SameSite=Strict`
 - Lambda@Edge はエンドポイントの形式を検証し、Cookie を code-server へ転送しない
@@ -253,6 +263,17 @@ node session.mjs stop
 
 リレーは残り5分になる前にトークンを更新するので、作業中はそのターミナルを開いたままにしてください。EC2 の初回は code-server のインストールに約100秒かかります。
 
+### CodeCommit
+
+code-server のターミナルで、通常の Git 操作をそのまま実行します。パスワードやキーの入力は要りません。新しいブラウザの初回は VS Code の **Trust Folder & Continue** を押してください。
+
+```sh
+git clone https://git-codecommit.<region>.amazonaws.com/v1/repos/<リポジトリ名>
+cd <リポジトリ名>
+git add . && git commit -m "..."
+git push origin HEAD:main
+```
+
 ### Claude Code
 
 Claude Code パネルを開くか、ターミナルで `claude` を実行します。Amazon Bedrock と `parameters/dev-params.ts` のモデルを使います。
@@ -284,6 +305,28 @@ const devParams: EnvParams = {
   browserAccess: false, // CloudFront と Lambda@Edge を作らない
 };
 ```
+
+### CodeCommit のリポジトリを指定する
+
+```typescript
+codeCommit: {
+  repositoryNames: ['team-app', 'team-infra'],   // 既存。権限だけを付ける
+  managedRepositoryNames: ['sandbox'],           // スタックで作成し、一緒に削除する
+},
+```
+
+同じアカウントとリージョンのリポジトリが対象です。`managedRepositoryNames` のリポジトリは、スタックを削除すると中身ごと消えます(`isAutoDeleteObject` が有効な場合)。残したいものは `repositoryNames` に書いてください。
+
+### NAT を切り替える
+
+```typescript
+ec2: {
+  natType: 'instance',          // 既定は 'gateway'
+  natInstanceType: 't4g.micro', // 既定値。arm64 のサイズを指定する
+},
+```
+
+NAT インスタンスは費用を抑えられますが、単一障害点で、パッチ適用も自分で行います。検証環境向けで、共用環境には `gateway` を使ってください。`t4g.nano` は使えません(下記の不具合を参照)。起動後にサイズを変えても UserData は再実行されないので、作り直すには一度 `gateway` に戻します。
 
 ### Claude Code を無効にする、またはモデルを変える
 
@@ -322,6 +365,15 @@ MicroVM は終了するとファイルが消え、寿命はサスペンド中も
 | 終了した MicroVM へのページ遷移(無効なトークン) | ポータルへの 302 と Cookie の削除 |
 | スイープ | 期限前は何もせず、`ExpiresAt` を過去にすると終了 |
 
+**CodeCommit と NAT の切り替え**
+
+| 確認項目 | 結果 |
+| --- | --- |
+| MicroVM のターミナル(実ブラウザ) | `git clone` と `git push` が成功。push は2秒 |
+| コミットの作成者 | `verify@example.com`、`verify`(Cognito のメールアドレス) |
+| 許可していないリポジトリ | `fatal: unable to access` で拒否 |
+| `natType` の切り替え | `instance` → `gateway` → `instance` をスタック更新で実施。`gateway` への更新は185秒 |
+
 **トークンの失効(1分のトークンで計測)**
 
 | 経過 | 新しいリクエスト | 接続済みの WebSocket |
@@ -338,7 +390,9 @@ MicroVM は終了するとファイルが消え、寿命はサスペンド中も
 3. **`ec2:CreateTags` にボリュームも必要。** スタックのタグが起動テンプレートのタグ指定に伝播するので、`RunInstances` がボリュームにもタグを付けます。インスタンスだけを許可すると `UnauthorizedOperation` になります。
 4. **`session-manager-plugin` がクライアントより長く生きる。** クライアントを止めてもプラグインが残り、ポートを占有しました。シグナルを転送しています。
 
-確認できていないこと: 実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
+5. **`t4g.nano` の NAT インスタンスは NAT として動かない。** メモリ 512 MiB では、起動時の `yum install iptables-services` が `Killed` になり、`iptables` が入りません。スタックの作成は成功し、ルートも正常に見えますが、プライベートサブネットからは外へ出られず、EC2 は Session Manager に登録されません。既定を `t4g.micro` にしました。
+
+確認できていないこと: EC2 から NAT インスタンス経由の CodeCommit 接続、VS Code のソース管理パネルからの Git 操作、実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
 
 ## 🔧 トラブルシューティング
 
@@ -371,6 +425,14 @@ Lambda@Edge の `ENDPOINT_PATTERN` が実際のエンドポイントと一致し
 ### 検査スクリプトでページ遷移の動作が再現しない
 
 Node.js の `fetch` は `sec-fetch-mode` を `cors` に上書きします。ページ遷移を試すときは、`curl -H 'Sec-Fetch-Mode: navigate'` か実ブラウザを使ってください。
+
+### EC2 が Session Manager に登録されない(NAT インスタンス)
+
+NAT インスタンスのコンソール出力(`aws ec2 get-console-output`)に `Killed` や `iptables: command not found` がないか確認します。あれば、メモリ不足で NAT の設定が入っていません。`natInstanceType` を `t4g.micro` 以上にして、インスタンスを作り直してください。
+
+### `git clone` が `unable to access` で失敗する
+
+リポジトリ名が `codeCommit` のパラメータにあるか確認します。CodeCommit の設定は、反映後に起動したセッションから有効です。古いセッションは終了して起動し直してください。
 
 ### Claude Code がサインインを求める、または Bedrock が拒否する
 

@@ -5,7 +5,7 @@
 // code-server runs with --auth none: the endpoint admits no request without a JWE token scoped to
 // this MicroVM, and the control plane issues that token only to the session owner. There is no
 // other path to this port, so a second, shared password would add no per-user control.
-import { execFile, spawn } from 'node:child_process';
+import { execFile, execFileSync, spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
@@ -31,13 +31,28 @@ function probeCodeServer() {
   });
 }
 
+// Commit author: the owner's sign-in address, passed by the control plane per MicroVM.
+async function configureGitIdentity(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  try {
+    const { runHookPayload } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const { gitEmail } = JSON.parse(runHookPayload);
+    if (!gitEmail) return;
+    execFileSync('git', ['config', '--global', 'user.email', gitEmail]);
+    execFileSync('git', ['config', '--global', 'user.name', gitEmail.split('@')[0]]);
+  } catch (err) {
+    console.error('[hook:run] git identity not set', err);
+  }
+}
+
 async function startCodeServer() {
   if (codeServer) return;
+  // AWS_REGION is a reserved image env var name, so the stack passes the Region under another name.
+  process.env.AWS_REGION ??= process.env.SESSION_REGION;
 
   // Claude Code settings.json mirrors the Bedrock env vars so the CLI and the VS Code extension agree.
   if (process.env.CLAUDE_CODE_USE_BEDROCK) {
-    // AWS_REGION is a reserved image env var name, so the stack passes the Region under another name.
-    process.env.AWS_REGION ??= process.env.BEDROCK_REGION;
     const keys = ['CLAUDE_CODE_USE_BEDROCK', 'AWS_REGION', 'ANTHROPIC_MODEL', 'ANTHROPIC_SMALL_FAST_MODEL'];
     const env = Object.fromEntries(keys.filter((k) => process.env[k]).map((k) => [k, process.env[k]]));
     mkdirSync('/home/node/.claude', { recursive: true });
@@ -78,6 +93,7 @@ const server = createServer(async (req, res) => {
     const hook = pathname.slice(HOOK_PREFIX.length + 1);
     try {
       if (hook === 'run') {
+        await configureGitIdentity(req);
         await startCodeServer();
       } else if (hook === 'terminate') {
         codeServer?.kill('SIGTERM');

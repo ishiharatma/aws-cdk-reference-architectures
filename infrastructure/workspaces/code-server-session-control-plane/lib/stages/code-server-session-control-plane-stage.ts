@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
 import { BrowserAccessStack } from 'lib/stacks/browser-access-stack';
+import { CodeCommitStack } from 'lib/stacks/code-commit-stack';
 import { ControlPlaneStack } from 'lib/stacks/control-plane-stack';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
 import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
@@ -32,6 +33,18 @@ export class CodeServerSessionControlPlaneStage extends cdk.Stage {
     const { project, environment, params, isAutoDeleteObject } = props;
     const common = { project, environment, params, env: props.env, terminationProtection: props.terminationProtection };
     const stackName = (suffix: string): string => `${project}-${environment}-code-server-sessions-${suffix}`;
+
+    const managedRepositoryNames = params.codeCommit?.managedRepositoryNames ?? [];
+    if (managedRepositoryNames.length > 0) {
+      new CodeCommitStack(this, 'CodeCommit', {
+        env: props.env,
+        terminationProtection: props.terminationProtection,
+        isAutoDeleteObject,
+        repositoryNames: managedRepositoryNames,
+        stackName: stackName('code-commit'),
+        description: 'CodeCommit repositories owned by the code-server sessions application',
+      });
+    }
 
     const microvm = new MicrovmComputeStack(this, 'Microvm', {
       ...common,

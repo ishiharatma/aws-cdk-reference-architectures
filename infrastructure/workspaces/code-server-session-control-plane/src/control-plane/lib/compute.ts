@@ -36,7 +36,7 @@ export interface StartedCompute {
 
 export const isEc2Enabled = (): boolean => Boolean(process.env.EC2_LAUNCH_TEMPLATE_ID);
 
-async function startMicrovm(sessionId: string): Promise<StartedCompute> {
+async function startMicrovm(sessionId: string, ownerEmail?: string): Promise<StartedCompute> {
   const result = await microvms.send(
     new RunMicrovmCommand({
       imageIdentifier: process.env.MICROVM_IMAGE_ARN ?? '',
@@ -50,13 +50,14 @@ async function startMicrovm(sessionId: string): Promise<StartedCompute> {
       },
       maximumDurationInSeconds: Number(process.env.MICROVM_MAX_DURATION_SECONDS),
       clientToken: sessionId,
+      runHookPayload: JSON.stringify({ gitEmail: ownerEmail }),
     }),
   );
   if (!result.microvmId || !result.endpoint) throw new Error('RunMicrovm did not return a microvmId/endpoint');
   return { resourceId: result.microvmId, endpoint: result.endpoint, state: 'PENDING' };
 }
 
-async function startEc2(sessionId: string, ownerId: string, expiresAt: number): Promise<StartedCompute> {
+async function startEc2(sessionId: string, ownerId: string, expiresAt: number, ownerEmail?: string): Promise<StartedCompute> {
   const subnets = (process.env.EC2_SUBNET_IDS ?? '').split(',');
   // Spread sessions across the private subnets; a session has a single instance, so no balancing is needed.
   const subnetId = subnets[sessionId.charCodeAt(0) % subnets.length];
@@ -76,6 +77,8 @@ async function startEc2(sessionId: string, ownerId: string, expiresAt: number): 
             { Key: 'SessionId', Value: sessionId },
             { Key: 'OwnerId', Value: ownerId },
             { Key: 'ExpiresAt', Value: String(expiresAt) },
+            // Replaces characters EC2 refuses in instance metadata tags, which would fail the launch.
+            ...(ownerEmail ? [{ Key: 'GitEmail', Value: ownerEmail.replace(/[^\w.:/=+@-]/g, '_') }] : []),
           ],
         },
       ],
@@ -86,8 +89,8 @@ async function startEc2(sessionId: string, ownerId: string, expiresAt: number): 
   return { resourceId: instanceId, state: 'PENDING' };
 }
 
-export async function startCompute(compute: Compute, sessionId: string, ownerId: string, expiresAt: number): Promise<StartedCompute> {
-  return compute === 'ec2' ? startEc2(sessionId, ownerId, expiresAt) : startMicrovm(sessionId);
+export async function startCompute(compute: Compute, sessionId: string, ownerId: string, expiresAt: number, ownerEmail?: string): Promise<StartedCompute> {
+  return compute === 'ec2' ? startEc2(sessionId, ownerId, expiresAt, ownerEmail) : startMicrovm(sessionId, ownerEmail);
 }
 
 /**

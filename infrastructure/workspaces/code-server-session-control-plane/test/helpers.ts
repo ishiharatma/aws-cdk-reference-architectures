@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Environment } from '@common/parameters/environments';
 import { params } from 'parameters/environments';
 import { BrowserAccessStack } from 'lib/stacks/browser-access-stack';
+import { CodeCommitStack } from 'lib/stacks/code-commit-stack';
 import { ControlPlaneStack } from 'lib/stacks/control-plane-stack';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
 import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
@@ -28,5 +29,10 @@ export function buildStacks(app = new cdk.App()) {
     httpApi: controlPlane.httpApi,
     apiStageName: controlPlane.stageName,
   });
-  return { app, microvm, ec2, controlPlane, browserAccess };
+  const codeCommit = new CodeCommitStack(app, 'CodeCommit', {
+    env,
+    isAutoDeleteObject: true,
+    repositoryNames: envParams.codeCommit?.managedRepositoryNames ?? [],
+  });
+  return { app, microvm, ec2, controlPlane, browserAccess, codeCommit };
 }
