@@ -1,0 +1,37 @@
+# syntax=docker/dockerfile:1
+#
+# code-server MicroVM image. Lambda MicroVMs builds this in a build MicroVM, starts it, POSTs
+# /aws/lambda-microvms/runtime/v1/ready until it returns 200, then snapshots memory + disk.
+# Every RunMicrovm resumes from that snapshot; code-server itself is started by the /run hook.
+FROM node:22-bookworm-slim
+
+ARG TARGETARCH
+ARG CODE_SERVER_VERSION=4.141.0
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates curl git procps openssh-client unzip less \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-${TARGETARCH}.tar.gz" \
+      -o /tmp/code-server.tgz \
+    && mkdir -p /opt/code-server \
+    && tar -xzf /tmp/code-server.tgz -C /opt/code-server --strip-components=1 \
+    && rm /tmp/code-server.tgz
+
+# Claude Code CLI; the VS Code extension is installed below as the runtime user. Bedrock settings
+# arrive as image environment variables (CLAUDE_CODE_USE_BEDROCK, ANTHROPIC_MODEL, ...).
+RUN npm install -g @anthropic-ai/claude-code
+
+WORKDIR /opt/launcher
+COPY server/ ./server/
+
+RUN mkdir -p /home/node/project && chown -R node:node /home/node /opt/launcher
+USER node
+RUN HOME=/home/node /opt/code-server/bin/code-server --install-extension Anthropic.claude-code
+ENV HOME=/home/node
+# Public port (lifecycle hooks + reverse proxy) -- must equal Hooks.port in the stack.
+# Not named PORT: code-server reads $PORT and would bind to it, overriding --bind-addr.
+ENV LAUNCHER_PORT=8080
+ENV CODE_SERVER_PORT=8081
+
+ENTRYPOINT ["node", "server/index.mjs"]

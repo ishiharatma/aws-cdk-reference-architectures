@@ -189,4 +189,22 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
 - **A pull-based worker that loses access to the Anthropic API does not exit.** The SDK poller logs `Request timed out` and backs off, so the MicroVM keeps running until the idle policy or `maximumDurationInSeconds` ends it. The stale-MicroVM alarm covers this; `terminate-microvm` ends it by hand.
 - **Network Firewall rule group updates take one to two minutes to take effect**, even when `ConfigurationSyncStateSummary` already reads `IN_SYNC`. A test run right after the update still passed traffic that the new rule should block.
 
+## Browser-only access with CloudFront + Lambda@Edge (`code-server-session-control-plane`, verified 2026-11-05)
+
+- **The endpoint host is `<id>.lambda-microvm.<region>.on.aws`**: `lambda-microvm` is singular, unlike the SDK and CLI name. A pattern inferred from the service name rejects every request.
+- **An origin-request Lambda@Edge function runs on WebSocket upgrades, and can replace the origin and add `X-aws-proxy-auth`.** Through CloudFront with a real token, the handshake returned 101 and code-server worked in a real browser. `AllViewer` keeps the viewer `Host` visible to the function; set `host` to the endpoint there.
+- **Replacing `request.origin.custom.domainName` keeps the original `path`.** A placeholder origin with `originPath` sent `/dev/...` to the MicroVM. HTTP got 404 while code-server's WebSocket answered 101 on any path, so only the WebSocket looked healthy. Clear `request.origin.custom.path`.
+- **`X-Forwarded-Host` passes through the MicroVM proxy to the application.** code-server compares it with `Origin`, so a relay or edge function need not rewrite `Origin`, and a WebSocket from another origin still gets 403. With `--auth none` there is no session cookie and no `Domain` attribute to strip.
+- **A 1-minute token was honored for about 2 minutes** (200 at 119 seconds, 403 at 142 seconds). Rejection is `403` with `x-aws-proxy-error: UNAUTHORIZED` and the body `Token authentication failed`. **An open WebSocket survives expiry** and still answered ping. The SDK documents a 60-minute maximum for `expirationInMinutes`.
+- **The token is about 900 bytes**, so endpoint plus token fits in one cookie (993 bytes with attributes).
+- **A terminated MicroVM with a valid token answers `502` with `x-aws-proxy-error: MICROVM_CONNECT_FAILED`**; origin-response functions do run on these.
+- **Node.js `fetch` overwrites `sec-fetch-mode` with `cors`.** Use `curl` or a real browser to test logic that depends on `navigate`.
+
+## Handing out Session Manager without AWS credentials (verified 2026-11-05)
+
+- **A Lambda can call `ssm:StartSession` and give the `SessionId`, `StreamUrl` and `TokenValue` to someone else.** `session-manager-plugin '<json>' <region> StartSession '' '<params json>' https://ssm.<region>.amazonaws.com` connected without any AWS credentials. Scope the policy to the tagged instance and `document/AWS-StartPortForwardingSession`.
+- **`Connection to destination port failed, check SSM Agent logs` means the forward is up but nothing listens yet**; it stops once the application starts.
+- **A spawned `session-manager-plugin` outlives its parent** and holds the local port, so forward signals to it.
+- **Stack tags reach `ec2.LaunchTemplate` tag specifications**, so `RunInstances` from that template also needs `ec2:CreateTags` on `volume/*`, or it fails with `UnauthorizedOperation`.
+
 See also [network-firewall-inspection.md](network-firewall-inspection.md) for the routing recipe.
