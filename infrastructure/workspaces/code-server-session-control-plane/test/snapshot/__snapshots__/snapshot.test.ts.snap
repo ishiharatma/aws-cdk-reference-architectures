@@ -1165,7 +1165,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "3fbdd0e2cd8d2c27f2cd476a940c8bcb6918cd34684b00485634c7b6778a58da.zip",
+          "S3Key": "cd0688c9c3e27acff9a6e508b639b030de7b3b82098b15dbc50d5a6aca2d102f.zip",
         },
         "Environment": {
           "Variables": {
@@ -1761,7 +1761,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "8d62c32cc5666c4a7cd146b28c60355c44aac5c95ba90e791b704771a812b2af.zip",
+          "S3Key": "72b976dbe91bfee46a7826abc23d5de5ce802bb86be31e70650be1e165b8ea44.zip",
         },
         "Environment": {
           "Variables": {
