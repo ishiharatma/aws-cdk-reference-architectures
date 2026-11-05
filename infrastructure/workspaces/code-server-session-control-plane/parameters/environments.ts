@@ -43,6 +43,13 @@ export interface MicrovmParams {
   readonly maximumDurationSeconds?: number;
   /** Lifetime of the endpoint token. Service maximum is 60. @default 60 */
   readonly authTokenMinutes?: number;
+  /**
+   * 'internet' lets sessions reach anything. 'private' removes every route out: AWS services through
+   * VPC endpoints only, packages through a read-only mirror, and no file transfer in the browser.
+   * It cannot be combined with `ec2`, whose setup downloads from the internet.
+   * @default 'internet'
+   */
+  readonly egress?: 'internet' | 'private';
 }
 
 /**
@@ -51,8 +58,31 @@ export interface MicrovmParams {
 export interface ControlPlaneParams {
   /** Sessions one user may hold at once, across compute types. @default 2 */
   readonly maxActiveSessionsPerOwner?: number;
+  /**
+   * Require an authenticator app at sign-in. Users enroll at their next sign-in through the portal.
+   * @default false
+   */
+  readonly requireMfa?: boolean;
+  /** Days a noncurrent workspace archive is kept, for recovery after a bad save. @default 14 */
+  readonly workspaceVersionDays?: number;
   /** DynamoDB TTL of a session record, also the deadline for a stopped EC2 instance. @default 1 */
   readonly sessionRecordTtlDays?: number;
+}
+
+/**
+ * Alarms and spending limits. Omit to deploy without notifications.
+ */
+export interface OperationsParams {
+  /** Receives alarms and budget notifications; confirm the SNS subscription after deploying. */
+  readonly alarmEmail?: string;
+  /** Monthly cost limit for resources tagged Project=<project>. Activate the tag in Billing first. */
+  readonly monthlyBudgetUsd?: number;
+  /**
+   * Bedrock tokens per day for the main model, all users together. Billing data lags by hours and
+   * users can call the model from their terminals, so this alarm is the prompt signal.
+   * @default 5000000
+   */
+  readonly dailyBedrockTokenLimit?: number;
 }
 
 /**
@@ -88,6 +118,7 @@ export interface EnvParams extends EnvironmentConfig {
   readonly controlPlane?: ControlPlaneParams;
   readonly bedrock?: BedrockParams;
   readonly codeCommit?: CodeCommitParams;
+  readonly operations?: OperationsParams;
   /** Publish the browser-only access path (CloudFront + Lambda@Edge in us-east-1). @default true */
   readonly browserAccess?: boolean;
   /** code-server release used by both compute types. @default '4.141.0' */

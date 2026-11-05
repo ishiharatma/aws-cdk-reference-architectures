@@ -5,18 +5,26 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigwv2Authorizers from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import * as apigwv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as budgets from 'aws-cdk-lib/aws-budgets';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as cwActions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
 import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
-import { CODE_SERVER_PORT, MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
+import { CODE_SERVER_PORT, MicrovmComputeStack, workspaceFunctionName } from 'lib/stacks/microvm-compute-stack';
+import { resolveBedrock } from 'lib/shared/claude-bedrock';
 
 /**
  *
@@ -28,6 +36,8 @@ interface StackProps extends cdk.StackProps {
   readonly params: EnvParams;
   readonly microvm: MicrovmComputeStack;
   readonly ec2?: Ec2ComputeStack;
+  /** Connector for running MicroVMs in private mode. @default the AWS-managed internet connector */
+  readonly egressConnectorArn?: string;
 }
 
 /**
@@ -69,6 +79,8 @@ export class ControlPlaneStack extends cdk.Stack {
       userPoolName: `${namePrefix}-users`,
       selfSignUpEnabled: false,
       signInAliases: { email: true },
+      mfa: controlPlane.requireMfa ? cognito.Mfa.REQUIRED : cognito.Mfa.OFF,
+      ...(controlPlane.requireMfa ? { mfaSecondFactor: { otp: true, sms: false } } : {}),
       passwordPolicy: {
         minLength: 12,
         requireLowercase: true,
@@ -78,19 +90,35 @@ export class ControlPlaneStack extends cdk.Stack {
       },
       removalPolicy,
     });
+    // Short-lived, because an issued ID token cannot be revoked and the HTTP API accepts it until it expires.
     const userPoolClient = userPool.addClient('UserPoolClient', {
       authFlows: { userPassword: true, userSrp: true },
       generateSecret: false,
+      idTokenValidity: cdk.Duration.minutes(15),
+      accessTokenValidity: cdk.Duration.minutes(15),
+      // A local relay runs for a working day and must renew without asking for a new MFA code.
+      refreshTokenValidity: cdk.Duration.hours(12),
+    });
+
+    const workspaceBucket = new s3.Bucket(this, 'WorkspaceBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      autoDeleteObjects: isAutoDeleteObject,
+      removalPolicy,
+      lifecycleRules: [{ noncurrentVersionExpiration: cdk.Duration.days(controlPlane.workspaceVersionDays ?? 14) }],
     });
 
     const environmentVariables: Record<string, string> = {
       NAME_PREFIX: namePrefix,
+      USER_POOL_ID: userPool.userPoolId,
       SESSIONS_TABLE_NAME: sessionsTable.tableName,
       CODE_SERVER_PORT: String(CODE_SERVER_PORT),
       AUTH_TOKEN_MINUTES: String(microvmParams.authTokenMinutes ?? 60),
       MICROVM_IMAGE_ARN: microvm.imageArn,
       MICROVM_EXECUTION_ROLE_ARN: microvm.executionRole.roleArn,
-      MICROVM_EGRESS_CONNECTOR_ARN: microvm.egressConnectorArn,
+      MICROVM_EGRESS_CONNECTOR_ARN: props.egressConnectorArn ?? microvm.egressConnectorArn,
       MICROVM_LOG_GROUP_NAME: microvm.logGroupName,
       MICROVM_MAX_IDLE_SECONDS: String(microvmParams.maxIdleSeconds ?? 900),
       MICROVM_SUSPENDED_SECONDS: String(microvmParams.suspendedSeconds ?? 3600),
@@ -105,7 +133,9 @@ export class ControlPlaneStack extends cdk.Stack {
         : {}),
     };
 
-    const makeFunction = (constructId: string, entryFile: string, extraEnv: Record<string, string> = {}): lambdaNodejs.NodejsFunction =>
+    const makeFunction = (
+      constructId: string, entryFile: string, extraEnv: Record<string, string> = {}, extraProps: Partial<lambdaNodejs.NodejsFunctionProps> = {},
+    ): lambdaNodejs.NodejsFunction =>
       new lambdaNodejs.NodejsFunction(this, constructId, {
         runtime: lambda.Runtime.NODEJS_22_X,
         architecture: lambda.Architecture.ARM_64,
@@ -115,10 +145,14 @@ export class ControlPlaneStack extends cdk.Stack {
         memorySize: 256,
         environment: { ...environmentVariables, ...extraEnv },
         logGroup: new logs.LogGroup(this, `${constructId}LogGroup`, {
-          retention: logs.RetentionDays.ONE_WEEK,
+          // These hold the audit trail of who started and opened what.
+          retention: logs.RetentionDays.ONE_YEAR,
           removalPolicy,
         }),
+        ...extraProps,
       });
+
+    const userLookup = new iam.PolicyStatement({ actions: ['cognito-idp:AdminGetUser'], resources: [userPool.userPoolArn] });
 
     // IAM authorizes MicroVM actions under the lambda: prefix. The identifiers are minted at
     // RunMicrovm time, so their ARNs are not known ahead of deployment.
@@ -136,12 +170,16 @@ export class ControlPlaneStack extends cdk.Stack {
     const createFn = makeFunction('CreateSessionFunction', 'create-session.ts');
     sessionsTable.grantReadWriteData(createFn);
     createFn.addToRolePolicy(microvmPolicy('RunMicrovm', 'GetMicrovm'));
+    createFn.addToRolePolicy(userLookup);
     microvm.executionRole.grantPassRole(createFn.grantPrincipal);
     // RunMicrovm also implicitly attaches the AWS-managed HTTP_INGRESS connector, which needs the same grant.
     createFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['lambda:PassNetworkConnector'],
-        resources: [`arn:${this.partition}:lambda:${this.region}:aws:network-connector:aws-network-connector:*`],
+        resources: [
+          `arn:${this.partition}:lambda:${this.region}:aws:network-connector:aws-network-connector:*`,
+          ...(props.egressConnectorArn ? [props.egressConnectorArn] : []),
+        ],
       }),
     );
 
@@ -156,6 +194,23 @@ export class ControlPlaneStack extends cdk.Stack {
     const accessFn = makeFunction('AccessSessionFunction', 'access-session.ts');
     sessionsTable.grantReadData(accessFn);
     accessFn.addToRolePolicy(microvmPolicy('CreateMicrovmAuthToken'));
+    accessFn.addToRolePolicy(userLookup);
+
+    const workspaceFn = makeFunction('WorkspaceUrlFunction', 'workspace-url.ts', { WORKSPACE_BUCKET_NAME: workspaceBucket.bucketName }, {
+      functionName: workspaceFunctionName(namePrefix),
+      // The presigner is not part of the Lambda runtime's SDK.
+      bundling: { externalModules: [] },
+    });
+    sessionsTable.grantReadData(workspaceFn);
+    workspaceBucket.grantReadWrite(workspaceFn, 'workspaces/*');
+
+    const revokeFn = makeFunction('RevokeUserFunction', 'revoke-user.ts');
+    sessionsTable.grantReadWriteData(revokeFn);
+    revokeFn.addToRolePolicy(microvmPolicy('TerminateMicrovm'));
+    revokeFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminDisableUser', 'cognito-idp:AdminUserGlobalSignOut'],
+      resources: [userPool.userPoolArn],
+    }));
 
     if (ec2Compute) {
       const describe = new iam.PolicyStatement({ actions: ['ec2:DescribeInstances'], resources: ['*'] });
@@ -208,6 +263,7 @@ export class ControlPlaneStack extends cdk.Stack {
       ec2Compute.instanceRole.grantPassRole(createFn.grantPrincipal);
 
       changeFn.addToRolePolicy(taggedInstances('StartInstances', 'StopInstances', 'TerminateInstances'));
+      revokeFn.addToRolePolicy(taggedInstances('TerminateInstances'));
 
       accessFn.addToRolePolicy(
         new iam.PolicyStatement({
@@ -285,8 +341,91 @@ export class ControlPlaneStack extends cdk.Stack {
       authorizer: new apigwv2.HttpNoneAuthorizer(),
     });
 
+    this.addOperations(namePrefix, project, params, [createFn, accessFn, workspaceFn, revokeFn], createFn, removalPolicy);
+
+    new cdk.CfnOutput(this, 'RevokeUserFunctionName', { value: revokeFn.functionName });
+    new cdk.CfnOutput(this, 'WorkspaceBucketName', { value: workspaceBucket.bucketName });
     new cdk.CfnOutput(this, 'ApiUrl', { value: stage.url as string });
     new cdk.CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
     new cdk.CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
+  }
+
+  /**
+   * Alarms on what a user would notice first, or what costs money without anyone noticing.
+   */
+  private addOperations(
+    namePrefix: string, project: string, params: EnvParams, functions: lambda.IFunction[], createFn: lambdaNodejs.NodejsFunction, removalPolicy: cdk.RemovalPolicy,
+  ): void {
+    const operations = params.operations;
+    if (!operations) return;
+
+    const topicKey = new kms.Key(this, 'AlarmTopicKey', { description: 'Encrypts the alarm topic', enableKeyRotation: true, removalPolicy });
+    topicKey.addToResourcePolicy(new iam.PolicyStatement({
+      principals: [new iam.ServicePrincipal('cloudwatch.amazonaws.com')],
+      actions: ['kms:Decrypt', 'kms:GenerateDataKey*'],
+      resources: ['*'],
+    }));
+    const topic = new sns.Topic(this, 'AlarmTopic', { topicName: `${namePrefix}-alarms`, masterKey: topicKey, enforceSSL: true });
+    if (operations.alarmEmail) topic.addSubscription(new subscriptions.EmailSubscription(operations.alarmEmail));
+    const action = new cwActions.SnsAction(topic);
+
+    const alarm = (id: string, metric: cloudwatch.IMetric, threshold: number, description: string): void => {
+      new cloudwatch.Alarm(this, `${id}Alarm`, {
+        alarmName: `${namePrefix}-${id}`,
+        alarmDescription: description,
+        metric,
+        threshold,
+        evaluationPeriods: 1,
+        comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }).addAlarmAction(action);
+    };
+
+    functions.forEach((fn, index) => {
+      alarm(`FunctionErrors${index}`, fn.metricErrors({ period: cdk.Duration.minutes(5) }), 1, 'A control plane function failed; users may be unable to start or open sessions');
+    });
+
+    // The account's MicroVM memory quota caps concurrent sessions; hitting it blocks new ones.
+    const quotaMetric = new logs.MetricFilter(this, 'CapacityErrorsFilter', {
+      logGroup: createFn.logGroup,
+      metricNamespace: namePrefix,
+      metricName: 'CapacityErrors',
+      filterPattern: logs.FilterPattern.anyTerm('ServiceQuotaExceededException', 'InsufficientInstanceCapacity'),
+      metricValue: '1',
+      defaultValue: 0,
+    }).metric({ statistic: 'Sum', period: cdk.Duration.minutes(5) });
+    alarm('CapacityErrors', quotaMetric, 1, 'New sessions are refused for lack of capacity; check the MicroVM memory quota');
+
+    const { modelId } = resolveBedrock(params.bedrock);
+    const tokens = (metricName: string): cloudwatch.Metric => new cloudwatch.Metric({
+      namespace: 'AWS/Bedrock',
+      metricName,
+      dimensionsMap: { ModelId: modelId },
+      statistic: 'Sum',
+      period: cdk.Duration.days(1),
+    });
+    alarm('BedrockDailyTokens', new cloudwatch.MathExpression({
+      expression: 'input + output',
+      usingMetrics: { input: tokens('InputTokenCount'), output: tokens('OutputTokenCount') },
+      period: cdk.Duration.days(1),
+      label: 'Bedrock tokens per day',
+    }), operations.dailyBedrockTokenLimit ?? 5_000_000, 'Bedrock use is unusually high; every user can call the model from a terminal, with no per-user limit');
+
+    if (operations.monthlyBudgetUsd && operations.alarmEmail) {
+      new budgets.CfnBudget(this, 'MonthlyBudget', {
+        budget: {
+          budgetName: `${namePrefix}-monthly`,
+          budgetType: 'COST',
+          timeUnit: 'MONTHLY',
+          budgetLimit: { amount: operations.monthlyBudgetUsd, unit: 'USD' },
+          // Requires the "Project" cost allocation tag to be activated in Billing.
+          costFilters: { TagKeyValue: [`user:Project$${project}`] },
+        },
+        notificationsWithSubscribers: [80, 100].map((threshold) => ({
+          notification: { notificationType: 'ACTUAL', comparisonOperator: 'GREATER_THAN', threshold, thresholdType: 'PERCENTAGE' },
+          subscribers: [{ subscriptionType: 'EMAIL', address: operations.alarmEmail as string }],
+        })),
+      });
+    }
   }
 }

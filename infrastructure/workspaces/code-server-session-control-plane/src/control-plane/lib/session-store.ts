@@ -18,6 +18,8 @@ export interface SessionRecord {
   readonly state: SessionState;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** SHA-256 of the token a MicroVM uses to reach its owner's saved workspace. */
+  readonly workspaceTokenHash?: string;
   /** Epoch seconds. DynamoDB TTL attribute. */
   readonly expiresAt: number;
 }
@@ -26,12 +28,16 @@ export async function putSession(record: SessionRecord): Promise<void> {
   await ddbClient.send(new PutCommand({ TableName: TABLE_NAME, Item: record }));
 }
 
+export async function getSession(sessionId: string): Promise<SessionRecord | undefined> {
+  const result = await ddbClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { sessionId } }));
+  return result.Item as SessionRecord | undefined;
+}
+
 /**
  * Returns the session only when it belongs to `ownerId`, so another user's session looks missing.
  */
 export async function getOwnedSession(sessionId: string, ownerId: string): Promise<SessionRecord | undefined> {
-  const result = await ddbClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { sessionId } }));
-  const session = result.Item as SessionRecord | undefined;
+  const session = await getSession(sessionId);
   return session?.ownerId === ownerId ? session : undefined;
 }
 

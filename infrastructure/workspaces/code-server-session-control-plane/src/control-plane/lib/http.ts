@@ -25,6 +25,15 @@ export function getOwnerId(event: APIGatewayProxyEventV2WithJWTAuthorizer): stri
 }
 
 /**
+ * One JSON line per action, so the function logs answer who started or opened which session and when.
+ * Role-based calls cannot answer that, because all sessions share one role.
+ */
+export function audit(action: string, event: APIGatewayProxyEventV2WithJWTAuthorizer, fields: Record<string, unknown>): void {
+  const claims = event.requestContext.authorizer?.jwt?.claims;
+  console.log(JSON.stringify({ audit: action, ownerId: claims?.sub, email: claims?.email, sourceIp: event.requestContext.http?.sourceIp, ...fields }));
+}
+
+/**
  * The caller's sign-in address, used as the commit author inside the session.
  */
 export function getOwnerEmail(event: APIGatewayProxyEventV2WithJWTAuthorizer): string | undefined {

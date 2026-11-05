@@ -31,6 +31,7 @@ export function claudeSettings(cfg: Required<BedrockParams>, region: string): st
   return JSON.stringify({
     env: {
       CLAUDE_CODE_USE_BEDROCK: '1',
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
       AWS_REGION: region,
       ANTHROPIC_MODEL: cfg.modelId,
       ANTHROPIC_SMALL_FAST_MODEL: cfg.smallFastModelId,

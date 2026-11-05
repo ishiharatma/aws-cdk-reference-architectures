@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { CreateMicrovmAuthTokenCommand, LambdaMicrovmsClient } from '@aws-sdk/client-lambda-microvms';
 import { SSMClient, StartSessionCommand } from '@aws-sdk/client-ssm';
-import { getOwnerId, jsonResponse, parseBody } from './lib/http';
+import { audit, getOwnerId, jsonResponse, parseBody } from './lib/http';
 import { getOwnedSession, SessionRecord } from './lib/session-store';
+import { isUserEnabled } from './lib/user-status';
 
 const microvms = new LambdaMicrovmsClient({});
 const ssm = new SSMClient({});
@@ -89,7 +90,10 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   const session = await getOwnedSession(sessionId, ownerId);
   if (!session) return jsonResponse(404, { message: 'Session not found' });
 
+  if (!(await isUserEnabled(event))) return jsonResponse(403, { message: 'This user is disabled' });
+
   const { type, localPort } = parseBody(event);
+  audit('session.access', event, { sessionId, type, resourceId: session.resourceId });
   if (session.compute === 'ec2') {
     if (type !== 'tunnel') return jsonResponse(400, { message: 'An EC2 session is reached with type "tunnel"' });
     return tunnelAccess(session, localPort);

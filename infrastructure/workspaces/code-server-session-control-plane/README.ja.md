@@ -17,6 +17,9 @@
 - AWS 認証情報を持たないユーザーへ、コントロールプレーンが開いた Session Manager のポートフォワードを渡す方法
 - 利用者がターミナルを持つ環境で、実行ロールとシークレットをどう設計するか
 - 指定した複数の CodeCommit リポジトリへ、ロールの権限で `git clone` と `git push` する方法
+- インターネットへの経路をなくした閉域構成。外部サイト、他アカウントの AWS リソース、DNS 経由の送信を塞ぎ、CodeCommit、Bedrock、npm、pip は使える
+- 共通ロールのまま他人の分を読めない、ワークスペースの保存と復元
+- MFA、利用者の即時停止、アラーム、監査ログ
 - 検証環境の費用を抑える NAT インスタンスと、NAT Gateway のパラメータでの切り替え
 - 2026-11-05 に実機でエンドツーエンドの検証を実施。実ブラウザでのログインと IDE の表示を含む。見つかって直した不具合は[実機デプロイ検証](#-実機デプロイ検証)にまとめている
 
@@ -58,9 +61,10 @@
 | スタック | 内容 | 省略方法 |
 | --- | --- | --- |
 | `Microvm` | MicroVM イメージ、ビルドロール、実行ロール、ロググループ | 必須 |
-| `Ec2` | VPC、NAT Gateway または NAT インスタンス、起動テンプレート、インスタンスロール | `params.ec2` を削除 |
+| `PrivateNetwork` | 閉域 VPC、VPC エンドポイント、DNS Firewall、CodeArtifact、ネットワークコネクタ | `microvm.egress` を `internet` にする |
+| `Ec2` | VPC、NAT Gateway または NAT インスタンス、起動テンプレート、インスタンスロール | `params.ec2` を削除。閉域とは併用できない |
 | `CodeCommit` | このアプリが所有するリポジトリ。スタックと一緒に削除される | `managedRepositoryNames` を空にする |
-| `ControlPlane` | Cognito、HTTP API、Lambda、DynamoDB、EC2 のスイープ | 必須 |
+| `ControlPlane` | Cognito、HTTP API、Lambda、DynamoDB、S3(ワークスペース)、アラーム、EC2 のスイープ | 必須 |
 | `BrowserAccess` と `edge-lambda-stack-*` | CloudFront、Lambda@Edge(us-east-1)、CloudFront Functions | `browserAccess: false` |
 
 ### 主要コンポーネント
@@ -72,7 +76,9 @@
 | `get-sessions` / `change-session` | 状態の参照、サスペンド、レジューム、終了。どれも所有者のセッションだけを扱う |
 | `access-session` | 入口を渡す唯一のルート。リレー用トークン、ブラウザ用 Cookie、EC2 用ストリームトークンを発行する |
 | `sweep-ec2` | 15分ごとに実行し、EC2 に MicroVM 相当の上限(稼働時間、セッション期限)を適用する |
-| `portal` | 方式 B のログインとセッション操作の画面 |
+| `workspace-url` | セッションのトークンを確認し、その所有者のアーカイブだけに届く署名付き URL を返す |
+| `revoke-user` | 運用者が呼ぶ。ユーザーを無効化し、サインアウトさせ、全セッションを終了する |
+| `portal` | 方式 B のログイン(MFA の登録とコード入力を含む)とセッション操作の画面 |
 | Lambda@Edge `router` | Cookie をオリジンと `X-aws-proxy-auth` に変換する。トークン切れのページ遷移をポータルへ戻す |
 | MicroVM 内ランチャー | ライフサイクルフックに応答し、`/run` で code-server を起動し、HTTP と WebSocket をプロキシする |
 | `scripts/session.mjs` | Cognito 認証で動くクライアント。リレーとトンネルを含む |
@@ -135,7 +141,37 @@ MicroVM にはアイドルポリシーと最大寿命がありますが、EC2 �
 
 Git の認証ヘルパーを `git-codecommit.*.amazonaws.com` に限定して設定するので、ほかの Git ホストの認証には影響しません。権限は `codeCommit` に書いたリポジトリの `GitPull` と `GitPush` だけです。ロールは全セッションで共通なので、**許可したリポジトリには全ユーザーが同じ権限で接続できます**。コミットの作成者には Cognito のメールアドレスが自動で入りますが、利用者は変更できるので、本人確認にはなりません。
 
-### 10. Well-Architected Framework との対応
+### 10. インターネットへの経路をなくす
+
+Network Firewall のドメイン許可も検討しましたが、閉域を既定にしました。許可したドメイン(GitHub や npm など)は持ち出しの経路にもなります。経路自体がなければ、その判断が要りません。費用も、エンドポイント1個あたり月約 $7 で、ファイアウォールの月 $280 以上より抑えられます。
+
+経路をなくすだけでは残る手段を、次のように塞いでいます。
+
+| 持ち出しの手段 | 対策 | 確認結果 |
+| --- | --- | --- |
+| 外部サイトへの送信 | ルートなし、DNS Firewall | 名前解決できず、IP 直接もタイムアウト |
+| 攻撃者自身のアカウントの S3 | S3 ゲートウェイエンドポイントのポリシーで、このアカウントのリソースだけを許可 | `AccessDenied` |
+| 攻撃者自身の認証情報 | インターフェイスエンドポイントのポリシーで、このアカウントのプリンシパルだけを許可 | ポリシーで設定 |
+| DNS クエリへの埋め込み | DNS Firewall で AWS の名前以外を NXDOMAIN に | 名前解決できない |
+| 別リージョン経由 | セキュリティグループで、エンドポイントと同一リージョンの S3 だけを許可 | タイムアウト |
+| パッケージの公開 | ミラーは読み取り権限のみ | 公開されなかった |
+| ブラウザからのダウンロード | `--disable-file-downloads`、`--disable-file-uploads` | 起動は確認(画面の動作は未確認) |
+
+イメージのビルドだけは `INTERNET_EGRESS` を使い、実行時に閉域のコネクタへ切り替えます。Claude Code は `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` で、Bedrock 以外の通信を止めています。
+
+**これで防げないこと:** 画面やターミナルからのコピー、撮影は止められません。正規の利用者による意図的な持ち出しを完全に防ぐものではなく、誤送信や、悪意あるパッケージとスクリプトによる送信を止める対策です。
+
+### 11. ワークスペースは、ロールに S3 権限を渡さずに保存する
+
+ロールは全員共通で、ターミナルから使えます。ここに S3 権限を付けると、他人のワークスペースも読めてしまいます。そこで、実行ロールには `workspace-url` 関数の呼び出しだけを許可し、関数がセッションごとの秘密トークンを確認して、その所有者のアーカイブだけに届く15分の署名付き URL を返します。HTTP API は閉域から届かないので、VPC エンドポイント経由で Lambda を直接呼びます。
+
+保存は5分ごとに変更があれば実行し、サスペンド時と終了時にも実行します。復元に失敗したセッションは保存を止めます。空のワークスペースで保存済みの内容を上書きしないためです。アーカイブはバージョニングしていて、既定で14日前まで戻せます。`node_modules` などは対象外です。
+
+### 12. 利用者の停止は、Cognito の無効化だけでは足りない
+
+Cognito のユーザーを無効にしても、起動中のセッション、発行済みの MicroVM トークン(最大60分)、ID トークンは残ります。`revoke-user` はセッションも終了させます。セッションの開始とアクセスのルートは Cognito に有効かどうかを毎回確認し、ID トークンの寿命は15分にしました。
+
+### 13. Well-Architected Framework との対応
 
 | 柱 | このパターンの対応 |
 | --- | --- |
@@ -157,11 +193,17 @@ Git の認証ヘルパーを `git-codecommit.*.amazonaws.com` に限定して設
 | NAT Gateway(`natType: 'gateway'`) | 1時間 $0.045(月 約 $32.85)+ 1 GB あたり $0.045 | **`ec2` を有効にすると常時** |
 | NAT インスタンス(`natType: 'instance'`) | `t4g.micro` 1時間 $0.0084(月 約 $6.1)+ パブリック IPv4 月 約 $3.65 | **`ec2` を有効にすると常時** |
 | CodeCommit | 5アクティブユーザーまで無料枠の範囲で利用可能 | リポジトリを使うとき |
+| VPC エンドポイント(閉域) | 1個 1時間 $0.01(7個、1 AZ で月 約 $51)+ 1 GB あたり $0.01 | **閉域なら常時** |
+| DNS Firewall | 100万クエリ $0.60 + ドメイン数に応じた少額 | 閉域なら常時 |
+| CodeArtifact | 1 GB 月 $0.05 + 100万リクエスト $0.05 | 閉域のパッケージ取得 |
+| S3(ワークスペース) | 1 GB 月 $0.023 | 保存量に応じて |
 | Lambda@Edge | 100万リクエスト $0.60 + GB 秒 $0.00005001 | 方式 B の全 HTTP リクエスト |
 | CloudFront | 個人利用なら無料枠に収まる | 方式 B |
 | HTTP API、Lambda、DynamoDB、Cognito | 少人数ならほぼゼロ | 常時 |
 
 セッションを起動しない限り、MicroVM のみの構成(`ec2` と `browserAccess` を外す)の固定費はほぼゼロです。EC2 版を残すと、NAT の固定費が加わります。検証環境では NAT インスタンスで月 $20 以上抑えられます。
+
+**10人の目安(閉域、MicroVM のみ):** 1人1日8時間、月20日の実行で MicroVM が約 $200、エンドポイントなどの固定費が約 $55、Bedrock のトークン料金は別です。
 
 コストの調整先:
 
@@ -169,6 +211,7 @@ Git の認証ヘルパーを `git-codecommit.*.amazonaws.com` に限定して設
 - `microvm.suspendedSeconds`: スナップショットを保存し続ける時間の上限
 - `ec2.maxRunningHours`、`ec2.instanceType`、`ec2.volumeSizeGiB`
 - `controlPlane.maxActiveSessionsPerOwner`
+- `operations.dailyBedrockTokenLimit`、`operations.monthlyBudgetUsd`、`operations.alarmEmail`
 
 ## 🔒 セキュリティ考慮事項
 
@@ -191,15 +234,17 @@ Git の認証ヘルパーを `git-codecommit.*.amazonaws.com` に限定して設
 - **Cookie の中のトークン**: 方式 B では JWE トークンがブラウザにあります。スクリプトからは読めませんが、端末自体が侵害されれば有効期間内は使われます。
 - **`--auth none`**: 方式 A と EC2 版では、`localhost:8443` に同じ端末のほかのプロセスが接続できます。共有端末では使わないでください。
 - **Bedrock の費用**: 利用者はターミナルからモデルを直接呼べます。Bedrock の費用はユーザーごとに制限していません。
-- **アウトバウンド通信**: MicroVM も EC2 もインターネットに自由に出られます。外部へのデータ持ち出しを制限するなら、[`claude-managed-agents-lambda-microvms`](../claude-managed-agents-lambda-microvms/README.ja.md) の Network Firewall パターンを参照してください。
+- **`internet` モードと EC2 版のアウトバウンド通信**: インターネットに自由に出られます。閉域にするか、[`claude-managed-agents-lambda-microvms`](../claude-managed-agents-lambda-microvms/README.ja.md) の Network Firewall パターンを参照してください。
+- **監査の粒度**: ロールが共通なので、CloudTrail や Bedrock のログでは利用者を区別できません。セッションの開始とアクセスは、Lambda のログ(1年保持)に利用者と一緒に記録します。Bedrock の呼び出しログはアカウント全体の設定なので、このスタックでは変更しません。必要なら `aws bedrock put-model-invocation-logging-configuration` で有効にしてください。
+- **MicroVM のエンドポイント**: トークンがあればどこからでも接続できます。接続元 IP の制限は、プラットフォーム側の機能としては確認していません。
 
 ### 意図的に範囲外としているもの(環境に応じて追加)
 
 - CloudFront と HTTP API の AWS WAF
-- Cognito の MFA と Plus 機能プラン
+- Cognito の Plus 機能プランと SSO 連携
 - カスタムドメインと証明書(デフォルト証明書では最小 TLS バージョンを指定できない)
 - CloudFront のアクセスログと VPC フローログ
-- 永続ワークスペース(下記「カスタマイズ」を参照)
+- EC2 版のワークスペース保存(EBS は停止中も残るが、セッション期限で消える)
 
 ### CDK Nag
 
@@ -274,6 +319,21 @@ git add . && git commit -m "..."
 git push origin HEAD:main
 ```
 
+### MFA と利用者の管理
+
+`requireMfa` を有効にすると、次のサインインでポータルが認証アプリの登録を求めます。表示されるキーを認証アプリに追加し、コードを入力してください。CLI ではコードを1回入力すると、12時間はリフレッシュトークンで更新を続けます(`~/.code-server-sessions-auth.json`、権限 600)。
+
+利用者を止めるときは、次を実行します。ユーザーの無効化、サインアウト、全セッションの終了をまとめて行います。
+
+```sh
+aws lambda invoke --function-name <RevokeUserFunctionName> \
+  --cli-binary-format raw-in-base64-out --payload '{"username":"user@example.com"}' /tmp/revoke.json
+```
+
+### 閉域でパッケージを使う
+
+npm と pip は、起動時に CodeArtifact のミラーへ自動で向きます。ほかのツールやレジストリは使えません。VS Code の拡張機能は Open VSX に届かないので、Dockerfile でイメージに入れてください。
+
 ### Claude Code
 
 Claude Code パネルを開くか、ターミナルで `claude` を実行します。Amazon Bedrock と `parameters/dev-params.ts` のモデルを使います。
@@ -338,9 +398,22 @@ bedrock: {
 },
 ```
 
+### 閉域と EC2 版を切り替える
+
+```typescript
+// 閉域(MicroVM のみ)
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'private' },
+
+// インターネットあり(EC2 版も使える)
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
+ec2: { natType: 'instance' },
+```
+
+`egress: 'private'` と `ec2` を同時に指定すると、合成時にエラーになります。EC2 のセットアップにインターネットが必要で、閉域にならないためです。閉域の EC2 には、必要なものを焼き込んだ AMI が必要です。
+
 ### 作業内容を残す
 
-MicroVM は終了するとファイルが消え、寿命はサスペンド中も含めて最大8時間です。EC2 もセッション期限で終了すると消えます。Git への push を基本とし、自動で残したいときは MicroVM の `/terminate` フックや EC2 のシャットダウン処理に S3 への同期を追加してください。その場合は、実行ロールに `ownerId` 単位で絞った S3 権限が必要です。
+MicroVM の `~/project` と VS Code の設定は自動で保存され、次のセッションで復元されます。保存の間隔は5分なので、直前の変更は失われることがあります。Git への push も併用してください。同じ利用者がセッションを2つ開くと、後に保存したほうが残ります(以前の版は S3 のバージョニングから戻せます)。EC2 版は対象外です。
 
 ## ✅ 実機デプロイ検証
 
@@ -365,11 +438,31 @@ MicroVM は終了するとファイルが消え、寿命はサスペンド中も
 | 終了した MicroVM へのページ遷移(無効なトークン) | ポータルへの 302 と Cookie の削除 |
 | スイープ | 期限前は何もせず、`ExpiresAt` を過去にすると終了 |
 
+**閉域、保存、停止、MFA**
+
+| 確認項目 | 結果 |
+| --- | --- |
+| 閉域での起動 | `RUNNING` まで5秒以内、IDE 表示まで9〜17秒 |
+| 外部サイト(example.com、github.com、npmjs、anthropic) | 名前解決できない |
+| IP 直接(1.1.1.1) | タイムアウト |
+| 他アカウントの S3 | 同一リージョンは `AccessDenied`、別リージョンはタイムアウト |
+| 閉域での CodeCommit、Bedrock | push 成功、`BEDROCK_OK` |
+| 閉域での npm、pip | `left-pad`、`six` をミラーからインストール |
+| `npm publish` | ミラーに公開されなかった |
+| 保存と復元 | セッションを終了して起動し直すと、ファイルと `.git` が戻った |
+| 他のユーザーから | 別の利用者のファイルは見えない |
+| ターミナルから S3 直接 | `AccessDenied` |
+| 誤ったトークン | `workspace-url` が拒否 |
+| 利用者の停止 | 再サインイン不可、発行済み ID トークンでもセッション開始とアクセスは 403、セッションは終了、更新も失敗 |
+| MFA | 登録とサインインが成功。誤ったコードは拒否。パスワードだけではトークンなし |
+| 閉域 + MFA の方式 A | 全項目成功 |
+
 **CodeCommit と NAT の切り替え**
 
 | 確認項目 | 結果 |
 | --- | --- |
 | MicroVM のターミナル(実ブラウザ) | `git clone` と `git push` が成功。push は2秒 |
+| EC2(`t4g.micro` の NAT インスタンス経由) | `git clone` と `git push`、Bedrock が成功。code-server の起動は100〜170秒 |
 | コミットの作成者 | `verify@example.com`、`verify`(Cognito のメールアドレス) |
 | 許可していないリポジトリ | `fatal: unable to access` で拒否 |
 | `natType` の切り替え | `instance` → `gateway` → `instance` をスタック更新で実施。`gateway` への更新は185秒 |
@@ -392,7 +485,9 @@ MicroVM は終了するとファイルが消え、寿命はサスペンド中も
 
 5. **`t4g.nano` の NAT インスタンスは NAT として動かない。** メモリ 512 MiB では、起動時の `yum install iptables-services` が `Killed` になり、`iptables` が入りません。スタックの作成は成功し、ルートも正常に見えますが、プライベートサブネットからは外へ出られず、EC2 は Session Manager に登録されません。既定を `t4g.micro` にしました。
 
-確認できていないこと: EC2 から NAT インスタンス経由の CodeCommit 接続、VS Code のソース管理パネルからの Git 操作、実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
+6. **閉域で code-server が起動待ちに間に合わなかった。** 1 vCPU の MicroVM で AWS CLI を2つ同時に動かすと、20秒の待ちを超えて `/run` が 500 になり、MicroVM が終了しました。パッケージの設定を code-server の起動後に回し、`/validate` で code-server と AWS CLI を動かして先読みさせたところ、IDE の表示が9〜17秒になりました。`/run` のタイムアウトの上限は60秒です。
+
+確認できていないこと: VS Code のソース管理パネルからの Git 操作、ファイルのダウンロード無効化の画面上の動作、アラームと予算の実際の通知、実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
 
 ## 🔧 トラブルシューティング
 
@@ -434,13 +529,25 @@ NAT インスタンスのコンソール出力(`aws ec2 get-console-output`)に 
 
 リポジトリ名が `codeCommit` のパラメータにあるか確認します。CodeCommit の設定は、反映後に起動したセッションから有効です。古いセッションは終了して起動し直してください。
 
+### `Your software token has already been used once`
+
+MFA の登録やサインインの直後は、同じ時間枠のコードを再利用できません。約1分待って次のコードを入力します。
+
+### `POST /sessions` が失敗し、`ServiceQuotaExceededException` が出る
+
+MicroVM のメモリのクォータ(`Max allocated ARM_64 MicroVM memory`)の上限です。既定が 8 GB のアカウントでは、2 GiB のセッションは同時に4つまでです。10人なら 20 GB 以上を Service Quotas で申請してください。`CapacityErrors` アラームで検知できます。
+
+### `WORKSPACE_NOT_RESTORED.txt` がプロジェクトにできる
+
+保存済みのワークスペースを復元できず、そのセッションでは保存を止めています。上書きを防ぐためです。セッションを終了して起動し直してください。MicroVM のログの `[workspace]` の行に原因が出ます。
+
 ### Claude Code がサインインを求める、または Bedrock が拒否する
 
 `bedrock.smokeCheck: true` でデプロイすると、MicroVM のログストリームに `[bedrock-check]` の行が出ます。`AccessDeniedException` なら、`aws bedrock-runtime converse` で応答するモデルを `bedrock.modelId` に設定します。
 
 ## 🧹 クリーンアップ
 
-スタックを削除しても、起動中のセッションは終了しません。先にすべて終了させてください。EC2 のインスタンスが残っていると VPC を削除できません。
+スタックを削除しても、起動中のセッションは終了しません。先にすべて終了させてください。EC2 のインスタンスが残っていると VPC を削除できません。`isAutoDeleteObject` が有効だと、保存したワークスペースと、`managedRepositoryNames` のリポジトリも削除されます。
 
 ```sh
 node scripts/session.mjs list

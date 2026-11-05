@@ -17,13 +17,14 @@ const suppressions = [
   },
   { id: 'AwsSolutions-APIG1', reason: 'Access logging is enabled on the HTTP API stage; this rule does not recognize that shape.' },
   { id: 'AwsSolutions-APIG4', reason: 'Every route has the Cognito JWT authorizer except GET /portal, a static page holding no data.' },
-  { id: 'AwsSolutions-COG2', reason: 'MFA enforcement is environment-specific policy left to the operator (README).' },
+  { id: 'AwsSolutions-COG2', reason: 'MFA is the requireMfa parameter, on in these templates; this rule only flags it where it is off.' },
   { id: 'AwsSolutions-COG4', reason: 'The JWT authorizer validates Cognito tokens; this rule does not recognize HttpApi authorizers.' },
   { id: 'AwsSolutions-COG8', reason: 'The Plus feature plan is a per-MAU cost the operator opts into per environment.' },
   { id: 'AwsSolutions-VPC7', reason: 'VPC Flow Logs are an environment-specific cost tradeoff left to the operator (README).' },
   { id: 'AwsSolutions-EC23', reason: 'The instance security group has no inbound rules at all.' },
   { id: 'AwsSolutions-EC28', reason: 'The optional NAT instance is stateless forwarding for verification environments; detailed monitoring is not worth its cost there.' },
   { id: 'AwsSolutions-EC29', reason: 'The optional NAT instance is single by design and disposable; the README recommends natType gateway for shared environments.' },
+  { id: 'AwsSolutions-S1', reason: 'Workspace access goes through presigned URLs recorded by CloudTrail data events when enabled; server access logs are an environment-specific addition.' },
   { id: 'AwsSolutions-CFR1', reason: 'Geo restriction depends on where the users are; left to the operator.' },
   { id: 'AwsSolutions-CFR2', reason: 'AWS WAF on the distribution is an environment-specific addition (README).' },
   { id: 'AwsSolutions-CFR3', reason: 'CloudFront access logging is an environment-specific addition (README).' },
@@ -33,7 +34,7 @@ const suppressions = [
 describe('CDK Nag AwsSolutions Pack', () => {
   const app = new cdk.App();
   const stacks = buildStacks(app);
-  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess, stacks.codeCommit];
+  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess, stacks.codeCommit, stacks.privateNetwork];
   all.forEach((stack) => NagSuppressions.addStackSuppressions(stack, suppressions, true));
   cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
   app.synth();

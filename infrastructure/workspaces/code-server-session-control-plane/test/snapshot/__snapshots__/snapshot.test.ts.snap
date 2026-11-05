@@ -382,15 +382,25 @@ exports[`Snapshot controlPlane resource counts 1`] = `
   "AWS::ApiGatewayV2::Integration": 8,
   "AWS::ApiGatewayV2::Route": 8,
   "AWS::ApiGatewayV2::Stage": 1,
+  "AWS::Budgets::Budget": 1,
+  "AWS::CloudWatch::Alarm": 6,
   "AWS::Cognito::UserPool": 1,
   "AWS::Cognito::UserPoolClient": 1,
   "AWS::DynamoDB::Table": 1,
   "AWS::Events::Rule": 1,
-  "AWS::IAM::Policy": 5,
-  "AWS::IAM::Role": 6,
-  "AWS::Lambda::Function": 6,
+  "AWS::IAM::Policy": 7,
+  "AWS::IAM::Role": 9,
+  "AWS::KMS::Key": 1,
+  "AWS::Lambda::Function": 9,
   "AWS::Lambda::Permission": 9,
-  "AWS::Logs::LogGroup": 7,
+  "AWS::Logs::LogGroup": 9,
+  "AWS::Logs::MetricFilter": 1,
+  "AWS::S3::Bucket": 1,
+  "AWS::S3::BucketPolicy": 1,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "Custom::S3AutoDeleteObjects": 1,
 }
 `;
 
@@ -423,6 +433,11 @@ exports[`Snapshot controlPlane template 1`] = `
         "Ref": "HttpApiF5A9A8A7",
       },
     },
+    "RevokeUserFunctionName": {
+      "Value": {
+        "Ref": "RevokeUserFunction6253DB95",
+      },
+    },
     "UserPoolClientId": {
       "Value": {
         "Ref": "UserPoolUserPoolClient40176907",
@@ -431,6 +446,11 @@ exports[`Snapshot controlPlane template 1`] = `
     "UserPoolId": {
       "Value": {
         "Ref": "UserPool6BA7E5F2",
+      },
+    },
+    "WorkspaceBucketName": {
+      "Value": {
+        "Ref": "WorkspaceBucket53E30B92",
       },
     },
   },
@@ -453,7 +473,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "c8d05ae7003d8371f2595b171bd7cb3ecca8d5df1039acc3c14fe17dc244db7f.zip",
+          "S3Key": "eb2fcbec66940a284c0077a8d00c74fa57f4309d0ed945fb8c30eaef8e982f62.zip",
         },
         "Environment": {
           "Variables": {
@@ -506,6 +526,9 @@ exports[`Snapshot controlPlane template 1`] = `
               "Ref": "SessionsTable7C302024",
             },
             "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -529,7 +552,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "AccessSessionFunctionLogGroupCD99B150": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -637,6 +660,16 @@ exports[`Snapshot controlPlane template 1`] = `
               "Resource": "*",
             },
             {
+              "Action": "cognito-idp:AdminGetUser",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn",
+                ],
+              },
+            },
+            {
               "Action": "ssm:StartSession",
               "Condition": {
                 "StringEquals": {
@@ -687,6 +720,198 @@ exports[`Snapshot controlPlane template 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "AlarmTopicD01E77F9": {
+      "Properties": {
+        "KmsMasterKeyId": {
+          "Fn::GetAtt": [
+            "AlarmTopicKey57B0D3A7",
+            "Arn",
+          ],
+        },
+        "TopicName": "test-test-code-server-sessions-alarms",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "AlarmTopicKey57B0D3A7": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Encrypts the alarm topic",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::123456789012:root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudwatch.amazonaws.com",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "AlarmTopicPolicy309DB5F8": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "AlarmTopicD01E77F9",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "AlarmTopicopsexamplecom7B0F70A1": {
+      "Properties": {
+        "Endpoint": "ops@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "AlarmTopicD01E77F9",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "BedrockDailyTokensAlarm3D863A93": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "Bedrock use is unusually high; every user can call the model from a terminal, with no per-user limit",
+        "AlarmName": "test-test-code-server-sessions-BedrockDailyTokens",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "Metrics": [
+          {
+            "Expression": "input + output",
+            "Id": "expr_1",
+            "Label": "Bedrock tokens per day",
+            "ReturnData": true,
+          },
+          {
+            "Id": "input",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "ModelId",
+                    "Value": "jp.anthropic.claude-sonnet-4-6",
+                  },
+                ],
+                "MetricName": "InputTokenCount",
+                "Namespace": "AWS/Bedrock",
+              },
+              "Period": 86400,
+              "Stat": "Sum",
+            },
+            "ReturnData": false,
+          },
+          {
+            "Id": "output",
+            "MetricStat": {
+              "Metric": {
+                "Dimensions": [
+                  {
+                    "Name": "ModelId",
+                    "Value": "jp.anthropic.claude-sonnet-4-6",
+                  },
+                ],
+                "MetricName": "OutputTokenCount",
+                "Namespace": "AWS/Bedrock",
+              },
+              "Period": 86400,
+              "Stat": "Sum",
+            },
+            "ReturnData": false,
+          },
+        ],
+        "Threshold": 5000000,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "CapacityErrorsAlarm4F4018CE": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "New sessions are refused for lack of capacity; check the MicroVM memory quota",
+        "AlarmName": "test-test-code-server-sessions-CapacityErrors",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "CapacityErrors",
+        "Namespace": "test-test-code-server-sessions",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "CapacityErrorsFilterC93326BA": {
+      "Properties": {
+        "FilterPattern": "?"ServiceQuotaExceededException" ?"InsufficientInstanceCapacity"",
+        "LogGroupName": {
+          "Ref": "CreateSessionFunctionLogGroupE7F44B5B",
+        },
+        "MetricTransformations": [
+          {
+            "DefaultValue": 0,
+            "MetricName": "CapacityErrors",
+            "MetricNamespace": "test-test-code-server-sessions",
+            "MetricValue": "1",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::MetricFilter",
+    },
     "ChangeSessionFunction9997E2A0": {
       "DependsOn": [
         "ChangeSessionFunctionServiceRoleDefaultPolicyA9010647",
@@ -698,7 +923,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "f82c1316c819644ef40f389af94dfee5675c20a6ecb350b45fbcd8802accdd32.zip",
+          "S3Key": "dcf1aa46853637109205b76d8c290c971dbcdbbcdd869b9eab0e6c75d3db0b89.zip",
         },
         "Environment": {
           "Variables": {
@@ -751,6 +976,9 @@ exports[`Snapshot controlPlane template 1`] = `
               "Ref": "SessionsTable7C302024",
             },
             "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -774,7 +1002,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "ChangeSessionFunctionLogGroup281C1849": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -937,7 +1165,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "12e60dcb0498432b432666679c792663864aa8cc60a3a371c29b50efac9dcfd4.zip",
+          "S3Key": "3fbdd0e2cd8d2c27f2cd476a940c8bcb6918cd34684b00485634c7b6778a58da.zip",
         },
         "Environment": {
           "Variables": {
@@ -990,6 +1218,9 @@ exports[`Snapshot controlPlane template 1`] = `
               "Ref": "SessionsTable7C302024",
             },
             "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -1013,7 +1244,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "CreateSessionFunctionLogGroupE7F44B5B": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -1126,6 +1357,16 @@ exports[`Snapshot controlPlane template 1`] = `
               ],
               "Effect": "Allow",
               "Resource": "*",
+            },
+            {
+              "Action": "cognito-idp:AdminGetUser",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn",
+                ],
+              },
             },
             {
               "Action": "iam:PassRole",
@@ -1341,6 +1582,174 @@ exports[`Snapshot controlPlane template 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "WorkspaceBucket53E30B92",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FunctionErrors0AlarmA4A9A466": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A control plane function failed; users may be unable to start or open sessions",
+        "AlarmName": "test-test-code-server-sessions-FunctionErrors0",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "CreateSessionFunction9E798546",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FunctionErrors1AlarmCD026B76": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A control plane function failed; users may be unable to start or open sessions",
+        "AlarmName": "test-test-code-server-sessions-FunctionErrors1",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "AccessSessionFunctionEC8C4142",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FunctionErrors2Alarm2EAEBFC5": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A control plane function failed; users may be unable to start or open sessions",
+        "AlarmName": "test-test-code-server-sessions-FunctionErrors2",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "WorkspaceUrlFunction5A8A64AE",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "FunctionErrors3AlarmF218BD08": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "AlarmTopicD01E77F9",
+          },
+        ],
+        "AlarmDescription": "A control plane function failed; users may be unable to start or open sessions",
+        "AlarmName": "test-test-code-server-sessions-FunctionErrors3",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RevokeUserFunction6253DB95",
+            },
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching",
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
     "GetSessionsFunctionD9DF29DE": {
       "DependsOn": [
         "GetSessionsFunctionServiceRoleDefaultPolicy00FA4214",
@@ -1352,7 +1761,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "ee537b7d6ae59d0c64d4e29a70534c8056b89111cae3d9c67c243125617e0b1b.zip",
+          "S3Key": "8d62c32cc5666c4a7cd146b28c60355c44aac5c95ba90e791b704771a812b2af.zip",
         },
         "Environment": {
           "Variables": {
@@ -1405,6 +1814,9 @@ exports[`Snapshot controlPlane template 1`] = `
               "Ref": "SessionsTable7C302024",
             },
             "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -1428,7 +1840,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "GetSessionsFunctionLogGroupE748A4FC": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -2171,6 +2583,55 @@ exports[`Snapshot controlPlane template 1`] = `
       },
       "Type": "AWS::ApiGatewayV2::Stage",
     },
+    "MonthlyBudget": {
+      "Properties": {
+        "Budget": {
+          "BudgetLimit": {
+            "Amount": 100,
+            "Unit": "USD",
+          },
+          "BudgetName": "test-test-code-server-sessions-monthly",
+          "BudgetType": "COST",
+          "CostFilters": {
+            "TagKeyValue": [
+              "user:Project$test",
+            ],
+          },
+          "TimeUnit": "MONTHLY",
+        },
+        "NotificationsWithSubscribers": [
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 80,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+          {
+            "Notification": {
+              "ComparisonOperator": "GREATER_THAN",
+              "NotificationType": "ACTUAL",
+              "Threshold": 100,
+              "ThresholdType": "PERCENTAGE",
+            },
+            "Subscribers": [
+              {
+                "Address": "ops@example.com",
+                "SubscriptionType": "EMAIL",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::Budgets::Budget",
+    },
     "PortalFunction8161D359": {
       "DependsOn": [
         "PortalFunctionServiceRoleE39A633B",
@@ -2181,7 +2642,7 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "9af2b78a6ef84502686d6bed626774f1e164ec7143fb0b8c8d52b0fe8d880e0e.zip",
+          "S3Key": "8f0d66101ff65bd12e4a54c97dbcb1ba4b6ba3eea1df93c1109582503375eb2d.zip",
         },
         "Environment": {
           "Variables": {
@@ -2237,6 +2698,9 @@ exports[`Snapshot controlPlane template 1`] = `
             "USER_POOL_CLIENT_ID": {
               "Ref": "UserPoolUserPoolClient40176907",
             },
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -2260,7 +2724,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "PortalFunctionLogGroupF1926DC1": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -2295,6 +2759,254 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
       },
       "Type": "AWS::IAM::Role",
+    },
+    "RevokeUserFunction6253DB95": {
+      "DependsOn": [
+        "RevokeUserFunctionServiceRoleDefaultPolicy3B193168",
+        "RevokeUserFunctionServiceRole4A4B5B9B",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "48fa096e3f99b95fe028564d78e7bb56f7e737382752839207d5769b2d655678.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_MINUTES": "60",
+            "CODE_SERVER_PORT": "8080",
+            "EC2_LAUNCH_TEMPLATE_ID": {
+              "Fn::ImportValue": "Ec2:ExportsOutputRefInstanceTemplate5962AC2CC706794E",
+            },
+            "EC2_SUBNET_IDS": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::ImportValue": "Ec2:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+                  },
+                  ",",
+                  {
+                    "Fn::ImportValue": "Ec2:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+                  },
+                ],
+              ],
+            },
+            "MAX_ACTIVE_SESSIONS_PER_OWNER": "2",
+            "MICROVM_EGRESS_CONNECTOR_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+                ],
+              ],
+            },
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::ImportValue": "Microvm:ExportsOutputFnGetAttMicrovmExecutionRole1ADA6FF9ArnF72A8B1D",
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::ImportValue": "Microvm:ExportsOutputFnGetAttCodeServerImageImageArnD58D7ECB",
+            },
+            "MICROVM_LOG_GROUP_NAME": {
+              "Fn::ImportValue": "Microvm:ExportsOutputRefMicrovmImageLogGroup9AB810C249D1164C",
+            },
+            "MICROVM_MAX_DURATION_SECONDS": "28800",
+            "MICROVM_MAX_IDLE_SECONDS": "900",
+            "MICROVM_SUSPENDED_SECONDS": "3600",
+            "NAME_PREFIX": "test-test-code-server-sessions",
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RevokeUserFunctionLogGroup0E423B60",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "RevokeUserFunctionServiceRole4A4B5B9B",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "RevokeUserFunctionLogGroup0E423B60": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 365,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RevokeUserFunctionServiceRole4A4B5B9B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "RevokeUserFunctionServiceRoleDefaultPolicy3B193168": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SessionsTable7C302024",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SessionsTable7C302024",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:TerminateMicrovm",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminDisableUser",
+                "cognito-idp:AdminUserGlobalSignOut",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "ec2:TerminateInstances",
+              "Condition": {
+                "StringEquals": {
+                  "aws:ResourceTag/CodeServerSessions": "test-test-code-server-sessions",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ec2:ap-northeast-1:123456789012:instance/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "RevokeUserFunctionServiceRoleDefaultPolicy3B193168",
+        "Roles": [
+          {
+            "Ref": "RevokeUserFunctionServiceRole4A4B5B9B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "SessionsTable7C302024": {
       "DeletionPolicy": "Delete",
@@ -2409,6 +3121,9 @@ exports[`Snapshot controlPlane template 1`] = `
               "Ref": "SessionsTable7C302024",
             },
             "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
           },
         },
         "Handler": "index.handler",
@@ -2432,7 +3147,7 @@ exports[`Snapshot controlPlane template 1`] = `
     "SweepEc2FunctionLogGroup5728CF29": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "RetentionInDays": 7,
+        "RetentionInDays": 365,
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
@@ -2574,6 +3289,10 @@ exports[`Snapshot controlPlane template 1`] = `
         ],
         "EmailVerificationMessage": "The verification code to your new account is {####}",
         "EmailVerificationSubject": "Verify your new account",
+        "EnabledMfas": [
+          "SOFTWARE_TOKEN_MFA",
+        ],
+        "MfaConfiguration": "ON",
         "Policies": {
           "PasswordPolicy": {
             "MinimumLength": 12,
@@ -2600,6 +3319,7 @@ exports[`Snapshot controlPlane template 1`] = `
     },
     "UserPoolUserPoolClient40176907": {
       "Properties": {
+        "AccessTokenValidity": 15,
         "AllowedOAuthFlows": [
           "implicit",
           "code",
@@ -2621,14 +3341,412 @@ exports[`Snapshot controlPlane template 1`] = `
           "ALLOW_REFRESH_TOKEN_AUTH",
         ],
         "GenerateSecret": false,
+        "IdTokenValidity": 15,
+        "RefreshTokenValidity": 720,
         "SupportedIdentityProviders": [
           "COGNITO",
         ],
+        "TokenValidityUnits": {
+          "AccessToken": "minutes",
+          "IdToken": "minutes",
+          "RefreshToken": "minutes",
+        },
         "UserPoolId": {
           "Ref": "UserPool6BA7E5F2",
         },
       },
       "Type": "AWS::Cognito::UserPoolClient",
+    },
+    "WorkspaceBucket53E30B92": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 14,
+              },
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkspaceBucketAutoDeleteObjectsCustomResource851E14A3": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "WorkspaceBucketPolicyDE4FEEC3",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "WorkspaceBucket53E30B92",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkspaceBucketPolicyDE4FEEC3": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "WorkspaceBucket53E30B92",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkspaceBucket53E30B92",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkspaceBucket53E30B92",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkspaceBucket53E30B92",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkspaceBucket53E30B92",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "WorkspaceUrlFunction5A8A64AE": {
+      "DependsOn": [
+        "WorkspaceUrlFunctionServiceRoleDefaultPolicy4B5DBC4E",
+        "WorkspaceUrlFunctionServiceRoleABE6DE4B",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "10a968f7a8e346f25fabdba90e915c95fd8ec808631ecbc40029c60e0590f6e4.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "AUTH_TOKEN_MINUTES": "60",
+            "CODE_SERVER_PORT": "8080",
+            "EC2_LAUNCH_TEMPLATE_ID": {
+              "Fn::ImportValue": "Ec2:ExportsOutputRefInstanceTemplate5962AC2CC706794E",
+            },
+            "EC2_SUBNET_IDS": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::ImportValue": "Ec2:ExportsOutputRefVpcprivateSubnet1SubnetCEAD37168693D373",
+                  },
+                  ",",
+                  {
+                    "Fn::ImportValue": "Ec2:ExportsOutputRefVpcprivateSubnet2Subnet2DE7549CDF5ACE3D",
+                  },
+                ],
+              ],
+            },
+            "MAX_ACTIVE_SESSIONS_PER_OWNER": "2",
+            "MICROVM_EGRESS_CONNECTOR_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition",
+                  },
+                  ":lambda:ap-northeast-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+                ],
+              ],
+            },
+            "MICROVM_EXECUTION_ROLE_ARN": {
+              "Fn::ImportValue": "Microvm:ExportsOutputFnGetAttMicrovmExecutionRole1ADA6FF9ArnF72A8B1D",
+            },
+            "MICROVM_IMAGE_ARN": {
+              "Fn::ImportValue": "Microvm:ExportsOutputFnGetAttCodeServerImageImageArnD58D7ECB",
+            },
+            "MICROVM_LOG_GROUP_NAME": {
+              "Fn::ImportValue": "Microvm:ExportsOutputRefMicrovmImageLogGroup9AB810C249D1164C",
+            },
+            "MICROVM_MAX_DURATION_SECONDS": "28800",
+            "MICROVM_MAX_IDLE_SECONDS": "900",
+            "MICROVM_SUSPENDED_SECONDS": "3600",
+            "NAME_PREFIX": "test-test-code-server-sessions",
+            "SESSIONS_TABLE_NAME": {
+              "Ref": "SessionsTable7C302024",
+            },
+            "SESSION_RECORD_TTL_DAYS": "1",
+            "USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2",
+            },
+            "WORKSPACE_BUCKET_NAME": {
+              "Ref": "WorkspaceBucket53E30B92",
+            },
+          },
+        },
+        "FunctionName": "test-test-code-server-sessions-workspace-url",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WorkspaceUrlFunctionLogGroup925554CD",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkspaceUrlFunctionServiceRoleABE6DE4B",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 15,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkspaceUrlFunctionLogGroup925554CD": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 365,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkspaceUrlFunctionServiceRoleABE6DE4B": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkspaceUrlFunctionServiceRoleDefaultPolicy4B5DBC4E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SessionsTable7C302024",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SessionsTable7C302024",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "SessionsTable7C302024",
+                          "Arn",
+                        ],
+                      },
+                      "/index/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkspaceBucket53E30B92",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkspaceBucket53E30B92",
+                          "Arn",
+                        ],
+                      },
+                      "/workspaces/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkspaceUrlFunctionServiceRoleDefaultPolicy4B5DBC4E",
+        "Roles": [
+          {
+            "Ref": "WorkspaceUrlFunctionServiceRoleABE6DE4B",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
   },
   "Rules": {
@@ -2987,6 +4105,7 @@ cat > /home/ec2-user/.claude/settings.json <<'JSON'
 {
   "env": {
     "CLAUDE_CODE_USE_BEDROCK": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "AWS_REGION": "ap-northeast-1",
     "ANTHROPIC_MODEL": "jp.anthropic.claude-sonnet-4-6",
     "ANTHROPIC_SMALL_FAST_MODEL": "jp.anthropic.claude-haiku-4-5-20251001-v1:0"
@@ -3468,7 +4587,7 @@ exports[`Snapshot microvm template 1`] = `
           ],
         },
         "CodeArtifact": {
-          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/8fc38352406be488bf7f95d74cf9ad3cf5dd6a96312b687488727cbcf38274fc.zip",
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/13f65ea786e77f51051daef5a9b75e734f5233c93c8460331a845a95e471de8f.zip",
         },
         "CpuConfigurations": [
           {
@@ -3496,7 +4615,15 @@ exports[`Snapshot microvm template 1`] = `
             "Value": "ap-northeast-1",
           },
           {
+            "Key": "WORKSPACE_FUNCTION_NAME",
+            "Value": "test-test-code-server-sessions-workspace-url",
+          },
+          {
             "Key": "CLAUDE_CODE_USE_BEDROCK",
+            "Value": "1",
+          },
+          {
+            "Key": "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
             "Value": "1",
           },
           {
@@ -3517,15 +4644,16 @@ exports[`Snapshot microvm template 1`] = `
             "Resume": "DISABLED",
             "Run": "ENABLED",
             "RunTimeoutInSeconds": 60,
-            "Suspend": "DISABLED",
+            "Suspend": "ENABLED",
+            "SuspendTimeoutInSeconds": 60,
             "Terminate": "ENABLED",
-            "TerminateTimeoutInSeconds": 15,
+            "TerminateTimeoutInSeconds": 60,
           },
           "MicrovmImageHooks": {
             "Ready": "ENABLED",
             "ReadyTimeoutInSeconds": 60,
             "Validate": "ENABLED",
-            "ValidateTimeoutInSeconds": 60,
+            "ValidateTimeoutInSeconds": 120,
           },
           "Port": 8080,
         },
@@ -3672,6 +4800,23 @@ exports[`Snapshot microvm template 1`] = `
               "Sid": "CodeCommitGitAccess",
             },
             {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":lambda:ap-northeast-1:123456789012:function:test-test-code-server-sessions-workspace-url",
+                  ],
+                ],
+              },
+              "Sid": "WorkspaceUrlOnly",
+            },
+            {
               "Action": [
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
@@ -3785,6 +4930,862 @@ exports[`Snapshot microvm template 1`] = `
       },
       "Type": "AWS::Logs::LogGroup",
       "UpdateReplacePolicy": "Delete",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Snapshot privateNetwork resource counts 1`] = `
+{
+  "AWS::CodeArtifact::Domain": 1,
+  "AWS::CodeArtifact::Repository": 3,
+  "AWS::EC2::RouteTable": 1,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupEgress": 2,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 1,
+  "AWS::EC2::SubnetRouteTableAssociation": 1,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 8,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::NetworkConnector": 1,
+  "AWS::Route53Resolver::FirewallDomainList": 2,
+  "AWS::Route53Resolver::FirewallRuleGroup": 1,
+  "AWS::Route53Resolver::FirewallRuleGroupAssociation": 1,
+}
+`;
+
+exports[`Snapshot privateNetwork template 1`] = `
+{
+  "Outputs": {
+    "EgressConnectorArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "EgressConnector",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AllDomains": {
+      "Properties": {
+        "Domains": [
+          "*",
+        ],
+        "Name": "test-test-code-server-sessions-all",
+      },
+      "Type": "AWS::Route53Resolver::FirewallDomainList",
+    },
+    "AwsDomains": {
+      "Properties": {
+        "Domains": [
+          "amazonaws.com",
+          "*.amazonaws.com",
+          "*.internal",
+        ],
+        "Name": "test-test-code-server-sessions-aws",
+      },
+      "Type": "AWS::Route53Resolver::FirewallDomainList",
+    },
+    "ConnectorOperatorRole9422756C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Manages the MicroVM connector network interfaces",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "DnsRules": {
+      "Properties": {
+        "FirewallRules": [
+          {
+            "Action": "ALLOW",
+            "FirewallDomainListId": {
+              "Fn::GetAtt": [
+                "AwsDomains",
+                "Id",
+              ],
+            },
+            "Priority": 1,
+          },
+          {
+            "Action": "BLOCK",
+            "BlockResponse": "NXDOMAIN",
+            "FirewallDomainListId": {
+              "Fn::GetAtt": [
+                "AllDomains",
+                "Id",
+              ],
+            },
+            "Priority": 2,
+          },
+        ],
+        "Name": "test-test-code-server-sessions-dns",
+      },
+      "Type": "AWS::Route53Resolver::FirewallRuleGroup",
+    },
+    "DnsRulesAssociation": {
+      "Properties": {
+        "FirewallRuleGroupId": {
+          "Fn::GetAtt": [
+            "DnsRules",
+            "Id",
+          ],
+        },
+        "Name": "test-test-code-server-sessions-dns",
+        "Priority": 1000,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::Route53Resolver::FirewallRuleGroupAssociation",
+    },
+    "EgressConnector": {
+      "Properties": {
+        "Configuration": {
+          "VpcEgressConfiguration": {
+            "AssociatedComputeResourceTypes": [
+              "MicroVm",
+            ],
+            "NetworkProtocol": "IPv4",
+            "SecurityGroupIds": [
+              {
+                "Fn::GetAtt": [
+                  "SessionsSecurityGroup32CC28C9",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetIds": [
+              {
+                "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+              },
+            ],
+          },
+        },
+        "Name": "test-test-code-server-sessions-private",
+        "OperatorRole": {
+          "Fn::GetAtt": [
+            "ConnectorOperatorRole9422756C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::NetworkConnector",
+    },
+    "EndpointsSecurityGroup7A56E975": {
+      "Properties": {
+        "GroupDescription": "VPC endpoints: HTTPS from sessions only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EndpointsSecurityGroupfromPrivateNetworkSessionsSecurityGroupA28D3CE2443D6D530E5": {
+      "Properties": {
+        "Description": "HTTPS from sessions",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EndpointsSecurityGroup7A56E975",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "NpmUpstream": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "ExternalConnections": [
+          "public:npmjs",
+        ],
+        "RepositoryName": "npm-store",
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "PackageDomain": {
+      "Properties": {
+        "DomainName": "test-test-code-server-sessions",
+      },
+      "Type": "AWS::CodeArtifact::Domain",
+    },
+    "PackageRepository": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "RepositoryName": "packages",
+        "Upstreams": [
+          {
+            "Fn::GetAtt": [
+              "NpmUpstream",
+              "Name",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "PypiUpstream",
+              "Name",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "PypiUpstream": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "ExternalConnections": [
+          "public:pypi",
+        ],
+        "RepositoryName": "pypi-store",
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "SessionsSecurityGroup32CC28C9": {
+      "Properties": {
+        "GroupDescription": "MicroVM sessions: HTTPS to the VPC endpoints only",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SessionsSecurityGrouptoPrivateNetworkEndpointsSecurityGroup4D4B6B954435AFDECDF": {
+      "Properties": {
+        "Description": "HTTPS to the VPC endpoints",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EndpointsSecurityGroup7A56E975",
+            "GroupId",
+          ],
+        },
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SessionsSecurityGrouptoplxxxxxxxx44381390650": {
+      "Properties": {
+        "Description": "HTTPS to S3 through the gateway endpoint",
+        "DestinationPrefixListId": "pl-xxxxxxxx",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcBedrockRuntimeEndpoint726DDE28": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.bedrock-runtime",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeArtifactApiEndpointFA3CC996": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.codeartifact.api",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeArtifactRepositoriesEndpointB30091A4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.codeartifact.repositories",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeCommitEndpoint3FDD83D3": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "codecommit:GitPull",
+                "codecommit:GitPush",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-a",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-b",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:managed-a",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.git-codecommit",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcLambdaEndpointB3C850C4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.lambda",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcLogsEndpointDA7F7E44": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.logs",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcS3Endpoint4A3DE4B5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:ResourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::assets-*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "RouteTableIds": [
+          {
+            "Ref": "VpcsessionsSubnet1RouteTable203D0838",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcStsEndpointF89E8173": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.sts",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcsessionsSubnet1RouteTable203D0838": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc/sessionsSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcsessionsSubnet1RouteTableAssociationB94068E8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcsessionsSubnet1RouteTable203D0838",
+        },
+        "SubnetId": {
+          "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcsessionsSubnet1Subnet59E1788C": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "sessions",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "PrivateNetwork/Vpc/sessionsSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
     },
   },
   "Rules": {

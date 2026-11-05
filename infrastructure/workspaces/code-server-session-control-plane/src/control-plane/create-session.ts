@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { isEc2Enabled, readState, startCompute } from './lib/compute';
-import { getOwnerEmail, getOwnerId, jsonResponse, parseBody } from './lib/http';
+import { audit, getOwnerEmail, getOwnerId, jsonResponse, parseBody } from './lib/http';
 import { listOwnedSessions, putSession, updateSessionState } from './lib/session-store';
+import { isUserEnabled } from './lib/user-status';
 
 const MAX_ACTIVE_SESSIONS = Number(process.env.MAX_ACTIVE_SESSIONS_PER_OWNER ?? '2');
 const SESSION_RECORD_TTL_DAYS = Number(process.env.SESSION_RECORD_TTL_DAYS ?? '1');
@@ -23,6 +24,8 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     return jsonResponse(400, { message: 'EC2 compute is not deployed in this environment' });
   }
 
+  if (!(await isUserEnabled(event))) return jsonResponse(403, { message: 'This user is disabled' });
+
   const existing = await listOwnedSessions(ownerId);
   const candidates = existing.filter((s) => s.state !== 'TERMINATED');
   const live = await Promise.all(candidates.map(async (s) => {
@@ -37,7 +40,8 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   const sessionId = randomUUID();
   const now = new Date();
   const expiresAt = Math.floor(now.getTime() / 1000) + SESSION_RECORD_TTL_DAYS * 24 * 60 * 60;
-  const started = await startCompute(compute, sessionId, ownerId, expiresAt, getOwnerEmail(event));
+  const workspaceToken = randomBytes(32).toString('hex');
+  const started = await startCompute(compute, sessionId, ownerId, expiresAt, getOwnerEmail(event), workspaceToken);
 
   await putSession({
     sessionId,
@@ -45,11 +49,13 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     compute,
     resourceId: started.resourceId,
     ...(started.endpoint ? { endpoint: started.endpoint } : {}),
+    workspaceTokenHash: createHash('sha256').update(workspaceToken).digest('hex'),
     state: started.state,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     expiresAt,
   });
 
+  audit('session.create', event, { sessionId, compute, resourceId: started.resourceId });
   return jsonResponse(201, { sessionId, compute, state: started.state });
 }

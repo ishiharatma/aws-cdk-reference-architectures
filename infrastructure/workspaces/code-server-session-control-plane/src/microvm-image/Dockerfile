@@ -9,7 +9,7 @@ ARG TARGETARCH
 ARG CODE_SERVER_VERSION=4.141.0
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates curl git procps openssh-client unzip less \
+    && apt-get install --yes --no-install-recommends ca-certificates curl git procps openssh-client unzip less python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-${TARGETARCH}.tar.gz" \

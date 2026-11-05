@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { resumeCompute, suspendCompute, terminateCompute } from './lib/compute';
-import { getOwnerId, jsonResponse } from './lib/http';
+import { audit, getOwnerId, jsonResponse } from './lib/http';
 import { getOwnedSession, updateSessionState } from './lib/session-store';
 
 /**
@@ -18,6 +18,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
   if (!session) return jsonResponse(404, { message: 'Session not found' });
 
   const routeKey = event.routeKey;
+  audit('session.change', event, { sessionId, route: routeKey, resourceId: session.resourceId });
   if (routeKey.startsWith('DELETE')) {
     await terminateCompute(session);
     await updateSessionState(sessionId, 'TERMINATING');
