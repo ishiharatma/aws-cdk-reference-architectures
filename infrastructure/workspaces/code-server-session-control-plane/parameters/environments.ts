@@ -44,6 +44,12 @@ export interface MicrovmParams {
   /** Lifetime of the endpoint token. Service maximum is 60. @default 60 */
   readonly authTokenMinutes?: number;
   /**
+   * VS Code extensions baked into the image, as publisher.name from Open VSX. A closed session cannot
+   * install from the gallery, and an extension runs arbitrary code in a session, so this list is
+   * also the review point. The build fails if one cannot be installed. @default []
+   */
+  readonly extensions?: string[];
+  /**
    * 'internet' lets sessions reach anything. 'private' removes every route out: AWS services through
    * VPC endpoints only, packages through a read-only mirror, and no file transfer in the browser.
    * It cannot be combined with `ec2`, whose setup downloads from the internet.

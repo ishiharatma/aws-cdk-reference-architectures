@@ -221,6 +221,7 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
 - **`/run` hook timeout is capped at 60 seconds by the resource schema** (`F3034` at synth).
 - **The first use of a program pages it in from the image.** Starting code-server alongside two AWS CLI processes on 1 vCPU exceeded a 20-second wait. Running those programs in the `/validate` hook made a later start much faster (IDE in 9 to 17 seconds), as the documentation says Lambda samples what that hook touches.
 - **`aws s3` to another Region stalls for minutes with default retries** because the connection attempts time out; set `AWS_MAX_ATTEMPTS=1` and `--cli-connect-timeout` in checks.
+- **A closed session cannot install extensions from the gallery** (`getaddrinfo ENOTFOUND open-vsx.org`). `code-server --install-extension` at image build and from a `.vsix` file both work; a VSIX cloned from CodeCommit installed fine and shows after a page reload.
 - **The `Max allocated ARM_64 MicroVM memory` quota was 8 GB in the verification account**, which caps 2 GiB sessions at 4 concurrent.
 - **Cognito refuses a TOTP code from the window after the one it just accepted** with `Your software token has already been used once`; waiting about a minute works.
 

@@ -9,6 +9,16 @@ const devParams: EnvParams = {
     baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1',
     baseImageVersion: '1',
     egress: 'private',
+    extensions: [
+      'yzhang.markdown-all-in-one',
+      'amazonwebservices.aws-toolkit-vscode',
+      'vscode-icons-team.vscode-icons',
+      'dbaeumer.vscode-eslint',
+      'DavidAnson.vscode-markdownlint',
+      'esbenp.prettier-vscode',
+      'hediet.vscode-drawio',
+      'oderwat.indent-rainbow',
+    ],
   },
   // To add EC2 sessions, set microvm.egress to 'internet' and add:
   //   ec2: { natType: 'instance' }  // a NAT instance keeps verification cheap; use 'gateway' when shared

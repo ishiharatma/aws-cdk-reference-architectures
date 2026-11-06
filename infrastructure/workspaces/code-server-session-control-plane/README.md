@@ -332,7 +332,31 @@ aws lambda invoke --function-name <RevokeUserFunctionName> \
 
 ### Packages in the closed network
 
-npm and pip point at the CodeArtifact mirror automatically at start. Other tools and registries do not work. VS Code extensions cannot reach Open VSX, so add them to the image in the Dockerfile.
+npm and pip point at the CodeArtifact mirror automatically at start. Other tools and registries do not work.
+
+### Extensions in the closed network
+
+A closed session cannot reach Open VSX, so installing from the screen fails (`getaddrinfo ENOTFOUND open-vsx.org`). There are two ways instead.
+
+**For everyone:** list them in `microvm.extensions`. They are installed at build time and available in every session. A change builds a new image, effective for new sessions. The build fails if a listed extension cannot be installed.
+
+```typescript
+microvm: {
+  // ...
+  extensions: ['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'], // publisher.name from Open VSX
+},
+```
+
+**To try one yourself:** put a reviewed `.vsix` in a CodeCommit repository and install it in the session. Browser upload is off, so it goes through the repository. It lands outside `~/project`, so **it is gone when the session ends**; install it again in a new session.
+
+```sh
+git clone https://git-codecommit.<region>.amazonaws.com/v1/repos/<repository>
+/opt/code-server/bin/code-server --install-extension <repository>/.vsix/<name>.vsix
+```
+
+Reload the page afterward.
+
+An extension runs arbitrary code in the session. In the closed network it cannot send anything out, but it can reach the allowed repositories and Bedrock, so treat the list as something to review. In AWS Toolkit, operations on services with no VPC endpoint fail.
 
 ### Claude Code
 
@@ -456,6 +480,9 @@ Deployed to a development account in ap-northeast-1 and us-east-1 on 2026-11-05,
 | Revoking a user | No new sign-in; an issued ID token gets 403 on start and access; sessions end; renewal fails |
 | MFA | Enrollment and sign-in work; wrong codes refused; a password alone gets no tokens |
 | Path A, closed with MFA | All checks pass |
+| `microvm.extensions` (8) | All installed; 567 MB of extensions, 3.5 GB of the 7.8 GB disk used; 31 seconds to the IDE on a new image's first run |
+| Ordinary install when closed | Fails with `getaddrinfo ENOTFOUND open-vsx.org` |
+| VSIX through CodeCommit | Clone and install succeed; shown in the list |
 
 **CodeCommit and NAT switching**
 
@@ -488,7 +515,7 @@ Defects found on real AWS and fixed:
 6. **code-server missed its start wait in the closed network.** Running two AWS CLI processes at once on a 1 vCPU MicroVM pushed it past the 20-second wait, `/run` returned 500 and the MicroVM ended. Package setup now runs after code-server, and `/validate` runs code-server and the AWS CLI so they are prefetched; the IDE now appears in 9 to 17 seconds. The `/run` timeout is capped at 60 seconds.
 7. **Removing the EC2 stack gave 500 to users with an EC2 session on record.** The permission to ask EC2 about that record was gone, so listing and starting sessions failed with `UnauthorizedOperation`. A record now reads as terminated when EC2 is not deployed.
 
-Not confirmed: Git from the VS Code Source Control panel, the on-screen effect of disabling downloads, actual alarm and budget notifications, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
+Not confirmed: what each extension itself does, Git from the VS Code Source Control panel, the on-screen effect of disabling downloads, actual alarm and budget notifications, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
 
 ## 🔧 Troubleshooting
 

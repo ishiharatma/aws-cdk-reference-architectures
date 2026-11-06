@@ -332,7 +332,31 @@ aws lambda invoke --function-name <RevokeUserFunctionName> \
 
 ### 閉域でパッケージを使う
 
-npm と pip は、起動時に CodeArtifact のミラーへ自動で向きます。ほかのツールやレジストリは使えません。VS Code の拡張機能は Open VSX に届かないので、Dockerfile でイメージに入れてください。
+npm と pip は、起動時に CodeArtifact のミラーへ自動で向きます。ほかのツールやレジストリは使えません。
+
+### 閉域で拡張機能を使う
+
+閉域のセッションからは Open VSX に届かないので、画面からインストールすると失敗します(`getaddrinfo ENOTFOUND open-vsx.org`)。次の2つの方法があります。
+
+**全員で使うもの:** `microvm.extensions` に指定します。ビルド時に入るので、全セッションで最初から使えます。変更すると新しいイメージがビルドされ、新しいセッションから有効になります。指定した拡張機能を入れられないとビルドが失敗します。
+
+```typescript
+microvm: {
+  // ...
+  extensions: ['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'], // Open VSX の publisher.name
+},
+```
+
+**個人で試すもの:** 確認した `.vsix` を CodeCommit のリポジトリに置き、セッションで入れます。ブラウザからのアップロードは無効なので、リポジトリを経由します。`~/project` の外に入るので、**セッションを終了すると消えます**。新しいセッションでは入れ直してください。
+
+```sh
+git clone https://git-codecommit.<region>.amazonaws.com/v1/repos/<リポジトリ名>
+/opt/code-server/bin/code-server --install-extension <リポジトリ名>/.vsix/<名前>.vsix
+```
+
+入れたあとはページを再読み込みしてください。
+
+拡張機能はセッションの中で任意のコードを実行できます。閉域なら外へは送れませんが、許可したリポジトリや Bedrock には届くので、一覧は審査の対象にしてください。AWS Toolkit は、VPC エンドポイントのないサービスの操作は失敗します。
 
 ### Claude Code
 
@@ -456,6 +480,9 @@ MicroVM の `~/project` と VS Code の設定は自動で保存され、次の�
 | 利用者の停止 | 再サインイン不可、発行済み ID トークンでもセッション開始とアクセスは 403、セッションは終了、更新も失敗 |
 | MFA | 登録とサインインが成功。誤ったコードは拒否。パスワードだけではトークンなし |
 | 閉域 + MFA の方式 A | 全項目成功 |
+| `microvm.extensions`(8個) | すべて導入済み。拡張機能は計 567 MB、ディスクは 7.8 GB 中 3.5 GB 使用。新イメージの初回は IDE 表示まで31秒 |
+| 閉域での通常のインストール | `getaddrinfo ENOTFOUND open-vsx.org` で失敗 |
+| CodeCommit 経由の VSIX | clone とインストールが成功、一覧に表示 |
 
 **CodeCommit と NAT の切り替え**
 
@@ -488,7 +515,7 @@ MicroVM の `~/project` と VS Code の設定は自動で保存され、次の�
 6. **閉域で code-server が起動待ちに間に合わなかった。** 1 vCPU の MicroVM で AWS CLI を2つ同時に動かすと、20秒の待ちを超えて `/run` が 500 になり、MicroVM が終了しました。パッケージの設定を code-server の起動後に回し、`/validate` で code-server と AWS CLI を動かして先読みさせたところ、IDE の表示が9〜17秒になりました。`/run` のタイムアウトの上限は60秒です。
 7. **EC2 スタックを外すと、EC2 セッションの記録が残るユーザーだけ 500 になった。** 記録の状態を EC2 に問い合わせる権限がなくなり、`UnauthorizedOperation` でセッションの一覧と開始が失敗しました。EC2 が配備されていなければ、記録を終了済みとして扱います。
 
-確認できていないこと: VS Code のソース管理パネルからの Git 操作、ファイルのダウンロード無効化の画面上の動作、アラームと予算の実際の通知、実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
+確認できていないこと: 各拡張機能の機能そのもの、VS Code のソース管理パネルからの Git 操作、ファイルのダウンロード無効化の画面上の動作、アラームと予算の実際の通知、実際の60分トークンの失効、開いたままのタブでのアイドル自動サスペンド、`maxRunningHours` による停止(期限切れの終了は確認済み)、方式 A と EC2 版の実ブラウザでの操作(HTTP と WebSocket の検査のみ)、複数ユーザーの同時利用。
 
 ## 🔧 トラブルシューティング
 

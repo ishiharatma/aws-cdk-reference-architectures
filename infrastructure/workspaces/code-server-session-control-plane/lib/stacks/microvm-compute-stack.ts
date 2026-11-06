@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -50,8 +51,25 @@ export class MicrovmComputeStack extends cdk.Stack {
     const namePrefix = `${project}-${environment}-code-server-sessions`;
     const image = params.microvm;
 
+    const extensions = image.extensions ?? [];
+    const invalid = extensions.filter((extension) => !/^[\w-]+\.[\w-]+$/.test(extension));
+    if (invalid.length > 0) throw new Error(`microvm.extensions must be publisher.name: ${invalid.join(', ')}`);
+
+    const imageSource = path.join(__dirname, '..', '..', 'src', 'microvm-image');
     const imageAsset = new s3assets.Asset(this, 'MicrovmImageAsset', {
-      path: path.join(__dirname, '..', '..', 'src', 'microvm-image'),
+      path: imageSource,
+      // The Dockerfile reads the list from the build context, so a changed list builds a new image.
+      assetHashType: cdk.AssetHashType.OUTPUT,
+      bundling: {
+        image: cdk.DockerImage.fromRegistry('unused'),
+        local: {
+          tryBundle(outputDir: string): boolean {
+            fs.cpSync(imageSource, outputDir, { recursive: true });
+            fs.writeFileSync(path.join(outputDir, 'extensions.txt'), extensions.map((extension) => `${extension}\n`).join(''));
+            return true;
+          },
+        },
+      },
     });
 
     const servicePrincipal = new iam.ServicePrincipal('lambda.amazonaws.com');

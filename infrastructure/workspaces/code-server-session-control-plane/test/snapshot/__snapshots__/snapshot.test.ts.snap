@@ -4587,7 +4587,7 @@ exports[`Snapshot microvm template 1`] = `
           ],
         },
         "CodeArtifact": {
-          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/13f65ea786e77f51051daef5a9b75e734f5233c93c8460331a845a95e471de8f.zip",
+          "Uri": "s3://cdk-hnb659fds-assets-123456789012-ap-northeast-1/ae87f6931390622e7b617e39b78d47e2180f43a1bc1da30370cb63dc2764c72a.zip",
         },
         "CpuConfigurations": [
           {

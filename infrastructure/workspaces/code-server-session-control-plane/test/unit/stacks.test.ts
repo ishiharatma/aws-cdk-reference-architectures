@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
+import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
 import { EnvParams } from 'parameters/environments';
 import { buildStacks } from 'test/helpers';
 
@@ -151,6 +152,32 @@ describe('PrivateNetworkStack', () => {
   test('the package mirror has upstreams and no publish permission anywhere', () => {
     template.resourceCountIs('AWS::CodeArtifact::Repository', 3);
     expect(JSON.stringify(microvmTemplate.toJSON())).not.toContain('codeartifact:PublishPackageVersion');
+  });
+});
+
+describe('microvm.extensions', () => {
+  const baseParams: EnvParams = {
+    region: 'ap-northeast-1',
+    microvm: { baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1', baseImageVersion: '1' },
+  };
+  const artifact = (extensions: string[]): unknown => {
+    const stack = new MicrovmComputeStack(new cdk.App(), 'Microvm', {
+      project: 'test',
+      environment: Environment.TEST,
+      env: { account: '123456789012', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      params: { ...baseParams, microvm: { ...baseParams.microvm, extensions } },
+    });
+    return JSON.stringify(Object.values(Template.fromStack(stack).findResources('AWS::Lambda::MicrovmImage'))[0]);
+  };
+
+  test('a changed list changes the image source, so a new image is built', () => {
+    expect(artifact(['a.b'])).not.toEqual(artifact(['a.c']));
+    expect(artifact(['a.b'])).toEqual(artifact(['a.b']));
+  });
+
+  test.each(['no-dot', 'a.b; curl evil', '../x.y', 'a.b\nc.d'])('refuses %s', (bad) => {
+    expect(() => artifact([bad])).toThrow('publisher.name');
   });
 });
 

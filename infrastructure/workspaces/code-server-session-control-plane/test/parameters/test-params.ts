@@ -12,6 +12,7 @@ const testParams: EnvParams = {
   microvm: {
     baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1',
     baseImageVersion: '1',
+    extensions: ['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'],
   },
   ec2: {},
   controlPlane: { requireMfa: true },
