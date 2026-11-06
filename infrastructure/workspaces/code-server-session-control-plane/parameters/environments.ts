@@ -50,7 +50,8 @@ export interface MicrovmParams {
    */
   readonly extensions?: string[];
   /**
-   * 'internet' lets sessions reach anything. 'private' removes every route out: AWS services through
+   * 'internet' lets sessions reach anything through the AWS-managed INTERNET_EGRESS connector, without
+   * NAT; `ec2.natType` applies to EC2 sessions only. 'private' removes every route out: AWS services through
    * VPC endpoints only, packages through a read-only mirror, and no file transfer in the browser.
    * It cannot be combined with `ec2`, whose setup downloads from the internet.
    * @default 'internet'

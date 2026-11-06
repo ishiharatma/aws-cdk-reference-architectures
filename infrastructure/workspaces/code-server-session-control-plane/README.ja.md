@@ -422,18 +422,37 @@ bedrock: {
 },
 ```
 
-### 閉域と EC2 版を切り替える
+### ネットワーク構成を切り替える
+
+閉域は MicroVM の `microvm.egress` で切り替えます。NAT は EC2 版だけが使い、`ec2.natType` で選びます。
+
+| 構成 | `microvm.egress` | `ec2` | MicroVM の外向き通信 | EC2 の外向き通信 |
+|---|---|---|---|---|
+| 閉域 | `'private'` | なし | VPC エンドポイントと読み取り専用ミラーのみ | - |
+| インターネット | `'internet'` | なし | AWS 管理の `INTERNET_EGRESS` | - |
+| EC2 + NAT インスタンス | `'internet'` | `{ natType: 'instance' }` | `INTERNET_EGRESS` | NAT インスタンス |
+| EC2 + NAT Gateway | `'internet'` | `{ natType: 'gateway' }` | `INTERNET_EGRESS` | NAT Gateway |
+| 閉域 + EC2 | `'private'` | あり | 指定不可(合成時にエラー) | 指定不可(合成時にエラー) |
+
+`egress` の既定は `'internet'`、`natType` の既定は `'gateway'` です。
 
 ```typescript
-// 閉域(MicroVM のみ)
+// 閉域
 microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'private' },
 
-// インターネットあり(EC2 版も使える)
+// インターネット(NAT なし)
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
+
+// EC2 + NAT インスタンス
 microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
 ec2: { natType: 'instance' },
 ```
 
 `egress: 'private'` と `ec2` を同時に指定すると、合成時にエラーになります。EC2 のセットアップにインターネットが必要で、閉域にならないためです。閉域の EC2 には、必要なものを焼き込んだ AMI が必要です。
+
+`'internet'` では、セッションからどこへでも通信でき、ブラウザでのファイル転送も禁止されません。コードを社外に送信しない要件があるなら `'private'` を使ってください。
+
+スタックの更新で `'internet'` から `'private'` へ切り替えられることは確認済みです。逆方向は未検証なので、実施するときはデプロイ後に動作を確認してください。
 
 ### 作業内容を残す
 

@@ -422,18 +422,37 @@ bedrock: {
 },
 ```
 
-### Switch between closed and EC2
+### Switch the network configuration
+
+`microvm.egress` turns the closed network on or off for MicroVMs. Only EC2 sessions use NAT, selected with `ec2.natType`.
+
+| Configuration | `microvm.egress` | `ec2` | MicroVM outbound | EC2 outbound |
+|---|---|---|---|---|
+| Closed | `'private'` | None | VPC endpoints and the read-only mirror only | - |
+| Internet | `'internet'` | None | AWS-managed `INTERNET_EGRESS` | - |
+| EC2 + NAT instance | `'internet'` | `{ natType: 'instance' }` | `INTERNET_EGRESS` | NAT instance |
+| EC2 + NAT Gateway | `'internet'` | `{ natType: 'gateway' }` | `INTERNET_EGRESS` | NAT Gateway |
+| Closed + EC2 | `'private'` | Set | Not allowed (error at synthesis) | Not allowed (error at synthesis) |
+
+`egress` defaults to `'internet'` and `natType` defaults to `'gateway'`.
 
 ```typescript
-// Closed (MicroVM only)
+// Closed
 microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'private' },
 
-// With internet (EC2 available)
+// Internet (no NAT)
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
+
+// EC2 + NAT instance
 microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
 ec2: { natType: 'instance' },
 ```
 
 Setting `egress: 'private'` together with `ec2` is an error at synthesis, because EC2 setup needs the internet and the result would not be closed. Closed EC2 needs an AMI with everything baked in.
+
+With `'internet'`, sessions can reach anything and file transfer in the browser is not blocked. If code must not leave your organization, use `'private'`.
+
+Switching from `'internet'` to `'private'` by stack update has been verified. The reverse direction has not, so confirm that sessions work after deploying it.
 
 ### Keep your work
 
