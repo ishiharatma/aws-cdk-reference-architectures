@@ -9,7 +9,7 @@ ARG TARGETARCH
 ARG CODE_SERVER_VERSION=4.141.0
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates curl git procps openssh-client unzip less \
+    && apt-get install --yes --no-install-recommends ca-certificates curl git procps openssh-client unzip less python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-${TARGETARCH}.tar.gz" \
@@ -33,6 +33,14 @@ COPY server/ ./server/
 RUN mkdir -p /home/node/project && chown -R node:node /home/node /opt/launcher
 USER node
 RUN HOME=/home/node /opt/code-server/bin/code-server --install-extension Anthropic.claude-code
+# microvm.extensions, written into the build context by the stack. Sessions may have no route to the
+# gallery, so this is the only chance. Checked afterward: a missing extension must fail the build.
+COPY extensions.txt /tmp/extensions.txt
+RUN while read -r extension; do \
+      HOME=/home/node /opt/code-server/bin/code-server --install-extension "$extension" \
+        && HOME=/home/node /opt/code-server/bin/code-server --list-extensions | grep -qix "$extension" \
+        || { echo "Could not install $extension"; exit 1; }; \
+    done < /tmp/extensions.txt
 ENV HOME=/home/node
 # Scoped to CodeCommit hosts so credentials for other Git hosts stay untouched.
 RUN git config --global 'credential.https://git-codecommit.*.amazonaws.com.helper' '!aws codecommit credential-helper $@' \

@@ -3,6 +3,7 @@
 // that VS Code depends on. This starts a real session, exercises one access path and ends the session.
 //
 //   export CS_API_URL=... CS_CLIENT_ID=... CS_USERNAME=... CS_PASSWORD=...
+//   With MFA required, sign in with a user and pass CS_ID_TOKEN instead of the password.
 //   node smoke.mjs relay                    # MicroVM through the local relay
 //   CS_DOMAIN=<DistributionDomainName> node smoke.mjs browser   # MicroVM through CloudFront + Lambda@Edge
 //   node smoke.mjs tunnel                   # EC2 through a Session Manager port forward (needs session-manager-plugin)
@@ -25,6 +26,7 @@ function check(name, ok, detail = '') {
 }
 
 async function signIn() {
+  if (process.env.CS_ID_TOKEN) return process.env.CS_ID_TOKEN;
   const res = await fetch(`https://cognito-idp.${region}.amazonaws.com/`, {
     method: 'POST',
     headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'AWSCognitoIdentityProviderService.InitiateAuth' },

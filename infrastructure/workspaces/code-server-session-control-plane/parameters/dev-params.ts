@@ -8,10 +8,22 @@ const devParams: EnvParams = {
     // AWS-managed al2023 base image (aws lambda-microvms list-managed-microvm-images, ap-northeast-1)
     baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1',
     baseImageVersion: '1',
+    egress: 'private',
+    extensions: [
+      'yzhang.markdown-all-in-one',
+      'amazonwebservices.aws-toolkit-vscode',
+      'vscode-icons-team.vscode-icons',
+      'dbaeumer.vscode-eslint',
+      'DavidAnson.vscode-markdownlint',
+      'esbenp.prettier-vscode',
+      'hediet.vscode-drawio',
+      'oderwat.indent-rainbow',
+    ],
   },
-  // A NAT instance keeps a verification environment cheap; use 'gateway' for anything shared.
-  ec2: { natType: 'instance' },
-  controlPlane: {},
+  // To add EC2 sessions, set microvm.egress to 'internet' and add:
+  //   ec2: { natType: 'instance' }  // a NAT instance keeps verification cheap; use 'gateway' when shared
+  controlPlane: { requireMfa: true },
+  operations: {},
   codeCommit: {
     // Created for verification and deleted with the stacks. List existing repositories in repositoryNames.
     managedRepositoryNames: ['code-server-sessions-demo'],

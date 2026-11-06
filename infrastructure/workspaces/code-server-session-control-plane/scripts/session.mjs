@@ -3,19 +3,24 @@
 //
 //   export CS_API_URL=<ApiUrl output> CS_CLIENT_ID=<UserPoolClientId output>
 //   export CS_USERNAME=you@example.com CS_PASSWORD='...'
+//   export CS_MFA_CODE=123456      # when MFA is required and no terminal can ask for it
 //   node session.mjs start [--compute microvm|ec2]
 //   node session.mjs connect [--port 8443]    # microvm: local relay; ec2: Session Manager port forward
 //   node session.mjs status | list | suspend | resume | stop
 //
 // The latest session ID is kept in scripts/.session.json; --session overrides it.
 import { spawn } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { createInterface } from 'node:readline/promises';
 import http from 'node:http';
 import https from 'node:https';
 import tls from 'node:tls';
 import { fileURLToPath } from 'node:url';
 
 const STATE_FILE = fileURLToPath(new URL('.session.json', import.meta.url));
+const AUTH_FILE = join(homedir(), '.code-server-sessions-auth.json');
 const REFRESH_MARGIN_MINUTES = 5;
 
 const command = process.argv[2];
@@ -32,19 +37,71 @@ const requireEnv = (name) => {
 const apiUrl = () => requireEnv('CS_API_URL').replace(/\/$/, '');
 const region = () => new URL(apiUrl()).hostname.split('.')[2];
 
-async function signIn() {
+async function cognito(target, body) {
   const res = await fetch(`https://cognito-idp.${region()}.amazonaws.com/`, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'AWSCognitoIdentityProviderService.InitiateAuth' },
-    body: JSON.stringify({
-      AuthFlow: 'USER_PASSWORD_AUTH',
-      ClientId: requireEnv('CS_CLIENT_ID'),
-      AuthParameters: { USERNAME: requireEnv('CS_USERNAME'), PASSWORD: requireEnv('CS_PASSWORD') },
-    }),
+    headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': `AWSCognitoIdentityProviderService.${target}` },
+    body: JSON.stringify(body),
   });
   const data = await res.json();
-  if (!data.AuthenticationResult) throw new Error(`Sign-in failed: ${data.message ?? data.ChallengeName}`);
-  return data.AuthenticationResult.IdToken;
+  if (!res.ok) throw new Error(`Sign-in failed: ${data.message ?? res.status}`);
+  return data;
+}
+
+async function askMfaCode() {
+  if (process.env.CS_MFA_CODE) return process.env.CS_MFA_CODE;
+  const prompt = createInterface({ input: process.stdin, output: process.stdout });
+  const code = await prompt.question('Authenticator code: ');
+  prompt.close();
+  return code.trim();
+}
+
+async function signInWithPassword() {
+  const username = requireEnv('CS_USERNAME');
+  const clientId = requireEnv('CS_CLIENT_ID');
+  const first = await cognito('InitiateAuth', { AuthFlow: 'USER_PASSWORD_AUTH', ClientId: clientId, AuthParameters: { USERNAME: username, PASSWORD: requireEnv('CS_PASSWORD') } });
+  if (first.AuthenticationResult) return first.AuthenticationResult;
+  if (first.ChallengeName === 'MFA_SETUP') throw new Error('Enroll an authenticator app at the portal first');
+  if (first.ChallengeName !== 'SOFTWARE_TOKEN_MFA') throw new Error(`Unsupported sign-in step: ${first.ChallengeName}`);
+  const second = await cognito('RespondToAuthChallenge', {
+    ChallengeName: 'SOFTWARE_TOKEN_MFA',
+    ClientId: clientId,
+    Session: first.Session,
+    ChallengeResponses: { USERNAME: username, SOFTWARE_TOKEN_MFA_CODE: await askMfaCode() },
+  });
+  return second.AuthenticationResult;
+}
+
+// The refresh token is kept in the home directory, readable only by this user and outside the repository, so a working day needs one MFA code
+// and a long-running relay can renew by itself. Renewal fails once the user is revoked.
+let auth;
+function loadAuth() {
+  if (auth) return auth;
+  try {
+    const saved = JSON.parse(readFileSync(AUTH_FILE, 'utf8'));
+    if (saved.username === process.env.CS_USERNAME) auth = saved;
+  } catch { /* first use */ }
+  return auth;
+}
+async function signIn() {
+  const current = loadAuth();
+  if (current?.idToken && current.expiresAt > Date.now() + 60_000) return current.idToken;
+  let result;
+  if (current?.refreshToken) {
+    result = await cognito('InitiateAuth', { AuthFlow: 'REFRESH_TOKEN_AUTH', ClientId: requireEnv('CS_CLIENT_ID'), AuthParameters: { REFRESH_TOKEN: current.refreshToken } })
+      .then((d) => d.AuthenticationResult)
+      .catch(() => undefined);
+  }
+  result ??= await signInWithPassword();
+  auth = {
+    username: process.env.CS_USERNAME,
+    idToken: result.IdToken,
+    refreshToken: result.RefreshToken ?? current?.refreshToken,
+    expiresAt: Date.now() + result.ExpiresIn * 1000,
+  };
+  writeFileSync(AUTH_FILE, JSON.stringify(auth), { mode: 0o600 });
+  chmodSync(AUTH_FILE, 0o600);
+  return auth.idToken;
 }
 
 async function api(method, path, body) {

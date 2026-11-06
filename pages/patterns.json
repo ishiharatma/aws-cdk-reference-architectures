@@ -894,9 +894,9 @@
   {
     "id": "code-server-session-control-plane",
     "title": "code-server Session Control Plane: One Cognito Sign-In, One IDE per User on a Lambda MicroVM or Private EC2",
-    "description": "Starts code-server on demand, one per user, behind a Cognito-authenticated control plane. MicroVM sessions are reached through a local relay or browser-only through CloudFront and Lambda@Edge, which turns an HttpOnly cookie into the X-aws-proxy-auth header. EC2 sessions sit in a private subnet with no inbound rules, reached through a Session Manager port forward that the control plane opens, so users need no AWS credentials. Deploy-verified, including sign-in and the IDE in a real browser.",
+    "description": "Starts code-server on demand, one per user, behind a Cognito-authenticated control plane. MicroVM sessions are reached through a local relay or browser-only through CloudFront and Lambda@Edge, which turns an HttpOnly cookie into the X-aws-proxy-auth header. EC2 sessions sit in a private subnet with no inbound rules, reached through a Session Manager port forward that the control plane opens, so users need no AWS credentials. A closed-network mode removes every route out, blocking outside sites, other accounts and DNS while CodeCommit, Bedrock, npm and pip keep working. Includes per-user workspace saving, MFA, user revocation and alarms. Deploy-verified, including sign-in and the IDE in a real browser.",
     "image": "code-server-session-control-plane/overview.drawio.svg",
-    "tags": ["CDK", "TypeScript", "Lambda MicroVMs", "EC2", "CloudFront", "Lambda@Edge", "Cognito", "API Gateway", "DynamoDB", "Systems Manager", "Bedrock", "code-server"],
+    "tags": ["CDK", "TypeScript", "Lambda MicroVMs", "EC2", "CloudFront", "Lambda@Edge", "Cognito", "API Gateway", "DynamoDB", "Systems Manager", "Bedrock", "CodeCommit", "CodeArtifact", "VPC Endpoints", "Route 53 Resolver", "S3", "code-server"],
     "link": "code-server-session-control-plane",
     "difficulty": "advanced",
     "level": 300,

@@ -36,7 +36,7 @@ export interface StartedCompute {
 
 export const isEc2Enabled = (): boolean => Boolean(process.env.EC2_LAUNCH_TEMPLATE_ID);
 
-async function startMicrovm(sessionId: string, ownerEmail?: string): Promise<StartedCompute> {
+async function startMicrovm(sessionId: string, ownerEmail?: string, workspaceToken?: string): Promise<StartedCompute> {
   const result = await microvms.send(
     new RunMicrovmCommand({
       imageIdentifier: process.env.MICROVM_IMAGE_ARN ?? '',
@@ -50,7 +50,7 @@ async function startMicrovm(sessionId: string, ownerEmail?: string): Promise<Sta
       },
       maximumDurationInSeconds: Number(process.env.MICROVM_MAX_DURATION_SECONDS),
       clientToken: sessionId,
-      runHookPayload: JSON.stringify({ gitEmail: ownerEmail }),
+      runHookPayload: JSON.stringify({ gitEmail: ownerEmail, sessionId, workspaceToken }),
     }),
   );
   if (!result.microvmId || !result.endpoint) throw new Error('RunMicrovm did not return a microvmId/endpoint');
@@ -89,14 +89,18 @@ async function startEc2(sessionId: string, ownerId: string, expiresAt: number, o
   return { resourceId: instanceId, state: 'PENDING' };
 }
 
-export async function startCompute(compute: Compute, sessionId: string, ownerId: string, expiresAt: number, ownerEmail?: string): Promise<StartedCompute> {
-  return compute === 'ec2' ? startEc2(sessionId, ownerId, expiresAt, ownerEmail) : startMicrovm(sessionId, ownerEmail);
+export async function startCompute(
+  compute: Compute, sessionId: string, ownerId: string, expiresAt: number, ownerEmail?: string, workspaceToken?: string,
+): Promise<StartedCompute> {
+  return compute === 'ec2' ? startEc2(sessionId, ownerId, expiresAt, ownerEmail) : startMicrovm(sessionId, ownerEmail, workspaceToken);
 }
 
 /**
  * Reads the live state: idle suspends, lifetime limits and the sweeper change it outside the control plane.
  */
 export async function readState(session: SessionRecord): Promise<SessionState> {
+  // A record can outlive the EC2 stack. Without it there is no instance to ask about, and no permission to ask.
+  if (session.compute === 'ec2' && !isEc2Enabled()) return 'TERMINATED';
   try {
     if (session.compute === 'ec2') {
       const result = await ec2.send(new DescribeInstancesCommand({ InstanceIds: [session.resourceId] }));

@@ -17,6 +17,9 @@ What this architecture demonstrates:
 - Handing a user without AWS credentials a Session Manager port forward that the control plane opened
 - How to design execution roles and secrets when the user has a terminal
 - `git clone` and `git push` to several named CodeCommit repositories with role credentials
+- A closed network with no route out: sending to outside sites, other accounts' AWS resources and through DNS is blocked, while CodeCommit, Bedrock, npm and pip keep working
+- Saving and restoring workspaces with a shared role, without letting users read each other's
+- MFA, immediate user revocation, alarms and an audit log
 - A NAT instance to keep verification cheap, switchable with a NAT Gateway by parameter
 - End-to-end verification on real AWS on 2026-11-05, including sign-in and the IDE in a real browser. The defects it found are listed under [Deployment Verification](#-deployment-verification)
 
@@ -58,9 +61,10 @@ There are three ways in, all behind the same control plane.
 | Stack | Contents | How to omit |
 | --- | --- | --- |
 | `Microvm` | MicroVM image, build role, execution role, log group | Required |
-| `Ec2` | VPC, NAT Gateway or NAT instance, launch template, instance role | Remove `params.ec2` |
+| `PrivateNetwork` | Closed VPC, VPC endpoints, DNS Firewall, CodeArtifact, network connector | Set `microvm.egress` to `internet` |
+| `Ec2` | VPC, NAT Gateway or NAT instance, launch template, instance role | Remove `params.ec2`. Cannot be combined with the closed network |
 | `CodeCommit` | Repositories owned by this application; deleted with the stack | Leave `managedRepositoryNames` empty |
-| `ControlPlane` | Cognito, HTTP API, Lambda, DynamoDB, EC2 sweeper | Required |
+| `ControlPlane` | Cognito, HTTP API, Lambda, DynamoDB, S3 (workspaces), alarms, EC2 sweeper | Required |
 | `BrowserAccess` and `edge-lambda-stack-*` | CloudFront, Lambda@Edge (us-east-1), CloudFront Functions | `browserAccess: false` |
 
 ### Key Components
@@ -72,7 +76,9 @@ There are three ways in, all behind the same control plane.
 | `get-sessions` / `change-session` | State, suspend, resume, end. Only ever acts on the caller's own sessions |
 | `access-session` | The one route that hands out a way in: a relay token, a browser cookie, or an EC2 stream token |
 | `sweep-ec2` | Runs every 15 minutes and gives EC2 the bounds a MicroVM already has (running time, session deadline) |
-| `portal` | Sign-in and session screen for Path B |
+| `workspace-url` | Checks a session's token and returns a presigned URL that reaches only that owner's archive |
+| `revoke-user` | Called by operators. Disables the user, signs them out and ends all their sessions |
+| `portal` | Sign-in (including MFA enrollment and codes) and session screen for Path B |
 | Lambda@Edge `router` | Turns the cookie into the origin and `X-aws-proxy-auth`; sends expired page loads back to the portal |
 | In-VM launcher | Answers lifecycle hooks, starts code-server from `/run`, proxies HTTP and WebSocket |
 | `scripts/session.mjs` | Client that authenticates with Cognito; includes the relay and the tunnel |
@@ -135,7 +141,37 @@ A signed-in user can start compute that costs money. `create-session` checks `ma
 
 The Git credential helper is scoped to `git-codecommit.*.amazonaws.com`, so credentials for other Git hosts are untouched. The role allows only `GitPull` and `GitPush` on the repositories in `codeCommit`. The role is shared by all sessions, so **every user reaches every listed repository with the same rights**. The commit author is set to the Cognito address automatically, but users can change it, so it does not prove identity.
 
-### 10. Well-Architected Framework Alignment
+### 10. Remove the route to the internet
+
+Network Firewall with a domain allow list was considered, but the closed network is the default. Any allowed domain (GitHub, npm) is also a way out, and with no route there is no such decision to make. It also costs less: about $7 per endpoint per month, against $280 or more for a firewall.
+
+Removing the route alone leaves other means, closed as follows.
+
+| Way to send data out | Control | Verified result |
+| --- | --- | --- |
+| Outside sites | No route, DNS Firewall | Names do not resolve; direct IP times out |
+| S3 in an attacker's account | S3 gateway endpoint policy allows this account's resources only | `AccessDenied` |
+| An attacker's own credentials | Interface endpoint policies allow this account's principals only | Set by policy |
+| Encoding in DNS queries | DNS Firewall answers NXDOMAIN for anything but AWS names | Names do not resolve |
+| Another Region | Security group allows only the endpoints and same-Region S3 | Times out |
+| Publishing a package | The mirror grants read only | Nothing published |
+| Browser download | `--disable-file-downloads`, `--disable-file-uploads` | Startup confirmed (on-screen behavior not confirmed) |
+
+Only the image build uses `INTERNET_EGRESS`; running MicroVMs get the closed connector. Claude Code has `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` set, stopping traffic other than Bedrock.
+
+**What this does not prevent:** copying from the screen or terminal, or photographing it. It is not a complete defense against a legitimate user deliberately taking code out. It stops accidental sending, and sending by malicious packages and scripts.
+
+### 11. Save workspaces without giving the role S3 access
+
+The role is shared by everyone and usable from the terminal, so S3 access on it would let users read each other's workspaces. Instead, the execution role may only call the `workspace-url` function, which checks a per-session secret token and returns a 15-minute presigned URL reaching only that owner's archive. The HTTP API is out of reach from the closed network, so Lambda is invoked directly through a VPC endpoint.
+
+Saving runs every 5 minutes when something changed, and at suspend and termination. A session whose restore failed stops saving, so an empty workspace cannot replace a saved one. Archives are versioned, recoverable for 14 days by default. `node_modules` and similar are excluded.
+
+### 12. Disabling a Cognito user is not enough to revoke them
+
+A disabled user keeps running sessions, issued MicroVM tokens (up to 60 minutes) and ID tokens. `revoke-user` also ends the sessions. The routes that start sessions or give access ask Cognito whether the user is enabled on every call, and ID tokens last 15 minutes.
+
+### 13. Well-Architected Framework Alignment
 
 | Pillar | How this pattern addresses it |
 | --- | --- |
@@ -157,11 +193,17 @@ Unit prices vary by Region. These US East (N. Virginia) list prices are for comp
 | NAT Gateway (`natType: 'gateway'`) | $0.045 per hour (about $32.85 per month) + $0.045 per GB | **Always, when `ec2` is enabled** |
 | NAT instance (`natType: 'instance'`) | `t4g.micro` $0.0084 per hour (about $6.1 per month) + public IPv4 about $3.65 per month | **Always, when `ec2` is enabled** |
 | CodeCommit | Within the free tier for up to 5 active users | When repositories are used |
+| VPC endpoints (closed) | $0.01 per hour each (7 in one AZ, about $51 per month) + $0.01 per GB | **Always, when closed** |
+| DNS Firewall | $0.60 per million queries + a small amount by domain count | Always, when closed |
+| CodeArtifact | $0.05 per GB-month + $0.05 per million requests | Package installs when closed |
+| S3 (workspaces) | $0.023 per GB-month | By amount saved |
 | Lambda@Edge | $0.60 per million requests + $0.00005001 per GB-second | Every Path B HTTP request |
 | CloudFront | Within the free tier for personal use | Path B |
 | HTTP API, Lambda, DynamoDB, Cognito | Close to zero for a small team | Always |
 
 With no sessions running, a MicroVM-only deployment (`ec2` and `browserAccess` removed) has almost no fixed cost. Keeping EC2 adds a fixed NAT cost. A NAT instance saves over $20 per month in a verification environment.
+
+**Estimate for 10 people (closed, MicroVM only):** with 8 running hours a day on 20 days a month, MicroVMs cost about $200 and endpoints and other fixed items about $55. Bedrock token charges are extra.
 
 What to tune:
 
@@ -169,6 +211,7 @@ What to tune:
 - `microvm.suspendedSeconds`: how long a snapshot is kept
 - `ec2.maxRunningHours`, `ec2.instanceType`, `ec2.volumeSizeGiB`
 - `controlPlane.maxActiveSessionsPerOwner`
+- `operations.dailyBedrockTokenLimit`, `operations.monthlyBudgetUsd`, `operations.alarmEmail`
 
 ## 🔒 Security Considerations
 
@@ -191,15 +234,17 @@ What to tune:
 - **Token in a cookie**: on Path B the JWE token is in the browser. Scripts cannot read it, but a compromised machine can use it until it expires.
 - **`--auth none`**: on Path A and EC2, other processes on the same machine can connect to `localhost:8443`. Do not use them on a shared machine.
 - **Bedrock spend**: users can call models directly from the terminal, and there is no per-user limit on Bedrock cost.
-- **Outbound traffic**: MicroVMs and EC2 can reach the internet freely. To limit data exfiltration, see the Network Firewall pattern in [`claude-managed-agents-lambda-microvms`](../claude-managed-agents-lambda-microvms/README.md).
+- **Outbound traffic in `internet` mode and on EC2**: sessions can reach the internet freely. Use the closed network, or see the Network Firewall pattern in [`claude-managed-agents-lambda-microvms`](../claude-managed-agents-lambda-microvms/README.md).
+- **Audit granularity**: the role is shared, so CloudTrail and Bedrock logs cannot tell users apart. Session starts and access are recorded with the user in the Lambda logs (kept for 1 year). Bedrock invocation logging is an account-wide setting that these stacks leave alone; enable it with `aws bedrock put-model-invocation-logging-configuration` if needed.
+- **MicroVM endpoint**: a token works from anywhere. No platform feature to limit source IPs has been confirmed.
 
 ### Intentionally out of scope (add per environment)
 
 - AWS WAF on CloudFront and the HTTP API
-- Cognito MFA and the Plus feature plan
+- The Cognito Plus feature plan and SSO federation
 - A custom domain and certificate (the default certificate cannot set a minimum TLS version)
 - CloudFront access logs and VPC Flow Logs
-- Persistent workspaces (see Customization)
+- Workspace saving on EC2 (EBS survives a stop but goes at the session deadline)
 
 ### CDK Nag
 
@@ -274,6 +319,45 @@ git add . && git commit -m "..."
 git push origin HEAD:main
 ```
 
+### MFA and managing users
+
+With `requireMfa` on, the portal asks for an authenticator app at the next sign-in. Add the displayed key to the app and enter its code. On the CLI, one code keeps a refresh token working for 12 hours (`~/.code-server-sessions-auth.json`, mode 600).
+
+To revoke a user, run this. It disables them, signs them out and ends all their sessions.
+
+```sh
+aws lambda invoke --function-name <RevokeUserFunctionName> \
+  --cli-binary-format raw-in-base64-out --payload '{"username":"user@example.com"}' /tmp/revoke.json
+```
+
+### Packages in the closed network
+
+npm and pip point at the CodeArtifact mirror automatically at start. Other tools and registries do not work.
+
+### Extensions in the closed network
+
+A closed session cannot reach Open VSX, so installing from the screen fails (`getaddrinfo ENOTFOUND open-vsx.org`). There are two ways instead.
+
+**For everyone:** list them in `microvm.extensions`. They are installed at build time and available in every session. A change builds a new image, effective for new sessions. The build fails if a listed extension cannot be installed.
+
+```typescript
+microvm: {
+  // ...
+  extensions: ['dbaeumer.vscode-eslint', 'esbenp.prettier-vscode'], // publisher.name from Open VSX
+},
+```
+
+**To try one yourself:** put a reviewed `.vsix` in a CodeCommit repository and install it in the session. Browser upload is off, so it goes through the repository. It lands outside `~/project`, so **it is gone when the session ends**; install it again in a new session.
+
+```sh
+git clone https://git-codecommit.<region>.amazonaws.com/v1/repos/<repository>
+/opt/code-server/bin/code-server --install-extension <repository>/.vsix/<name>.vsix
+```
+
+Reload the page afterward.
+
+An extension runs arbitrary code in the session. In the closed network it cannot send anything out, but it can reach the allowed repositories and Bedrock, so treat the list as something to review. In AWS Toolkit, operations on services with no VPC endpoint fail.
+
 ### Claude Code
 
 Open the Claude Code panel or run `claude` in the terminal. It uses Amazon Bedrock and the models in `parameters/dev-params.ts`.
@@ -338,9 +422,41 @@ bedrock: {
 },
 ```
 
+### Switch the network configuration
+
+`microvm.egress` turns the closed network on or off for MicroVMs. Only EC2 sessions use NAT, selected with `ec2.natType`.
+
+| Configuration | `microvm.egress` | `ec2` | MicroVM outbound | EC2 outbound |
+|---|---|---|---|---|
+| Closed | `'private'` | None | VPC endpoints and the read-only mirror only | - |
+| Internet | `'internet'` | None | AWS-managed `INTERNET_EGRESS` | - |
+| EC2 + NAT instance | `'internet'` | `{ natType: 'instance' }` | `INTERNET_EGRESS` | NAT instance |
+| EC2 + NAT Gateway | `'internet'` | `{ natType: 'gateway' }` | `INTERNET_EGRESS` | NAT Gateway |
+| Closed + EC2 | `'private'` | Set | Not allowed (error at synthesis) | Not allowed (error at synthesis) |
+
+`egress` defaults to `'internet'` and `natType` defaults to `'gateway'`.
+
+```typescript
+// Closed
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'private' },
+
+// Internet (no NAT)
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
+
+// EC2 + NAT instance
+microvm: { baseImageArn: '...', baseImageVersion: '1', egress: 'internet' },
+ec2: { natType: 'instance' },
+```
+
+Setting `egress: 'private'` together with `ec2` is an error at synthesis, because EC2 setup needs the internet and the result would not be closed. Closed EC2 needs an AMI with everything baked in.
+
+With `'internet'`, sessions can reach anything and file transfer in the browser is not blocked. If code must not leave your organization, use `'private'`.
+
+Switching from `'internet'` to `'private'` by stack update has been verified. The reverse direction has not, so confirm that sessions work after deploying it.
+
 ### Keep your work
 
-A MicroVM's files are gone on termination, and its lifetime is at most 8 hours including suspended time. An EC2 instance's files are gone when it is terminated at the session deadline. Push to Git as the baseline. To keep files automatically, add an S3 sync to the MicroVM `/terminate` hook or the EC2 shutdown, with S3 permissions on the execution role narrowed per `ownerId`.
+A MicroVM's `~/project` and VS Code settings are saved automatically and restored in the next session. Saving runs every 5 minutes, so the latest changes can be lost; push to Git as well. If one user opens two sessions, the later save wins (earlier versions can be recovered from S3 versioning). EC2 is not covered.
 
 ## ✅ Deployment Verification
 
@@ -365,11 +481,34 @@ Deployed to a development account in ap-northeast-1 and us-east-1 on 2026-11-05,
 | Page load to a terminated MicroVM (invalid token) | 302 to the portal and the cookie cleared |
 | Sweep | No action before the deadline; terminates when `ExpiresAt` is in the past |
 
+**Closed network, saving, revocation, MFA**
+
+| Check | Result |
+| --- | --- |
+| Start when closed | `RUNNING` within 5 seconds, IDE in 9 to 17 seconds |
+| Outside sites (example.com, github.com, npmjs, anthropic) | Names do not resolve |
+| Direct IP (1.1.1.1) | Times out |
+| S3 in another account | `AccessDenied` in the same Region, times out in another |
+| CodeCommit, Bedrock when closed | Push succeeds, `BEDROCK_OK` |
+| npm, pip when closed | `left-pad`, `six` installed from the mirror |
+| `npm publish` | Nothing published to the mirror |
+| Save and restore | Ending a session and starting a new one brought back files and `.git` |
+| From another user | Another user's files are not visible |
+| S3 directly from the terminal | `AccessDenied` |
+| Wrong token | Refused by `workspace-url` |
+| Revoking a user | No new sign-in; an issued ID token gets 403 on start and access; sessions end; renewal fails |
+| MFA | Enrollment and sign-in work; wrong codes refused; a password alone gets no tokens |
+| Path A, closed with MFA | All checks pass |
+| `microvm.extensions` (8) | All installed; 567 MB of extensions, 3.5 GB of the 7.8 GB disk used; 31 seconds to the IDE on a new image's first run |
+| Ordinary install when closed | Fails with `getaddrinfo ENOTFOUND open-vsx.org` |
+| VSIX through CodeCommit | Clone and install succeed; shown in the list |
+
 **CodeCommit and NAT switching**
 
 | Check | Result |
 | --- | --- |
 | MicroVM terminal (real browser) | `git clone` and `git push` succeed; push took 2 seconds |
+| EC2 (through a `t4g.micro` NAT instance) | `git clone`, `git push` and Bedrock succeed; code-server up in 100 to 170 seconds |
 | Commit author | `verify@example.com`, `verify` (the Cognito address) |
 | A repository not listed | Refused with `fatal: unable to access` |
 | `natType` switching | `instance` → `gateway` → `instance` by stack update; the update to `gateway` took 185 seconds |
@@ -392,7 +531,10 @@ Defects found on real AWS and fixed:
 
 5. **A `t4g.nano` NAT instance does not work as a NAT.** On 512 MiB, the boot-time `yum install iptables-services` is `Killed` and `iptables` is never installed. The stack succeeds and routes look healthy, but private subnets cannot get out and EC2 never registers with Session Manager. The default is now `t4g.micro`.
 
-Not confirmed: CodeCommit from EC2 through the NAT instance, Git from the VS Code Source Control panel, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
+6. **code-server missed its start wait in the closed network.** Running two AWS CLI processes at once on a 1 vCPU MicroVM pushed it past the 20-second wait, `/run` returned 500 and the MicroVM ended. Package setup now runs after code-server, and `/validate` runs code-server and the AWS CLI so they are prefetched; the IDE now appears in 9 to 17 seconds. The `/run` timeout is capped at 60 seconds.
+7. **Removing the EC2 stack gave 500 to users with an EC2 session on record.** The permission to ask EC2 about that record was gone, so listing and starting sessions failed with `UnauthorizedOperation`. A record now reads as terminated when EC2 is not deployed.
+
+Not confirmed: what each extension itself does, Git from the VS Code Source Control panel, the on-screen effect of disabling downloads, actual alarm and budget notifications, expiry of a real 60-minute token, idle auto-suspend with a tab left open, stopping by `maxRunningHours` (termination at the deadline is confirmed), Path A and EC2 in a real browser (HTTP and WebSocket checks only), several users at once.
 
 ## 🔧 Troubleshooting
 
@@ -434,13 +576,25 @@ Check the NAT instance console output (`aws ec2 get-console-output`) for `Killed
 
 Check that the repository is in the `codeCommit` parameters. CodeCommit settings apply to sessions started after the update; end and restart older sessions.
 
+### `Your software token has already been used once`
+
+Right after MFA enrollment or a sign-in, a code from the same time window cannot be reused. Wait about a minute and enter the next one.
+
+### `POST /sessions` fails with `ServiceQuotaExceededException`
+
+This is the MicroVM memory quota (`Max allocated ARM_64 MicroVM memory`). An account at the default of 8 GB allows 4 concurrent 2 GiB sessions. For 10 people, request 20 GB or more in Service Quotas. The `CapacityErrors` alarm detects it.
+
+### `WORKSPACE_NOT_RESTORED.txt` appears in the project
+
+The saved workspace could not be restored, and saving is off for that session to avoid overwriting it. End the session and start a new one. The `[workspace]` lines in the MicroVM log give the cause.
+
 ### Claude Code asks you to sign in, or Bedrock refuses
 
 Deploy with `bedrock.smokeCheck: true` to get a `[bedrock-check]` line in the MicroVM log stream. For `AccessDeniedException`, set `bedrock.modelId` to a model that answers `aws bedrock-runtime converse`.
 
 ## 🧹 Cleanup
 
-Deleting the stacks does not end running sessions. End them first; a remaining EC2 instance blocks VPC deletion.
+Deleting the stacks does not end running sessions. End them first; a remaining EC2 instance blocks VPC deletion. With `isAutoDeleteObject` set, saved workspaces and `managedRepositoryNames` repositories are deleted too.
 
 ```sh
 node scripts/session.mjs list

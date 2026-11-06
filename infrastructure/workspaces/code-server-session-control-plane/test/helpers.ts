@@ -6,6 +6,7 @@ import { CodeCommitStack } from 'lib/stacks/code-commit-stack';
 import { ControlPlaneStack } from 'lib/stacks/control-plane-stack';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
 import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
+import { PrivateNetworkStack } from 'lib/stacks/private-network-stack';
 import './parameters';
 
 const env = { account: '123456789012', region: 'ap-northeast-1' };
@@ -34,5 +35,10 @@ export function buildStacks(app = new cdk.App()) {
     isAutoDeleteObject: true,
     repositoryNames: envParams.codeCommit?.managedRepositoryNames ?? [],
   });
-  return { app, microvm, ec2, controlPlane, browserAccess, codeCommit };
+  const privateNetwork = new PrivateNetworkStack(app, 'PrivateNetwork', {
+    env,
+    namePrefix: 'test-test-code-server-sessions',
+    codeCommit: envParams.codeCommit,
+  });
+  return { app, microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork };
 }

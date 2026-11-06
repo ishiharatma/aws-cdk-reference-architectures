@@ -59,22 +59,75 @@ async function openSession(id) {
   throw new Error('The MicroVM did not start in time');
 }
 
+async function cognitoCall(target, body) {
+  const res = await fetch(cognito, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'AWSCognitoIdentityProviderService.' + target },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Sign-in failed');
+  return data;
+}
+
+async function signedIn(result) {
+  idToken = result.IdToken;
+  $('password').value = '';
+  $('code').value = '';
+  $('login').hidden = true;
+  $('mfa').hidden = true;
+  $('app').hidden = false;
+  show('');
+  await refresh();
+}
+
+// What Cognito asks for next: enrolling an authenticator app, or a code from one already enrolled.
+let challenge;
+async function handleChallenge(data) {
+  if (data.AuthenticationResult) return signedIn(data.AuthenticationResult);
+  challenge = { name: data.ChallengeName, session: data.Session, username: $('username').value };
+  if (data.ChallengeName === 'MFA_SETUP') {
+    const { SecretCode, Session } = await cognitoCall('AssociateSoftwareToken', { Session: data.Session });
+    challenge.session = Session;
+    $('setup-secret').textContent = SecretCode;
+    $('setup').hidden = false;
+  } else if (data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+    $('setup').hidden = true;
+  } else {
+    throw new Error('Unsupported sign-in step: ' + data.ChallengeName);
+  }
+  $('login').hidden = true;
+  $('mfa').hidden = false;
+  show('');
+}
+
 $('login').onsubmit = async (event) => {
   event.preventDefault();
   try {
-    const res = await fetch(cognito, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'AWSCognitoIdentityProviderService.InitiateAuth' },
-      body: JSON.stringify({ AuthFlow: 'USER_PASSWORD_AUTH', ClientId: clientId, AuthParameters: { USERNAME: $('username').value, PASSWORD: $('password').value } }),
-    });
-    const data = await res.json();
-    if (!data.AuthenticationResult) throw new Error(data.message || data.ChallengeName || 'Sign-in failed');
-    idToken = data.AuthenticationResult.IdToken;
-    $('password').value = '';
-    $('login').hidden = true;
-    $('app').hidden = false;
-    show('');
-    await refresh();
+    await handleChallenge(await cognitoCall('InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: clientId,
+      AuthParameters: { USERNAME: $('username').value, PASSWORD: $('password').value },
+    }));
+  } catch (e) { show(e.message); }
+};
+
+$('mfa').onsubmit = async (event) => {
+  event.preventDefault();
+  const code = $('code').value.trim();
+  try {
+    if (challenge.name === 'MFA_SETUP') {
+      const verified = await cognitoCall('VerifySoftwareToken', { Session: challenge.session, UserCode: code, FriendlyDeviceName: 'authenticator' });
+      if (verified.Status !== 'SUCCESS') throw new Error('The code was not accepted');
+      await handleChallenge(await cognitoCall('RespondToAuthChallenge', {
+        ChallengeName: 'MFA_SETUP', ClientId: clientId, Session: verified.Session, ChallengeResponses: { USERNAME: challenge.username },
+      }));
+    } else {
+      await handleChallenge(await cognitoCall('RespondToAuthChallenge', {
+        ChallengeName: 'SOFTWARE_TOKEN_MFA', ClientId: clientId, Session: challenge.session,
+        ChallengeResponses: { USERNAME: challenge.username, SOFTWARE_TOKEN_MFA_CODE: code },
+      }));
+    }
   } catch (e) { show(e.message); }
 };
 
@@ -90,7 +143,7 @@ $('start').onclick = async () => {
 const page = (nonce: string): string => `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>code-server sessions</title><meta name="viewport" content="width=device-width, initial-scale=1">
-<style nonce="${nonce}">body{font:16px system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem}input,button{font:inherit;padding:.4rem .6rem}input{display:block;width:100%;box-sizing:border-box;margin:.25rem 0 .75rem}li{margin:.5rem 0}#message{color:#b00020;min-height:1.5rem}</style></head>
+<style nonce="${nonce}">body{font:16px system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem}input,button{font:inherit;padding:.4rem .6rem}input{display:block;width:100%;box-sizing:border-box;margin:.25rem 0 .75rem}li{margin:.5rem 0}#message{color:#b00020;min-height:1.5rem}code{word-break:break-all;font-size:1rem}</style></head>
 <body>
 <h1>code-server sessions</h1>
 <p id="message" role="status"></p>
@@ -98,6 +151,14 @@ const page = (nonce: string): string => `<!DOCTYPE html>
 <label for="username">Email</label><input id="username" type="email" autocomplete="username" required>
 <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
 <button>Sign in</button>
+</form>
+<form id="mfa" hidden>
+<div id="setup" hidden>
+<p>Add this key to your authenticator app as a time-based account, then enter the code it shows.</p>
+<p><code id="setup-secret"></code></p>
+</div>
+<label for="code">Authenticator code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" required>
+<button>Continue</button>
 </form>
 <div id="app" hidden>
 <button id="start">Start a new session</button>

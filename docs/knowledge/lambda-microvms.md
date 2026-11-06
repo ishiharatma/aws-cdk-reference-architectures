@@ -213,4 +213,20 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
 - **`runHookPayload` can carry per-user Git identity.** Set `user.email` in the `/run` hook; without it, `git commit` fails in a fresh image.
 - **VS Code shows a trust prompt in a new browser before opening a terminal**, which also blocks browser automation waiting on `.xterm`.
 
+## Closed network for MicroVMs (verified 2026-11-05)
+
+- **A MicroVM on a VPC connector with no route out works with interface endpoints only.** Bedrock, `git-codecommit`, Lambda, STS, CodeArtifact and an S3 gateway endpoint were all reachable; `1.1.1.1` timed out. The image build can keep `INTERNET_EGRESS` while `RunMicrovm` passes the VPC connector. `lambda:PassNetworkConnector` is needed on the customer connector as well.
+- **A Route 53 Resolver DNS Firewall on the VPC applies to MicroVM DNS.** With `*.amazonaws.com` and `*.internal` allowed and `*` blocked, `example.com` failed to resolve and service names resolved to `10.0.0.x`.
+- **HTTP APIs cannot be reached from there**, so in-VM code that must call the control plane needs another path. Invoking a Lambda function through its VPC endpoint worked.
+- **`/run` hook timeout is capped at 60 seconds by the resource schema** (`F3034` at synth).
+- **The first use of a program pages it in from the image.** Starting code-server alongside two AWS CLI processes on 1 vCPU exceeded a 20-second wait. Running those programs in the `/validate` hook made a later start much faster (IDE in 9 to 17 seconds), as the documentation says Lambda samples what that hook touches.
+- **`aws s3` to another Region stalls for minutes with default retries** because the connection attempts time out; set `AWS_MAX_ATTEMPTS=1` and `--cli-connect-timeout` in checks.
+- **A closed session cannot install extensions from the gallery** (`getaddrinfo ENOTFOUND open-vsx.org`). `code-server --install-extension` at image build and from a `.vsix` file both work; a VSIX cloned from CodeCommit installed fine and shows after a page reload.
+- **The `Max allocated ARM_64 MicroVM memory` quota was 8 GB in the verification account**, which caps 2 GiB sessions at 4 concurrent.
+- **Cognito refuses a TOTP code from the window after the one it just accepted** with `Your software token has already been used once`; waiting about a minute works.
+
+## NAT instance size (verified 2026-11-05)
+
+- **`ec2.NatProvider.instanceV2` with `t4g.nano` on Amazon Linux 2023 does not configure NAT.** Boot-time `yum install iptables-services` is `Killed` for lack of memory, `iptables` is absent, the stack succeeds and routes look healthy, but private subnets cannot get out. `t4g.micro` works. Changing the size later does not rerun UserData; recreating the instance does (for example, switching to a gateway and back).
+
 See also [network-firewall-inspection.md](network-firewall-inspection.md) for the routing recipe.

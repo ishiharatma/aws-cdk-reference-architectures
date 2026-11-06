@@ -7,6 +7,7 @@ import { CodeCommitStack } from 'lib/stacks/code-commit-stack';
 import { ControlPlaneStack } from 'lib/stacks/control-plane-stack';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
 import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
+import { PrivateNetworkStack } from 'lib/stacks/private-network-stack';
 
 /**
  *
@@ -46,6 +47,21 @@ export class CodeServerSessionControlPlaneStage extends cdk.Stage {
       });
     }
 
+    const isPrivate = params.microvm.egress === 'private';
+    if (isPrivate && params.ec2) {
+      throw new Error("microvm.egress 'private' cannot be combined with ec2: EC2 setup downloads from the internet, so its sessions would have a route out");
+    }
+    const privateNetwork = isPrivate
+      ? new PrivateNetworkStack(this, 'PrivateNetwork', {
+          env: props.env,
+          terminationProtection: props.terminationProtection,
+          namePrefix: `${project}-${environment}-code-server-sessions`,
+          codeCommit: params.codeCommit,
+          stackName: stackName('private-network'),
+          description: 'VPC endpoints, DNS firewall and package mirror for sessions with no route out',
+        })
+      : undefined;
+
     const microvm = new MicrovmComputeStack(this, 'Microvm', {
       ...common,
       isAutoDeleteObject,
@@ -66,6 +82,7 @@ export class CodeServerSessionControlPlaneStage extends cdk.Stage {
       isAutoDeleteObject,
       microvm,
       ec2,
+      egressConnectorArn: privateNetwork?.connectorArn,
       stackName: stackName('control-plane'),
       description: 'Cognito-authenticated code-server session control plane',
     });

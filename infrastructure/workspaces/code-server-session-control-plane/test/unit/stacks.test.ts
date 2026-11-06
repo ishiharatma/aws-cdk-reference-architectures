@@ -2,10 +2,11 @@ import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { Environment } from '@common/parameters/environments';
 import { Ec2ComputeStack } from 'lib/stacks/ec2-compute-stack';
+import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
 import { EnvParams } from 'parameters/environments';
 import { buildStacks } from 'test/helpers';
 
-const { microvm, ec2, controlPlane, browserAccess, codeCommit } = buildStacks();
+const { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork } = buildStacks();
 const microvmTemplate = Template.fromStack(microvm);
 const ec2Template = Template.fromStack(ec2);
 const controlPlaneTemplate = Template.fromStack(controlPlane);
@@ -111,6 +112,111 @@ describe('natType', () => {
     template.hasResourceProperties('AWS::EC2::SecurityGroup', {
       SecurityGroupIngress: [Match.objectLike({ IpProtocol: '-1', CidrIp: Match.anyValue() })],
       GroupDescription: 'Security Group for NAT instances',
+    });
+  });
+});
+
+describe('PrivateNetworkStack', () => {
+  const template = Template.fromStack(privateNetwork);
+
+  test('there is no route out', () => {
+    template.resourceCountIs('AWS::EC2::InternetGateway', 0);
+    template.resourceCountIs('AWS::EC2::NatGateway', 0);
+  });
+
+  test('sessions can only speak HTTPS to the endpoints and S3', () => {
+    const groups = JSON.stringify(template.findResources('AWS::EC2::SecurityGroup'));
+    expect(groups).not.toContain('0.0.0.0/0');
+    template.hasResourceProperties('AWS::Lambda::NetworkConnector', Match.objectLike({ Name: 'test-test-code-server-sessions-private' }));
+  });
+
+  test('endpoints refuse other accounts, so nothing can be sent to one', () => {
+    template.hasResourceProperties('AWS::EC2::VPCEndpoint', {
+      ServiceName: 'com.amazonaws.ap-northeast-1.bedrock-runtime',
+      PolicyDocument: { Statement: [Match.objectLike({ Condition: { StringEquals: { 'aws:PrincipalAccount': '123456789012' } } })] },
+    });
+    template.hasResourceProperties('AWS::EC2::VPCEndpoint', {
+      ServiceName: Match.objectLike({}),
+      VpcEndpointType: 'Gateway',
+      PolicyDocument: { Statement: Match.arrayWith([Match.objectLike({ Condition: { StringEquals: { 'aws:ResourceAccount': '123456789012' } } })]) },
+    });
+  });
+
+  test('the DNS firewall allows AWS names and blocks the rest', () => {
+    template.hasResourceProperties('AWS::Route53Resolver::FirewallRuleGroup', {
+      FirewallRules: [Match.objectLike({ Priority: 1, Action: 'ALLOW' }), Match.objectLike({ Priority: 2, Action: 'BLOCK' })],
+    });
+    template.resourceCountIs('AWS::Route53Resolver::FirewallRuleGroupAssociation', 1);
+  });
+
+  test('the package mirror has upstreams and no publish permission anywhere', () => {
+    template.resourceCountIs('AWS::CodeArtifact::Repository', 3);
+    expect(JSON.stringify(microvmTemplate.toJSON())).not.toContain('codeartifact:PublishPackageVersion');
+  });
+});
+
+describe('microvm.extensions', () => {
+  const baseParams: EnvParams = {
+    region: 'ap-northeast-1',
+    microvm: { baseImageArn: 'arn:aws:lambda:ap-northeast-1:aws:microvm-image:al2023-1', baseImageVersion: '1' },
+  };
+  const artifact = (extensions: string[]): unknown => {
+    const stack = new MicrovmComputeStack(new cdk.App(), 'Microvm', {
+      project: 'test',
+      environment: Environment.TEST,
+      env: { account: '123456789012', region: 'ap-northeast-1' },
+      isAutoDeleteObject: true,
+      params: { ...baseParams, microvm: { ...baseParams.microvm, extensions } },
+    });
+    return JSON.stringify(Object.values(Template.fromStack(stack).findResources('AWS::Lambda::MicrovmImage'))[0]);
+  };
+
+  test('a changed list changes the image source, so a new image is built', () => {
+    expect(artifact(['a.b'])).not.toEqual(artifact(['a.c']));
+    expect(artifact(['a.b'])).toEqual(artifact(['a.b']));
+  });
+
+  test.each(['no-dot', 'a.b; curl evil', '../x.y', 'a.b\nc.d'])('refuses %s', (bad) => {
+    expect(() => artifact([bad])).toThrow('publisher.name');
+  });
+});
+
+describe('Workspace', () => {
+  test('the bucket is private and versioned', () => {
+    controlPlaneTemplate.hasResourceProperties('AWS::S3::Bucket', {
+      PublicAccessBlockConfiguration: Match.objectLike({ BlockPublicAcls: true, RestrictPublicBuckets: true }),
+      VersioningConfiguration: { Status: 'Enabled' },
+    });
+  });
+
+  test('the execution role reaches S3 only through the token-checked function', () => {
+    const policies = JSON.stringify(microvmTemplate.findResources('AWS::IAM::Policy', { Properties: { Roles: [{ Ref: Match.stringLikeRegexp('MicrovmExecutionRole') }] } }));
+    expect(policies).toContain('test-test-code-server-sessions-workspace-url');
+    expect(policies).not.toContain('s3:');
+  });
+
+  test('suspend and terminate hooks are on, with time to save', () => {
+    microvmTemplate.hasResourceProperties('AWS::Lambda::MicrovmImage', {
+      Hooks: Match.objectLike({ MicrovmHooks: Match.objectLike({ Suspend: 'ENABLED', SuspendTimeoutInSeconds: 60, Terminate: 'ENABLED', TerminateTimeoutInSeconds: 60 }) }),
+    });
+  });
+});
+
+describe('Operations', () => {
+  test('alarms and the budget exist', () => {
+    controlPlaneTemplate.hasResourceProperties('AWS::CloudWatch::Alarm', { AlarmName: Match.stringLikeRegexp('BedrockDailyTokens'), Threshold: 5000000 });
+    controlPlaneTemplate.hasResourceProperties('AWS::CloudWatch::Alarm', { AlarmName: Match.stringLikeRegexp('CapacityErrors') });
+    controlPlaneTemplate.resourceCountIs('AWS::Budgets::Budget', 1);
+  });
+
+  test('MFA is an authenticator app, not SMS', () => {
+    controlPlaneTemplate.hasResourceProperties('AWS::Cognito::UserPool', { MfaConfiguration: 'ON', EnabledMfas: ['SOFTWARE_TOKEN_MFA'] });
+  });
+
+  test('tokens are short-lived, and revoking is limited to this user pool', () => {
+    controlPlaneTemplate.hasResourceProperties('AWS::Cognito::UserPoolClient', { IdTokenValidity: 15 });
+    controlPlaneTemplate.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: { Statement: Match.arrayWith([Match.objectLike({ Action: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminDisableUser', 'cognito-idp:AdminUserGlobalSignOut'], Resource: Match.anyValue() })]) },
     });
   });
 });
