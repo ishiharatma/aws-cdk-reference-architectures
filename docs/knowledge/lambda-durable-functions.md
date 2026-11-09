@@ -1,4 +1,4 @@
-# Lambda Durable Functions — Verified Behaviors
+# Lambda durable functions — Verified Behaviors
 
 Verified while deploy-verifying [`lambda-durable-functions-approval`](../../infrastructure/workspaces/lambda-durable-functions-approval/)
 (ap-northeast-1, `aws-cdk-lib` 2.273.0, `@aws/durable-execution-sdk-js` 2.x, October 2026).
