@@ -5,6 +5,7 @@ import { params } from 'parameters/environments';
 import { SqsLambdaFirehoseStage } from 'lib/stages/sqs-lambda-firehose-stage';
 import { Environment } from '@common/parameters/environments';
 import { validateDeployment } from '@common/helpers/validate-deployment';
+import { EmulatorCompatAspect } from '@common/aspects/emulator-compat-aspect';
 import 'parameters'
 
 const app = new cdk.App();
@@ -44,6 +45,12 @@ const stage = new SqsLambdaFirehoseStage(app, `SqsLambdaFirehose${pascalCase(env
   isAutoDeleteObject: isAutoDeleteObject,
   params: envParams,
 });
+
+// Local testing against AWS Emulator only (`-c emulator=true`); never set for real AWS.
+// Added to the Stage, not the App: aspects on the App do not cross Stage boundaries.
+if (app.node.tryGetContext('emulator') === 'true') {
+  cdk.Aspects.of(stage).add(new EmulatorCompatAspect());
+}
 
 // --------------------------------- Tagging  -------------------------------------
 cdk.Tags.of(stage).add("Project", pjName);

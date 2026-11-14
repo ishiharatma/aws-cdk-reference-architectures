@@ -4,6 +4,7 @@ import { pascalCase } from 'change-case-commonjs';
 import { Environment } from '@common/parameters/environments';
 import { params } from 'parameters/environments';
 import { validateDeployment } from '@common/helpers/validate-deployment';
+import { EmulatorCompatAspect } from '@common/aspects/emulator-compat-aspect';
 import 'parameters'; // registers dev-params into `params` as a side effect
 
 import { EventbridgeCustomBusStage } from 'lib/stages/eventbridge-custom-bus-stage';
@@ -38,6 +39,12 @@ const stage = new EventbridgeCustomBusStage(app, `EventbridgeCustomBus${pascalCa
   isAutoDeleteObject,
   params: envParams,
 });
+
+// Local testing against AWS Emulator only (`-c emulator=true`); never set for real AWS.
+// Added to the Stage, not the App: aspects on the App do not cross Stage boundaries.
+if (app.node.tryGetContext('emulator') === 'true') {
+  cdk.Aspects.of(stage).add(new EmulatorCompatAspect());
+}
 
 // --------------------------------- Tagging  -------------------------------------
 cdk.Tags.of(stage).add('Project', pjName);
