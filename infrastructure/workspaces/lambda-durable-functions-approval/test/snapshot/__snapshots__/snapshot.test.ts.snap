@@ -667,7 +667,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
           {},
         ],
         "SourceObjectKeys": [
-          "9df6477a587fe862b96a91ec9e65e9a8fbec4d49082fe8f8aba8c08a14b8e2aa.zip",
+          "16c374598a5df56047238f3e14247eb5072f6ba68e702f86d7c83494313ca8f8.zip",
           "fc628675e9f1631af210941acf2e9f946c89ef277e610eced0cb4be9d799d56d.zip",
         ],
         "WaitForDistributionInvalidation": true,
@@ -2654,7 +2654,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "2dbb2dd79c7ef1ebf58a09ef078dcb69c47a0054239fb9d6ce5880e1db1a1bb3.zip",
+          "S3Key": "dfeb7888ba6ff8f7af93d8e3f5a47698e38a4046f3bbd428d767f9da5d2a374b.zip",
         },
         "Environment": {
           "Variables": {
@@ -2834,7 +2834,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "fc814495b8cef503f2109ad8e0cce6770c170bba82c772233ce88ba34871aec9.zip",
+          "S3Key": "e6df70954f8f900d07831f7e9323ba4877e8a0d65e1c7e6a38ed5e0c9dda4b2b.zip",
         },
         "Environment": {
           "Variables": {
