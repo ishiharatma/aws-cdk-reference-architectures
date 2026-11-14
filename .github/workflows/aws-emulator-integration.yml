@@ -6,9 +6,9 @@
 name: AWS Emulator Integration
 
 on:
-  push:
+  pull_request:
     branches:
-      - "feat/aws-emulator-*"
+      - main
     paths:
       - "infrastructure/common/aspects/**"
       - "infrastructure/workspaces/eventbridge-custom-bus/**"
