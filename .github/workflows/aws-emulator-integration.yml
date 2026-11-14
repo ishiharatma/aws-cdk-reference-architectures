@@ -95,7 +95,7 @@ jobs:
           source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
           export PATH="$GITHUB_WORKSPACE/scripts/aws-emulator/cfn-outputs-shim:$PATH"
           export CDKD_OUTPUTS="$RUNNER_TEMP/outputs.json"
-          ./test-eventbus.sh --project emu --env dev --region us-east-1 --skip-replay
+          bash ./test-eventbus.sh --project emu --env dev --region us-east-1 --skip-replay
 
       - name: Destroy with cdkd
         if: always()
