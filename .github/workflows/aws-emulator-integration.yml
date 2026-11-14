@@ -1,0 +1,110 @@
+# .github/workflows/aws-emulator-integration.yml
+#
+# Deploys eventbridge-custom-bus to AWS Emulator with cdkd and runs its end-to-end test script,
+# without an AWS account. Archive replay is skipped: AWS Emulator does not expose archives
+# created through Cloud Control / CloudFormation to the EventBridge API (1.0.348).
+name: AWS Emulator Integration
+
+on:
+  push:
+    branches:
+      - "feat/aws-emulator-*"
+    paths:
+      - "infrastructure/common/aspects/**"
+      - "infrastructure/workspaces/eventbridge-custom-bus/**"
+      - "scripts/aws-emulator/**"
+      - ".github/workflows/aws-emulator-integration.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: aws-emulator-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+  CDKD_VERSION: "0.350.1"
+  EMU_PORT: "9297"
+  # Fingerprint of the key that signs AWS Emulator packages (AWS Emulator User Guide).
+  EMU_GPG_FINGERPRINT: "98BCF336A3BE53B734E967C52E5BF49BD940F624"
+  WORKSPACE_DIR: "infrastructure/workspaces/eventbridge-custom-bus"
+
+jobs:
+  eventbridge-custom-bus:
+    name: eventbridge-custom-bus on AWS Emulator (cdkd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infrastructure
+        run: npm ci
+
+      - name: Install cdkd and pre-pull its loopback forwarder image
+        run: |
+          npm install -g "@cdkd/cli@${CDKD_VERSION}"
+          # cdkd (via cdk-local) starts this image with docker run but does not pull it.
+          image=$(grep -rhoE 'public\.ecr\.aws/docker/library/node:[0-9a-z.-]+@sha256:[0-9a-f]{64}' "$(npm root -g)/@cdkd/cli" | sort -u | head -1)
+          docker pull "$image"
+
+      - name: Install AWS Emulator (signature verified)
+        run: |
+          base=https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/latest
+          curl -fsSLo aws-emulator.deb "$base/aws-emulator_amd64.deb"
+          curl -fsSLo aws-emulator.deb.sig "$base/aws-emulator_amd64.deb.sig"
+          curl -fsSL https://downloads.aws.com/keys/gpg/current.asc | gpg --import
+          gpg --list-keys --with-colons | grep -q "fpr:::::::::${EMU_GPG_FINGERPRINT}:"
+          gpg --verify aws-emulator.deb.sig aws-emulator.deb
+          sudo apt-get install -y ./aws-emulator.deb socat
+          aws-emulator -v
+
+      - name: Start AWS Emulator
+        run: |
+          nohup aws-emulator -t off -p "$EMU_PORT" > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -fs --cacert "$HOME/.aws/emulator/$EMU_PORT/ca.pem" "https://127.0.0.1:$EMU_PORT/__admin/health" && break
+            sleep 1
+          done
+          # cdkd runs custom resource handlers in local Lambda runtime containers, which reach the
+          # emulator through the Docker bridge gateway. The native emulator binds one address, so
+          # forward the gateway address to it (never bind 0.0.0.0).
+          gw=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
+          nohup socat "TCP-LISTEN:$EMU_PORT,bind=$gw,reuseaddr,fork" "TCP:127.0.0.1:$EMU_PORT" > /dev/null 2>&1 &
+
+      - name: Deploy with cdkd
+        working-directory: ${{ env.WORKSPACE_DIR }}
+        run: |
+          source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
+          ENV=dev cdkd deploy '**' --aws-emulator \
+            -c project=emu -c env=dev -c emulator=cdkd -O "$RUNNER_TEMP/outputs.json"
+
+      - name: Run test-eventbus.sh (archive replay skipped)
+        working-directory: ${{ env.WORKSPACE_DIR }}
+        run: |
+          source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
+          export PATH="$GITHUB_WORKSPACE/scripts/aws-emulator/cfn-outputs-shim:$PATH"
+          export CDKD_OUTPUTS="$RUNNER_TEMP/outputs.json"
+          ./test-eventbus.sh --project emu --env dev --region us-east-1 --skip-replay
+
+      - name: Destroy with cdkd
+        if: always()
+        working-directory: ${{ env.WORKSPACE_DIR }}
+        run: |
+          source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
+          ENV=dev cdkd destroy '**' --aws-emulator --force \
+            -c project=emu -c env=dev -c emulator=cdkd
+
+      - name: Emulator log
+        if: failure()
+        run: tail -n 200 "$RUNNER_TEMP/emulator.log"

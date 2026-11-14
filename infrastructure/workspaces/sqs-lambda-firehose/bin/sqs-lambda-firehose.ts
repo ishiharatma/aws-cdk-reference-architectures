@@ -46,10 +46,13 @@ const stage = new SqsLambdaFirehoseStage(app, `SqsLambdaFirehose${pascalCase(env
   params: envParams,
 });
 
-// Local testing against AWS Emulator only (`-c emulator=true`); never set for real AWS.
+// Local testing against AWS Emulator only; never set for real AWS.
+//   -c emulator=true : CDK CLI (CloudFormation) — also drops custom resources
+//   -c emulator=cdkd : cdkd --aws-emulator — keeps custom resources, cdkd runs them locally
 // Added to the Stage, not the App: aspects on the App do not cross Stage boundaries.
-if (app.node.tryGetContext('emulator') === 'true') {
-  cdk.Aspects.of(stage).add(new EmulatorCompatAspect());
+const emulatorMode = app.node.tryGetContext('emulator');
+if (emulatorMode === 'true' || emulatorMode === 'cdkd') {
+  cdk.Aspects.of(stage).add(new EmulatorCompatAspect({ removeCustomResources: emulatorMode === 'true' }));
 }
 
 // --------------------------------- Tagging  -------------------------------------
