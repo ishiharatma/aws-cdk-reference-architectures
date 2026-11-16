@@ -3,7 +3,9 @@
 Verified by deploying `eventbridge-custom-bus` and `sqs-lambda-firehose` to AWS Emulator with the
 CDK CLI and with cdkd, and running the same scripts on real AWS (ap-northeast-1), November 2026.
 AWS Emulator 1.0.343 / 1.0.348 (local) and 1.0.352 (GitHub Actions), `@cdkd/cli` 0.350.1.
-AWS Emulator ships several releases a day; re-check before relying on any entry below.
+Re-checked on 1.0.471 (2026-11-16); entries say where that version behaves differently.
+AWS Emulator ships several releases a day (1.0.348 → 1.0.471 in three days); re-check before
+relying on any entry below.
 
 The repository's tooling for this lives in `infrastructure/common/aspects/emulator-compat-aspect.ts`,
 `scripts/aws-emulator/` and `.github/workflows/aws-emulator-integration.yml`.
@@ -12,7 +14,8 @@ The repository's tooling for this lives in `infrastructure/common/aspects/emulat
 
 GitHub releases (`aws/aws-emulator`) carry no packages (only `scores.json.gz`). The deb/rpm come
 from `https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/latest/`, which lagged:
-GitHub showed 1.0.351 while `LTS/latest` served 1.0.348, and a CI run a few hours later got 1.0.352.
+GitHub showed 1.0.351 while `LTS/latest` served 1.0.348, and a CI run a few hours later got 1.0.352
+(on 2026-11-16 both were at 1.0.471).
 There is no versioned download path to pin, so print `aws-emulator -v` in every CI log. Verify the
 package with `gpg --verify` against the key at `https://downloads.aws.com/keys/gpg/current.asc`
 (fingerprint `98BC F336 A3BE 53B7 34E9 67C5 2E5B F49B D940 F624`).
@@ -33,7 +36,8 @@ on creation order. Reproduced with plain CLI calls (`create-event-source-mapping
 `set-queue-attributes` with the DenyInsecureTransport statement, then it is refused). Real Lambda
 creates the mapping with the same policy, even immediately after `SetQueueAttributes`.
 
-The same root cause silently drops **EventBridge → SQS** deliveries: the target queue receives
+Still reproduced on 1.0.471. The same root cause silently drops **EventBridge → SQS** deliveries
+(1.0.471, CLI-created bus: one message with an Allow-only queue policy, zero once the TLS Deny is added): the target queue receives
 nothing, the rule's DLQ stays empty, no error anywhere. It also breaks S3 → SQS notification setup
 (`aws/aws-emulator#369`). Fix for emulator runs only: strip the `aws:SecureTransport=false` Deny
 statements (not the whole policy — EventBridge's Allow lives in the same queue policy).
@@ -42,41 +46,50 @@ statements (not the whole policy — EventBridge's Allow lives in the same queue
 
 ## Resources created through CloudFormation or Cloud Control can be invisible to the service API
 
-- A custom `AWS::Events::EventBus` created by a CloudFormation stack returns `Ref`/`Arn`, but
-  `aws events describe-event-bus` says **`Event bus <name> does not exist.`**, so every
-  `AWS::Events::Rule` on it fails. A two-resource template reproduces it; a bus created with the CLI
-  works. Open upstream since 2026-10-25 (`20261025T002357Z-events-a-cloudformation-created-aws-events-eventbus-is-invisible.md`).
-  Earlier write-ups that found EventBridge working with CDK used the default bus.
-- cdkd creates the bus through the SDK, so rules work, but it provisions `AWS::Events::Archive`
-  through Cloud Control (`provisionedBy: cc-api` in cdkd state). `aws cloudcontrol get-resource`
-  returns it; `aws events list-archives` / `describe-archive` do not, so replay cannot be tested.
+- **Fixed in 1.0.471.** Up to at least 1.0.348, a custom `AWS::Events::EventBus` created by a
+  CloudFormation stack returned `Ref`/`Arn`, but `aws events describe-event-bus` said
+  **`Event bus <name> does not exist.`**, so every `AWS::Events::Rule` on it failed. A two-resource
+  template reproduced it; a bus created with the CLI worked. Upstream issue
+  `20261025T002357Z-events-a-cloudformation-created-aws-events-eventbus-is-invisible.md`. A stack that
+  only uses the default bus never hits it. On 1.0.471 the same template creates a visible bus and its rule.
+- Still on 1.0.471: an `AWS::Events::Archive` is invisible to the EventBridge API, whether created by
+  CloudFormation (same stack as the now-visible bus) or by cdkd through Cloud Control
+  (`provisionedBy: cc-api` in cdkd state). `aws cloudcontrol get-resource` returns it;
+  `aws events list-archives` / `describe-archive` do not, so replay cannot be tested.
 
 ## Unsupported CloudFormation type: `AWS::Logs::Delivery*`
 
 **`Template format error: Unrecognized resource types: [AWS::Logs::DeliverySource, AWS::Logs::DeliveryDestination, AWS::Logs::Delivery]`**
-at change set creation (event bus log delivery, see [eventbridge-custom-bus.md](eventbridge-custom-bus.md)).
+at change set creation (unchanged on 1.0.471) (event bus log delivery, see [eventbridge-custom-bus.md](eventbridge-custom-bus.md)).
 cdkd gets further but fails on `Fn::GetAtt DeliveryDestination.Arn` ("attributes are not enriched
 for this resource type") — a cdkd gap, not an emulator one. Remove these three resources for
 emulator runs.
 
 ## The Lambda runtimes are reimplementations, not the official runtimes
 
-From a probe function on 1.0.343/1.0.348:
+From a probe function on 1.0.343/1.0.348, re-checked on 1.0.471:
 
 | | Python 3.13 / 3.14 | Node.js 22 / 24 |
 | --- | --- | --- |
 | Version string | `3.14.0.alpha ... [RustPython 0.6.0 ...]` | `v22.0.0` / `v24.0.0` |
 | SDK | `boto3` at `/var/task/boto3`, no `botocore.__version__` (emulator shim) | `@aws-sdk/client-*` works |
-| Missing | `asyncio` (`No module named '_signal'`), `http.client.IncompleteRead`, urllib3 | `https`, `zlib`, `fetch` |
+| Missing | `asyncio` (`No module named '_signal'`), `http.client.IncompleteRead`, urllib3 (all unchanged on 1.0.471) | `zlib`, `fetch` (`https` is available on 1.0.471) |
 
 Consequences:
 
 - A function that bundles urllib3 2.x (Powertools with its tracer, a pinned botocore, requests)
   fails at import: **`Runtime.ImportModuleError: Unable to import module 'index': cannot import name 'IncompleteRead' from 'http.client'`**.
-  Real Lambda python3.13 imports the same package (`aws/aws-emulator#408`).
+  Real Lambda python3.13 imports the same package (`aws/aws-emulator#408`). Unchanged on 1.0.471.
 - CDK custom resource handlers (`autoDeleteObjects`, `AwsCustomResource`, e.g. the one
   `targets.CloudWatchLogGroup` adds silently) fail with **`Cannot find module 'zlib'`**; the CDK CLI
-  rollback then waits ~90 s and ends in `ROLLBACK_FAILED`.
+  rollback then waits ~90 s and ends in `ROLLBACK_FAILED`. On 1.0.471 (with `https` available) the
+  `AwsCustomResource` still fails through CloudFormation, now reported as
+  **`CloudFormation did not receive a response from your Custom Resource`**, and the stack again ends
+  in `ROLLBACK_FAILED`.
+- Removing that `AwsCustomResource` (as `EmulatorCompatAspect` does for the CDK CLI) also removes the
+  log group resource policy it sets. On 1.0.471 `eventbridge-custom-bus` then deploys with the CDK CLI
+  and passes 6 of 7 non-replay checks; the failing one is EventBridge → CloudWatch Logs delivery, most
+  likely refused for lack of that policy. With cdkd, which runs the custom resource locally, all 7 pass.
 - A function that uses only the runtime's SDK reaches the emulator with no environment variables
   added (no `AWS_ENDPOINT_URL`, no credentials). `NodejsFunction`'s default of excluding
   `@aws-sdk/*` from the bundle works; bundling the SDK pulls in `https` and fails.
@@ -91,7 +104,9 @@ action) were denied with the same error code and reason clause as AWS
 identity-based policy`, `with an explicit deny in a resource-based policy`). A permissions boundary
 was **not** enforced: the emulator allowed the call, AWS denied it with
 `because no permissions boundary allows the dynamodb:PutItem action`
-(upstream `20261113T094431Z-cloudformation-iam-lambda-s3-a-lambda-execution-role.md`).
+(upstream `20261113T094431Z-cloudformation-iam-lambda-s3-a-lambda-execution-role.md`; still not
+enforced on 1.0.471). Only calls made inside a Lambda function with its execution role were tested;
+calls made directly with an IAM user's keys, or list-type operations, may be evaluated differently.
 
 ## cdkd `--aws-emulator`: custom resources run locally, with two prerequisites
 
