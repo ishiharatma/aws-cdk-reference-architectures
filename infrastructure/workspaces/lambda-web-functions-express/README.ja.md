@@ -145,8 +145,8 @@ L2 でも自分で書く必要が残るもの:
 - **実行ロール**。L2 の既定ロールは `AWSLambdaBasicExecutionRole`(ログの権限が `*`)なので、ロググループに絞ったロールを `role` で渡しています。
 - **コピー用 Lambda のロググループ**。既定は保持期間 731 日・`Retain` で、スタックを削除しても残るため、`copyOptions.logGroup` で渡しています。
 
-> [!WARNING]
-> **L2 版は実機デプロイで未検証です。** L2 はリビジョンの `FunctionName` に `Ref`(L2 の型定義では ARN を返すと記載)を、エンドポイントの `FunctionName` に `GetAtt FunctionArn` を渡します。L1 版の検証では「ARN を渡すと後でエンドポイントの `DomainName` が読めなくなる」ことを確認しています(設計判断 2)。L2 版をデプロイしたら、`EndpointDomainName` の出力と CloudFront 経由の疎通を必ず確認してください。
+> [!NOTE]
+> **L2 版は 2026-11-18 に実際の環境(ap-northeast-1)で確認しました。** L2 はリビジョンの `FunctionName` に `Ref` を、エンドポイントの `FunctionName` に `GetAtt FunctionArn` を渡します。初回作成でも、コード変更によるリビジョンの置き換え(エンドポイントの更新を伴う)でも、`EndpointDomainName` は読み取れ、CloudFront 経由の疎通も保たれました。`./test-api.sh --l2` は全項目が成功し、署名なしの直接アクセスは 403 でした。設計判断 2 の「ARN を渡すと後で `DomainName` が読めなくなる」は、L2 の組み合わせでは起きていません。VPC egress(`vpcEgress.enabled: true`)の L2 版は、この確認には含めていません。
 
 既存の L1 版スタックを L2 に移行する場合は、論理 ID が変わるため関数・リビジョン・エンドポイントが置き換わり、エンドポイントのドメインも変わります。また、L2 は `AWS::Lambda::ResourcePolicy` を自分で作るため、既存の `CfnResourcePolicy` を先に削除してから L2 の grant を追加する 2 段階のデプロイが必要です(aws-cdk-lib の README に記載)。
 
@@ -385,6 +385,7 @@ curl -s "$URL/debug/env" | jq .
 ./test-api.sh --project myproject --env dev
 ./test-api.sh --project myproject --env dev --only concurrency --parallel 30
 ./test-api.sh --project myproject --env dev --throttle
+./test-api.sh --project myproject --env dev --l2   # L2 版スタック(...-l2)を確認する
 ```
 
 ### 同じサーバーをローカルで動かす

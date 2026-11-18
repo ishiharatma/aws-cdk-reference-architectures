@@ -383,8 +383,8 @@ The stack defines its own connector only with `network.egressMode: 'firewall'`. 
 
 The L2 variant's physical names are `<project>-<env>-claude2-*` and its metric namespace is `ClaudeManagedAgentsL2`. It reads the same SSM secrets as the L1 stack. It adds a second Network Firewall endpoint and NAT gateway, so delete the L2 stack once the comparison is done. Each stack has its own webhook URL to register with Anthropic.
 
-> [!WARNING]
-> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
+> [!NOTE]
+> This L2 variant itself has not been deployed. The same `lambda.NetworkConnector` usage (`MICRO_VM`, default operator role `AWSLambdaNetworkConnectorOperatorPolicy`) was verified on 2026-11-18 with the L2 variants of `lambda-microvms-codex-appserver` and `code-server-session-control-plane` (the connector reached `ACTIVE` and a MicroVM got out through a NAT gateway). The path through Network Firewall is still unchecked.
 
 ## ✅ Deploy verification
 

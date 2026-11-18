@@ -317,8 +317,8 @@ Stage は同じスタックを 2 つデプロイします。`<project>-<env>-lam
 
 L2 版の物理名は `<project>-<env>-codex2-*` です。OpenAI API キーのシークレット(`...-codex2-openai-api-key`)も別に作られるので、L2 版を使う前に値を入れてください。NAT Gateway も 1 つ増えます。
 
-> [!WARNING]
-> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
+> [!NOTE]
+> L2 版は 2026-11-18 に実際の環境で確認しました。L2 が作る operator role(`AWSLambdaNetworkConnectorOperatorPolicy`)でコネクターは `ACTIVE` になり、MicroVM イメージのビルドとセッションの `RunMicrovm` も成功しました。セッション内の codex app-server は `api.openai.com` に到達し(キー未設定のため 401)、その時間帯に NAT Gateway の `BytesOutToDestination` が増えています。このポリシーが許可するのは ENI の作成とタグ付けだけですが、コネクターと VPC を含むスタックの削除は問題なく完了しました。
 
 ## ✅ 実機デプロイ検証
 

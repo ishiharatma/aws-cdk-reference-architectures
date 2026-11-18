@@ -471,8 +471,8 @@ MicroVM の `~/project` と VS Code の設定は自動で保存され、次の�
 
 L2 版の物理名は `<project>-<env>-code-server-sessions-l2-*` です。インターフェイス VPC エンドポイントと CodeArtifact ドメインがもう 1 組できるため、比較が済んだら L2 版のスタックを削除してください。
 
-> [!WARNING]
-> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
+> [!NOTE]
+> L2 版は 2026-11-18 に実際の環境で確認しました。L2 が作る operator role(`AWSLambdaNetworkConnectorOperatorPolicy`)でコネクターは `ACTIVE` になり、スタックの削除も完了しました。この構成のセッションは L1 のコネクターを使うため、L2 のコネクターで MicroVM を動かす確認は `lambda-microvms-codex-appserver` の L2 版で行っています。
 
 ## ✅ 実機デプロイ検証
 

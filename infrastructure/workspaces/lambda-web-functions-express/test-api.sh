@@ -45,6 +45,7 @@ PARALLEL=30
 SLEEP_MS=2000
 THROTTLE=false
 THROTTLE_REQUESTS=400
+STACK_SUFFIX=""
 
 STACK_NAME=""
 BASE_URL=""
@@ -77,12 +78,14 @@ OPTIONS:
     --sleep-ms MS              Server-side wait per concurrency request (default: 2000)
     --throttle                 Also run the throttle check (sends a burst of requests)
     --throttle-requests N      Requests in the throttle burst (default: 400)
+    --l2                       Target the L2 stack (<project>-<env>-lambda-web-functions-express-l2)
     -h, --help                 Show this help message
 
 EXAMPLES:
     $0 --project myproject --env dev
     $0 --project myproject --env dev --only concurrency --parallel 150
     $0 --project myproject --env dev --throttle
+    $0 --project myproject --env dev --l2
 EOF
     exit 1
 }
@@ -100,6 +103,7 @@ parse_args() {
             --sleep-ms) SLEEP_MS="$2"; shift 2 ;;
             --throttle) THROTTLE=true; shift ;;
             --throttle-requests) THROTTLE_REQUESTS="$2"; shift 2 ;;
+            --l2) STACK_SUFFIX="-l2"; shift ;;
             *) print_message "$RED" "Unknown option: $1"; usage ;;
         esac
     done
@@ -111,7 +115,7 @@ validate_args() {
         usage
     fi
     PROFILE="${PROFILE:-${PROJECT}-${ENVIRONMENT}}"
-    STACK_NAME="${PROJECT}-${ENVIRONMENT}-lambda-web-functions-express"
+    STACK_NAME="${PROJECT}-${ENVIRONMENT}-lambda-web-functions-express${STACK_SUFFIX}"
 }
 
 check_requirements() {
@@ -259,7 +263,8 @@ check_stream() {
     first=""
     count=0
     while IFS= read -r line; do
-        if [[ "$line" == data:* ]]; then
+        # Count only the numbered events; the closing `event: done` also carries a data line.
+        if [[ "$line" == data:*\"seq\"* ]]; then
             count=$((count + 1))
             [[ -z "$first" ]] && first=$(( $(date +%s%3N) - start ))
         fi

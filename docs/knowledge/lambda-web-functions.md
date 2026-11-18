@@ -36,6 +36,13 @@ GB-seconds over the environment lifetime + data transfer.
 - Pass the **bare function name** to revision and endpoint (an ARN later breaks reading
   the endpoint `DomainName`, per the official skill). A name creates no reference, so add
   `addResourceDependency(fn)` to both.
+- The **`lambda.WebFunction` L2 (aws-cdk-lib 2.276.0)** passes `Ref` of the function to the
+  revision and `GetAtt FunctionArn` to the endpoint. Verified 2026-11-18: `DomainName` was
+  readable on create **and** after a code change that replaced the revision and updated the
+  endpoint, and CloudFront (OAC) kept serving. The ARN caveat above did not reproduce with
+  that combination. The L2 also renders `endpoint.grants.invoke(...)` into the single
+  `AWS::Lambda::ResourcePolicy` and `WebFunctionCode.fromAssetToManagedBucket` into a
+  versioned bucket plus a copy custom resource; all were removed by `cdk destroy`.
 - **`BucketDeployment.objectKeys` are relative to `destinationKeyPrefix`.** Passing
   `Fn.select(0, deployment.objectKeys)` straight into `S3Object.Key` failed the revision
   with `The specified S3 object does not exist: s3://<bucket>/<hash>.zip (versionId=...)`
