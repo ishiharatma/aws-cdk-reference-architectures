@@ -62,6 +62,7 @@
 | --- | --- | --- |
 | `Microvm` | MicroVM イメージ、ビルドロール、実行ロール、ロググループ | 必須 |
 | `PrivateNetwork` | 閉域 VPC、VPC エンドポイント、DNS Firewall、CodeArtifact、ネットワークコネクタ | `microvm.egress` を `internet` にする |
+| `PrivateNetworkL2` | `PrivateNetwork` と同じ構成で、コネクタを NetworkConnector L2 で作る比較用(セッションは使わない) | `microvm.egress` を `internet` にする |
 | `Ec2` | VPC、NAT Gateway または NAT インスタンス、起動テンプレート、インスタンスロール | `params.ec2` を削除。閉域とは併用できない |
 | `CodeCommit` | このアプリが所有するリポジトリ。スタックと一緒に削除される | `managedRepositoryNames` を空にする |
 | `ControlPlane` | Cognito、HTTP API、Lambda、DynamoDB、S3(ワークスペース)、アラーム、EC2 のスイープ | 必須 |
@@ -457,6 +458,21 @@ ec2: { natType: 'instance' },
 ### 作業内容を残す
 
 MicroVM の `~/project` と VS Code の設定は自動で保存され、次のセッションで復元されます。保存の間隔は5分なので、直前の変更は失われることがあります。Git への push も併用してください。同じ利用者がセッションを2つ開くと、後に保存したほうが残ります(以前の版は S3 のバージョニングから戻せます)。EC2 版は対象外です。
+
+### NetworkConnector L2 版(aws-cdk-lib 2.276.0)の PrivateNetwork を並べてデプロイする
+
+`microvm.egress: 'private'` のとき、Stage は `PrivateNetwork` と同じネットワークを `lambda.NetworkConnector`(`networkConnectorImpl: 'l2'`)で作る `PrivateNetworkL2`(`...-private-network-l2`)を並べてデプロイします。**比較用で、セッションは使いません**。ControlPlane は引き続き L1 のコネクターを MicroVM に渡します。
+
+| 項目 | L1 | L2 |
+|------|----|----|
+| コネクター | `CfnNetworkConnector`(サブネット ID・セキュリティグループ ID を手で渡す) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| operator role | 自前(`AWSLambdaVPCAccessExecutionRole`) | 既定で作成(`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| 出力 `EgressConnectorArn` | `attrArn` | `networkConnectorArn`(どちらもバージョンなしの ARN) |
+
+L2 版の物理名は `<project>-<env>-code-server-sessions-l2-*` です。インターフェイス VPC エンドポイントと CodeArtifact ドメインがもう 1 組できるため、比較が済んだら L2 版のスタックを削除してください。
+
+> [!WARNING]
+> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
 
 ## ✅ 実機デプロイ検証
 

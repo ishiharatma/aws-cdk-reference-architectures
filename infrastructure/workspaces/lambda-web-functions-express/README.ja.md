@@ -57,7 +57,8 @@
 | スタック | リージョン | 内容 |
 |-------|--------|----------|
 | `<project>-<env>-lambda-web-functions-express-waf` | us-east-1 | WAF Web ACL + IP セット |
-| `<project>-<env>-lambda-web-functions-express` | ap-northeast-1 | それ以外すべて(Web Function、バケット、CloudFront、DynamoDB、ログ) |
+| `<project>-<env>-lambda-web-functions-express` | ap-northeast-1 | それ以外すべて(Web Function、バケット、CloudFront、DynamoDB、ログ)。L1 で構築 |
+| `<project>-<env>-lambda-web-functions-express-l2` | ap-northeast-1 | 同じ構成を aws-cdk-lib 2.276.0 の L2 で構築(設計判断 8)。物理名は `lwf2` |
 
 ## 🔌 Lambda Web Functions の仕組み
 
@@ -99,7 +100,7 @@ CloudFront が各リクエストに署名してエンドポイントへ送り、
 
 ### 2. 生成された L1 を 1 つの Construct で包む
 
-`aws-cdk-lib` 2.273.0 で `CfnWebFunction`、`CfnWebFunctionRevision`、`CfnWebFunctionEndpoint` が生成されています(L2 はまだありません)。[`lib/constructs/web-function.ts`](lib/constructs/web-function.ts) はこれらをバケット・ロール・ロググループとまとめ、次の罠をコードに織り込んでいます。
+`aws-cdk-lib` 2.273.0 で `CfnWebFunction`、`CfnWebFunctionRevision`、`CfnWebFunctionEndpoint` が生成されています(L2 は 2.276.0 で追加。設計判断 8 を参照)。[`lib/constructs/web-function.ts`](lib/constructs/web-function.ts) はこれらをバケット・ロール・ロググループとまとめ、次の罠をコードに織り込んでいます。
 
 - リビジョンとエンドポイントは関数を**素の名前**で参照します(ARN を渡すと後でエンドポイントの `DomainName` が読めなくなる)。名前では CloudFormation の参照関係ができないため `addResourceDependency` が必要です。
 - `BucketDeployment.objectKeys` は **`destinationKeyPrefix` を含まない相対キー**です。プレフィックスを付け直さないと `CreateWebFunctionRevision` が *"The specified S3 object does not exist"* で失敗します(初回デプロイで遭遇)。
@@ -124,6 +125,30 @@ API Gateway がない分、入力検証・CORS・セキュリティヘッダー�
 ### 7. VPC egress はリビジョンの設定(L1 はスキーマより遅れている)
 
 リビジョンには、**バージョン付き**のコネクター ARN(`attrLatestVersionArn`)を渡します。実際の CloudFormation スキーマには `ServiceConfig.EgressNetworkConnectorArn` がありますが、aws-cdk-lib 2.273.0 で生成された `CfnWebFunctionRevision` にはこのプロパティがありません。そのため [`web-function.ts`](lib/constructs/web-function.ts) では `addPropertyOverride` で設定しています。CloudFormation はこれを受け付け、リビジョンは `...:network-connector:<id>:1` に紐づいて作成されました。同梱の cfn-lint は `GetAtt LatestVersionArn`(E9004。`validateAgainstDefaultRules` ではエラー)と `AssociatedComputeResourceTypes: WebFunction`(W3030。`MicroVm` しか知らない)も拒否するため、両方を Construct で承認しています。コネクターの作成には約 4 分かかります。追加しても削除しても、リビジョンはエラーなく置き換わりました。
+
+### 8. aws-cdk-lib 2.276.0 の L2(`WebFunction` / `NetworkConnector`)で組んだ版を並置
+
+2.276.0 で `lambda.WebFunction` と `lambda.NetworkConnector` の L2 が追加されました。同じ構成を L2 で組んだ [`lambda-web-functions-express-l2-stack.ts`](lib/stacks/lambda-web-functions-express-l2-stack.ts) を、L1 版と同じ Stage に並べています(物理名は `lwf2`、WAF スタックは共有)。
+
+| 項目 | L1 版(`web-function.ts` + `web-function-vpc-egress.ts`) | L2 版 |
+|------|------|------|
+| 関数・リビジョン・エンドポイント | `CfnWebFunction*` 3 つと依存関係を手で配線 | `new lambda.WebFunction()` 1 つ。`defaultEndpointAuth` は必須(既定値なし) |
+| コード用バケット | 自前のバケット + `BucketDeployment` + 読み取りポリシー | `WebFunctionCode.fromAssetToManagedBucket()` がバージョニング・SSE-S3・`lambda.amazonaws.com` の読み取りポリシー付きで作成 |
+| VPC egress | `CfnNetworkConnector` + `addPropertyOverride('ServiceConfig.EgressNetworkConnectorArn', ...)` + cfn-lint の承認 2 件 | `egressNetworkConnector: connector` を渡すだけで `LatestVersionArn` に固定される |
+| コネクターの operator role | 自前(`AWSLambdaVPCAccessExecutionRole`) | 既定で作成(`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| CloudFront からの呼び出し許可 | `CfnResourcePolicy` を手書き | `fn.endpoint.grants.invoke(ServicePrincipal)` が単一の `AWS::Lambda::ResourcePolicy` を生成 |
+| OAC | `CfnOriginAccessControl` + `addPropertyOverride` | `FunctionUrlOriginAccessControl`(オリジンタイプ `lambda`)+ `HttpOrigin` の `originAccessControlId` |
+
+L2 でも自分で書く必要が残るもの:
+
+- **`.local` ロググループ**。L2 は作らないため、L1 版と同じくスタックで宣言しています。
+- **実行ロール**。L2 の既定ロールは `AWSLambdaBasicExecutionRole`(ログの権限が `*`)なので、ロググループに絞ったロールを `role` で渡しています。
+- **コピー用 Lambda のロググループ**。既定は保持期間 731 日・`Retain` で、スタックを削除しても残るため、`copyOptions.logGroup` で渡しています。
+
+> [!WARNING]
+> **L2 版は実機デプロイで未検証です。** L2 はリビジョンの `FunctionName` に `Ref`(L2 の型定義では ARN を返すと記載)を、エンドポイントの `FunctionName` に `GetAtt FunctionArn` を渡します。L1 版の検証では「ARN を渡すと後でエンドポイントの `DomainName` が読めなくなる」ことを確認しています(設計判断 2)。L2 版をデプロイしたら、`EndpointDomainName` の出力と CloudFront 経由の疎通を必ず確認してください。
+
+既存の L1 版スタックを L2 に移行する場合は、論理 ID が変わるため関数・リビジョン・エンドポイントが置き換わり、エンドポイントのドメインも変わります。また、L2 は `AWS::Lambda::ResourcePolicy` を自分で作るため、既存の `CfnResourcePolicy` を先に削除してから L2 の grant を追加する 2 段階のデプロイが必要です(aws-cdk-lib の README に記載)。
 
 ## 🔀 パターン比較
 
@@ -378,11 +403,12 @@ test/
 ├── snapshot/snapshot.test.ts                  # テンプレート + リソース数のスナップショット(メイン + WAF)
 └── unit/
     ├── lambda-web-functions-express-stack.test.ts   # Web Function / バケット / OAC / リソースポリシー / WAF のアサーション
+    ├── lambda-web-functions-express-l2-stack.test.ts # L2 版スタックと Stage(L1 / L2 の並置)のアサーション
     └── app.test.ts                                  # Express アプリをプロセス内でテスト(supertest、DynamoDB はモック)
 ```
 
 ```bash
-npm test -w workspaces/lambda-web-functions-express                 # 54 テスト
+npm test -w workspaces/lambda-web-functions-express                 # 84 テスト
 npm run test:snapshot:update -w workspaces/lambda-web-functions-express
 ```
 

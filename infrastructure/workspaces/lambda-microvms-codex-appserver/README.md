@@ -396,6 +396,21 @@ the corresponding `AwsSolutions-IAM5` suppression.
 Change `natGateways: 1` to `natGateways: 2` in the `Vpc` construct for production-grade AZ resilience (at
 roughly double the NAT Gateway cost).
 
+### Deploy the NetworkConnector L2 variant (aws-cdk-lib 2.276.0) side by side
+
+The stage deploys the same stack twice: `<project>-<env>-lambda-microvms-codex-appserver-stack` uses `lambda.CfnNetworkConnector`, and `...-l2-stack` uses `lambda.NetworkConnector` (`networkConnectorImpl: 'l2'`). Only the connector differs.
+
+| Item | L1 | L2 |
+|------|----|----|
+| Connector | `CfnNetworkConnector` (subnet and security group IDs passed by hand) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| Operator role | Own role (`AWSLambdaVPCAccessExecutionRole`) | Created by default (`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| ARN passed to MicroVMs | `attrArn` | `networkConnectorArn` (both unqualified) |
+
+The L2 variant's physical names are `<project>-<env>-codex2-*`. It has its own OpenAI API key secret (`...-codex2-openai-api-key`); put the value in before using it. It also adds one NAT gateway.
+
+> [!WARNING]
+> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
+
 ## ✅ Deploy verification
 
 Deployed to a real account (`ap-northeast-1`) on 2026-09-27, tested at the infrastructure and

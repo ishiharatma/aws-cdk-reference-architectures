@@ -57,7 +57,8 @@ This is the fourth workspace that implements **the same API** so the Lambda inte
 | Stack | Region | Contents |
 |-------|--------|----------|
 | `<project>-<env>-lambda-web-functions-express-waf` | us-east-1 | WAF Web ACL + IP sets |
-| `<project>-<env>-lambda-web-functions-express` | ap-northeast-1 | Everything else (Web Function, bucket, CloudFront, DynamoDB, logs) |
+| `<project>-<env>-lambda-web-functions-express` | ap-northeast-1 | Everything else (Web Function, bucket, CloudFront, DynamoDB, logs), built with L1s |
+| `<project>-<env>-lambda-web-functions-express-l2` | ap-northeast-1 | The same architecture built with the aws-cdk-lib 2.276.0 L2s (design decision 8); physical names use `lwf2` |
 
 ## 🔌 How Lambda Web Functions Work
 
@@ -99,7 +100,7 @@ Two CloudFront settings are mandatory for this origin: `AllViewerExceptHostHeade
 
 ### 2. Generated L1 constructs, wrapped in one construct
 
-`aws-cdk-lib` 2.273.0 generates `CfnWebFunction`, `CfnWebFunctionRevision` and `CfnWebFunctionEndpoint` (no L2 yet). [`lib/constructs/web-function.ts`](lib/constructs/web-function.ts) wraps them with the bucket, role and log group, and encodes the gotchas:
+`aws-cdk-lib` 2.273.0 generates `CfnWebFunction`, `CfnWebFunctionRevision` and `CfnWebFunctionEndpoint` (the L2s arrived in 2.276.0; see design decision 8). [`lib/constructs/web-function.ts`](lib/constructs/web-function.ts) wraps them with the bucket, role and log group, and encodes the gotchas:
 
 - Revision and endpoint reference the function by its **bare name** (an ARN later breaks reading the endpoint `DomainName`), which creates no CloudFormation reference, so `addResourceDependency` is required.
 - `BucketDeployment.objectKeys` are **relative to `destinationKeyPrefix`** — the prefix must be prepended, otherwise `CreateWebFunctionRevision` fails with *"The specified S3 object does not exist"* (hit during the first deploy).
@@ -124,6 +125,30 @@ One process serves many requests concurrently. Module-level variables are shared
 ### 7. VPC egress is a revision setting (and the L1 lags behind the schema)
 
 The revision takes the **version-qualified** connector ARN (`attrLatestVersionArn`). The live CloudFormation schema has `ServiceConfig.EgressNetworkConnectorArn`, but the `CfnWebFunctionRevision` generated in aws-cdk-lib 2.273.0 does not expose it, so [`web-function.ts`](lib/constructs/web-function.ts) sets it with `addPropertyOverride` — CloudFormation accepted it and the revision came up bound to `...:network-connector:<id>:1`. The bundled cfn-lint also rejects `GetAtt LatestVersionArn` (E9004, an error with `validateAgainstDefaultRules`) and `AssociatedComputeResourceTypes: WebFunction` (W3030, it only knows `MicroVm`); both are acknowledged in the constructs. The connector takes ~4 minutes to create; adding or removing it replaces the revision without errors.
+
+### 8. A side-by-side version built with the aws-cdk-lib 2.276.0 L2s (`WebFunction` / `NetworkConnector`)
+
+aws-cdk-lib 2.276.0 adds the `lambda.WebFunction` and `lambda.NetworkConnector` L2s. [`lambda-web-functions-express-l2-stack.ts`](lib/stacks/lambda-web-functions-express-l2-stack.ts) builds the same architecture with them and is deployed in the same stage as the L1 version (physical names use `lwf2`; the WAF stack is shared).
+
+| Item | L1 version (`web-function.ts` + `web-function-vpc-egress.ts`) | L2 version |
+|------|------|------|
+| Function, revision, endpoint | Three `CfnWebFunction*` resources and their dependencies, wired by hand | One `new lambda.WebFunction()`. `defaultEndpointAuth` is required (no default) |
+| Code bucket | Own bucket + `BucketDeployment` + read policy | `WebFunctionCode.fromAssetToManagedBucket()` creates it with versioning, SSE-S3 and the `lambda.amazonaws.com` read policy |
+| VPC egress | `CfnNetworkConnector` + `addPropertyOverride('ServiceConfig.EgressNetworkConnectorArn', ...)` + two cfn-lint acknowledgements | Pass `egressNetworkConnector: connector`; the revision is pinned to `LatestVersionArn` |
+| Connector operator role | Own role (`AWSLambdaVPCAccessExecutionRole`) | Created by default (`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| Invoke permission for CloudFront | Hand-written `CfnResourcePolicy` | `fn.endpoint.grants.invoke(ServicePrincipal)` renders the single `AWS::Lambda::ResourcePolicy` |
+| OAC | `CfnOriginAccessControl` + `addPropertyOverride` | `FunctionUrlOriginAccessControl` (origin type `lambda`) + `originAccessControlId` on `HttpOrigin` |
+
+What the L2 version still has to do itself:
+
+- **The `.local` log group.** The L2 does not create it, so the stack declares it as the L1 version does.
+- **The execution role.** The L2 default role carries `AWSLambdaBasicExecutionRole` (log permissions on `*`), so a role scoped to the log groups is passed as `role`.
+- **The code-copy function's log group.** Its default is 731-day retention with `Retain`, which outlives the stack, so it is passed as `copyOptions.logGroup`.
+
+> [!WARNING]
+> **The L2 version has not been verified by a real deployment.** The L2 passes `Ref` (documented in the L2 type definitions as returning the ARN) as the revision's `FunctionName`, and `GetAtt FunctionArn` as the endpoint's `FunctionName`. Verifying the L1 version showed that passing the ARN makes the endpoint's `DomainName` unreadable later (design decision 2). After deploying the L2 version, check the `EndpointDomainName` output and a request through CloudFront.
+
+Moving an existing L1 deployment to the L2 changes the logical IDs, so the function, revision and endpoint are replaced and the endpoint domain changes. The L2 also creates the `AWS::Lambda::ResourcePolicy` itself, so the move takes two deployments: remove the existing `CfnResourcePolicy` first, then add the L2 grant (as the aws-cdk-lib README describes).
 
 ## 🔀 Pattern Comparison
 
@@ -378,11 +403,12 @@ test/
 ├── snapshot/snapshot.test.ts                  # template + resource-count snapshots (main + WAF)
 └── unit/
     ├── lambda-web-functions-express-stack.test.ts   # Web Function / bucket / OAC / resource policy / WAF assertions
+    ├── lambda-web-functions-express-l2-stack.test.ts # L2 stack and stage (L1 / L2 side by side) assertions
     └── app.test.ts                                  # Express app in-process (supertest, mocked DynamoDB)
 ```
 
 ```bash
-npm test -w workspaces/lambda-web-functions-express                 # 54 tests
+npm test -w workspaces/lambda-web-functions-express                 # 84 tests
 npm run test:snapshot:update -w workspaces/lambda-web-functions-express
 ```
 

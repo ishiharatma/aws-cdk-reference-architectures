@@ -62,6 +62,7 @@ There are three ways in, all behind the same control plane.
 | --- | --- | --- |
 | `Microvm` | MicroVM image, build role, execution role, log group | Required |
 | `PrivateNetwork` | Closed VPC, VPC endpoints, DNS Firewall, CodeArtifact, network connector | Set `microvm.egress` to `internet` |
+| `PrivateNetworkL2` | The same as `PrivateNetwork`, with the connector built by the NetworkConnector L2, for comparison (no session uses it) | Set `microvm.egress` to `internet` |
 | `Ec2` | VPC, NAT Gateway or NAT instance, launch template, instance role | Remove `params.ec2`. Cannot be combined with the closed network |
 | `CodeCommit` | Repositories owned by this application; deleted with the stack | Leave `managedRepositoryNames` empty |
 | `ControlPlane` | Cognito, HTTP API, Lambda, DynamoDB, S3 (workspaces), alarms, EC2 sweeper | Required |
@@ -457,6 +458,21 @@ Switching from `'internet'` to `'private'` by stack update has been verified. Th
 ### Keep your work
 
 A MicroVM's `~/project` and VS Code settings are saved automatically and restored in the next session. Saving runs every 5 minutes, so the latest changes can be lost; push to Git as well. If one user opens two sessions, the later save wins (earlier versions can be recovered from S3 versioning). EC2 is not covered.
+
+### Deploy the NetworkConnector L2 variant (aws-cdk-lib 2.276.0) of PrivateNetwork side by side
+
+With `microvm.egress: 'private'`, the stage also deploys `PrivateNetworkL2` (`...-private-network-l2`), the same network with its connector built by `lambda.NetworkConnector` (`networkConnectorImpl: 'l2'`). **It is for comparison only; no session uses it.** The control plane keeps passing the L1 connector to MicroVMs.
+
+| Item | L1 | L2 |
+|------|----|----|
+| Connector | `CfnNetworkConnector` (subnet and security group IDs passed by hand) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| Operator role | Own role (`AWSLambdaVPCAccessExecutionRole`) | Created by default (`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| `EgressConnectorArn` output | `attrArn` | `networkConnectorArn` (both unqualified) |
+
+The L2 variant's physical names are `<project>-<env>-code-server-sessions-l2-*`. It adds a second set of interface VPC endpoints and a second CodeArtifact domain, so delete the L2 stack once the comparison is done.
+
+> [!WARNING]
+> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
 
 ## ✅ Deployment Verification
 
