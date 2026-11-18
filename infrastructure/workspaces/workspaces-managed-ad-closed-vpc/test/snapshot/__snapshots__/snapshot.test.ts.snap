@@ -1,0 +1,3723 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Stack Snapshot Tests directory Complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "AWS Managed Microsoft AD and the management instance that builds OUs / GPOs",
+  "Outputs": {
+    "AdminSecretArn": {
+      "Value": {
+        "Ref": "ManagedAdAdminSecret6ED1FDE9",
+      },
+    },
+    "DirectoryId": {
+      "Value": {
+        "Ref": "ManagedAdDirectoryDF3AEB51",
+      },
+    },
+    "InstallDcvAdmxDocumentName": {
+      "Description": "Run after the first WorkSpace is AVAILABLE (parameter: WorkSpaceComputerName)",
+      "Value": {
+        "Ref": "ManagementInstanceInstallDcvAdmxDocumentE7B6FF24",
+      },
+    },
+    "ManagementInstanceId": {
+      "Value": {
+        "Ref": "ManagementInstanceAFD83A9B",
+      },
+    },
+    "PublishOutputRefManagedAdDirectoryDF3AEB514E680207": {
+      "Value": {
+        "Ref": "ManagedAdDirectoryDF3AEB51",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValueawsserviceamiwindowslatestWindowsServer2025EnglishFullBaseC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/ami-windows-latest/Windows_Server-2025-English-Full-Base",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": {
+      "DependsOn": [
+        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 120,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287LogGroup449FB7C2": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Join": [
+            "",
+            [
+              "/aws/lambda/",
+              {
+                "Ref": "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+              },
+            ],
+          ],
+        },
+        "RetentionInDays": 731,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ManagedAdAdminSecret6ED1FDE9": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Admin password of wsdev.example.co.jp (user: WSDEV\\Admin)",
+        "GenerateSecretString": {
+          "ExcludeCharacters": ""'\`$\\/@%&*(){}[]|;:<>?,=+~^ ",
+          "PasswordLength": 32,
+          "RequireEachIncludedType": true,
+        },
+        "Name": "test-test/managed-ad/admin",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ManagedAdDirectoryDF3AEB51": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Edition": "Standard",
+        "Name": "wsdev.example.co.jp",
+        "Password": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "ManagedAdAdminSecret6ED1FDE9",
+              },
+              ":SecretString:::}}",
+            ],
+          ],
+        },
+        "ShortName": "WSDEV",
+        "VpcSettings": {
+          "SubnetIds": [
+            {
+              "Fn::GetStackOutput": {
+                "OutputName": "PublishOutputRefClosedVpcSubnetadaz15876288686354F27",
+                "Region": "ap-northeast-1",
+                "StackName": "test-test-ws-network",
+              },
+            },
+            {
+              "Fn::GetStackOutput": {
+                "OutputName": "PublishOutputRefClosedVpcSubnetadaz4D23F40619971307A",
+                "Region": "ap-northeast-1",
+                "StackName": "test-test-ws-network",
+              },
+            },
+          ],
+          "VpcId": {
+            "Fn::GetStackOutput": {
+              "OutputName": "PublishOutputRefClosedVpc8AA052A642ECE0E0",
+              "Region": "ap-northeast-1",
+              "StackName": "test-test-ws-network",
+            },
+          },
+        },
+      },
+      "Type": "AWS::DirectoryService::MicrosoftAD",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ManagedAdEnableDirectoryDataAccess71F0A0FE": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "ManagedAdEnableDirectoryDataAccessCustomResourcePolicyAEFBE2AE",
+      ],
+      "Properties": {
+        "Create": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"DirectoryService","action":"EnableDirectoryDataAccess","parameters":{"DirectoryId":"",
+              {
+                "Ref": "ManagedAdDirectoryDF3AEB51",
+              },
+              ""},"physicalResourceId":{"id":"",
+              {
+                "Ref": "ManagedAdDirectoryDF3AEB51",
+              },
+              "-ds-data"}}",
+            ],
+          ],
+        },
+        "Delete": {
+          "Fn::Join": [
+            "",
+            [
+              "{"service":"DirectoryService","action":"DisableDirectoryDataAccess","parameters":{"DirectoryId":"",
+              {
+                "Ref": "ManagedAdDirectoryDF3AEB51",
+              },
+              ""},"ignoreErrorCodesMatching":"EntityDoesNotExistException|DirectoryInDesiredStateException"}",
+            ],
+          ],
+        },
+        "InstallLatestAwsSdk": false,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::AWS",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ManagedAdEnableDirectoryDataAccessCustomResourcePolicyAEFBE2AE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ds:DisableDirectoryDataAccess",
+                "ds:EnableDirectoryDataAccess",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:ds:ap-northeast-1:123456789012:directory/",
+                    {
+                      "Ref": "ManagedAdDirectoryDF3AEB51",
+                    },
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ManagedAdEnableDirectoryDataAccessCustomResourcePolicyAEFBE2AE",
+        "Roles": [
+          {
+            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ManagementInstanceAFD83A9B": {
+      "DependsOn": [
+        "ManagementInstanceRoleDefaultPolicyE8C8F405",
+        "ManagementInstanceRole9A01B5F9",
+      ],
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::GetStackOutput": {
+            "OutputName": "PublishOutputFnGetAttClosedVpcSubnetmanageaz19C87D468AvailabilityZone8DCB0CD5",
+            "Region": "ap-northeast-1",
+            "StackName": "test-test-ws-network",
+          },
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "Encrypted": true,
+              "VolumeSize": 50,
+              "VolumeType": "gp3",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "ManagementInstanceInstanceProfile1FE03A79",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValueawsserviceamiwindowslatestWindowsServer2025EnglishFullBaseC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.medium",
+        "LaunchTemplate": {
+          "LaunchTemplateName": "TestDirectoryManagementInstanceLaunchTemplate92AD9170",
+          "Version": {
+            "Fn::GetAtt": [
+              "ManagementInstanceLaunchTemplate7C0C4AED",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": false,
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Fn::GetAtt": [
+                  "ManagementInstanceSecurityGroup098C1C77",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetId": {
+              "Fn::GetStackOutput": {
+                "OutputName": "PublishOutputRefClosedVpcSubnetmanageaz19C87D468CB7D833D",
+                "Region": "ap-northeast-1",
+                "StackName": "test-test-ws-network",
+              },
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-management",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": "<powershell></powershell>",
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "ManagementInstanceBootstrapAssociation4E9DAD4F": {
+      "Properties": {
+        "AssociationName": "test-test-ad-bootstrap",
+        "Name": {
+          "Ref": "ManagementInstanceBootstrapDocument8ED4DADA",
+        },
+        "Parameters": {
+          "AdminSecretArn": [
+            {
+              "Ref": "ManagedAdAdminSecret6ED1FDE9",
+            },
+          ],
+          "ConfigBase64": [
+            "eyJkb21haW5OYW1lIjoid3NkZXYuZXhhbXBsZS5jby5qcCIsIm5ldEJpb3NOYW1lIjoiV1NERVYiLCJtYW5hZ2VtZW50Q29tcHV0ZXJPdSI6Ik9VPUFkbWluLE9VPUNvbXB1dGVycyIsIm9yZ2FuaXphdGlvbmFsVW5pdHMiOlt7Im5hbWUiOiJXb3JrU3BhY2VzIiwicGFyZW50IjoiT1U9Q29tcHV0ZXJzIiwiZGVzY3JpcHRpb24iOiJDb21wdXRlciBhY2NvdW50cyBvZiBXb3JrU3BhY2VzIn0seyJuYW1lIjoiSW1hZ2VCdWlsZCIsInBhcmVudCI6Ik9VPUNvbXB1dGVycyIsImRlc2NyaXB0aW9uIjoiV29ya1NwYWNlcyB1c2VkIHRvIGJ1aWxkIGN1c3RvbSBpbWFnZXMifSx7Im5hbWUiOiJBZG1pbiIsInBhcmVudCI6Ik9VPUNvbXB1dGVycyIsImRlc2NyaXB0aW9uIjoiTWFuYWdlbWVudCBpbnN0YW5jZXMgKEdQTyBlZGl0aW5nLCBsb2cgY29sbGVjdGlvbikifSx7Im5hbWUiOiJFbXBsb3llZXMiLCJwYXJlbnQiOiJPVT1Vc2VycyIsImRlc2NyaXB0aW9uIjoiSW4taG91c2UgZGV2ZWxvcGVycyJ9LHsibmFtZSI6IlZlbmRvcnMiLCJwYXJlbnQiOiJPVT1Vc2VycyIsImRlc2NyaXB0aW9uIjoiVmVuZG9yIHN0YWZmIn0seyJuYW1lIjoiQWRtaW5zIiwicGFyZW50IjoiT1U9VXNlcnMiLCJkZXNjcmlwdGlvbiI6IlRlYW0gYWRtaW5pc3RyYXRvciBhY2NvdW50cyAoYWRtLTxuYW1lPikifSx7Im5hbWUiOiJEaXNhYmxlZCIsInBhcmVudCI6Ik9VPVVzZXJzIiwiZGVzY3JpcHRpb24iOiJBY2NvdW50cyBkaXNhYmxlZCBmb3IgaW5hY3Rpdml0eSJ9LHsibmFtZSI6Ikdyb3VwcyIsInBhcmVudCI6IiIsImRlc2NyaXB0aW9uIjoiU2VjdXJpdHkgZ3JvdXBzIG9mIHRoZSBXb3JrU3BhY2VzIGVudmlyb25tZW50In1dLCJncm91cHMiOlt7Im5hbWUiOiJXUy1Vc2VycyIsInBhcmVudCI6Ik9VPUdyb3VwcyIsImRlc2NyaXB0aW9uIjoiQWxsIFdvcmtTcGFjZXMgdXNlcnMifSx7Im5hbWUiOiJXUy1Mb2NhbEFkbWlucyIsInBhcmVudCI6Ik9VPUdyb3VwcyIsImRlc2NyaXB0aW9uIjoiVXNlcnMgdGVtcG9yYXJpbHkgZ3JhbnRlZCBsb2NhbCBhZG1pbmlzdHJhdG9yIn0seyJuYW1lIjoiV1MtQWRtaW5zIiwicGFyZW50IjoiT1U9R3JvdXBzIiwiZGVzY3JpcHRpb24iOiJUZWFtIGFkbWluaXN0cmF0b3IgYWNjb3VudHMifSx7Im5hbWUiOiJWZW5kb3ItVXNlck1hbmFnZXJzIiwicGFyZW50IjoiT1U9R3JvdXBzIiwiZGVzY3JpcHRpb24iOiJWZW5kb3Igc3RhZmYgd2hvIG1hbmFnZSB1c2VycyJ9XSwicGFzc3dvcmRQb2xpY3kiOnsicHNvTmFtZSI6IkN1c3RvbWVyUFNPLTAxIiwiYXBwbGllc1RvR3JvdXAiOiJXUy1Vc2VycyIsIm1pblBhc3N3b3JkTGVuZ3RoIjoxNCwicGFzc3dvcmRIaXN0b3J5Q291bnQiOjI0LCJtYXhQYXNzd29yZEFnZURheXMiOjkwLCJsb2Nrb3V0VGhyZXNob2xkIjo1LCJsb2Nrb3V0RHVyYXRpb25NaW51dGVzIjozMCwibG9ja291dE9ic2VydmF0aW9uV2luZG93TWludXRlcyI6MzB9LCJncm91cFBvbGljeSI6eyJpbmFjdGl2aXR5VGltZW91dFNlY29uZHMiOjkwMCwic2VjdXJpdHlMb2dNYXhTaXplS2IiOjEwNDg1NzZ9LCJncG9UYXJnZXRzIjp7IndvcmtzcGFjZXNPdSI6Ik9VPVdvcmtTcGFjZXMsT1U9Q29tcHV0ZXJzIiwiYWRtaW5PdSI6Ik9VPUFkbWluLE9VPUNvbXB1dGVycyJ9LCJsb2NhbEFkbWluaXN0cmF0b3JHcm91cHMiOlsiV1MtQWRtaW5zIiwiV1MtTG9jYWxBZG1pbnMiXSwid2luUm0iOnsiaXB2NEZpbHRlciI6IjEwLjk3LjIyMS45Ni0xMC45Ny4yMjEuMTExLDEwLjk3LjIyMS4xMTItMTAuOTcuMjIxLjEyNyIsInJlbW90ZUFkZHJlc3NlcyI6WyIxMC45Ny4yMjEuOTYvMjgiLCIxMC45Ny4yMjEuMTEyLzI4Il19fQ==",
+          ],
+          "DnsIpAddresses": [
+            {
+              "Fn::Join": [
+                ",",
+                {
+                  "Fn::GetAtt": [
+                    "ManagedAdDirectoryDF3AEB51",
+                    "DnsIpAddresses",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Region": [
+            "ap-northeast-1",
+          ],
+        },
+        "Targets": [
+          {
+            "Key": "InstanceIds",
+            "Values": [
+              {
+                "Ref": "ManagementInstanceAFD83A9B",
+              },
+            ],
+          },
+        ],
+        "WaitForSuccessTimeoutSeconds": 3600,
+      },
+      "Type": "AWS::SSM::Association",
+    },
+    "ManagementInstanceBootstrapDocument8ED4DADA": {
+      "Properties": {
+        "Content": {
+          "description": "Join the management instance to Managed AD and build OUs, groups, PSO and GPOs",
+          "mainSteps": [
+            {
+              "action": "aws:runPowerShellScript",
+              "inputs": {
+                "runCommand": [
+                  "$ConfigBase64 = '{{ ConfigBase64 }}'",
+                  "$DnsIpAddresses = '{{ DnsIpAddresses }}'",
+                  "$AdminSecretArn = '{{ AdminSecretArn }}'",
+                  "$Region = '{{ Region }}'",
+                  "$NetBiosName = 'WSDEV'",
+                  "$Stage2Base64 = 'IyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyBDcmVhdGVzIHRoZSBPVSB0cmVlLCBzZWN1cml0eSBncm91cHMsIFBTTyBzZXR0aW5ncyBhbmQgR1BPcyBvZiB0aGUgV29ya1NwYWNlcyBlbnZpcm9ubWVudC4KIyBSdW5zIGFzIDxOZXRCSU9TPlxBZG1pbiB0aHJvdWdoIGEgb25lLXNob3Qgc2NoZWR1bGVkIHRhc2sgc3RhcnRlZCBieQojIGJvb3RzdHJhcC1tYW5hZ2VtZW50LWluc3RhbmNlLnBzMS4gRXZlcnkgc3RlcCBpcyBpZGVtcG90ZW50IHNvIHRoYXQgdGhlIGFzc29jaWF0aW9uIGNhbiBiZQojIHJlLXJ1biBhZnRlciBhIHBhcmFtZXRlciBjaGFuZ2UuCiMKIyBBbGwgd3JpdGVzIGdvIHRvIHRoZSBQREMgZW11bGF0b3Igc28gbGF0ZXIgc3RlcHMgbmV2ZXIgcmVhZCBhIERDIHRoYXQgaGFzIG5vdCByZXBsaWNhdGVkIHlldC4KIyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KcGFyYW0oCiAgICBbUGFyYW1ldGVyKE1hbmRhdG9yeSldIFtzdHJpbmddJENvbmZpZ1BhdGgsCiAgICBbUGFyYW1ldGVyKE1hbmRhdG9yeSldIFtzdHJpbmddJFJlc3VsdFBhdGgsCiAgICBbUGFyYW1ldGVyKE1hbmRhdG9yeSldIFtzdHJpbmddJExvZ1BhdGgKKQokRXJyb3JBY3Rpb25QcmVmZXJlbmNlID0gJ1N0b3AnCiRQcm9ncmVzc1ByZWZlcmVuY2UgPSAnU2lsZW50bHlDb250aW51ZScKU3RhcnQtVHJhbnNjcmlwdCAtUGF0aCAkTG9nUGF0aCAtRm9yY2UgfCBPdXQtTnVsbAoKdHJ5IHsKICAgICRDb25maWcgPSBHZXQtQ29udGVudCAtUGF0aCAkQ29uZmlnUGF0aCAtUmF3IHwgQ29udmVydEZyb20tSnNvbgogICAgSW1wb3J0LU1vZHVsZSBBY3RpdmVEaXJlY3RvcnksIEdyb3VwUG9saWN5CgogICAgJGRvbWFpbiA9IEdldC1BRERvbWFpbgogICAgJGRvbWFpbkRuID0gJGRvbWFpbi5EaXN0aW5ndWlzaGVkTmFtZQogICAgJGRuc1Jvb3QgPSAkZG9tYWluLkROU1Jvb3QKICAgICRwZGMgPSAkZG9tYWluLlBEQ0VtdWxhdG9yCiAgICAkYmFzZURuID0gIk9VPSQoJENvbmZpZy5uZXRCaW9zTmFtZSksJGRvbWFpbkRuIgoKICAgIGZ1bmN0aW9uIFJlc29sdmUtUmVsYXRpdmVEbihbc3RyaW5nXSRSZWxhdGl2ZSkgewogICAgICAgIGlmIChbc3RyaW5nXTo6SXNOdWxsT3JFbXB0eSgkUmVsYXRpdmUpKSB7IHJldHVybiAkYmFzZURuIH0KICAgICAgICByZXR1cm4gIiRSZWxhdGl2ZSwkYmFzZURuIgogICAgfQoKICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgIyAxLiBPcmdhbml6YXRpb25hbCB1bml0cwogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBmb3JlYWNoICgkb3UgaW4gJENvbmZpZy5vcmdhbml6YXRpb25hbFVuaXRzKSB7CiAgICAgICAgJHBhcmVudERuID0gUmVzb2x2ZS1SZWxhdGl2ZURuICRvdS5wYXJlbnQKICAgICAgICAkZG4gPSAiT1U9JCgkb3UubmFtZSksJHBhcmVudERuIgogICAgICAgIGlmIChHZXQtQURPcmdhbml6YXRpb25hbFVuaXQgLUZpbHRlciAiRGlzdGluZ3Vpc2hlZE5hbWUgLWVxICckZG4nIiAtU2VydmVyICRwZGMpIHsKICAgICAgICAgICAgU2V0LUFET3JnYW5pemF0aW9uYWxVbml0IC1JZGVudGl0eSAkZG4gLURlc2NyaXB0aW9uICRvdS5kZXNjcmlwdGlvbiAtU2VydmVyICRwZGMKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBOZXctQURPcmdhbml6YXRpb25hbFVuaXQgLU5hbWUgJG91Lm5hbWUgLVBhdGggJHBhcmVudERuIC1EZXNjcmlwdGlvbiAkb3UuZGVzY3JpcHRpb24gYAogICAgICAgICAgICAgICAgLVByb3RlY3RlZEZyb21BY2NpZGVudGFsRGVsZXRpb24gJHRydWUgLVNlcnZlciAkcGRjCiAgICAgICAgICAgIFdyaXRlLUhvc3QgIkNyZWF0ZWQgT1UgJGRuIgogICAgICAgIH0KICAgIH0KCiAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICMgMi4gU2VjdXJpdHkgZ3JvdXBzCiAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgIGZvcmVhY2ggKCRncm91cCBpbiAkQ29uZmlnLmdyb3VwcykgewogICAgICAgICRwYXRoID0gUmVzb2x2ZS1SZWxhdGl2ZURuICRncm91cC5wYXJlbnQKICAgICAgICBpZiAoLW5vdCAoR2V0LUFER3JvdXAgLUZpbHRlciAiU2FtQWNjb3VudE5hbWUgLWVxICckKCRncm91cC5uYW1lKSciIC1TZXJ2ZXIgJHBkYykpIHsKICAgICAgICAgICAgTmV3LUFER3JvdXAgLU5hbWUgJGdyb3VwLm5hbWUgLVNhbUFjY291bnROYW1lICRncm91cC5uYW1lIC1Hcm91cFNjb3BlIEdsb2JhbCBgCiAgICAgICAgICAgICAgICAtR3JvdXBDYXRlZ29yeSBTZWN1cml0eSAtUGF0aCAkcGF0aCAtRGVzY3JpcHRpb24gJGdyb3VwLmRlc2NyaXB0aW9uIC1TZXJ2ZXIgJHBkYwogICAgICAgICAgICBXcml0ZS1Ib3N0ICJDcmVhdGVkIGdyb3VwICQoJGdyb3VwLm5hbWUpIgogICAgICAgIH0KICAgIH0KCiAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICMgMy4gRmluZS1ncmFpbmVkIHBhc3N3b3JkIHBvbGljeSAoUFNPIHByZS1jcmVhdGVkIGJ5IE1hbmFnZWQgQUQpCiAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICRwc28gPSAkQ29uZmlnLnBhc3N3b3JkUG9saWN5CiAgICBTZXQtQURGaW5lR3JhaW5lZFBhc3N3b3JkUG9saWN5IC1JZGVudGl0eSAkcHNvLnBzb05hbWUgLVNlcnZlciAkcGRjIGAKICAgICAgICAtTWluUGFzc3dvcmRMZW5ndGggJHBzby5taW5QYXNzd29yZExlbmd0aCBgCiAgICAgICAgLVBhc3N3b3JkSGlzdG9yeUNvdW50ICRwc28ucGFzc3dvcmRIaXN0b3J5Q291bnQgYAogICAgICAgIC1NYXhQYXNzd29yZEFnZSAoTmV3LVRpbWVTcGFuIC1EYXlzICRwc28ubWF4UGFzc3dvcmRBZ2VEYXlzKSBgCiAgICAgICAgLUxvY2tvdXRUaHJlc2hvbGQgJHBzby5sb2Nrb3V0VGhyZXNob2xkIGAKICAgICAgICAtTG9ja291dER1cmF0aW9uIChOZXctVGltZVNwYW4gLU1pbnV0ZXMgJHBzby5sb2Nrb3V0RHVyYXRpb25NaW51dGVzKSBgCiAgICAgICAgLUxvY2tvdXRPYnNlcnZhdGlvbldpbmRvdyAoTmV3LVRpbWVTcGFuIC1NaW51dGVzICRwc28ubG9ja291dE9ic2VydmF0aW9uV2luZG93TWludXRlcykgYAogICAgICAgIC1Db21wbGV4aXR5RW5hYmxlZCAkdHJ1ZSAtUmV2ZXJzaWJsZUVuY3J5cHRpb25FbmFibGVkICRmYWxzZQogICAgJHN1YmplY3RzID0gQChHZXQtQURGaW5lR3JhaW5lZFBhc3N3b3JkUG9saWN5U3ViamVjdCAtSWRlbnRpdHkgJHBzby5wc29OYW1lIC1TZXJ2ZXIgJHBkYykKICAgIGlmICgtbm90ICgkc3ViamVjdHMgfCBXaGVyZS1PYmplY3QgeyAkXy5OYW1lIC1lcSAkcHNvLmFwcGxpZXNUb0dyb3VwIH0pKSB7CiAgICAgICAgQWRkLUFERmluZUdyYWluZWRQYXNzd29yZFBvbGljeVN1YmplY3QgLUlkZW50aXR5ICRwc28ucHNvTmFtZSAtU3ViamVjdHMgJHBzby5hcHBsaWVzVG9Hcm91cCAtU2VydmVyICRwZGMKICAgICAgICBXcml0ZS1Ib3N0ICJBcHBsaWVkICQoJHBzby5wc29OYW1lKSB0byAkKCRwc28uYXBwbGllc1RvR3JvdXApIgogICAgfQoKICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgIyA0LiBHUE8gaGVscGVycwogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBmdW5jdGlvbiBHZXQtT3JOZXdHcG8oW3N0cmluZ10kTmFtZSwgW3N0cmluZ10kQ29tbWVudCkgewogICAgICAgICRncG8gPSBHZXQtR1BPIC1OYW1lICROYW1lIC1Eb21haW4gJGRuc1Jvb3QgLVNlcnZlciAkcGRjIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlCiAgICAgICAgaWYgKC1ub3QgJGdwbykgewogICAgICAgICAgICAkZ3BvID0gTmV3LUdQTyAtTmFtZSAkTmFtZSAtQ29tbWVudCAkQ29tbWVudCAtRG9tYWluICRkbnNSb290IC1TZXJ2ZXIgJHBkYwogICAgICAgICAgICBXcml0ZS1Ib3N0ICJDcmVhdGVkIEdQTyAkTmFtZSIKICAgICAgICB9CiAgICAgICAgcmV0dXJuICRncG8KICAgIH0KCiAgICBmdW5jdGlvbiBBZGQtR3BvTGlua09uY2UoJEdwbywgW3N0cmluZ10kVGFyZ2V0RG4pIHsKICAgICAgICAkbGlua3MgPSAoR2V0LUdQSW5oZXJpdGFuY2UgLVRhcmdldCAkVGFyZ2V0RG4gLURvbWFpbiAkZG5zUm9vdCAtU2VydmVyICRwZGMpLkdwb0xpbmtzCiAgICAgICAgaWYgKC1ub3QgKCRsaW5rcyB8IFdoZXJlLU9iamVjdCB7ICRfLkdwb0lkIC1lcSAkR3BvLklkIH0pKSB7CiAgICAgICAgICAgIE5ldy1HUExpbmsgLUd1aWQgJEdwby5JZCAtVGFyZ2V0ICRUYXJnZXREbiAtTGlua0VuYWJsZWQgWWVzIC1Eb21haW4gJGRuc1Jvb3QgLVNlcnZlciAkcGRjIHwgT3V0LU51bGwKICAgICAgICAgICAgV3JpdGUtSG9zdCAiTGlua2VkICQoJEdwby5EaXNwbGF5TmFtZSkgdG8gJFRhcmdldERuIgogICAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiBTZXQtUG9saWN5RHdvcmQoJEdwbywgW3N0cmluZ10kS2V5LCBbc3RyaW5nXSROYW1lLCBbaW50XSRWYWx1ZSkgewogICAgICAgIFNldC1HUFJlZ2lzdHJ5VmFsdWUgLUd1aWQgJEdwby5JZCAtS2V5ICRLZXkgLVZhbHVlTmFtZSAkTmFtZSAtVHlwZSBEV29yZCAtVmFsdWUgJFZhbHVlIGAKICAgICAgICAgICAgLURvbWFpbiAkZG5zUm9vdCAtU2VydmVyICRwZGMgfCBPdXQtTnVsbAogICAgfQoKICAgIGZ1bmN0aW9uIFNldC1Qb2xpY3lTdHJpbmcoJEdwbywgW3N0cmluZ10kS2V5LCBbc3RyaW5nXSROYW1lLCBbc3RyaW5nXSRWYWx1ZSkgewogICAgICAgIFNldC1HUFJlZ2lzdHJ5VmFsdWUgLUd1aWQgJEdwby5JZCAtS2V5ICRLZXkgLVZhbHVlTmFtZSAkTmFtZSAtVHlwZSBTdHJpbmcgLVZhbHVlICRWYWx1ZSBgCiAgICAgICAgICAgIC1Eb21haW4gJGRuc1Jvb3QgLVNlcnZlciAkcGRjIHwgT3V0LU51bGwKICAgIH0KCiAgICBmdW5jdGlvbiBHZXQtR3BvU3lzdm9sUGF0aCgkR3BvKSB7CiAgICAgICAgcmV0dXJuICJcXCRwZGNcU1lTVk9MXCRkbnNSb290XFBvbGljaWVzXHskKCRHcG8uSWQpfSIKICAgIH0KCiAgICAjIFNldHRpbmdzIHdyaXR0ZW4gYXMgZmlsZXMgaW50byBTWVNWT0wgKGF1ZGl0LmNzdiwgR3JvdXBzLnhtbCkgYXJlIG9ubHkgcHJvY2Vzc2VkIHdoZW4KICAgICMgdGhlIGNsaWVudC1zaWRlIGV4dGVuc2lvbiBpcyBsaXN0ZWQgaW4gZ1BDTWFjaGluZUV4dGVuc2lvbk5hbWVzIGFuZCB0aGUgbWFjaGluZSB2ZXJzaW9uCiAgICAjIGluY3JlYXNlcywgd2hpY2ggaXMgd2hhdCB0aGUgR1BNQyBlZGl0b3IgZG9lcyBiZWhpbmQgdGhlIHNjZW5lcy4KICAgIGZ1bmN0aW9uIFJlZ2lzdGVyLU1hY2hpbmVFeHRlbnNpb24oJEdwbywgW3N0cmluZ1tdXSRFeHRlbnNpb25CbG9ja3MpIHsKICAgICAgICAkZ3BvRG4gPSAiQ049eyQoJEdwby5JZCl9LENOPVBvbGljaWVzLENOPVN5c3RlbSwkZG9tYWluRG4iCiAgICAgICAgJG9iaiA9IEdldC1BRE9iamVjdCAtSWRlbnRpdHkgJGdwb0RuIC1Qcm9wZXJ0aWVzIGdQQ01hY2hpbmVFeHRlbnNpb25OYW1lcywgdmVyc2lvbk51bWJlciAtU2VydmVyICRwZGMKICAgICAgICAkZXhpc3RpbmcgPSBAKCkKICAgICAgICBpZiAoJG9iai5nUENNYWNoaW5lRXh0ZW5zaW9uTmFtZXMpIHsKICAgICAgICAgICAgJGV4aXN0aW5nID0gQChbcmVnZXhdOjpNYXRjaGVzKCRvYmouZ1BDTWFjaGluZUV4dGVuc2lvbk5hbWVzLCAnXFtbXlxdXStcXScpIHwgRm9yRWFjaC1PYmplY3QgeyAkXy5WYWx1ZSB9KQogICAgICAgIH0KICAgICAgICAkbWVyZ2VkID0gKEAoJGV4aXN0aW5nICsgJEV4dGVuc2lvbkJsb2NrcykgfCBGb3JFYWNoLU9iamVjdCB7ICRfLlRvVXBwZXJJbnZhcmlhbnQoKSB9IHwKICAgICAgICAgICAgU29ydC1PYmplY3QgLVVuaXF1ZSkgLWpvaW4gJycKICAgICAgICAjIFRoZSBsb3cgMTYgYml0cyBhcmUgdGhlIGNvbXB1dGVyLXNpZGUgdmVyc2lvbi4KICAgICAgICAkbmV3VmVyc2lvbiA9IFtpbnRdJG9iai52ZXJzaW9uTnVtYmVyICsgMQogICAgICAgIFNldC1BRE9iamVjdCAtSWRlbnRpdHkgJGdwb0RuIC1TZXJ2ZXIgJHBkYyBgCiAgICAgICAgICAgIC1SZXBsYWNlIEB7IGdQQ01hY2hpbmVFeHRlbnNpb25OYW1lcyA9ICRtZXJnZWQ7IHZlcnNpb25OdW1iZXIgPSAkbmV3VmVyc2lvbiB9CiAgICAgICAgJGdwdEluaSA9IEpvaW4tUGF0aCAoR2V0LUdwb1N5c3ZvbFBhdGggJEdwbykgJ0dQVC5JTkknCiAgICAgICAgJGNvbnRlbnQgPSAoR2V0LUNvbnRlbnQgLVBhdGggJGdwdEluaSkgLXJlcGxhY2UgJ15WZXJzaW9uPVxkKycsICJWZXJzaW9uPSRuZXdWZXJzaW9uIgogICAgICAgIFNldC1Db250ZW50IC1QYXRoICRncHRJbmkgLVZhbHVlICRjb250ZW50IC1FbmNvZGluZyBBU0NJSQogICAgfQoKICAgICR3b3Jrc3BhY2VzT3VEbiA9IFJlc29sdmUtUmVsYXRpdmVEbiAkQ29uZmlnLmdwb1RhcmdldHMud29ya3NwYWNlc091CiAgICAkYWRtaW5PdURuID0gUmVzb2x2ZS1SZWxhdGl2ZURuICRDb25maWcuZ3BvVGFyZ2V0cy5hZG1pbk91CiAgICAkZ3AgPSAkQ29uZmlnLmdyb3VwUG9saWN5CgogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAjIDUuIEdQTy1XUy1TZWN1cml0eSAoT1U9V29ya1NwYWNlcykKICAgICMgICAgRENWIHNldHRpbmdzIChjbGlwYm9hcmQsIHNjcmVlbiBjYXB0dXJlLCBmaWxlIHRyYW5zZmVyLCBwcmludGVyLCBVU0IsIGlkbGUgZGlzY29ubmVjdCkKICAgICMgICAgbmVlZCB3c3AuYWRteCBmcm9tIGEgcnVubmluZyBXb3JrU3BhY2U7IGluc3RhbGwgaXQgd2l0aCB0aGUgSW5zdGFsbERjdkFkbXggZG9jdW1lbnQgYW5kCiAgICAjICAgIGNvbmZpZ3VyZSB0aGVtIGluIEdQTUMuIE9ubHkgdGhlIFdpbmRvd3MgaWRsZSBsb2NrIGlzIHNldCBoZXJlLgogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAkc2VjdXJpdHlHcG8gPSBHZXQtT3JOZXdHcG8gJ0dQTy1XUy1TZWN1cml0eScgJ0RhdGEgZXhmaWx0cmF0aW9uIGFuZCBpZGxlIGNvbnRyb2xzIGZvciBXb3JrU3BhY2VzJwogICAgU2V0LVBvbGljeUR3b3JkICRzZWN1cml0eUdwbyAnSEtMTVxTb2Z0d2FyZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxQb2xpY2llc1xTeXN0ZW0nIGAKICAgICAgICAnSW5hY3Rpdml0eVRpbWVvdXRTZWNzJyAkZ3AuaW5hY3Rpdml0eVRpbWVvdXRTZWNvbmRzCiAgICBBZGQtR3BvTGlua09uY2UgJHNlY3VyaXR5R3BvICR3b3Jrc3BhY2VzT3VEbgoKICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgIyA2LiBHUE8tV1MtQXVkaXQgKE9VPVdvcmtTcGFjZXMpCiAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICRhdWRpdEdwbyA9IEdldC1Pck5ld0dwbyAnR1BPLVdTLUF1ZGl0JyAnUHJvY2VzcyAvIFBvd2VyU2hlbGwgYXVkaXRpbmcgYW5kIFdpblJNIGZvciBsb2cgY29sbGVjdGlvbicKICAgICMgSW5jbHVkZSBjb21tYW5kIGxpbmUgaW4gcHJvY2VzcyBjcmVhdGlvbiBldmVudHMgKDQ2ODgpCiAgICBTZXQtUG9saWN5RHdvcmQgJGF1ZGl0R3BvICdIS0xNXFNvZnR3YXJlXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFBvbGljaWVzXFN5c3RlbVxBdWRpdCcgYAogICAgICAgICdQcm9jZXNzQ3JlYXRpb25JbmNsdWRlQ21kTGluZV9FbmFibGVkJyAxCiAgICAjIFBvd2VyU2hlbGwgc2NyaXB0IGJsb2NrIGxvZ2dpbmcgKDQxMDQpCiAgICBTZXQtUG9saWN5RHdvcmQgJGF1ZGl0R3BvICdIS0xNXFNvZnR3YXJlXFBvbGljaWVzXE1pY3Jvc29mdFxXaW5kb3dzXFBvd2VyU2hlbGxcU2NyaXB0QmxvY2tMb2dnaW5nJyBgCiAgICAgICAgJ0VuYWJsZVNjcmlwdEJsb2NrTG9nZ2luZycgMQogICAgIyBTZWN1cml0eSBsb2cgc2l6ZSAoS0IpCiAgICBTZXQtUG9saWN5RHdvcmQgJGF1ZGl0R3BvICdIS0xNXFNvZnR3YXJlXFBvbGljaWVzXE1pY3Jvc29mdFxXaW5kb3dzXEV2ZW50TG9nXFNlY3VyaXR5JyBgCiAgICAgICAgJ01heFNpemUnICRncC5zZWN1cml0eUxvZ01heFNpemVLYgogICAgIyBBZHZhbmNlZCBhdWRpdCBwb2xpY3kgbXVzdCBvdmVycmlkZSB0aGUgbGVnYWN5IGNhdGVnb3J5IHBvbGljeQogICAgU2V0LVBvbGljeUR3b3JkICRhdWRpdEdwbyAnSEtMTVxTeXN0ZW1cQ3VycmVudENvbnRyb2xTZXRcQ29udHJvbFxMc2EnICdTQ0VOb0FwcGx5TGVnYWN5QXVkaXRQb2xpY3knIDEKICAgICMgV2luUk0gbGlzdGVuZXIgcmVzdHJpY3RlZCB0byB0aGUgbWFuYWdlbWVudCBzdWJuZXRzCiAgICBTZXQtUG9saWN5RHdvcmQgJGF1ZGl0R3BvICdIS0xNXFNvZnR3YXJlXFBvbGljaWVzXE1pY3Jvc29mdFxXaW5kb3dzXFdpblJNXFNlcnZpY2UnICdBbGxvd0F1dG9Db25maWcnIDEKICAgIFNldC1Qb2xpY3lTdHJpbmcgJGF1ZGl0R3BvICdIS0xNXFNvZnR3YXJlXFBvbGljaWVzXE1pY3Jvc29mdFxXaW5kb3dzXFdpblJNXFNlcnZpY2UnICdJUHY0RmlsdGVyJyBgCiAgICAgICAgJENvbmZpZy53aW5SbS5pcHY0RmlsdGVyCiAgICAjIFdpblJNIHNlcnZpY2U6IGF1dG9tYXRpYyBzdGFydCAocHJlZmVyZW5jZSBpdGVtLCBub3QgYSBwb2xpY3kga2V5KQogICAgJHdpblJtU3RhcnQgPSBHZXQtR1BQcmVmUmVnaXN0cnlWYWx1ZSAtR3VpZCAkYXVkaXRHcG8uSWQgLUNvbnRleHQgQ29tcHV0ZXIgYAogICAgICAgIC1LZXkgJ0hLTE1cU1lTVEVNXEN1cnJlbnRDb250cm9sU2V0XFNlcnZpY2VzXFdpblJNJyAtVmFsdWVOYW1lICdTdGFydCcgYAogICAgICAgIC1Eb21haW4gJGRuc1Jvb3QgLVNlcnZlciAkcGRjIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlCiAgICBpZiAoLW5vdCAkd2luUm1TdGFydCkgewogICAgICAgIFNldC1HUFByZWZSZWdpc3RyeVZhbHVlIC1HdWlkICRhdWRpdEdwby5JZCAtQ29udGV4dCBDb21wdXRlciAtQWN0aW9uIFVwZGF0ZSBgCiAgICAgICAgICAgIC1LZXkgJ0hLTE1cU1lTVEVNXEN1cnJlbnRDb250cm9sU2V0XFNlcnZpY2VzXFdpblJNJyAtVmFsdWVOYW1lICdTdGFydCcgLVR5cGUgRFdvcmQgLVZhbHVlIDIgYAogICAgICAgICAgICAtRG9tYWluICRkbnNSb290IC1TZXJ2ZXIgJHBkYyB8IE91dC1OdWxsCiAgICB9CiAgICAjIFdpbmRvd3MgRmlyZXdhbGw6IFRDUCA1OTg1IGZyb20gdGhlIG1hbmFnZW1lbnQgc3VibmV0cyBvbmx5CiAgICAkcG9saWN5U3RvcmUgPSAiJGRuc1Jvb3RcR1BPLVdTLUF1ZGl0IgogICAgJHJ1bGVOYW1lID0gJ1dTLVdpblJNLUhUVFAtSW4tRnJvbS1NYW5hZ2VtZW50JwogICAgaWYgKC1ub3QgKEdldC1OZXRGaXJld2FsbFJ1bGUgLVBvbGljeVN0b3JlICRwb2xpY3lTdG9yZSAtTmFtZSAkcnVsZU5hbWUgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUpKSB7CiAgICAgICAgTmV3LU5ldEZpcmV3YWxsUnVsZSAtUG9saWN5U3RvcmUgJHBvbGljeVN0b3JlIC1OYW1lICRydWxlTmFtZSBgCiAgICAgICAgICAgIC1EaXNwbGF5TmFtZSAnV2luUk0gKEhUVFAtSW4pIGZyb20gbWFuYWdlbWVudCBzdWJuZXRzJyAtRGlyZWN0aW9uIEluYm91bmQgLVByb3RvY29sIFRDUCBgCiAgICAgICAgICAgIC1Mb2NhbFBvcnQgNTk4NSAtUmVtb3RlQWRkcmVzcyBAKCRDb25maWcud2luUm0ucmVtb3RlQWRkcmVzc2VzKSAtQWN0aW9uIEFsbG93IC1Qcm9maWxlIEFueSB8IE91dC1OdWxsCiAgICB9CiAgICAjIEFkdmFuY2VkIGF1ZGl0IHBvbGljeTogRGV0YWlsZWQgVHJhY2tpbmcgPiBBdWRpdCBQcm9jZXNzIENyZWF0aW9uID0gU3VjY2VzcyAoNDY4OCkKICAgICRhdWRpdERpciA9IEpvaW4tUGF0aCAoR2V0LUdwb1N5c3ZvbFBhdGggJGF1ZGl0R3BvKSAnTWFjaGluZVxNaWNyb3NvZnRcV2luZG93cyBOVFxBdWRpdCcKICAgIE5ldy1JdGVtIC1JdGVtVHlwZSBEaXJlY3RvcnkgLVBhdGggJGF1ZGl0RGlyIC1Gb3JjZSB8IE91dC1OdWxsCiAgICBTZXQtQ29udGVudCAtUGF0aCAoSm9pbi1QYXRoICRhdWRpdERpciAnYXVkaXQuY3N2JykgLUVuY29kaW5nIEFTQ0lJIC1WYWx1ZSBAKAogICAgICAgICdNYWNoaW5lIE5hbWUsUG9saWN5IFRhcmdldCxTdWJjYXRlZ29yeSxTdWJjYXRlZ29yeSBHVUlELEluY2x1c2lvbiBTZXR0aW5nLEV4Y2x1c2lvbiBTZXR0aW5nLFNldHRpbmcgVmFsdWUnLAogICAgICAgICcsU3lzdGVtLEF1ZGl0IFByb2Nlc3MgQ3JlYXRpb24sezBjY2U5MjJiLTY5YWUtMTFkOS1iZWQzLTUwNTA1NDUwMzAzMH0sU3VjY2VzcywsMScKICAgICkKICAgIFJlZ2lzdGVyLU1hY2hpbmVFeHRlbnNpb24gJGF1ZGl0R3BvIEAoCiAgICAgICAgJ1t7RjNDQ0M2ODEtQjc0Qy00MDYwLTlGMjYtQ0Q4NDUyNURDQTJBfXswRjNGMzczNS01NzNELTk4MDQtOTlFNC1BQjJBNjlCQTVGRDR9XScKICAgICkKICAgIEFkZC1HcG9MaW5rT25jZSAkYXVkaXRHcG8gJHdvcmtzcGFjZXNPdURuCgogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAjIDcuIEdQTy1XUy1Mb2NhbEFkbWluIChPVT1Xb3JrU3BhY2VzKQogICAgIyAgICBHcm91cCBQb2xpY3kgUHJlZmVyZW5jZXMgPiBMb2NhbCBVc2VycyBhbmQgR3JvdXBzOiByZWJ1aWxkIHRoZSBidWlsdC1pbiBBZG1pbmlzdHJhdG9ycwogICAgIyAgICBncm91cCBmcm9tIEFEIGdyb3VwcyBzbyBsb2NhbCBhZG1pbiBpcyBncmFudGVkIC8gcmV2b2tlZCBieSBncm91cCBtZW1iZXJzaGlwLgogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAkbG9jYWxBZG1pbkdwbyA9IEdldC1Pck5ld0dwbyAnR1BPLVdTLUxvY2FsQWRtaW4nICdMb2NhbCBBZG1pbmlzdHJhdG9ycyBtZW1iZXJzaGlwIG1hbmFnZWQgYnkgQUQgZ3JvdXBzJwogICAgJG1lbWJlcnMgPSBAKCc8TWVtYmVyIG5hbWU9IiVDb21wdXRlck5hbWUlXEFkbWluaXN0cmF0b3IiIGFjdGlvbj0iQUREIiBzaWQ9IiIvPicpCiAgICBmb3JlYWNoICgkZ3JvdXBOYW1lIGluICRDb25maWcubG9jYWxBZG1pbmlzdHJhdG9yR3JvdXBzKSB7CiAgICAgICAgJHNpZCA9IChHZXQtQURHcm91cCAtSWRlbnRpdHkgJGdyb3VwTmFtZSAtU2VydmVyICRwZGMpLlNJRC5WYWx1ZQogICAgICAgICRtZW1iZXJzICs9ICI8TWVtYmVyIG5hbWU9YCIkKCRDb25maWcubmV0Qmlvc05hbWUpXCRncm91cE5hbWVgIiBhY3Rpb249YCJBRERgIiBzaWQ9YCIkc2lkYCIvPiIKICAgIH0KICAgICRjaGFuZ2VkID0gKEdldC1EYXRlKS5Ub1VuaXZlcnNhbFRpbWUoKS5Ub1N0cmluZygneXl5eS1NTS1kZCBISDptbTpzcycpCiAgICAkZ3JvdXBzWG1sID0gQCIKPD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPEdyb3VwcyBjbHNpZD0iezMxMjVFOTM3LUVCMTYtNGI0Yy05OTM0LTU0NEZDNkQyNEQyNn0iPjxHcm91cCBjbHNpZD0iezZENEE3OUU0LTUyOUMtNDQ4MS1BQkQwLUY1QkQ3RUE5M0JBN30iIG5hbWU9IkFkbWluaXN0cmF0b3JzIChidWlsdC1pbikiIGltYWdlPSIyIiBjaGFuZ2VkPSIkY2hhbmdlZCIgdWlkPSJ7MkI3RjVDMUUtNkE0My00QzFELTlCNUUtM0Y4QTBEMkM3RTQxfSI+PFByb3BlcnRpZXMgYWN0aW9uPSJVIiBuZXdOYW1lPSIiIGRlc2NyaXB0aW9uPSIiIGRlbGV0ZUFsbFVzZXJzPSIxIiBkZWxldGVBbGxHcm91cHM9IjEiIHJlbW92ZUFjY291bnRzPSIwIiBncm91cFNpZD0iUy0xLTUtMzItNTQ0IiBncm91cE5hbWU9IkFkbWluaXN0cmF0b3JzIChidWlsdC1pbikiPjxNZW1iZXJzPiQoJG1lbWJlcnMgLWpvaW4gJycpPC9NZW1iZXJzPjwvUHJvcGVydGllcz48L0dyb3VwPjwvR3JvdXBzPgoiQAogICAgJGdyb3Vwc0RpciA9IEpvaW4tUGF0aCAoR2V0LUdwb1N5c3ZvbFBhdGggJGxvY2FsQWRtaW5HcG8pICdNYWNoaW5lXFByZWZlcmVuY2VzXEdyb3VwcycKICAgIE5ldy1JdGVtIC1JdGVtVHlwZSBEaXJlY3RvcnkgLVBhdGggJGdyb3Vwc0RpciAtRm9yY2UgfCBPdXQtTnVsbAogICAgW0lPLkZpbGVdOjpXcml0ZUFsbFRleHQoKEpvaW4tUGF0aCAkZ3JvdXBzRGlyICdHcm91cHMueG1sJyksICRncm91cHNYbWwsIChOZXctT2JqZWN0IFN5c3RlbS5UZXh0LlVURjhFbmNvZGluZyAkZmFsc2UpKQogICAgUmVnaXN0ZXItTWFjaGluZUV4dGVuc2lvbiAkbG9jYWxBZG1pbkdwbyBAKAogICAgICAgICdbezAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMH17NzlGOTI2NjktNDIyNC00NzZDLTlDNUMtNkVGQjREODdERjRBfV0nLAogICAgICAgICdbezE3RDg5RkVDLTVDNDQtNDk3Mi1CMTJELTI0MUNBRUY3NDUwOX17NzlGOTI2NjktNDIyNC00NzZDLTlDNUMtNkVGQjREODdERjRBfV0nCiAgICApCiAgICBBZGQtR3BvTGlua09uY2UgJGxvY2FsQWRtaW5HcG8gJHdvcmtzcGFjZXNPdURuCgogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAjIDguIEdQTy1BZG1pbiAoT1U9QWRtaW4pOiBtaW5pbWFsIGhhcmRlbmluZyBvZiB0aGUgbWFuYWdlbWVudCBpbnN0YW5jZQogICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAkYWRtaW5HcG8gPSBHZXQtT3JOZXdHcG8gJ0dQTy1BZG1pbicgJ01pbmltYWwgcHJvdGVjdGlvbiBvZiBtYW5hZ2VtZW50IGluc3RhbmNlcycKICAgIFNldC1Qb2xpY3lEd29yZCAkYWRtaW5HcG8gJ0hLTE1cU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cUG9saWNpZXNcU3lzdGVtJyBgCiAgICAgICAgJ0luYWN0aXZpdHlUaW1lb3V0U2VjcycgJGdwLmluYWN0aXZpdHlUaW1lb3V0U2Vjb25kcwogICAgQWRkLUdwb0xpbmtPbmNlICRhZG1pbkdwbyAkYWRtaW5PdURuCgogICAgU2V0LUNvbnRlbnQgLVBhdGggJFJlc3VsdFBhdGggLVZhbHVlICdTVUNDRVNTJwp9IGNhdGNoIHsKICAgIFdyaXRlLUhvc3QgIkVSUk9SOiAkKCRfIHwgT3V0LVN0cmluZykiCiAgICBTZXQtQ29udGVudCAtUGF0aCAkUmVzdWx0UGF0aCAtVmFsdWUgIkZBSUxFRDogJCgkXy5FeGNlcHRpb24uTWVzc2FnZSkiCn0gZmluYWxseSB7CiAgICBTdG9wLVRyYW5zY3JpcHQgfCBPdXQtTnVsbAp9Cg=='",
+                  "# ---------------------------------------------------------------------------",
+                  "# Shared helpers for the SSM Run Command documents of this workspace.",
+                  "# Expects $AdminSecretArn, $Region and $NetBiosName to be defined by the caller.",
+                  "# ---------------------------------------------------------------------------",
+                  "$ErrorActionPreference = 'Stop'",
+                  "$ProgressPreference = 'SilentlyContinue'",
+                  "",
+                  "function Get-AdminPassword {",
+                  "    # AWS Tools for PowerShell ship with the AWS Windows AMIs; fall back to the AWS CLI.",
+                  "    if (Get-Command -Name Get-SECSecretValue -ErrorAction SilentlyContinue) {",
+                  "        return (Get-SECSecretValue -SecretId $AdminSecretArn -Region $Region).SecretString",
+                  "    }",
+                  "    $json = & aws secretsmanager get-secret-value --secret-id $AdminSecretArn --region $Region --output json",
+                  "    if ($LASTEXITCODE -ne 0) {",
+                  "        throw 'Failed to read the AD admin secret from Secrets Manager'",
+                  "    }",
+                  "    return ($json | ConvertFrom-Json).SecretString",
+                  "}",
+                  "",
+                  "function Get-AdminCredential {",
+                  "    param([Parameter(Mandatory)] [string]$Password)",
+                  "    $secure = ConvertTo-SecureString -String $Password -AsPlainText -Force",
+                  "    return New-Object System.Management.Automation.PSCredential("$NetBiosName\\Admin", $secure)",
+                  "}",
+                  "",
+                  "# ---------------------------------------------------------------------------",
+                  "# Bootstrap of the management instance (runs as LocalSystem via a State Manager association).",
+                  "#",
+                  "# Phase 1 (not yet domain-joined):",
+                  "#   point DNS at the domain controllers, install RSAT / GPMC, create the OU the instance joins",
+                  "#   into (OU=Admin) remotely with the admin credential, join the domain and exit 3010 so that",
+                  "#   SSM reboots the instance and runs this script again.",
+                  "# Phase 2 (domain-joined):",
+                  "#   run Build-AdObjects.ps1 as the domain admin through a one-shot scheduled task. The",
+                  "#   GroupPolicy cmdlets have no -Credential parameter and LocalSystem (the computer account)",
+                  "#   has no rights on GPOs, so the work must run in a real logon session of the admin.",
+                  "#",
+                  "# Variables injected by the document header:",
+                  "#   $ConfigBase64, $DnsIpAddresses, $AdminSecretArn, $Region, $Stage2Base64, $NetBiosName",
+                  "# ---------------------------------------------------------------------------",
+                  "$Config = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($ConfigBase64)) | ConvertFrom-Json",
+                  "$DnsIps = @($DnsIpAddresses.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ })",
+                  "$WorkDir = 'C:\\ProgramData\\WorkSpacesAdBootstrap'",
+                  "New-Item -ItemType Directory -Path $WorkDir -Force | Out-Null",
+                  "",
+                  "$password = Get-AdminPassword",
+                  "$credential = Get-AdminCredential -Password $password",
+                  "",
+                  "Install-WindowsFeature -Name RSAT-AD-PowerShell, RSAT-ADDS-Tools, GPMC | Out-Null",
+                  "Import-Module ActiveDirectory",
+                  "",
+                  "$domainDn = ($Config.domainName.Split('.') | ForEach-Object { "DC=$_" }) -join ','",
+                  "$baseDn = "OU=$($Config.netBiosName),$domainDn"",
+                  "",
+                  "if (-not (Get-CimInstance -ClassName Win32_ComputerSystem).PartOfDomain) {",
+                  "    # ----------------------------- Phase 1 -----------------------------",
+                  "    $adapter = Get-NetAdapter | Where-Object Status -eq 'Up' | Sort-Object ifIndex | Select-Object -First 1",
+                  "    Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses $DnsIps",
+                  "    Write-Output "DNS servers set to $($DnsIps -join ', ')"",
+                  "",
+                  "    # Create the join target OU chain first so the computer object lands in OU=Admin directly",
+                  "    # (and therefore receives GPO-Admin from its first boot in the domain).",
+                  "    $parentDn = $baseDn",
+                  "    foreach ($rdn in ($Config.managementComputerOu.Split(',') | ForEach-Object { $_.Trim() })[-1..0]) {",
+                  "        $name = $rdn -replace '^OU=', ''",
+                  "        $dn = "$rdn,$parentDn"",
+                  "        $existing = Get-ADOrganizationalUnit -Filter "DistinguishedName -eq '$dn'" -Server $DnsIps[0] -Credential $credential",
+                  "        if (-not $existing) {",
+                  "            New-ADOrganizationalUnit -Name $name -Path $parentDn -ProtectedFromAccidentalDeletion $true \`",
+                  "                -Server $DnsIps[0] -Credential $credential",
+                  "            Write-Output "Created OU $dn"",
+                  "        }",
+                  "        $parentDn = $dn",
+                  "    }",
+                  "",
+                  "    Add-Computer -DomainName $Config.domainName -Credential $credential -OUPath $parentDn -Force",
+                  "    Write-Output "Joined $($Config.domainName) into $parentDn. Rebooting to continue (exit 3010)."",
+                  "    exit 3010",
+                  "}",
+                  "",
+                  "# ----------------------------- Phase 2 -----------------------------",
+                  "# The admin needs local administrator rights for the scheduled task (batch logon, elevated token).",
+                  "try {",
+                  "    Add-LocalGroupMember -SID 'S-1-5-32-544' -Member "$($Config.netBiosName)\\Admin" -ErrorAction Stop",
+                  "} catch {",
+                  "    if ($_.FullyQualifiedErrorId -notmatch 'MemberExists') { throw }",
+                  "}",
+                  "",
+                  "$stage2Path = Join-Path $WorkDir 'Build-AdObjects.ps1'",
+                  "$configPath = Join-Path $WorkDir 'config.json'",
+                  "$resultPath = Join-Path $WorkDir 'result.txt'",
+                  "$logPath = Join-Path $WorkDir 'build-ad-objects.log'",
+                  "$stage2 = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Stage2Base64))",
+                  "[IO.File]::WriteAllText($stage2Path, $stage2, (New-Object System.Text.UTF8Encoding $true))",
+                  "[IO.File]::WriteAllText($configPath, ($Config | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding $false))",
+                  "Remove-Item -Path $resultPath -ErrorAction SilentlyContinue",
+                  "",
+                  "$taskName = 'WorkSpacesAdBootstrap'",
+                  "$action = New-ScheduledTaskAction -Execute 'powershell.exe' \`",
+                  "    -Argument "-NoProfile -ExecutionPolicy Bypass -File \`"$stage2Path\`" -ConfigPath \`"$configPath\`" -ResultPath \`"$resultPath\`" -LogPath \`"$logPath\`""",
+                  "Register-ScheduledTask -TaskName $taskName -Action $action -User "$($Config.netBiosName)\\Admin" \`",
+                  "    -Password $password -RunLevel Highest -Force | Out-Null",
+                  "try {",
+                  "    Start-ScheduledTask -TaskName $taskName",
+                  "    $deadline = (Get-Date).AddMinutes(30)",
+                  "    while (-not (Test-Path $resultPath) -and (Get-Date) -lt $deadline) {",
+                  "        Start-Sleep -Seconds 10",
+                  "    }",
+                  "} finally {",
+                  "    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false",
+                  "}",
+                  "",
+                  "if (Test-Path $logPath) { Get-Content -Path $logPath | Write-Output }",
+                  "$result = if (Test-Path $resultPath) { (Get-Content -Path $resultPath -Raw).Trim() } else { 'TIMEOUT' }",
+                  "if ($result -ne 'SUCCESS') {",
+                  "    throw "Build-AdObjects.ps1 did not succeed: $result"",
+                  "}",
+                  "",
+                  "gpupdate /target:computer /force | Out-Null",
+                  "Write-Output 'AD objects and GPOs are in place.'",
+                  "",
+                ],
+                "timeoutSeconds": "3600",
+              },
+              "name": "Bootstrap",
+            },
+          ],
+          "parameters": {
+            "AdminSecretArn": {
+              "description": "Secrets Manager ARN of the AD admin password",
+              "type": "String",
+            },
+            "ConfigBase64": {
+              "description": "Base64 JSON of the AD design",
+              "type": "String",
+            },
+            "DnsIpAddresses": {
+              "description": "Domain controller IPs (comma-separated)",
+              "type": "String",
+            },
+            "Region": {
+              "description": "Region of the secret",
+              "type": "String",
+            },
+          },
+          "schemaVersion": "2.2",
+        },
+        "DocumentFormat": "JSON",
+        "DocumentType": "Command",
+      },
+      "Type": "AWS::SSM::Document",
+    },
+    "ManagementInstanceInstallDcvAdmxDocumentE7B6FF24": {
+      "Properties": {
+        "Content": {
+          "description": "Copy wsp.admx / wsp.adml from a WorkSpace into the Group Policy Central Store",
+          "mainSteps": [
+            {
+              "action": "aws:runPowerShellScript",
+              "inputs": {
+                "runCommand": [
+                  "$WorkSpaceComputerName = '{{ WorkSpaceComputerName }}'",
+                  "$DomainName = 'wsdev.example.co.jp'",
+                  {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "$AdminSecretArn = '",
+                        {
+                          "Ref": "ManagedAdAdminSecret6ED1FDE9",
+                        },
+                        "'",
+                      ],
+                    ],
+                  },
+                  "$Region = 'ap-northeast-1'",
+                  "$NetBiosName = 'WSDEV'",
+                  "# ---------------------------------------------------------------------------",
+                  "# Shared helpers for the SSM Run Command documents of this workspace.",
+                  "# Expects $AdminSecretArn, $Region and $NetBiosName to be defined by the caller.",
+                  "# ---------------------------------------------------------------------------",
+                  "$ErrorActionPreference = 'Stop'",
+                  "$ProgressPreference = 'SilentlyContinue'",
+                  "",
+                  "function Get-AdminPassword {",
+                  "    # AWS Tools for PowerShell ship with the AWS Windows AMIs; fall back to the AWS CLI.",
+                  "    if (Get-Command -Name Get-SECSecretValue -ErrorAction SilentlyContinue) {",
+                  "        return (Get-SECSecretValue -SecretId $AdminSecretArn -Region $Region).SecretString",
+                  "    }",
+                  "    $json = & aws secretsmanager get-secret-value --secret-id $AdminSecretArn --region $Region --output json",
+                  "    if ($LASTEXITCODE -ne 0) {",
+                  "        throw 'Failed to read the AD admin secret from Secrets Manager'",
+                  "    }",
+                  "    return ($json | ConvertFrom-Json).SecretString",
+                  "}",
+                  "",
+                  "function Get-AdminCredential {",
+                  "    param([Parameter(Mandatory)] [string]$Password)",
+                  "    $secure = ConvertTo-SecureString -String $Password -AsPlainText -Force",
+                  "    return New-Object System.Management.Automation.PSCredential("$NetBiosName\\Admin", $secure)",
+                  "}",
+                  "",
+                  "# ---------------------------------------------------------------------------",
+                  "# Copies the DCV Group Policy templates (wsp.admx / wsp.adml) from a running WorkSpace into the",
+                  "# domain's Central Store, so the DCV settings of GPO-WS-Security can be edited in GPMC.",
+                  "# Run once after the first WorkSpace is AVAILABLE (runs as LocalSystem via Run Command).",
+                  "#",
+                  "# Reaching the WorkSpace uses WinRM (TCP 5985), which GPO-WS-Audit opens for the management",
+                  "# subnets and the WorkSpaces security group allows from them.",
+                  "#",
+                  "# Variables injected by the document header:",
+                  "#   $WorkSpaceComputerName, $DomainName, $AdminSecretArn, $Region, $NetBiosName",
+                  "# ---------------------------------------------------------------------------",
+                  "$password = Get-AdminPassword",
+                  "$credential = Get-AdminCredential -Password $password",
+                  "",
+                  "$staging = Join-Path $env:ProgramData 'WorkSpacesAdBootstrap\\wsp-admx'",
+                  "New-Item -ItemType Directory -Path $staging -Force | Out-Null",
+                  "",
+                  "$session = New-PSSession -ComputerName $WorkSpaceComputerName -Credential $credential",
+                  "try {",
+                  "    Copy-Item -FromSession $session -Path 'C:\\Program Files\\Amazon\\WSP\\wsp.admx' -Destination $staging -Force",
+                  "    Copy-Item -FromSession $session -Path 'C:\\Program Files\\Amazon\\WSP\\wsp.adml' -Destination $staging -Force",
+                  "} finally {",
+                  "    Remove-PSSession -Session $session",
+                  "}",
+                  "",
+                  "New-PSDrive -Name WsSysvol -PSProvider FileSystem -Root "\\\\$DomainName\\SYSVOL" -Credential $credential | Out-Null",
+                  "try {",
+                  "    $central = "WsSysvol:\\$DomainName\\Policies\\PolicyDefinitions"",
+                  "    if (-not (Test-Path $central)) {",
+                  "        # Once a Central Store exists GPMC reads templates only from it, so seed it with the",
+                  "        # templates of this Windows Server 2025 instance first.",
+                  "        Copy-Item -Path "$env:windir\\PolicyDefinitions" -Destination "WsSysvol:\\$DomainName\\Policies" -Recurse",
+                  "        Write-Output 'Created the Central Store from the local PolicyDefinitions'",
+                  "    }",
+                  "    New-Item -ItemType Directory -Path "$central\\en-US" -Force | Out-Null",
+                  "    Copy-Item -Path (Join-Path $staging 'wsp.admx') -Destination $central -Force",
+                  "    Copy-Item -Path (Join-Path $staging 'wsp.adml') -Destination "$central\\en-US" -Force",
+                  "    Write-Output "Installed wsp.admx / wsp.adml into $central"",
+                  "} finally {",
+                  "    Remove-PSDrive -Name WsSysvol",
+                  "}",
+                  "",
+                ],
+                "timeoutSeconds": "600",
+              },
+              "name": "InstallDcvAdmx",
+            },
+          ],
+          "parameters": {
+            "WorkSpaceComputerName": {
+              "allowedPattern": "^[A-Za-z0-9-]{1,15}$",
+              "description": "Computer name of a running WorkSpace (e.g. WSAMZN-XXXXXXXX)",
+              "type": "String",
+            },
+          },
+          "schemaVersion": "2.2",
+        },
+        "DocumentFormat": "JSON",
+        "DocumentType": "Command",
+      },
+      "Type": "AWS::SSM::Document",
+    },
+    "ManagementInstanceInstanceProfile1FE03A79": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "ManagementInstanceRole9A01B5F9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "ManagementInstanceLaunchTemplate7C0C4AED": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "TestDirectoryManagementInstanceLaunchTemplate92AD9170",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "ManagementInstanceRole9A01B5F9": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Management instance: SSM managed node + read the AD admin secret",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSSMManagedInstanceCore",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ManagementInstanceRoleDefaultPolicyE8C8F405": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:GetSecretValue",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "ManagedAdAdminSecret6ED1FDE9",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ManagementInstanceRoleDefaultPolicyE8C8F405",
+        "Roles": [
+          {
+            "Ref": "ManagementInstanceRole9A01B5F9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ManagementInstanceSecurityGroup098C1C77": {
+      "Properties": {
+        "GroupDescription": "Management instance: no inbound, outbound to the VPC only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "10.97.220.0/23",
+            "Description": "Inside the VPC",
+            "IpProtocol": "-1",
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "S3 gateway endpoint (no other route exists)",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Fn::GetStackOutput": {
+            "OutputName": "PublishOutputRefClosedVpc8AA052A642ECE0E0",
+            "Region": "ap-northeast-1",
+            "StackName": "test-test-ws-network",
+          },
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests directory Resource types and counts 1`] = `
+{
+  "AWS::DirectoryService::MicrosoftAD": 1,
+  "AWS::EC2::Instance": 1,
+  "AWS::EC2::LaunchTemplate": 1,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::IAM::InstanceProfile": 1,
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::SSM::Association": 1,
+  "AWS::SSM::Document": 2,
+  "AWS::SecretsManager::Secret": 1,
+  "Custom::AWS": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests network Complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "WorkSpaces closed VPC (no IGW / NAT) with VPC endpoints",
+  "Outputs": {
+    "PublishOutputFnGetAttClosedVpcSubnetmanageaz19C87D468AvailabilityZone8DCB0CD5": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ClosedVpcSubnetmanageaz19C87D468",
+          "AvailabilityZone",
+        ],
+      },
+    },
+    "PublishOutputRefClosedVpc8AA052A642ECE0E0": {
+      "Value": {
+        "Ref": "ClosedVpc8AA052A6",
+      },
+    },
+    "PublishOutputRefClosedVpcSubnetadaz15876288686354F27": {
+      "Value": {
+        "Ref": "ClosedVpcSubnetadaz158762886",
+      },
+    },
+    "PublishOutputRefClosedVpcSubnetadaz4D23F40619971307A": {
+      "Value": {
+        "Ref": "ClosedVpcSubnetadaz4D23F4061",
+      },
+    },
+    "PublishOutputRefClosedVpcSubnetmanageaz19C87D468CB7D833D": {
+      "Value": {
+        "Ref": "ClosedVpcSubnetmanageaz19C87D468",
+      },
+    },
+    "PublishOutputRefClosedVpcSubnetwsaz1C45D646BB3C203CE": {
+      "Value": {
+        "Ref": "ClosedVpcSubnetwsaz1C45D646B",
+      },
+    },
+    "PublishOutputRefClosedVpcSubnetwsaz41D97D049BFB02948": {
+      "Value": {
+        "Ref": "ClosedVpcSubnetwsaz41D97D049",
+      },
+    },
+    "TransitGatewaySubnetIds": {
+      "Description": "Reserved for the Transit Gateway attachment (not created)",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Ref": "ClosedVpcSubnettgwaz1920F8094",
+            },
+            ",",
+            {
+              "Ref": "ClosedVpcSubnettgwaz4CA540C75",
+            },
+          ],
+        ],
+      },
+    },
+    "VpcId": {
+      "Value": {
+        "Ref": "ClosedVpc8AA052A6",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "ClosedVpc8AA052A6": {
+      "Properties": {
+        "CidrBlock": "10.97.220.0/23",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "ClosedVpcDirectoryRouteTable516C5D43": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-rtb-ad",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "ClosedVpcEndpointSecurityGroup1C5776F4": {
+      "Properties": {
+        "GroupDescription": "Interface VPC endpoints: HTTPS from inside the VPC only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.97.220.0/23",
+            "Description": "HTTPS from the VPC",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "ClosedVpcEndpointec2messages1476C8EC": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClosedVpcEndpointSecurityGroup1C5776F4",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ec2messages",
+        "SubnetIds": [
+          {
+            "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+          },
+          {
+            "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcEndpointlogsF696946F": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClosedVpcEndpointSecurityGroup1C5776F4",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.logs",
+        "SubnetIds": [
+          {
+            "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+          },
+          {
+            "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcEndpointsRouteTable8E2B963B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-rtb-vpce",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "ClosedVpcEndpointsecretsmanagerF3C63139": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClosedVpcEndpointSecurityGroup1C5776F4",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.secretsmanager",
+        "SubnetIds": [
+          {
+            "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+          },
+          {
+            "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcEndpointssm82C7831F": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClosedVpcEndpointSecurityGroup1C5776F4",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssm",
+        "SubnetIds": [
+          {
+            "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+          },
+          {
+            "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcEndpointssmmessagesAAC87F52": {
+      "Properties": {
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "ClosedVpcEndpointSecurityGroup1C5776F4",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.ssmmessages",
+        "SubnetIds": [
+          {
+            "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+          },
+          {
+            "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcFlowLog2F41E893": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "ClosedVpcFlowLogIAMRoleA269AAC5",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "ClosedVpcFlowLogGroupFCF7E1ED",
+        },
+        "ResourceId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Network/ClosedVpc/FlowLog",
+          },
+        ],
+        "TrafficType": "ALL",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "ClosedVpcFlowLogGroupFCF7E1ED": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 90,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ClosedVpcFlowLogIAMRoleA269AAC5": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Network/ClosedVpc/FlowLog",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "ClosedVpcFlowLogIAMRoleDefaultPolicy8DB16AD4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ClosedVpcFlowLogGroupFCF7E1ED",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ClosedVpcFlowLogIAMRoleDefaultPolicy8DB16AD4",
+        "Roles": [
+          {
+            "Ref": "ClosedVpcFlowLogIAMRoleA269AAC5",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "ClosedVpcManagementRouteTable67130F40": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-rtb-manage",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "ClosedVpcRestrictDefaultSecurityGroupCustomResource7CD4F1B5": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Account": "123456789012",
+        "DefaultSecurityGroupId": {
+          "Fn::GetAtt": [
+            "ClosedVpc8AA052A6",
+            "DefaultSecurityGroup",
+          ],
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::VpcRestrictDefaultSG",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ClosedVpcRouteTableAssociationadaz136588FB4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcDirectoryRouteTable516C5D43",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetadaz158762886",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationadaz4EFA74813": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcDirectoryRouteTable516C5D43",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetadaz4D23F4061",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationmanageaz1387F6C6C": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcManagementRouteTable67130F40",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetmanageaz19C87D468",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationmanageaz46C717752": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcManagementRouteTable67130F40",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetmanageaz40F1E9F1B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationtgwaz1180423DA": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcTransitGatewayRouteTable731FA682",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnettgwaz1920F8094",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationtgwaz4C035CA8D": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcTransitGatewayRouteTable731FA682",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnettgwaz4CA540C75",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationvpceaz186CDD9A8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcEndpointsRouteTable8E2B963B",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetvpceaz16F527EDC",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationvpceaz490B7A091": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcEndpointsRouteTable8E2B963B",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetvpceaz452E897D1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationwsaz1E7D04E34": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcWorkspacesRouteTable7E2F3146",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetwsaz1C45D646B",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcRouteTableAssociationwsaz45A179D45": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "ClosedVpcWorkspacesRouteTable7E2F3146",
+        },
+        "SubnetId": {
+          "Ref": "ClosedVpcSubnetwsaz41D97D049",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "ClosedVpcS3GatewayEndpoint807D0672": {
+      "Properties": {
+        "RouteTableIds": [
+          {
+            "Ref": "ClosedVpcWorkspacesRouteTable7E2F3146",
+          },
+          {
+            "Ref": "ClosedVpcManagementRouteTable67130F40",
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.s3",
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "ClosedVpcSubnetadaz158762886": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az1",
+        "CidrBlock": "10.97.221.0/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-ad-az1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetadaz4D23F4061": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az4",
+        "CidrBlock": "10.97.221.16/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-ad-az4",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetmanageaz19C87D468": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az1",
+        "CidrBlock": "10.97.221.96/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-manage-az1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetmanageaz40F1E9F1B": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az4",
+        "CidrBlock": "10.97.221.112/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-manage-az4",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnettgwaz1920F8094": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az1",
+        "CidrBlock": "10.97.221.224/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-tgw-az1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnettgwaz4CA540C75": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az4",
+        "CidrBlock": "10.97.221.240/28",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-tgw-az4",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetvpceaz16F527EDC": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az1",
+        "CidrBlock": "10.97.221.32/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-vpce-az1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetvpceaz452E897D1": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az4",
+        "CidrBlock": "10.97.221.64/27",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-vpce-az4",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetwsaz1C45D646B": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az1",
+        "CidrBlock": "10.97.220.0/25",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-ws-az1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcSubnetwsaz41D97D049": {
+      "Properties": {
+        "AvailabilityZoneId": "apne1-az4",
+        "CidrBlock": "10.97.220.128/25",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-ws-az4",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "ClosedVpcTransitGatewayRouteTable731FA682": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-rtb-tgw",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "ClosedVpcWorkspacesRouteTable7E2F3146": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test-test-rtb-ws",
+          },
+        ],
+        "VpcId": {
+          "Ref": "ClosedVpc8AA052A6",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+      "DependsOn": [
+        "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "02b51ab524e7bcf8f477de3e71e5f9a72e448301b26ba62e9e75a14f9c55a093.zip",
+        },
+        "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group",
+        "Handler": "__entrypoint__.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RevokeSecurityGroupEgress",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:ec2:ap-northeast-1:123456789012:security-group/",
+                          {
+                            "Fn::GetAtt": [
+                              "ClosedVpc8AA052A6",
+                              "DefaultSecurityGroup",
+                            ],
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "Inline",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests network Resource types and counts 1`] = `
+{
+  "AWS::EC2::FlowLog": 1,
+  "AWS::EC2::RouteTable": 5,
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::EC2::Subnet": 10,
+  "AWS::EC2::SubnetRouteTableAssociation": 10,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 6,
+  "AWS::IAM::Policy": 1,
+  "AWS::IAM::Role": 2,
+  "AWS::Lambda::Function": 1,
+  "AWS::Logs::LogGroup": 1,
+  "Custom::VpcRestrictDefaultSG": 1,
+}
+`;
+
+exports[`Stack Snapshot Tests usageReport Complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "Monthly WorkSpaces usage report (Scheduler -> Lambda -> S3 / SNS)",
+  "Outputs": {
+    "ReportBucketName": {
+      "Value": {
+        "Ref": "UsageReportReportBucket72A2BA24",
+      },
+    },
+    "ReportFunctionName": {
+      "Value": {
+        "Ref": "UsageReportFunction81C7C719",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "UsageReportAccessLogBucketE4B940EB",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget35fb1e88DC3D65": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                  "aws:SourceArn": "arn:aws:scheduler:ap-northeast-1:123456789012:schedule-group/default",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget35fb1eDefaultPolicyDF3F81EE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageReportFunction81C7C719",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageReportFunction81C7C719",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget35fb1eDefaultPolicyDF3F81EE",
+        "Roles": [
+          {
+            "Ref": "SchedulerRoleForTarget35fb1e88DC3D65",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "UsageReportAccessLogBucketAutoDeleteObjectsCustomResourceDEF0E828": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "UsageReportAccessLogBucketPolicy28133271",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "UsageReportAccessLogBucketE4B940EB",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UsageReportAccessLogBucketE4B940EB": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 400,
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UsageReportAccessLogBucketPolicy28133271": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "UsageReportAccessLogBucketE4B940EB",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageReportAccessLogBucketE4B940EB",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageReportAccessLogBucketE4B940EB",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:PutBucketPolicy",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageReportAccessLogBucketE4B940EB",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageReportAccessLogBucketE4B940EB",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "UsageReportReportBucket72A2BA24",
+                      "Arn",
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "logging.s3.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "UsageReportAccessLogBucketE4B940EB",
+                        "Arn",
+                      ],
+                    },
+                    "/report-bucket/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "UsageReportFunction81C7C719": {
+      "DependsOn": [
+        "UsageReportFunctionServiceRoleDefaultPolicy7706DB6C",
+        "UsageReportFunctionServiceRoleDB2CF93D",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "09372d3b1feb576a2f54d04ce19d27aaeb69d454c23c2302c1adc2f293ace978.zip",
+        },
+        "Description": "Monthly WorkSpaces last-connection report (CSV to S3, summary to SNS)",
+        "Environment": {
+          "Variables": {
+            "INACTIVE_THRESHOLD_DAYS": "30",
+            "REPORT_BUCKET": {
+              "Ref": "UsageReportReportBucket72A2BA24",
+            },
+            "REPORT_PREFIX": "reports",
+            "REPORT_TIME_ZONE": "Asia/Tokyo",
+            "TOPIC_ARN": {
+              "Ref": "UsageReportReportTopicBEDDFD88",
+            },
+          },
+        },
+        "FunctionName": "test-test-workspaces-usage-report",
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "UsageReportFunctionLogGroupDBC0DAC8",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "UsageReportFunctionServiceRoleDB2CF93D",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 300,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "UsageReportFunctionLogGroupDBC0DAC8": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 365,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UsageReportFunctionServiceRoleDB2CF93D": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "UsageReportFunctionServiceRoleDefaultPolicy7706DB6C": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "workspaces:DescribeWorkspaces",
+                "workspaces:DescribeWorkspacesConnectionStatus",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "s3:Abort*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "UsageReportReportBucket72A2BA24",
+                        "Arn",
+                      ],
+                    },
+                    "/reports/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "UsageReportReportTopicBEDDFD88",
+              },
+            },
+            {
+              "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+              ],
+              "Condition": {
+                "ForAnyValue:StringEquals": {
+                  "kms:ResourceAliases": "alias/aws/sns",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "arn:aws:kms:ap-northeast-1:123456789012:key/*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "UsageReportFunctionServiceRoleDefaultPolicy7706DB6C",
+        "Roles": [
+          {
+            "Ref": "UsageReportFunctionServiceRoleDB2CF93D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "UsageReportReportBucket72A2BA24": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 400,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 30,
+              },
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "UsageReportAccessLogBucketE4B940EB",
+          },
+          "LogFilePrefix": "report-bucket/",
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UsageReportReportBucketAutoDeleteObjectsCustomResourceEFC225EA": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "UsageReportReportBucketPolicyD936F377",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "UsageReportReportBucket72A2BA24",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "UsageReportReportBucketPolicyD936F377": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "UsageReportReportBucket72A2BA24",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageReportReportBucket72A2BA24",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageReportReportBucket72A2BA24",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:DeleteObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:PutBucketPolicy",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageReportReportBucket72A2BA24",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageReportReportBucket72A2BA24",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "UsageReportReportTopicBEDDFD88": {
+      "Properties": {
+        "DisplayName": "WorkSpaces usage report",
+        "KmsMasterKeyId": "arn:aws:kms:ap-northeast-1:123456789012:alias/aws/sns",
+        "TopicName": "test-test-workspaces-usage-report",
+      },
+      "Type": "AWS::SNS::Topic",
+    },
+    "UsageReportReportTopicPolicy099539FE": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Ref": "UsageReportReportTopicBEDDFD88",
+              },
+              "Sid": "AllowPublishThroughSSLOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Topics": [
+          {
+            "Ref": "UsageReportReportTopicBEDDFD88",
+          },
+        ],
+      },
+      "Type": "AWS::SNS::TopicPolicy",
+    },
+    "UsageReportReportTopicopsexamplecomC5F5B6BD": {
+      "Properties": {
+        "Endpoint": "ops@example.com",
+        "Protocol": "email",
+        "TopicArn": {
+          "Ref": "UsageReportReportTopicBEDDFD88",
+        },
+      },
+      "Type": "AWS::SNS::Subscription",
+    },
+    "UsageReportScheduleC980A744": {
+      "Properties": {
+        "Description": "Monthly WorkSpaces usage report",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF",
+        },
+        "Name": "test-test-workspaces-usage-report",
+        "ScheduleExpression": "cron(0 9 1 * ? *)",
+        "ScheduleExpressionTimezone": "Asia/Tokyo",
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "UsageReportFunction81C7C719",
+              "Arn",
+            ],
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 2,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget35fb1e88DC3D65",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests usageReport Resource types and counts 1`] = `
+{
+  "AWS::IAM::Policy": 2,
+  "AWS::IAM::Role": 3,
+  "AWS::Lambda::Function": 2,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::S3::Bucket": 2,
+  "AWS::S3::BucketPolicy": 2,
+  "AWS::SNS::Subscription": 1,
+  "AWS::SNS::Topic": 1,
+  "AWS::SNS::TopicPolicy": 1,
+  "AWS::Scheduler::Schedule": 1,
+  "Custom::S3AutoDeleteObjects": 2,
+}
+`;
+
+exports[`Stack Snapshot Tests workspaces Complete CloudFormation template snapshot 1`] = `
+{
+  "Description": "WorkSpaces directory registration with IP access control and the operator role",
+  "Outputs": {
+    "IpGroupId": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WorkSpacesDirectoryIpGroup5CB03A13",
+          "GroupId",
+        ],
+      },
+    },
+    "OperatorRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "OperatorRole893B8D82",
+          "Arn",
+        ],
+      },
+    },
+    "RegistrationCode": {
+      "Description": "Enter this code in the WorkSpaces client on the standard PCs",
+      "Value": {
+        "Fn::GetAtt": [
+          "WorkSpacesDirectoryRegistration4DA2D17F",
+          "RegistrationCode",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "OperatorRole893B8D82": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "Bool": {
+                  "aws:MultiFactorAuthPresent": "true",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::123456789012:root",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "WorkSpaces operator: lifecycle / apps / images / ds-data users; no network or directory settings",
+        "MaxSessionDuration": 3600,
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "workspaces:CreateTags",
+                    "workspaces:CreateWorkspaces",
+                    "workspaces:RebootWorkspaces",
+                    "workspaces:RebuildWorkspaces",
+                    "workspaces:StartWorkspaces",
+                    "workspaces:StopWorkspaces",
+                    "workspaces:TerminateWorkspaces",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "AllowWorkSpacesLifecycle",
+                },
+                {
+                  "Action": [
+                    "workspaces:AssociateWorkspaceApplication",
+                    "workspaces:DeployWorkspaceApplications",
+                    "workspaces:DisassociateWorkspaceApplication",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "AllowLicenseIncludedApplications",
+                },
+                {
+                  "Action": [
+                    "workspaces:CreateWorkspaceBundle",
+                    "workspaces:CreateWorkspaceImage",
+                    "workspaces:UpdateWorkspaceBundle",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "AllowImagesAndBundles",
+                },
+                {
+                  "Action": [
+                    "ds:DescribeDirectories",
+                    "ec2:DescribeAvailabilityZones",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeVpcs",
+                    "workspaces:Describe*",
+                    "workspaces:List*",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Sid": "AllowReadOnly",
+                },
+                {
+                  "Action": [
+                    "ds-data:CreateUser",
+                    "ds-data:DescribeUser",
+                    "ds-data:DisableUser",
+                    "ds-data:ListGroupsForMember",
+                    "ds-data:ListUsers",
+                    "ds-data:SearchUsers",
+                    "ds:AccessDSData",
+                    "ds:ResetUserPassword",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:ds:ap-northeast-1:123456789012:directory/",
+                        {
+                          "Fn::GetStackOutput": {
+                            "OutputName": "PublishOutputRefManagedAdDirectoryDF3AEB514E680207",
+                            "Region": "ap-northeast-1",
+                            "StackName": "test-test-ws-directory",
+                          },
+                        },
+                      ],
+                    ],
+                  },
+                  "Sid": "AllowDirectoryDataUserManagement",
+                },
+                {
+                  "Action": [
+                    "workspaces:AssociateIpGroups",
+                    "workspaces:AuthorizeIpRules",
+                    "workspaces:CreateIpGroup",
+                    "workspaces:DeleteIpGroup",
+                    "workspaces:DisassociateIpGroups",
+                    "workspaces:RevokeIpRules",
+                    "workspaces:UpdateRulesOfIpGroup",
+                  ],
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyIpAccessControlGroups",
+                },
+                {
+                  "Action": [
+                    "workspaces:DeregisterWorkspaceDirectory",
+                    "workspaces:RegisterWorkspaceDirectory",
+                  ],
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyDirectoryRegistration",
+                },
+                {
+                  "Action": "workspaces:ModifyWorkspaceAccessProperties",
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyAccessProperties",
+                },
+                {
+                  "Action": "workspaces:ModifyWorkspaceCreationProperties",
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyCreationProperties",
+                },
+                {
+                  "Action": "workspaces:ModifyClientProperties",
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyClientProperties",
+                },
+                {
+                  "Action": "workspaces:ModifySelfservicePermissions",
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenySelfservicePermissions",
+                },
+                {
+                  "Action": [
+                    "ec2:AcceptVpcPeeringConnection",
+                    "ec2:AssociateRouteTable",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:CreateNetworkAcl",
+                    "ec2:CreateNetworkAclEntry",
+                    "ec2:CreateRoute",
+                    "ec2:CreateRouteTable",
+                    "ec2:CreateSecurityGroup",
+                    "ec2:CreateVpcEndpoint",
+                    "ec2:CreateVpcPeeringConnection",
+                    "ec2:DeleteNetworkAcl",
+                    "ec2:DeleteNetworkAclEntry",
+                    "ec2:DeleteRoute",
+                    "ec2:DeleteRouteTable",
+                    "ec2:DeleteSecurityGroup",
+                    "ec2:DeleteVpcEndpoints",
+                    "ec2:DeleteVpcPeeringConnection",
+                    "ec2:DisassociateRouteTable",
+                    "ec2:ModifyNetworkInterfaceAttribute",
+                    "ec2:ModifySecurityGroupRules",
+                    "ec2:ModifyVpcEndpoint",
+                    "ec2:ModifyVpcEndpointServicePermissions",
+                    "ec2:ModifyVpcPeeringConnectionOptions",
+                    "ec2:ReplaceNetworkAclAssociation",
+                    "ec2:ReplaceNetworkAclEntry",
+                    "ec2:ReplaceRoute",
+                    "ec2:ReplaceRouteTableAssociation",
+                    "ec2:RevokeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
+                    "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+                  ],
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyNetworkPath",
+                },
+                {
+                  "Action": [
+                    "ds:Accept*",
+                    "ds:Add*",
+                    "ds:AuthorizeApplication",
+                    "ds:Cancel*",
+                    "ds:Create*",
+                    "ds:Delete*",
+                    "ds:Deregister*",
+                    "ds:Disable*",
+                    "ds:Enable*",
+                    "ds:Register*",
+                    "ds:Reject*",
+                    "ds:Remove*",
+                    "ds:ResetDirectory*",
+                    "ds:Restore*",
+                    "ds:Share*",
+                    "ds:Start*",
+                    "ds:UnauthorizeApplication",
+                    "ds:Unshare*",
+                    "ds:Update*",
+                    "ds:Verify*",
+                  ],
+                  "Effect": "Deny",
+                  "Resource": "*",
+                  "Sid": "DenyDirectorySettings",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "WorkSpacesOperator",
+          },
+        ],
+        "RoleName": "test-workspaces-operator",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryHandlerLogGroup40DFF5A4": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "RetentionInDays": 30,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkSpacesDirectoryIpGroup5CB03A13": {
+      "Properties": {
+        "GroupDesc": "Standard PC egress addresses allowed to stream WorkSpaces",
+        "GroupName": "test-standard-pc",
+        "UserRules": [
+          {
+            "IpRule": "203.0.113.10/32",
+            "RuleDesc": "Office egress",
+          },
+          {
+            "IpRule": "198.51.100.0/28",
+            "RuleDesc": "VPN egress",
+          },
+        ],
+      },
+      "Type": "AWS::WorkSpaces::WorkspaceIpGroup",
+    },
+    "WorkSpacesDirectoryIsCompleteHandler99A4CF35": {
+      "DependsOn": [
+        "WorkSpacesDirectoryIsCompleteHandlerServiceRoleDefaultPolicyA4F74C33",
+        "WorkSpacesDirectoryIsCompleteHandlerServiceRoleEC2B27F8",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "4220c3435ae45fe47232817607f41027be00260c510aeb821108002d8aecb2c1.zip",
+        },
+        "Description": "Waits for REGISTERED and applies the locked directory settings",
+        "Handler": "index.is_complete",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WorkSpacesDirectoryHandlerLogGroup40DFF5A4",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryIsCompleteHandlerServiceRoleEC2B27F8",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 300,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkSpacesDirectoryIsCompleteHandlerServiceRoleDefaultPolicyA4F74C33": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ds:AuthorizeApplication",
+                "ds:DescribeDirectories",
+                "ds:UnauthorizeApplication",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateTags",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpcs",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress",
+                "workspaces:AssociateIpGroups",
+                "workspaces:CreateTags",
+                "workspaces:DeregisterWorkspaceDirectory",
+                "workspaces:DescribeWorkspaceDirectories",
+                "workspaces:DisassociateIpGroups",
+                "workspaces:ModifyClientProperties",
+                "workspaces:ModifySelfservicePermissions",
+                "workspaces:ModifyWorkspaceAccessProperties",
+                "workspaces:ModifyWorkspaceCreationProperties",
+                "workspaces:RegisterWorkspaceDirectory",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:GetRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::123456789012:role/workspaces_DefaultRole",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryIsCompleteHandlerServiceRoleDefaultPolicyA4F74C33",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryIsCompleteHandlerServiceRoleEC2B27F8",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryIsCompleteHandlerServiceRoleEC2B27F8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryOnEventHandler5A3BB4F5": {
+      "DependsOn": [
+        "WorkSpacesDirectoryOnEventHandlerServiceRoleDefaultPolicyDA641D82",
+        "WorkSpacesDirectoryOnEventHandlerServiceRole794D21D4",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "4220c3435ae45fe47232817607f41027be00260c510aeb821108002d8aecb2c1.zip",
+        },
+        "Description": "Registers / deregisters the WorkSpaces directory",
+        "Handler": "index.on_event",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WorkSpacesDirectoryHandlerLogGroup40DFF5A4",
+          },
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryOnEventHandlerServiceRole794D21D4",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.14",
+        "Timeout": 300,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkSpacesDirectoryOnEventHandlerServiceRole794D21D4": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryOnEventHandlerServiceRoleDefaultPolicyDA641D82": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ds:AuthorizeApplication",
+                "ds:DescribeDirectories",
+                "ds:UnauthorizeApplication",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateTags",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpcs",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress",
+                "workspaces:AssociateIpGroups",
+                "workspaces:CreateTags",
+                "workspaces:DeregisterWorkspaceDirectory",
+                "workspaces:DescribeWorkspaceDirectories",
+                "workspaces:DisassociateIpGroups",
+                "workspaces:ModifyClientProperties",
+                "workspaces:ModifySelfservicePermissions",
+                "workspaces:ModifyWorkspaceAccessProperties",
+                "workspaces:ModifyWorkspaceCreationProperties",
+                "workspaces:RegisterWorkspaceDirectory",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": "iam:GetRole",
+              "Effect": "Allow",
+              "Resource": "arn:aws:iam::123456789012:role/workspaces_DefaultRole",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryOnEventHandlerServiceRoleDefaultPolicyDA641D82",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryOnEventHandlerServiceRole794D21D4",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryProviderframeworkisCompleteC23CBA3B": {
+      "DependsOn": [
+        "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleDefaultPolicy25B7D80B",
+        "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleBD0A4A37",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "e16ffb3b34af185b8b30c88fdb19faa13b6c42bb38580485c4e84b384ee48b63.zip",
+        },
+        "Description": "AWS CDK resource provider framework - isComplete (Test/WorkSpaces/WorkSpacesDirectory/Provider)",
+        "Environment": {
+          "Variables": {
+            "USER_IS_COMPLETE_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                "Arn",
+              ],
+            },
+            "USER_ON_EVENT_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                "Arn",
+              ],
+            },
+          },
+        },
+        "Handler": "framework.isComplete",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "FATAL",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "WorkSpacesDirectoryHandlerLogGroup40DFF5A4",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleBD0A4A37",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleBD0A4A37": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleDefaultPolicy25B7D80B": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:GetFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleDefaultPolicy25B7D80B",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryProviderframeworkisCompleteServiceRoleBD0A4A37",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryProviderframeworkonEvent3F661DAD": {
+      "DependsOn": [
+        "WorkSpacesDirectoryProviderframeworkonEventServiceRoleDefaultPolicy25ADECF2",
+        "WorkSpacesDirectoryProviderframeworkonEventServiceRoleF0A3DDC4",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "e16ffb3b34af185b8b30c88fdb19faa13b6c42bb38580485c4e84b384ee48b63.zip",
+        },
+        "Description": "AWS CDK resource provider framework - onEvent (Test/WorkSpaces/WorkSpacesDirectory/Provider)",
+        "Environment": {
+          "Variables": {
+            "USER_IS_COMPLETE_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                "Arn",
+              ],
+            },
+            "USER_ON_EVENT_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                "Arn",
+              ],
+            },
+            "WAITER_STATE_MACHINE_ARN": {
+              "Ref": "WorkSpacesDirectoryProviderwaiterstatemachineD7FFE249",
+            },
+          },
+        },
+        "Handler": "framework.onEvent",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "FATAL",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "WorkSpacesDirectoryHandlerLogGroup40DFF5A4",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryProviderframeworkonEventServiceRoleF0A3DDC4",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkSpacesDirectoryProviderframeworkonEventServiceRoleDefaultPolicy25ADECF2": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:GetFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "WorkSpacesDirectoryProviderwaiterstatemachineD7FFE249",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryProviderframeworkonEventServiceRoleDefaultPolicy25ADECF2",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryProviderframeworkonEventServiceRoleF0A3DDC4",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryProviderframeworkonEventServiceRoleF0A3DDC4": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryProviderframeworkonTimeoutD0CE09D8": {
+      "DependsOn": [
+        "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleDefaultPolicyAF1200BF",
+        "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleB9C86952",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
+          "S3Key": "e16ffb3b34af185b8b30c88fdb19faa13b6c42bb38580485c4e84b384ee48b63.zip",
+        },
+        "Description": "AWS CDK resource provider framework - onTimeout (Test/WorkSpaces/WorkSpacesDirectory/Provider)",
+        "Environment": {
+          "Variables": {
+            "USER_IS_COMPLETE_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                "Arn",
+              ],
+            },
+            "USER_ON_EVENT_FUNCTION_ARN": {
+              "Fn::GetAtt": [
+                "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                "Arn",
+              ],
+            },
+          },
+        },
+        "Handler": "framework.onTimeout",
+        "LoggingConfig": {
+          "ApplicationLogLevel": "FATAL",
+          "LogFormat": "JSON",
+          "LogGroup": {
+            "Ref": "WorkSpacesDirectoryHandlerLogGroup40DFF5A4",
+          },
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleB9C86952",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs24.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleB9C86952": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleDefaultPolicyAF1200BF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "lambda:GetFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryIsCompleteHandler99A4CF35",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryOnEventHandler5A3BB4F5",
+                    "Arn",
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleDefaultPolicyAF1200BF",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryProviderframeworkonTimeoutServiceRoleB9C86952",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryProviderwaiterstatemachineD7FFE249": {
+      "DependsOn": [
+        "WorkSpacesDirectoryProviderwaiterstatemachineRoleDefaultPolicy15EE6F27",
+        "WorkSpacesDirectoryProviderwaiterstatemachineRoleE0F4DD4F",
+      ],
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Join": [
+            "",
+            [
+              "{"StartAt":"framework-isComplete-task","States":{"framework-isComplete-task":{"End":true,"Retry":[{"ErrorEquals":["States.ALL"],"IntervalSeconds":30,"MaxAttempts":60,"BackoffRate":1}],"Catch":[{"ErrorEquals":["States.ALL"],"Next":"framework-onTimeout-task"}],"Type":"Task","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "WorkSpacesDirectoryProviderframeworkisCompleteC23CBA3B",
+                  "Arn",
+                ],
+              },
+              ""},"framework-onTimeout-task":{"End":true,"Type":"Task","Resource":"",
+              {
+                "Fn::GetAtt": [
+                  "WorkSpacesDirectoryProviderframeworkonTimeoutD0CE09D8",
+                  "Arn",
+                ],
+              },
+              ""}}}",
+            ],
+          ],
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryProviderwaiterstatemachineRoleE0F4DD4F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "WorkSpacesDirectoryProviderwaiterstatemachineRoleDefaultPolicy15EE6F27": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryProviderframeworkisCompleteC23CBA3B",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::GetAtt": [
+                    "WorkSpacesDirectoryProviderframeworkonTimeoutD0CE09D8",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryProviderframeworkisCompleteC23CBA3B",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "WorkSpacesDirectoryProviderframeworkonTimeoutD0CE09D8",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "WorkSpacesDirectoryProviderwaiterstatemachineRoleDefaultPolicy15EE6F27",
+        "Roles": [
+          {
+            "Ref": "WorkSpacesDirectoryProviderwaiterstatemachineRoleE0F4DD4F",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "WorkSpacesDirectoryProviderwaiterstatemachineRoleE0F4DD4F": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryRegistration4DA2D17F": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "WorkSpacesDirectoryWorkspacesDefaultRoleD42E4981",
+      ],
+      "Properties": {
+        "AllowedDeviceTypes": [
+          "DeviceTypeWindows",
+        ],
+        "CustomSecurityGroupId": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryWorkspacesSecurityGroup20627455",
+            "GroupId",
+          ],
+        },
+        "DefaultOu": "OU=WorkSpaces,OU=Computers,OU=WSDEV,DC=wsdev,DC=example,DC=co,DC=jp",
+        "DirectoryId": {
+          "Fn::GetStackOutput": {
+            "OutputName": "PublishOutputRefManagedAdDirectoryDF3AEB514E680207",
+            "Region": "ap-northeast-1",
+            "StackName": "test-test-ws-directory",
+          },
+        },
+        "IpGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "WorkSpacesDirectoryIpGroup5CB03A13",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "WorkSpacesDirectoryProviderframeworkonEvent3F661DAD",
+            "Arn",
+          ],
+        },
+        "SubnetIds": [
+          {
+            "Fn::GetStackOutput": {
+              "OutputName": "PublishOutputRefClosedVpcSubnetwsaz1C45D646BB3C203CE",
+              "Region": "ap-northeast-1",
+              "StackName": "test-test-ws-network",
+            },
+          },
+          {
+            "Fn::GetStackOutput": {
+              "OutputName": "PublishOutputRefClosedVpcSubnetwsaz41D97D049BFB02948",
+              "Region": "ap-northeast-1",
+              "StackName": "test-test-ws-network",
+            },
+          },
+        ],
+        "UserEnabledAsLocalAdministrator": "true",
+      },
+      "Type": "Custom::WorkSpacesDirectoryRegistration",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "WorkSpacesDirectoryWorkspacesDefaultRoleD42E4981": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "workspaces.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Service role WorkSpaces uses to manage ENIs and directory integration",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonWorkSpacesServiceAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonWorkSpacesSelfServiceAccess",
+              ],
+            ],
+          },
+        ],
+        "RoleName": "workspaces_DefaultRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "WorkSpacesDirectoryWorkspacesSecurityGroup20627455": {
+      "Properties": {
+        "GroupDescription": "WorkSpaces: WinRM from management subnets",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.97.221.96/28",
+            "Description": "WinRM from management",
+            "FromPort": 5985,
+            "IpProtocol": "tcp",
+            "ToPort": 5985,
+          },
+          {
+            "CidrIp": "10.97.221.112/28",
+            "Description": "WinRM from management",
+            "FromPort": 5985,
+            "IpProtocol": "tcp",
+            "ToPort": 5985,
+          },
+        ],
+        "VpcId": {
+          "Fn::GetStackOutput": {
+            "OutputName": "PublishOutputRefClosedVpc8AA052A642ECE0E0",
+            "Region": "ap-northeast-1",
+            "StackName": "test-test-ws-network",
+          },
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Stack Snapshot Tests workspaces Resource types and counts 1`] = `
+{
+  "AWS::EC2::SecurityGroup": 1,
+  "AWS::IAM::Policy": 6,
+  "AWS::IAM::Role": 8,
+  "AWS::Lambda::Function": 5,
+  "AWS::Logs::LogGroup": 1,
+  "AWS::StepFunctions::StateMachine": 1,
+  "AWS::WorkSpaces::WorkspaceIpGroup": 1,
+  "Custom::WorkSpacesDirectoryRegistration": 1,
+}
+`;
