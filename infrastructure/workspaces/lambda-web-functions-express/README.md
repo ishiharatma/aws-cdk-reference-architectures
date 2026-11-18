@@ -145,8 +145,8 @@ What the L2 version still has to do itself:
 - **The execution role.** The L2 default role carries `AWSLambdaBasicExecutionRole` (log permissions on `*`), so a role scoped to the log groups is passed as `role`.
 - **The code-copy function's log group.** Its default is 731-day retention with `Retain`, which outlives the stack, so it is passed as `copyOptions.logGroup`.
 
-> [!WARNING]
-> **The L2 version has not been verified by a real deployment.** The L2 passes `Ref` (documented in the L2 type definitions as returning the ARN) as the revision's `FunctionName`, and `GetAtt FunctionArn` as the endpoint's `FunctionName`. Verifying the L1 version showed that passing the ARN makes the endpoint's `DomainName` unreadable later (design decision 2). After deploying the L2 version, check the `EndpointDomainName` output and a request through CloudFront.
+> [!NOTE]
+> **The L2 version was verified by a real deployment on 2026-11-18 (ap-northeast-1).** The L2 passes `Ref` as the revision's `FunctionName` and `GetAtt FunctionArn` as the endpoint's `FunctionName`. `EndpointDomainName` stayed readable both on first creation and after a code change that replaced the revision (and updated the endpoint), and requests through CloudFront kept working. `./test-api.sh --l2` passed every check, and unsigned direct requests got 403. The "passing the ARN makes `DomainName` unreadable later" caveat from design decision 2 did not occur with the L2's combination. The L2 version with VPC egress (`vpcEgress.enabled: true`) was not part of this check.
 
 Moving an existing L1 deployment to the L2 changes the logical IDs, so the function, revision and endpoint are replaced and the endpoint domain changes. The L2 also creates the `AWS::Lambda::ResourcePolicy` itself, so the move takes two deployments: remove the existing `CfnResourcePolicy` first, then add the L2 grant (as the aws-cdk-lib README describes).
 
@@ -385,6 +385,7 @@ curl -s "$URL/debug/env" | jq .
 ./test-api.sh --project myproject --env dev
 ./test-api.sh --project myproject --env dev --only concurrency --parallel 30
 ./test-api.sh --project myproject --env dev --throttle
+./test-api.sh --project myproject --env dev --l2   # Check the L2 stack (...-l2)
 ```
 
 ### Run the same server locally

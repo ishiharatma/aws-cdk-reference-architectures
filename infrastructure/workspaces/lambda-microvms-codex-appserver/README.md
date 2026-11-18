@@ -408,8 +408,8 @@ The stage deploys the same stack twice: `<project>-<env>-lambda-microvms-codex-a
 
 The L2 variant's physical names are `<project>-<env>-codex2-*`. It has its own OpenAI API key secret (`...-codex2-openai-api-key`); put the value in before using it. It also adds one NAT gateway.
 
-> [!WARNING]
-> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
+> [!NOTE]
+> The L2 variant was verified by a real deployment on 2026-11-18. With the operator role the L2 creates (`AWSLambdaNetworkConnectorOperatorPolicy`), the connector reached `ACTIVE`, and both the MicroVM image build and a session's `RunMicrovm` succeeded. The codex app-server in the session reached `api.openai.com` (401, since no key was set), and the NAT gateway's `BytesOutToDestination` rose at the same time. The policy only allows creating and tagging ENIs, yet deleting the stack, connector and VPC included, completed without errors.
 
 ## ✅ Deploy verification
 

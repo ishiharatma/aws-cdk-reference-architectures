@@ -383,8 +383,8 @@ secrets: { useCustomerManagedKey: true },
 
 L2 版の物理名は `<project>-<env>-claude2-*`、メトリクスの名前空間は `ClaudeManagedAgentsL2` です。SSM のシークレットは L1 版と同じパラメーターを読みます。Network Firewall のエンドポイントと NAT Gateway が L2 版の分も増えるため、比較が済んだら L2 版のスタックを削除してください。Anthropic 側に登録する Webhook の URL はスタックごとに別です。
 
-> [!WARNING]
-> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
+> [!NOTE]
+> この L2 版そのものは実際の環境にデプロイしていません。同じ `lambda.NetworkConnector`(`MICRO_VM`、既定の operator role `AWSLambdaNetworkConnectorOperatorPolicy`)の使い方は、2026-11-18 に `lambda-microvms-codex-appserver` と `code-server-session-control-plane` の L2 版で確認済みです(コネクターが `ACTIVE` になり、MicroVM から NAT Gateway 経由で外に出られた)。Network Firewall を通る経路での確認は残っています。
 
 ## ✅ 実機デプロイ検証
 

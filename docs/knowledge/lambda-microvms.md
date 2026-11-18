@@ -225,6 +225,12 @@ Verified 2026-10-08 with `code-server-ec2-vs-lambda-microvms`.
 - **The `Max allocated ARM_64 MicroVM memory` quota was 8 GB in the verification account**, which caps 2 GiB sessions at 4 concurrent.
 - **Cognito refuses a TOTP code from the window after the one it just accepted** with `Your software token has already been used once`; waiting about a minute works.
 
+## `lambda.NetworkConnector` L2 and its default operator role (aws-cdk-lib 2.276.0, verified 2026-11-18)
+
+- **The operator role the L2 creates by default works for a MicroVM `VPC_EGRESS` connector.** It attaches only `AWSLambdaNetworkConnectorOperatorPolicy`, whose statements allow `ec2:CreateNetworkInterface` (subnet, security group, and ENIs tagged `aws:lambda:networkConnectorName` / `aws:lambda:networkConnectorId`) and `ec2:CreateTags` on create. There is no `Describe*` or `DeleteNetworkInterface`. With it, the connector reached `ACTIVE` (`StateReason: Initial creation`), an image built against it, `RunMicrovm` succeeded, the session reached `api.openai.com` through the NAT gateway (`BytesOutToDestination` rose), and `cdk destroy` removed the connector, VPC and NAT gateway without errors. Confirmed with `lambda-microvms-codex-appserver` and `code-server-session-control-plane`.
+- **No connector ENI appeared in the account's VPC**, even with a session `RUNNING` and its traffic leaving through the NAT gateway: `describe-network-interfaces` filtered by the VPC listed only the NAT gateway ENI (and, in the private variant, the interface-endpoint ENIs). Do not use that listing to decide whether a connector is in use; use NAT gateway metrics or flow logs.
+- **Reading a connector**: AWS CLI 2.38.3 has no `get-network-connector`. boto3 1.44 has it under the service name **`lambda-core`** (not `lambda`), and the parameter is `Identifier` (ARN or ID).
+
 ## NAT instance size (verified 2026-11-05)
 
 - **`ec2.NatProvider.instanceV2` with `t4g.nano` on Amazon Linux 2023 does not configure NAT.** Boot-time `yum install iptables-services` is `Killed` for lack of memory, `iptables` is absent, the stack succeeds and routes look healthy, but private subnets cannot get out. `t4g.micro` works. Changing the size later does not rerun UserData; recreating the instance does (for example, switching to a gateway and back).

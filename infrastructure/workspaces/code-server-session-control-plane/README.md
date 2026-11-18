@@ -471,8 +471,8 @@ With `microvm.egress: 'private'`, the stage also deploys `PrivateNetworkL2` (`..
 
 The L2 variant's physical names are `<project>-<env>-code-server-sessions-l2-*`. It adds a second set of interface VPC endpoints and a second CodeArtifact domain, so delete the L2 stack once the comparison is done.
 
-> [!WARNING]
-> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
+> [!NOTE]
+> The L2 variant was verified by a real deployment on 2026-11-18. With the operator role the L2 creates (`AWSLambdaNetworkConnectorOperatorPolicy`), the connector reached `ACTIVE`, and deleting the stack completed. Sessions here use the L1 connector, so running a MicroVM through an L2 connector was checked with the L2 variant of `lambda-microvms-codex-appserver`.
 
 ## ✅ Deployment Verification
 
