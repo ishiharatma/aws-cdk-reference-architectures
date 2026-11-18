@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Annotations, Match } from 'aws-cdk-lib/assertions';
 import { AwsSolutionsChecks, NagSuppressions } from 'cdk-nag';
 import { CloudfrontWafStack } from 'lib/stacks/cloudfront-waf-stack';
-import { buildStack, envName, projectName, testEnv } from '../helpers/stack';
+import { buildL2Stack, buildStack, envName, projectName, testEnv } from '../helpers/stack';
 
 const expectNoFindings = (stack: cdk.Stack): void => {
   const warnings = Annotations.fromStack(stack).findWarning('*', Match.stringLikeRegexp('AwsSolutions-.*'));
@@ -22,6 +22,18 @@ describe('CDK Nag AwsSolutions Pack', () => {
     const app = new cdk.App({ context: { 'aws:cdk:bundling-stacks': [] } });
     const stack = buildStack(app, { vpcEgress: { enabled: vpcEgress as boolean, maxAzs: 2 } });
     applyMainStackSuppressions(stack);
+    cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+    app.synth();
+    expectNoFindings(stack);
+  });
+
+  test.each([
+    ['default', false],
+    ['with VPC egress', true],
+  ])('L2 stack (%s) has no unsuppressed findings', (_label, vpcEgress) => {
+    const app = new cdk.App({ context: { 'aws:cdk:bundling-stacks': [] } });
+    const stack = buildL2Stack(app, { vpcEgress: { enabled: vpcEgress as boolean, maxAzs: 2 } });
+    applyL2StackSuppressions(stack);
     cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
     app.synth();
     expectNoFindings(stack);
@@ -74,6 +86,53 @@ function applyMainStackSuppressions(stack: cdk.Stack): void {
         reason:
           'The code bucket only holds immutable deployment zips written by CloudFormation; access is audited via CloudTrail ' +
           'and server access logs add no value for this reference.',
+      },
+      {
+        id: 'AwsSolutions-CFR1',
+        reason: 'Geo restriction is a business decision; the WAF allow list and managed rules provide access control here.',
+      },
+      {
+        id: 'AwsSolutions-CFR3',
+        reason: 'CloudFront access logging is environment-specific; standard logging v2 can be added (see README).',
+      },
+      {
+        id: 'AwsSolutions-CFR4',
+        reason:
+          'The default *.cloudfront.net certificate cannot enforce TLSv1.2 as minimum; a custom domain with ACM ' +
+          '(then set minimumProtocolVersion TLS_V1_2_2021) removes this finding.',
+      },
+    ],
+    true,
+  );
+}
+
+/**
+ * Suppressions for the L2 stack. The helpers differ from the L1 stack: the code is copied by the
+ * `WebFunctionCode.fromAssetToManagedBucket` custom resource instead of BucketDeployment, and the
+ * connector's operator role is created by `lambda.NetworkConnector`.
+ */
+function applyL2StackSuppressions(stack: cdk.Stack): void {
+  NagSuppressions.addStackSuppressions(
+    stack,
+    [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWS managed policies are attached only by aws-cdk-lib: AWSLambdaBasicExecutionRole on the WebFunction code-copy ' +
+          'custom resource, and AWSLambdaNetworkConnectorOperatorPolicy on the NetworkConnector operator role (the policy ' +
+          'the service documents for it). The Web Function role uses scoped inline log permissions.',
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason:
+          'Wildcards are limited to: log streams under the function log groups (stream names are generated), and the ' +
+          'code-copy custom resource access to the CDK asset object and the web-function/ prefix of the managed code bucket.',
+      },
+      {
+        id: 'AwsSolutions-S1',
+        reason:
+          'The managed code bucket only holds immutable deployment zips written by the code-copy custom resource; access is ' +
+          'audited via CloudTrail and server access logs add no value for this reference.',
       },
       {
         id: 'AwsSolutions-CFR1',
