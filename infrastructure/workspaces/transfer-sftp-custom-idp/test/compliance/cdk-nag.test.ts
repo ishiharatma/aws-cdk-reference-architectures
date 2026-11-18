@@ -74,6 +74,11 @@ function applySuppressions(stack: TransferSftpCustomIdpStack): void {
 
   NagSuppressions.addStackSuppressions(stack, [
     {
+      id: 'AwsSolutions-L1',
+      reason:
+        'Functions are pinned to Python 3.14 deliberately. aws-cdk-lib 2.276.0 added PYTHON_3_15, which makes this rule flag 3.14; the runtime is bumped on purpose after verification, not by a library upgrade.',
+    },
+    {
       id: 'AwsSolutions-S1',
       reason: 'The bucket is a verification SFTP data bucket; transfer activity is audited through Transfer Family structured logs and CloudTrail data events can be enabled per environment.',
     },

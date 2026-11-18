@@ -305,6 +305,21 @@ npm run test:compliance -w workspaces/lambda-microvms-codex-appserver  # cdk-nag
 
 `Vpc` コンストラクトの `natGateways: 1` を `natGateways: 2` に変えると、本番相当の AZ 耐障害性になります。NAT Gateway の費用はほぼ倍になります。
 
+### NetworkConnector L2 版(aws-cdk-lib 2.276.0)を並べてデプロイする
+
+Stage は同じスタックを 2 つデプロイします。`<project>-<env>-lambda-microvms-codex-appserver-stack` は `lambda.CfnNetworkConnector` で、`...-l2-stack` は `networkConnectorImpl: 'l2'` で `lambda.NetworkConnector` を使います。違いはコネクターの作り方だけです。
+
+| 項目 | L1 | L2 |
+|------|----|----|
+| コネクター | `CfnNetworkConnector`(サブネット ID・セキュリティグループ ID を手で渡す) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| operator role | 自前(`AWSLambdaVPCAccessExecutionRole`) | 既定で作成(`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| MicroVM に渡す ARN | `attrArn` | `networkConnectorArn`(どちらもバージョンなしの ARN) |
+
+L2 版の物理名は `<project>-<env>-codex2-*` です。OpenAI API キーのシークレット(`...-codex2-openai-api-key`)も別に作られるので、L2 版を使う前に値を入れてください。NAT Gateway も 1 つ増えます。
+
+> [!WARNING]
+> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
+
 ## ✅ 実機デプロイ検証
 
 2026-09-27 に実際のアカウント(`ap-northeast-1`)へデプロイし、インフラと JSON-RPC のプロトコルの水準で検証して、スタックを削除しました。OpenAI API キーは使っていません。インフラの検証に絞ったため、OpenAI API キーで認証される実際の Turn は実行していません。この検証で6件の不具合を見つけて直しました。どれも静的なチェック(`cdk synth`、ユニットテスト、cdk-nag)では検出できず、実サービスの挙動でしか分かりません。

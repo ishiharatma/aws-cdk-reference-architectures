@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Environment } from '@common/parameters/environments';
 import { LambdaWebFunctionsExpressStack } from 'lib/stacks/lambda-web-functions-express-stack';
+import { LambdaWebFunctionsExpressL2Stack } from 'lib/stacks/lambda-web-functions-express-l2-stack';
 import { EnvParams, params } from 'parameters/environments';
 import '../parameters';
 
@@ -22,6 +23,24 @@ export function buildStack(app?: cdk.App, overrides: Partial<EnvParams> = {}): L
   const envParams: EnvParams = { ...base, ...overrides };
   const scope = app ?? new cdk.App({ context: { 'aws:cdk:bundling-stacks': [] } });
   return new LambdaWebFunctionsExpressStack(scope, 'LambdaWebFunctionsExpress', {
+    project: projectName,
+    environment: envName,
+    isAutoDeleteObject: true,
+    env: testEnv,
+    params: envParams,
+    webAclArn,
+  });
+}
+
+/** Build the L2 stack for tests, with the same deterministic settings as {@link buildStack}. */
+export function buildL2Stack(app?: cdk.App, overrides: Partial<EnvParams> = {}): LambdaWebFunctionsExpressL2Stack {
+  const base = params[envName];
+  if (!base) {
+    throw new Error(`No parameters found for environment: ${envName}`);
+  }
+  const envParams: EnvParams = { ...base, ...overrides };
+  const scope = app ?? new cdk.App({ context: { 'aws:cdk:bundling-stacks': [] } });
+  return new LambdaWebFunctionsExpressL2Stack(scope, 'LambdaWebFunctionsExpressL2', {
     project: projectName,
     environment: envName,
     isAutoDeleteObject: true,

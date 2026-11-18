@@ -83,7 +83,7 @@ exports[`Snapshot browserAccess template 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "9c6fb024141b9f250937f3d343393b13ac4bf1c616f9264a256b8ef352c5d0f4.zip",
+          "S3Key": "d585de04b17c574bf032c2e8d0da0d59bf2615b316e4912b719dd9a973279bcc.zip",
         },
         "Handler": "__entrypoint__.handler",
         "MemorySize": 128,
@@ -1589,7 +1589,7 @@ exports[`Snapshot controlPlane template 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+          "S3Key": "6dba3da2af96b69a187d689b326e5272b9abc8671c0427845a8bed243e02877d.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -5779,6 +5779,861 @@ exports[`Snapshot privateNetwork template 1`] = `
           {
             "Key": "Name",
             "Value": "PrivateNetwork/Vpc/sessionsSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Snapshot privateNetworkL2 resource counts 1`] = `
+{
+  "AWS::CodeArtifact::Domain": 1,
+  "AWS::CodeArtifact::Repository": 3,
+  "AWS::EC2::RouteTable": 1,
+  "AWS::EC2::SecurityGroup": 2,
+  "AWS::EC2::SecurityGroupEgress": 2,
+  "AWS::EC2::SecurityGroupIngress": 1,
+  "AWS::EC2::Subnet": 1,
+  "AWS::EC2::SubnetRouteTableAssociation": 1,
+  "AWS::EC2::VPC": 1,
+  "AWS::EC2::VPCEndpoint": 8,
+  "AWS::IAM::Role": 1,
+  "AWS::Lambda::NetworkConnector": 1,
+  "AWS::Route53Resolver::FirewallDomainList": 2,
+  "AWS::Route53Resolver::FirewallRuleGroup": 1,
+  "AWS::Route53Resolver::FirewallRuleGroupAssociation": 1,
+}
+`;
+
+exports[`Snapshot privateNetworkL2 template 1`] = `
+{
+  "Outputs": {
+    "EgressConnectorArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "EgressConnectorL2B6985330",
+          "Arn",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AllDomains": {
+      "Properties": {
+        "Domains": [
+          "*",
+        ],
+        "Name": "test-test-code-server-sessions-l2-all",
+      },
+      "Type": "AWS::Route53Resolver::FirewallDomainList",
+    },
+    "AwsDomains": {
+      "Properties": {
+        "Domains": [
+          "amazonaws.com",
+          "*.amazonaws.com",
+          "*.internal",
+        ],
+        "Name": "test-test-code-server-sessions-l2-aws",
+      },
+      "Type": "AWS::Route53Resolver::FirewallDomainList",
+    },
+    "DnsRules": {
+      "Properties": {
+        "FirewallRules": [
+          {
+            "Action": "ALLOW",
+            "FirewallDomainListId": {
+              "Fn::GetAtt": [
+                "AwsDomains",
+                "Id",
+              ],
+            },
+            "Priority": 1,
+          },
+          {
+            "Action": "BLOCK",
+            "BlockResponse": "NXDOMAIN",
+            "FirewallDomainListId": {
+              "Fn::GetAtt": [
+                "AllDomains",
+                "Id",
+              ],
+            },
+            "Priority": 2,
+          },
+        ],
+        "Name": "test-test-code-server-sessions-l2-dns",
+      },
+      "Type": "AWS::Route53Resolver::FirewallRuleGroup",
+    },
+    "DnsRulesAssociation": {
+      "Properties": {
+        "FirewallRuleGroupId": {
+          "Fn::GetAtt": [
+            "DnsRules",
+            "Id",
+          ],
+        },
+        "Name": "test-test-code-server-sessions-l2-dns",
+        "Priority": 1000,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::Route53Resolver::FirewallRuleGroupAssociation",
+    },
+    "EgressConnectorL2B6985330": {
+      "Properties": {
+        "Configuration": {
+          "VpcEgressConfiguration": {
+            "AssociatedComputeResourceTypes": [
+              "MicroVm",
+            ],
+            "NetworkProtocol": "IPv4",
+            "SecurityGroupIds": [
+              {
+                "Fn::GetAtt": [
+                  "SessionsSecurityGroup32CC28C9",
+                  "GroupId",
+                ],
+              },
+            ],
+            "SubnetIds": [
+              {
+                "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+              },
+            ],
+          },
+        },
+        "Name": "test-test-code-server-sessions-l2-private",
+        "OperatorRole": {
+          "Fn::GetAtt": [
+            "EgressConnectorL2OperatorRoleC8EB61F7",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::NetworkConnector",
+    },
+    "EgressConnectorL2OperatorRoleC8EB61F7": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AWSLambdaNetworkConnectorOperatorPolicy",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EndpointsSecurityGroup7A56E975": {
+      "Properties": {
+        "GroupDescription": "VPC endpoints: HTTPS from sessions only",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "EndpointsSecurityGroupfromPrivateNetworkL2SessionsSecurityGroup0005651C44369891CF8": {
+      "Properties": {
+        "Description": "HTTPS from sessions",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "EndpointsSecurityGroup7A56E975",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "NpmUpstream": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "ExternalConnections": [
+          "public:npmjs",
+        ],
+        "RepositoryName": "npm-store",
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "PackageDomain": {
+      "Properties": {
+        "DomainName": "test-test-code-server-sessions-l2",
+      },
+      "Type": "AWS::CodeArtifact::Domain",
+    },
+    "PackageRepository": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "RepositoryName": "packages",
+        "Upstreams": [
+          {
+            "Fn::GetAtt": [
+              "NpmUpstream",
+              "Name",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "PypiUpstream",
+              "Name",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "PypiUpstream": {
+      "Properties": {
+        "DomainName": {
+          "Fn::GetAtt": [
+            "PackageDomain",
+            "Name",
+          ],
+        },
+        "ExternalConnections": [
+          "public:pypi",
+        ],
+        "RepositoryName": "pypi-store",
+      },
+      "Type": "AWS::CodeArtifact::Repository",
+    },
+    "SessionsSecurityGroup32CC28C9": {
+      "Properties": {
+        "GroupDescription": "MicroVM sessions: HTTPS to the VPC endpoints only",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SessionsSecurityGrouptoPrivateNetworkL2EndpointsSecurityGroup6E4476EF443F03A38CC": {
+      "Properties": {
+        "Description": "HTTPS to the VPC endpoints",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "EndpointsSecurityGroup7A56E975",
+            "GroupId",
+          ],
+        },
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SessionsSecurityGrouptoplxxxxxxxx44381390650": {
+      "Properties": {
+        "Description": "HTTPS to S3 through the gateway endpoint",
+        "DestinationPrefixListId": "pl-xxxxxxxx",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SessionsSecurityGroup32CC28C9",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcBedrockRuntimeEndpoint726DDE28": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.bedrock-runtime",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeArtifactApiEndpointFA3CC996": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.codeartifact.api",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeArtifactRepositoriesEndpointB30091A4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.codeartifact.repositories",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcCodeCommitEndpoint3FDD83D3": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "codecommit:GitPull",
+                "codecommit:GitPush",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-a",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:existing-b",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":codecommit:ap-northeast-1:123456789012:managed-a",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.git-codecommit",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcLambdaEndpointB3C850C4": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.lambda",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcLogsEndpointDA7F7E44": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.logs",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcS3Endpoint4A3DE4B5": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:ResourceAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::assets-*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "RouteTableIds": [
+          {
+            "Ref": "VpcsessionsSubnet1RouteTable203D0838",
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".s3",
+            ],
+          ],
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Gateway",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcStsEndpointF89E8173": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Condition": {
+                "StringEquals": {
+                  "aws:PrincipalAccount": "123456789012",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "EndpointsSecurityGroup7A56E975",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": "com.amazonaws.ap-northeast-1.sts",
+        "SubnetIds": [
+          {
+            "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VpcsessionsSubnet1RouteTable203D0838": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc/sessionsSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcsessionsSubnet1RouteTableAssociationB94068E8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcsessionsSubnet1RouteTable203D0838",
+        },
+        "SubnetId": {
+          "Ref": "VpcsessionsSubnet1Subnet59E1788C",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcsessionsSubnet1Subnet59E1788C": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/24",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "sessions",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "Name",
+            "Value": "PrivateNetworkL2/Vpc/sessionsSubnet1",
           },
         ],
         "VpcId": {

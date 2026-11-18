@@ -371,6 +371,21 @@ secrets: { useCustomerManagedKey: true },
 
 `src/microvm-image/Dockerfile` に追加し(arm64 版、バージョン固定)、再デプロイします。アセットのハッシュが変わるため、イメージは再ビルドされます。
 
+### NetworkConnector L2 版(aws-cdk-lib 2.276.0)を並べてデプロイする
+
+独自のコネクターを作るのは `network.egressMode: 'firewall'` のときだけです。このとき Stage は、`InspectedEgress` のコネクターを `lambda.NetworkConnector`(`networkConnectorImpl: 'l2'`)で作るスタック `<project>-<env>-claude-managed-agents-l2` を並べてデプロイします。`internet` モードはマネージドコネクターの ARN を使うだけで比べるものがないため、L2 版は作りません。
+
+| 項目 | L1 | L2 |
+|------|----|----|
+| コネクター | `CfnNetworkConnector`(サブネット ID・セキュリティグループ ID を手で渡す) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| operator role | 自前(`AWSLambdaVPCAccessExecutionRole`) | 既定で作成(`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| MicroVM に渡す ARN | `attrArn` | `networkConnectorArn`(どちらもバージョンなしの ARN) |
+
+L2 版の物理名は `<project>-<env>-claude2-*`、メトリクスの名前空間は `ClaudeManagedAgentsL2` です。SSM のシークレットは L1 版と同じパラメーターを読みます。Network Firewall のエンドポイントと NAT Gateway が L2 版の分も増えるため、比較が済んだら L2 版のスタックを削除してください。Anthropic 側に登録する Webhook の URL はスタックごとに別です。
+
+> [!WARNING]
+> L2 版は実機デプロイで未検証です。L1 版の operator role(`AWSLambdaVPCAccessExecutionRole`)は実機で確認済みですが、L2 の既定(`AWSLambdaNetworkConnectorOperatorPolicy`)はまだ確認していません。
+
 ## ✅ 実機デプロイ検証
 
 2026-10-09 に `ap-northeast-1` で実機検証しました。スタックの作成は `internet` モードで264秒、出口 VPC を含めると約11分です(ネットワークコネクタの作成に約4分)。検証後にスタックは削除済みです。

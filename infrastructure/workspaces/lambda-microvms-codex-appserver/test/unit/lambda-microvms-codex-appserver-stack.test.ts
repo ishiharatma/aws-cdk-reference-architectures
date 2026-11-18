@@ -203,3 +203,69 @@ describe('LambdaMicrovmsCodexAppserverStack', () => {
     });
   });
 });
+
+describe('LambdaMicrovmsCodexAppserverStack with the NetworkConnector L2', () => {
+  let template: Template;
+
+  beforeAll(() => {
+    const app = new cdk.App();
+    const stack = new LambdaMicrovmsCodexAppserverStack(app, 'LambdaMicrovmsCodexAppserverL2', {
+      project: projectName,
+      environment: envName,
+      isAutoDeleteObject: true,
+      env: testEnv,
+      params: envParams,
+      networkConnectorImpl: 'l2',
+    });
+    template = Template.fromStack(stack);
+  });
+
+  test('connector is built by lambda.NetworkConnector for MicroVms in the egress subnets', () => {
+    template.resourceCountIs('AWS::Lambda::NetworkConnector', 1);
+    template.hasResourceProperties('AWS::Lambda::NetworkConnector', {
+      Name: 'test-test-codex2-egress',
+      OperatorRole: { 'Fn::GetAtt': [Match.stringLikeRegexp('^MicrovmEgressConnectorL2OperatorRole'), 'Arn'] },
+      Configuration: {
+        VpcEgressConfiguration: {
+          AssociatedComputeResourceTypes: ['MicroVm'],
+          NetworkProtocol: 'IPv4',
+          SubnetIds: Match.arrayWith([{ Ref: Match.stringLikeRegexp('microvmegress') }]),
+          SecurityGroupIds: [{ 'Fn::GetAtt': [Match.stringLikeRegexp('MicrovmEgressSecurityGroup'), 'GroupId'] }],
+        },
+      },
+    });
+  });
+
+  test('default operator role carries AWSLambdaNetworkConnectorOperatorPolicy', () => {
+    template.hasResourceProperties('AWS::IAM::Role', {
+      ManagedPolicyArns: [
+        { 'Fn::Join': ['', Match.arrayWith([Match.stringLikeRegexp('AWSLambdaNetworkConnectorOperatorPolicy$')])] },
+      ],
+    });
+  });
+
+  test('image, control plane and PassNetworkConnector use the unqualified connector ARN', () => {
+    const connectorArn = { 'Fn::GetAtt': [Match.stringLikeRegexp('^MicrovmEgressConnectorL2'), 'Arn'] };
+    template.hasResourceProperties('AWS::Lambda::MicrovmImage', {
+      Name: 'test-test-codex2-image',
+      EgressNetworkConnectors: [connectorArn],
+    });
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: { Variables: Match.objectLike({ EGRESS_NETWORK_CONNECTORS: connectorArn }) },
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({ Action: 'lambda:PassNetworkConnector', Resource: Match.arrayWith([connectorArn]) }),
+        ]),
+      },
+    });
+  });
+
+  test('physical names do not collide with the L1 stack', () => {
+    for (const tableName of ['test-test-codex2-events', 'test-test-codex2-sessions', 'test-test-codex2-connections']) {
+      template.hasResourceProperties('AWS::DynamoDB::Table', { TableName: tableName });
+    }
+    template.hasResourceProperties('AWS::SecretsManager::Secret', { Name: 'test-test-codex2-openai-api-key' });
+  });
+});

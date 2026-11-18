@@ -4,7 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as nfw from 'aws-cdk-lib/aws-networkfirewall';
-import { Construct } from 'constructs';
+import { Construct, IConstruct } from 'constructs';
 
 export interface InspectedEgressProps {
   readonly prefix: string;
@@ -13,6 +13,14 @@ export interface InspectedEgressProps {
   readonly allowedDomains: string[];
   readonly logRetention: logs.RetentionDays;
   readonly removalPolicy: cdk.RemovalPolicy;
+  /**
+   * `l1`: `lambda.CfnNetworkConnector` with a hand-made operator role.
+   * `l2`: `lambda.NetworkConnector` (aws-cdk-lib 2.276.0) with its default operator role
+   * (`AWSLambdaNetworkConnectorOperatorPolicy`).
+   *
+   * @default 'l1'
+   */
+  readonly networkConnectorImpl?: 'l1' | 'l2';
 }
 
 /**
@@ -27,7 +35,10 @@ export interface InspectedEgressProps {
  * endpoint and NAT gateway per AZ.
  */
 export class InspectedEgress extends Construct {
-  public readonly connector: lambda.CfnNetworkConnector;
+  /** The connector resource (L1 or L2), for dependencies. */
+  public readonly connector: IConstruct;
+  /** Unqualified connector ARN: MicroVMs resolve the current version at run time. */
+  public readonly connectorArn: string;
   public readonly alertLogGroup: logs.ILogGroup;
   public readonly flowLogGroup: logs.ILogGroup;
   public readonly firewall: nfw.CfnFirewall;
@@ -137,25 +148,42 @@ export class InspectedEgress extends Construct {
     });
     securityGroup.addEgressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS to the internet, filtered by Network Firewall');
 
-    // A VPC_EGRESS connector needs a role Lambda can assume to manage ENIs in the subnets.
-    const operatorRole = new iam.Role(this, 'ConnectorOperatorRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Assumed by Lambda to manage ENIs in the MicroVM egress subnet',
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')],
-    });
+    if (props.networkConnectorImpl === 'l2') {
+      // The L2 creates the operator role (AWSLambdaNetworkConnectorOperatorPolicy) itself.
+      const connector = new lambda.NetworkConnector(this, 'ConnectorL2', {
+        networkConnectorName: `${prefix}-egress`,
+        configuration: lambda.NetworkConnectorConfiguration.vpcEgress({
+          computeType: lambda.NetworkConnectorComputeType.MICRO_VM,
+          vpc,
+          vpcSubnets: { subnets: [workloadSubnet] },
+          securityGroups: [securityGroup],
+        }),
+      });
+      this.connector = connector;
+      this.connectorArn = connector.networkConnectorArn;
+    } else {
+      // A VPC_EGRESS connector needs a role Lambda can assume to manage ENIs in the subnets.
+      const operatorRole = new iam.Role(this, 'ConnectorOperatorRole', {
+        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        description: 'Assumed by Lambda to manage ENIs in the MicroVM egress subnet',
+        managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')],
+      });
 
-    this.connector = new lambda.CfnNetworkConnector(this, 'Connector', {
-      name: `${prefix}-egress`,
-      operatorRole: operatorRole.roleArn,
-      configuration: {
-        vpcEgressConfiguration: {
-          associatedComputeResourceTypes: ['MicroVm'],
-          subnetIds: [workloadSubnet.subnetId],
-          securityGroupIds: [securityGroup.securityGroupId],
-          networkProtocol: 'IPv4',
+      const connector = new lambda.CfnNetworkConnector(this, 'Connector', {
+        name: `${prefix}-egress`,
+        operatorRole: operatorRole.roleArn,
+        configuration: {
+          vpcEgressConfiguration: {
+            associatedComputeResourceTypes: ['MicroVm'],
+            subnetIds: [workloadSubnet.subnetId],
+            securityGroupIds: [securityGroup.securityGroupId],
+            networkProtocol: 'IPv4',
+          },
         },
-      },
-    });
+      });
+      this.connector = connector;
+      this.connectorArn = connector.attrArn;
+    }
     // Connector ENIs are only useful once the whole path exists.
     [workloadToFirewall, firewallToNat, publicToWorkload, nat].forEach((dep) => this.connector.node.addDependency(dep));
   }

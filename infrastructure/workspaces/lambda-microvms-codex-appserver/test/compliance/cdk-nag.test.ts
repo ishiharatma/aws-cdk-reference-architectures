@@ -14,7 +14,7 @@ if (!envParams) {
   throw new Error(`No parameters found for environment: ${envName}`);
 }
 
-describe('CDK Nag AwsSolutions Pack', () => {
+describe.each(['l1', 'l2'] as const)('CDK Nag AwsSolutions Pack (network connector %s)', (networkConnectorImpl) => {
   let stack: LambdaMicrovmsCodexAppserverStack;
 
   beforeAll(() => {
@@ -25,6 +25,7 @@ describe('CDK Nag AwsSolutions Pack', () => {
       isAutoDeleteObject: true,
       env: testEnv,
       params: envParams,
+      networkConnectorImpl,
     });
 
     applySuppressions(stack);
@@ -74,7 +75,9 @@ function applySuppressions(stack: cdk.Stack): void {
         id: 'AwsSolutions-IAM4',
         reason:
           'AWSLambdaBasicExecutionRole (CloudWatch Logs) and AmazonAPIGatewayPushToCloudWatchLogs are the ' +
-          'AWS-recommended managed policies for Lambda and API Gateway logging; scoping them by hand adds no security.',
+          'AWS-recommended managed policies for Lambda and API Gateway logging; scoping them by hand adds no security. ' +
+          'The network connector operator role uses AWSLambdaVPCAccessExecutionRole (L1) or ' +
+          'AWSLambdaNetworkConnectorOperatorPolicy (L2 default) to manage the connector ENIs.',
       },
       {
         id: 'AwsSolutions-IAM5',

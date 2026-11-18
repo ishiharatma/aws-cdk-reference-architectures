@@ -26,5 +26,21 @@ export class ClaudeManagedAgentsLambdaMicrovmsStage extends cdk.Stage {
       terminationProtection: props.terminationProtection,
       isAutoDeleteObject: props.isAutoDeleteObject,
     });
+
+    // Only the firewall egress mode defines its own network connector; the internet mode uses an
+    // AWS-managed connector ARN, so an L2 variant would be an identical copy of the stack.
+    if (props.params.network?.egressMode === 'firewall') {
+      new ClaudeManagedAgentsLambdaMicrovmsStack(this, 'MainL2', {
+        project: props.project,
+        environment: props.environment,
+        envParams: props.params,
+        env: props.env,
+        stackName: `${props.project}-${props.environment}-claude-managed-agents-l2`,
+        description: `Claude Managed Agents on Lambda MicroVMs, egress connector built with the NetworkConnector L2 (${props.environment})`,
+        terminationProtection: props.terminationProtection,
+        isAutoDeleteObject: props.isAutoDeleteObject,
+        networkConnectorImpl: 'l2',
+      });
+    }
   }
 }

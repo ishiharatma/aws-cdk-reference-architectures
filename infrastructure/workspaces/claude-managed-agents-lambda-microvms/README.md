@@ -371,6 +371,21 @@ secrets: { useCustomerManagedKey: true },
 
 Add them to `src/microvm-image/Dockerfile` (arm64 builds, pinned versions) and redeploy. The image is rebuilt from the asset hash.
 
+### Deploy the NetworkConnector L2 variant (aws-cdk-lib 2.276.0) side by side
+
+The stack defines its own connector only with `network.egressMode: 'firewall'`. In that mode the stage also deploys `<project>-<env>-claude-managed-agents-l2`, whose `InspectedEgress` connector is built with `lambda.NetworkConnector` (`networkConnectorImpl: 'l2'`). The `internet` mode only uses a managed connector ARN, so there is nothing to compare and no L2 variant is deployed.
+
+| Item | L1 | L2 |
+|------|----|----|
+| Connector | `CfnNetworkConnector` (subnet and security group IDs passed by hand) | `NetworkConnectorConfiguration.vpcEgress({ computeType: MICRO_VM, vpc, vpcSubnets, securityGroups })` |
+| Operator role | Own role (`AWSLambdaVPCAccessExecutionRole`) | Created by default (`AWSLambdaNetworkConnectorOperatorPolicy`) |
+| ARN passed to MicroVMs | `attrArn` | `networkConnectorArn` (both unqualified) |
+
+The L2 variant's physical names are `<project>-<env>-claude2-*` and its metric namespace is `ClaudeManagedAgentsL2`. It reads the same SSM secrets as the L1 stack. It adds a second Network Firewall endpoint and NAT gateway, so delete the L2 stack once the comparison is done. Each stack has its own webhook URL to register with Anthropic.
+
+> [!WARNING]
+> The L2 variant has not been verified by a real deployment. The L1 operator role (`AWSLambdaVPCAccessExecutionRole`) is verified; the L2 default (`AWSLambdaNetworkConnectorOperatorPolicy`) is not yet.
+
 ## ✅ Deploy verification
 
 Deploy-verified on 2026-10-09 in `ap-northeast-1` (stack creation 264 s in `internet` mode, about 11 minutes with the egress VPC, whose network connector takes about 4 minutes). The stack was destroyed afterwards.

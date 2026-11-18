@@ -19,11 +19,23 @@ import { Environment } from '@common/parameters/environments';
 import { EnvParams } from 'parameters/environments';
 import { defaultControlPlaneConfig, defaultMicrovmImageConfig } from 'lib/types';
 
+/** Which construct level builds the MicroVM egress network connector. */
+export type NetworkConnectorImpl = 'l1' | 'l2';
+
 interface StackProps extends cdk.StackProps {
   readonly project: string;
   readonly environment: Environment;
   readonly isAutoDeleteObject: boolean;
   readonly params: EnvParams;
+  /**
+   * `l1`: `lambda.CfnNetworkConnector` with a hand-made operator role.
+   * `l2`: `lambda.NetworkConnector` (aws-cdk-lib 2.276.0), whose default operator role carries
+   * `AWSLambdaNetworkConnectorOperatorPolicy`. Physical names get a `2` suffix on the prefix
+   * so both variants deploy side by side.
+   *
+   * @default 'l1'
+   */
+  readonly networkConnectorImpl?: NetworkConnectorImpl;
 }
 
 /**
@@ -56,7 +68,8 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
 
     const { project, environment, isAutoDeleteObject, params } = props;
     const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
-    const namePrefix = `${project}-${environment}-codex`;
+    const networkConnectorImpl = props.networkConnectorImpl ?? 'l1';
+    const namePrefix = `${project}-${environment}-codex${networkConnectorImpl === 'l2' ? '2' : ''}`;
 
     const microvmImageParams = params.microvmImage;
     const controlPlaneParams = params.controlPlane ?? {};
@@ -92,26 +105,49 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     // is required for VPC_EGRESS connector type". AWSLambdaVPCAccessExecutionRole
     // grants exactly that permission set (it's the same role shape a
     // VPC-attached Lambda function's own execution role would need).
-    const networkConnectorOperatorRole = new iam.Role(this, 'MicrovmEgressConnectorOperatorRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Assumed by Lambda to manage ENIs in the MicroVM egress subnets on behalf of the network connector',
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
-      ],
-    });
+    //
+    // The L2 (`lambda.NetworkConnector`) creates that operator role itself, with
+    // AWSLambdaNetworkConnectorOperatorPolicy, and turns the subnet selection and
+    // security groups into the same VpcEgressConfiguration.
+    let egressNetworkConnector: Construct;
+    // Unqualified connector ARN: MicroVMs resolve the current version at run time.
+    let egressNetworkConnectorArn: string;
+    if (networkConnectorImpl === 'l2') {
+      const connector = new lambda.NetworkConnector(this, 'MicrovmEgressConnectorL2', {
+        networkConnectorName: `${namePrefix}-egress`,
+        configuration: lambda.NetworkConnectorConfiguration.vpcEgress({
+          computeType: lambda.NetworkConnectorComputeType.MICRO_VM,
+          vpc,
+          vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+          securityGroups: [egressSecurityGroup],
+        }),
+      });
+      egressNetworkConnector = connector;
+      egressNetworkConnectorArn = connector.networkConnectorArn;
+    } else {
+      const networkConnectorOperatorRole = new iam.Role(this, 'MicrovmEgressConnectorOperatorRole', {
+        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        description: 'Assumed by Lambda to manage ENIs in the MicroVM egress subnets on behalf of the network connector',
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+        ],
+      });
 
-    const egressNetworkConnector = new lambda.CfnNetworkConnector(this, 'MicrovmEgressConnector', {
-      name: `${namePrefix}-egress`,
-      operatorRole: networkConnectorOperatorRole.roleArn,
-      configuration: {
-        vpcEgressConfiguration: {
-          associatedComputeResourceTypes: ['MicroVm'],
-          subnetIds: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds,
-          securityGroupIds: [egressSecurityGroup.securityGroupId],
-          networkProtocol: 'IPv4',
+      const connector = new lambda.CfnNetworkConnector(this, 'MicrovmEgressConnector', {
+        name: `${namePrefix}-egress`,
+        operatorRole: networkConnectorOperatorRole.roleArn,
+        configuration: {
+          vpcEgressConfiguration: {
+            associatedComputeResourceTypes: ['MicroVm'],
+            subnetIds: vpc.selectSubnets({ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }).subnetIds,
+            securityGroupIds: [egressSecurityGroup.securityGroupId],
+            networkProtocol: 'IPv4',
+          },
         },
-      },
-    });
+      });
+      egressNetworkConnector = connector;
+      egressNetworkConnectorArn = connector.attrArn;
+    }
 
     // ------------------------------------------------------------------
     // Events: every codex app-server JSON-RPC line, captured in-VM and
@@ -221,7 +257,9 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
     microvmImageLogGroup.grantWrite(buildRole);
 
     const microvmImage = new lambda.CfnMicrovmImage(this, 'CodexAppServerImage', {
-      name: microvmImageParams.name ?? `${namePrefix}-image`,
+      name: microvmImageParams.name
+        ? `${microvmImageParams.name}${networkConnectorImpl === 'l2' ? '-l2' : ''}`
+        : `${namePrefix}-image`,
       description: 'codex app-server (OpenAI Codex CLI) + an in-VM HTTP relay/event-handler, packaged as a Lambda MicroVM image',
       baseImageArn: microvmImageParams.baseImageArn,
       baseImageVersion: microvmImageParams.baseImageVersion,
@@ -230,7 +268,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
         uri: microvmImageAsset.s3ObjectUrl,
       },
       cpuConfigurations: [{ architecture: microvmImageParams.architecture ?? defaultMicrovmImageConfig.architecture }],
-      egressNetworkConnectors: [egressNetworkConnector.attrArn],
+      egressNetworkConnectors: [egressNetworkConnectorArn],
       environmentVariables: [
         { key: 'OPENAI_API_KEY_SECRET_ARN', value: openAiApiKeySecret.secretArn },
         { key: 'EVENTS_TABLE_NAME', value: eventsTable.tableName },
@@ -317,7 +355,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       EVENTS_TABLE_NAME: eventsTable.tableName,
       MICROVM_IMAGE_ARN: microvmImage.attrImageArn,
       MICROVM_EXECUTION_ROLE_ARN: executionRole.roleArn,
-      EGRESS_NETWORK_CONNECTORS: egressNetworkConnector.attrArn,
+      EGRESS_NETWORK_CONNECTORS: egressNetworkConnectorArn,
       CODEX_APP_SERVER_PORT: String(appServerPort),
       MAX_SESSION_DURATION_MINUTES: String(
         controlPlaneParams.maxSessionDurationInMinutes ?? defaultControlPlaneConfig.maxSessionDurationInMinutes,
@@ -399,7 +437,7 @@ export class LambdaMicrovmsCodexAppserverStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ['lambda:PassNetworkConnector'],
         resources: [
-          egressNetworkConnector.attrArn,
+          egressNetworkConnectorArn,
           `arn:${cdk.Aws.PARTITION}:lambda:${this.region}:aws:network-connector:aws-network-connector:*`,
         ],
       }),

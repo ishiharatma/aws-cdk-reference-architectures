@@ -102,6 +102,11 @@ function applySuppressions(stack: CicdCloudfrontS3Stack): void {
     stack,
     [
       {
+        id: 'AwsSolutions-L1',
+        reason:
+          'Functions are pinned to Python 3.14 deliberately. aws-cdk-lib 2.276.0 added PYTHON_3_15, which makes this rule flag 3.14; the runtime is bumped on purpose after verification, not by a library upgrade.',
+      },
+      {
         id: 'AwsSolutions-S1',
         reason: 'These are example S3 buckets for demonstration and do not require server access logging.',
       },

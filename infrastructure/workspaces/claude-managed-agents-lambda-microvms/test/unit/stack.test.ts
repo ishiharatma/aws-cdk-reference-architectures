@@ -1,5 +1,10 @@
+import * as cdk from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
-import { buildStack } from '../helpers';
+import { Environment } from '@common/parameters/environments';
+import { ClaudeManagedAgentsLambdaMicrovmsStage } from 'lib/stages/claude-managed-agents-lambda-microvms-stage';
+import { EnvParams } from 'parameters/environments';
+import { buildStack, defaultEnv, firewallNetwork } from '../helpers';
+import { testParams } from '../parameters/test-params';
 import '../parameters';
 
 /** The ARN embeds the partition pseudo parameter, so it renders as an Fn::Join ending in the connector name. */
@@ -241,5 +246,89 @@ describe('optional operations settings', () => {
         }),
       },
     });
+  });
+});
+
+describe('firewall egress with the NetworkConnector L2', () => {
+  const template = Template.fromStack(buildStack(firewallNetwork, undefined, 'l2'));
+
+  test('connector is built by lambda.NetworkConnector for MicroVms in the workload subnet', () => {
+    template.resourceCountIs('AWS::Lambda::NetworkConnector', 1);
+    template.hasResourceProperties('AWS::Lambda::NetworkConnector', {
+      Name: 'test-test-claude2-egress',
+      OperatorRole: { 'Fn::GetAtt': [Match.stringLikeRegexp('^InspectedEgressConnectorL2OperatorRole'), 'Arn'] },
+      Configuration: {
+        VpcEgressConfiguration: {
+          AssociatedComputeResourceTypes: ['MicroVm'],
+          NetworkProtocol: 'IPv4',
+          SubnetIds: [{ Ref: Match.stringLikeRegexp('workloadSubnet1') }],
+          SecurityGroupIds: [{ 'Fn::GetAtt': [Match.stringLikeRegexp('ConnectorSecurityGroup'), 'GroupId'] }],
+        },
+      },
+    });
+  });
+
+  test('default operator role carries AWSLambdaNetworkConnectorOperatorPolicy', () => {
+    template.hasResourceProperties('AWS::IAM::Role', {
+      ManagedPolicyArns: [
+        { 'Fn::Join': ['', Match.arrayWith([Match.stringLikeRegexp('AWSLambdaNetworkConnectorOperatorPolicy$')])] },
+      ],
+    });
+  });
+
+  test('connector waits for the inspected egress routes and NAT gateway', () => {
+    const connector = Object.values(template.findResources('AWS::Lambda::NetworkConnector'))[0];
+    expect(connector.DependsOn).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/WorkloadDefaultToFirewall/),
+        expect.stringMatching(/FirewallDefaultToNat/),
+        expect.stringMatching(/PublicToWorkloadViaFirewall/),
+        expect.stringMatching(/InspectedEgressNat/),
+      ]),
+    );
+  });
+
+  test('launcher passes the unqualified connector ARN and may pass it', () => {
+    const connectorArn = { 'Fn::GetAtt': [Match.stringLikeRegexp('^InspectedEgressConnectorL2'), 'Arn'] };
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: { Variables: Match.objectLike({ EGRESS_CONNECTOR_ARN: connectorArn }) },
+    });
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({ Action: 'lambda:PassNetworkConnector', Resource: Match.arrayWith([connectorArn]) }),
+        ]),
+      },
+    });
+  });
+
+  test('physical names and the metric namespace do not collide with the L1 stack', () => {
+    template.hasResourceProperties('AWS::NetworkFirewall::Firewall', { FirewallName: 'test-test-claude2-firewall' });
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      FunctionName: 'test-test-claude2-stale-detector',
+      Environment: { Variables: Match.objectLike({ METRIC_NAMESPACE: 'ClaudeManagedAgentsL2' }) },
+    });
+  });
+});
+
+describe('ClaudeManagedAgentsLambdaMicrovmsStage', () => {
+  const stackNames = (overrides: Partial<EnvParams>): string[] => {
+    const stage = new ClaudeManagedAgentsLambdaMicrovmsStage(new cdk.App(), 'Stage', {
+      project: 'test',
+      environment: Environment.TEST,
+      env: defaultEnv,
+      terminationProtection: false,
+      isAutoDeleteObject: true,
+      params: { ...testParams, ...overrides },
+    });
+    return stage.node.children.filter((c): c is cdk.Stack => cdk.Stack.isStack(c)).map((s) => s.stackName);
+  };
+
+  test('internet egress deploys only the main stack (no connector of its own to compare)', () => {
+    expect(stackNames({})).toEqual(['test-test-claude-managed-agents']);
+  });
+
+  test('firewall egress deploys the L2 connector variant side by side', () => {
+    expect(stackNames(firewallNetwork)).toEqual(['test-test-claude-managed-agents', 'test-test-claude-managed-agents-l2']);
   });
 });

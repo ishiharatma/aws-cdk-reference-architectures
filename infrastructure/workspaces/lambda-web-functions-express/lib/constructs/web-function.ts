@@ -1,5 +1,3 @@
-import * as path from 'path';
-import { execFileSync } from 'child_process';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -7,6 +5,7 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
+import { esbuildBundling } from 'lib/constructs/esbuild-bundling';
 
 /** Endpoint authentication type. `ApplicationManaged` is public; `IamAuth` requires SigV4. */
 export type WebFunctionAuthType = 'ApplicationManaged' | 'IamAuth';
@@ -103,29 +102,7 @@ export class WebFunction extends Construct {
       prune: false, // older revisions may still reference older zips
       sources: [
         s3deploy.Source.asset(props.sourceDir, {
-          bundling: {
-            image: cdk.DockerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
-            command: ['sh', '-c', 'echo "Docker bundling is not supported; install esbuild locally" && exit 1'],
-            local: {
-              tryBundle(outputDir: string): boolean {
-                execFileSync(
-                  'npx',
-                  [
-                    'esbuild',
-                    path.join(props.sourceDir, props.entry),
-                    '--bundle',
-                    '--platform=node',
-                    '--target=node24',
-                    '--format=cjs',
-                    `--outfile=${path.join(outputDir, 'index.js')}`,
-                    '--log-level=warning',
-                  ],
-                  { stdio: 'inherit' },
-                );
-                return true;
-              },
-            },
-          },
+          bundling: esbuildBundling(props.sourceDir, props.entry),
         }),
       ],
     });

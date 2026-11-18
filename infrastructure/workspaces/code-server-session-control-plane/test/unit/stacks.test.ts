@@ -6,7 +6,7 @@ import { MicrovmComputeStack } from 'lib/stacks/microvm-compute-stack';
 import { EnvParams } from 'parameters/environments';
 import { buildStacks } from 'test/helpers';
 
-const { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork } = buildStacks();
+const { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork, privateNetworkL2 } = buildStacks();
 const microvmTemplate = Template.fromStack(microvm);
 const ec2Template = Template.fromStack(ec2);
 const controlPlaneTemplate = Template.fromStack(controlPlane);
@@ -276,5 +276,43 @@ describe('BrowserAccessStack', () => {
         CacheBehaviors: [Match.objectLike({ PathPattern: '/__cp/*', FunctionAssociations: [Match.objectLike({ EventType: 'viewer-request' })] })],
       }),
     });
+  });
+});
+
+describe('PrivateNetworkStack with the NetworkConnector L2', () => {
+  const template = Template.fromStack(privateNetworkL2);
+
+  test('connector is built by lambda.NetworkConnector for MicroVms in the isolated subnet', () => {
+    template.resourceCountIs('AWS::Lambda::NetworkConnector', 1);
+    template.hasResourceProperties('AWS::Lambda::NetworkConnector', {
+      Name: 'test-test-code-server-sessions-l2-private',
+      OperatorRole: { 'Fn::GetAtt': [Match.stringLikeRegexp('^EgressConnectorL2OperatorRole'), 'Arn'] },
+      Configuration: {
+        VpcEgressConfiguration: {
+          AssociatedComputeResourceTypes: ['MicroVm'],
+          NetworkProtocol: 'IPv4',
+          SubnetIds: [{ Ref: Match.stringLikeRegexp('sessionsSubnet1') }],
+          SecurityGroupIds: [{ 'Fn::GetAtt': [Match.stringLikeRegexp('SessionsSecurityGroup'), 'GroupId'] }],
+        },
+      },
+    });
+  });
+
+  test('default operator role carries AWSLambdaNetworkConnectorOperatorPolicy', () => {
+    template.hasResourceProperties('AWS::IAM::Role', {
+      ManagedPolicyArns: [
+        { 'Fn::Join': ['', Match.arrayWith([Match.stringLikeRegexp('AWSLambdaNetworkConnectorOperatorPolicy$')])] },
+      ],
+    });
+  });
+
+  test('exports the unqualified connector ARN and keeps the network without a route out', () => {
+    template.hasOutput('EgressConnectorArn', { Value: { 'Fn::GetAtt': [Match.stringLikeRegexp('^EgressConnectorL2'), 'Arn'] } });
+    template.resourceCountIs('AWS::EC2::InternetGateway', 0);
+    template.resourceCountIs('AWS::EC2::NatGateway', 0);
+  });
+
+  test('package mirror domain does not collide with the L1 network', () => {
+    template.hasResourceProperties('AWS::CodeArtifact::Domain', { DomainName: 'test-test-code-server-sessions-l2' });
   });
 });

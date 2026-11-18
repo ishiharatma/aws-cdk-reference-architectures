@@ -664,6 +664,25 @@ exports[`Stack Snapshot Tests BudgetsCostAnomalyDetectionCostDigestStack Complet
           "Statement": [
             {
               "Action": "sts:AssumeRole",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":states:ap-northeast-1:123456789012:stateMachine:*",
+                      ],
+                    ],
+                  },
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": "123456789012",
+                },
+              },
               "Effect": "Allow",
               "Principal": {
                 "Service": "states.amazonaws.com",

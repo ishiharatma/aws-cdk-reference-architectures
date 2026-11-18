@@ -2,7 +2,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import { CloudfrontWafStack } from 'lib/stacks/cloudfront-waf-stack';
-import { buildStack, envName, projectName, testEnv } from '../helpers/stack';
+import { buildL2Stack, buildStack, envName, projectName, testEnv } from '../helpers/stack';
 
 const countResources = (template: Template): Record<string, number> => {
   const counts: Record<string, number> = {};
@@ -23,6 +23,18 @@ const countResources = (template: Template): Record<string, number> => {
  */
 describe('LambdaWebFunctionsExpressStack Snapshot', () => {
   const template = Template.fromStack(buildStack());
+
+  test('Complete CloudFormation template snapshot', () => {
+    expect(template.toJSON()).toMatchSnapshot();
+  });
+
+  test('Resource types and counts', () => {
+    expect(countResources(template)).toMatchSnapshot();
+  });
+});
+
+describe('LambdaWebFunctionsExpressL2Stack Snapshot', () => {
+  const template = Template.fromStack(buildL2Stack());
 
   test('Complete CloudFormation template snapshot', () => {
     expect(template.toJSON()).toMatchSnapshot();

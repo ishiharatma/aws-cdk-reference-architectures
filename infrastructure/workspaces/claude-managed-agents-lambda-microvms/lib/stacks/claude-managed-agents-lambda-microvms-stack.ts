@@ -26,10 +26,17 @@ export interface ClaudeManagedAgentsLambdaMicrovmsStackProps extends cdk.StackPr
   readonly environment: Environment;
   readonly isAutoDeleteObject: boolean;
   readonly envParams: EnvParams;
+  /**
+   * Construct level of the firewall egress connector (`network.egressMode: 'firewall'` only).
+   * `l2` uses `lambda.NetworkConnector` (aws-cdk-lib 2.276.0) and suffixes physical names and the
+   * metric namespace so both variants deploy side by side.
+   *
+   * @default 'l1'
+   */
+  readonly networkConnectorImpl?: 'l1' | 'l2';
 }
 
 const HOOK_PORT = 9000;
-const METRIC_NAMESPACE = 'ClaudeManagedAgents';
 
 /**
  * Claude Managed Agents self-hosted sandboxes on AWS Lambda MicroVMs (event-driven webhook model).
@@ -47,7 +54,9 @@ export class ClaudeManagedAgentsLambdaMicrovmsStack extends cdk.Stack {
 
     const { project, environment, isAutoDeleteObject, envParams } = props;
     const removalPolicy = isAutoDeleteObject ? cdk.RemovalPolicy.DESTROY : cdk.RemovalPolicy.RETAIN;
-    const prefix = `${project}-${environment}-claude`;
+    const networkConnectorImpl = props.networkConnectorImpl ?? 'l1';
+    const prefix = `${project}-${environment}-claude${networkConnectorImpl === 'l2' ? '2' : ''}`;
+    const METRIC_NAMESPACE = `ClaudeManagedAgents${networkConnectorImpl === 'l2' ? 'L2' : ''}`;
     const logRetention = (envParams.operations?.logRetentionDays ?? 30) as logs.RetentionDays;
     const network = envParams.network ?? {};
     const egressMode = network.egressMode ?? 'internet';
@@ -114,8 +123,9 @@ export class ClaudeManagedAgentsLambdaMicrovmsStack extends cdk.Stack {
         allowedDomains: network.allowedDomains ?? ['api.anthropic.com', '.amazonaws.com'],
         logRetention,
         removalPolicy,
+        networkConnectorImpl,
       });
-      egressConnectorArn = inspectedEgress.connector.attrArn;
+      egressConnectorArn = inspectedEgress.connectorArn;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -237,7 +247,7 @@ export class ClaudeManagedAgentsLambdaMicrovmsStack extends cdk.Stack {
       resources: [
         // RunMicrovm also attaches an AWS-managed HTTP_INGRESS connector implicitly.
         managedConnector('*'),
-        ...(inspectedEgress ? [inspectedEgress.connector.attrArn] : []),
+        ...(inspectedEgress ? [inspectedEgress.connectorArn] : []),
       ],
     }));
 

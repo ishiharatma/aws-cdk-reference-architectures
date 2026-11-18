@@ -9,8 +9,8 @@ import { buildStacks } from 'test/helpers';
  * Detailed property assertions live in test/unit/.
  */
 describe('Snapshot', () => {
-  const { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork } = buildStacks();
-  const stacks = { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork };
+  const { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork, privateNetworkL2 } = buildStacks();
+  const stacks = { microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork, privateNetworkL2 };
 
   test.each(Object.entries(stacks))('%s template', (_name, stack) => {
     expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
