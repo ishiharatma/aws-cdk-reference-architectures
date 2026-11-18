@@ -14,6 +14,19 @@ const variants: Record<string, Parameters<typeof buildStack>[0]> = {
 
 describe.each(Object.entries(variants))('Stack Snapshot Tests (%s)', (_name, overrides) => {
   const template = Template.fromStack(buildStack(overrides));
+  registerSnapshotTests(template);
+});
+
+describe('Stack Snapshot Tests (firewall egress, NetworkConnector L2)', () => {
+  registerSnapshotTests(Template.fromStack(buildStack(variants['firewall egress'], undefined, 'l2')));
+});
+
+/**
+ * Registers the full-template and resource-count snapshot tests for one template.
+ *
+ * @param template - Synthesized stack template
+ */
+function registerSnapshotTests(template: Template): void {
 
   test('Complete CloudFormation template snapshot', () => {
     const json = template.toJSON();
@@ -29,4 +42,4 @@ describe.each(Object.entries(variants))('Stack Snapshot Tests (%s)', (_name, ove
     });
     expect(counts).toMatchSnapshot();
   });
-});
+}
