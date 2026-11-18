@@ -902,5 +902,18 @@
     "level": 300,
     "date": "2026-11-05",
     "articles": {}
+  },
+  {
+    "id": "workspaces-managed-ad-closed-vpc",
+    "title": "WorkSpaces and AWS Managed Microsoft AD on a VPC with No Internet Path",
+    "description": "Windows Server 2025 WorkSpaces that only the company's standard PCs can reach through an IP access control group, in a /23 VPC with no internet gateway or NAT and subnets reserved for a later Transit Gateway attachment. A Python custom resource registers the directory and locks its settings (Windows client only, no reconnect, no self-service). A management instance builds the AD OU tree, groups, PSO and GPOs through SSM, and the vendor gets an operator role whose explicit Denies protect the IP restriction, directory settings and network path. A monthly Python Lambda stores each WorkSpace's last connection time as CSV in S3 and mails a summary through SNS. Code only; not deploy-verified yet.",
+    "image": "workspaces-managed-ad-closed-vpc/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "WorkSpaces", "Directory Service", "Managed Microsoft AD", "Systems Manager", "VPC Endpoints", "IAM", "Lambda", "Python", "EventBridge Scheduler", "SNS", "S3", "Group Policy"],
+    "link": "workspaces-managed-ad-closed-vpc",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-11-18",
+    "articles": {},
+    "draft": true
   }
 ]
