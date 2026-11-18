@@ -27,5 +27,19 @@ export class LambdaMicrovmsCodexAppserverStage extends cdk.Stage {
       isAutoDeleteObject: props.isAutoDeleteObject,
       params: props.params,
     });
+
+    // Same stack with the egress connector built by the aws-cdk-lib 2.276.0 L2
+    // (`lambda.NetworkConnector`), deployed side by side for comparison.
+    new LambdaMicrovmsCodexAppserverStack(this, `${pascalCase(props.project)}${pascalCase('lambda-microvms-codex-appserver-l2')}`, {
+      stackName: `${props.project}-${props.environment}-lambda-microvms-codex-appserver-l2-stack`,
+      description: 'Serverless Codex App Server on AWS Lambda MicroVMs (egress connector built with the NetworkConnector L2)',
+      project: props.project,
+      environment: props.environment,
+      env: props.env,
+      terminationProtection: props.terminationProtection,
+      isAutoDeleteObject: props.isAutoDeleteObject,
+      params: props.params,
+      networkConnectorImpl: 'l2',
+    });
   }
 }

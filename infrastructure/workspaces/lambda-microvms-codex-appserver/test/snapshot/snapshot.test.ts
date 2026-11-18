@@ -24,6 +24,35 @@ if (!envParams) {
  *
  * Detailed property assertions live in test/unit/.
  */
+const countResources = (template: Template): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  Object.values(template.toJSON().Resources || {}).forEach((resource: any) => {
+    counts[resource.Type] = (counts[resource.Type] || 0) + 1;
+  });
+  return counts;
+};
+
+describe('LambdaMicrovmsCodexAppserverStack (NetworkConnector L2) Snapshot', () => {
+  const app = new cdk.App();
+  const stack = new LambdaMicrovmsCodexAppserverStack(app, 'LambdaMicrovmsCodexAppserverL2', {
+    project: projectName,
+    environment: envName,
+    isAutoDeleteObject: true,
+    env: testEnv,
+    params: envParams,
+    networkConnectorImpl: 'l2',
+  });
+  const stackTemplate = Template.fromStack(stack);
+
+  test('Complete CloudFormation template snapshot', () => {
+    expect(stackTemplate.toJSON()).toMatchSnapshot();
+  });
+
+  test('Resource types and counts', () => {
+    expect(countResources(stackTemplate)).toMatchSnapshot();
+  });
+});
+
 describe('LambdaMicrovmsCodexAppserverStack Snapshot', () => {
   const app = new cdk.App();
   const stack = new LambdaMicrovmsCodexAppserverStack(app, 'LambdaMicrovmsCodexAppserver', {
