@@ -47,6 +47,11 @@ describe('CDK Nag AwsSolutions Pack', () => {
   NagSuppressions.addStackSuppressions(stage.target, instanceSuppressions);
   NagSuppressions.addStackSuppressions(stage.clientVpn, [
     {
+      id: 'AwsSolutions-L1',
+      reason:
+        'Functions are pinned to Python 3.14 deliberately. aws-cdk-lib 2.276.0 added PYTHON_3_15, which makes this rule flag 3.14; the runtime is bumped on purpose after verification, not by a library upgrade.',
+    },
+    {
       id: 'AwsSolutions-IAM4',
       reason: 'The connect handler only needs AWSLambdaBasicExecutionRole to write its decision log.',
       appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'],

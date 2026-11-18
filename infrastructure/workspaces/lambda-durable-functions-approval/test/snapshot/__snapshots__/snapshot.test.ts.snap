@@ -233,7 +233,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
         ],
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0.zip",
+          "S3Key": "a12efc822af4855efaddc35cac5d42dfa7a132ded579c17dbca95a4a89d0db43.zip",
         },
         "Environment": {
           "Variables": {
@@ -391,7 +391,7 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
       "Properties": {
         "Code": {
           "S3Bucket": "cdk-hnb659fds-assets-123456789012-ap-northeast-1",
-          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+          "S3Key": "6dba3da2af96b69a187d689b326e5272b9abc8671c0427845a8bed243e02877d.zip",
         },
         "Description": {
           "Fn::Join": [
@@ -605,70 +605,34 @@ exports[`LambdaDurableFunctionsApprovalStack Snapshot Complete CloudFormation te
           {},
           {
             "<<marker:0xbaba:0>>": {
-              "Fn::Join": [
-                "",
-                [
-                  ""https://",
-                  {
-                    "Ref": "RequestsApi5EAF7131",
-                  },
-                  ".execute-api.ap-northeast-1.",
-                  {
-                    "Ref": "AWS::URLSuffix",
-                  },
-                  "/",
-                  {
-                    "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
-                  },
-                  "/"",
-                ],
-              ],
+              "Ref": "RequestsApi5EAF7131",
             },
             "<<marker:0xbaba:1>>": {
-              "Fn::Join": [
-                "",
-                [
-                  """,
-                  {
-                    "Ref": "DemoWebUiUserPoolA370D570",
-                  },
-                  """,
-                ],
-              ],
+              "Ref": "AWS::URLSuffix",
             },
             "<<marker:0xbaba:2>>": {
-              "Fn::Join": [
-                "",
-                [
-                  """,
-                  {
-                    "Ref": "DemoWebUiUserPoolWebClient4518857E",
-                  },
-                  """,
-                ],
-              ],
+              "Ref": "RequestsApiDeploymentStagetestA4D5B1C1",
             },
             "<<marker:0xbaba:3>>": {
-              "Fn::Join": [
-                "",
-                [
-                  """,
-                  {
-                    "Ref": "DemoWebUiIdentityPool3C771354",
-                  },
-                  """,
-                ],
-              ],
+              "Ref": "DemoWebUiUserPoolA370D570",
+            },
+            "<<marker:0xbaba:4>>": {
+              "Ref": "DemoWebUiUserPoolWebClient4518857E",
+            },
+            "<<marker:0xbaba:5>>": {
+              "Ref": "DemoWebUiIdentityPool3C771354",
             },
           },
         ],
         "SourceMarkersConfig": [
           {},
-          {},
+          {
+            "jsonEscape": true,
+          },
         ],
         "SourceObjectKeys": [
           "16c374598a5df56047238f3e14247eb5072f6ba68e702f86d7c83494313ca8f8.zip",
-          "fc628675e9f1631af210941acf2e9f946c89ef277e610eced0cb4be9d799d56d.zip",
+          "33aeacacc023b73f55b1271fdbbf1dc2330cedfb6a71a6f2df83d4e64edccde8.zip",
         ],
         "WaitForDistributionInvalidation": true,
       },
