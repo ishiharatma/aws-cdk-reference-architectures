@@ -40,5 +40,11 @@ export function buildStacks(app = new cdk.App()) {
     namePrefix: 'test-test-code-server-sessions',
     codeCommit: envParams.codeCommit,
   });
-  return { app, microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork };
+  const privateNetworkL2 = new PrivateNetworkStack(app, 'PrivateNetworkL2', {
+    env,
+    namePrefix: 'test-test-code-server-sessions-l2',
+    codeCommit: envParams.codeCommit,
+    networkConnectorImpl: 'l2',
+  });
+  return { app, microvm, ec2, controlPlane, browserAccess, codeCommit, privateNetwork, privateNetworkL2 };
 }

@@ -62,6 +62,20 @@ export class CodeServerSessionControlPlaneStage extends cdk.Stage {
         })
       : undefined;
 
+    // The same network with the connector built by the aws-cdk-lib 2.276.0 L2 (`lambda.NetworkConnector`),
+    // deployed side by side for comparison. The control plane keeps using the L1 connector above.
+    if (isPrivate) {
+      new PrivateNetworkStack(this, 'PrivateNetworkL2', {
+        env: props.env,
+        terminationProtection: props.terminationProtection,
+        namePrefix: `${project}-${environment}-code-server-sessions-l2`,
+        codeCommit: params.codeCommit,
+        networkConnectorImpl: 'l2',
+        stackName: stackName('private-network-l2'),
+        description: 'Private network for sessions, egress connector built with the NetworkConnector L2 (comparison only)',
+      });
+    }
+
     const microvm = new MicrovmComputeStack(this, 'Microvm', {
       ...common,
       isAutoDeleteObject,

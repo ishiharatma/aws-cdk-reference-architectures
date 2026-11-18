@@ -15,6 +15,14 @@ import { CodeCommitParams } from 'parameters/environments';
 interface StackProps extends cdk.StackProps {
   readonly namePrefix: string;
   readonly codeCommit?: CodeCommitParams;
+  /**
+   * `l1`: `lambda.CfnNetworkConnector` with a hand-made operator role.
+   * `l2`: `lambda.NetworkConnector` (aws-cdk-lib 2.276.0) with its default operator role
+   * (`AWSLambdaNetworkConnectorOperatorPolicy`).
+   *
+   * @default 'l1'
+   */
+  readonly networkConnectorImpl?: 'l1' | 'l2';
 }
 
 /**
@@ -140,25 +148,39 @@ export class PrivateNetworkStack extends cdk.Stack {
       name: `${namePrefix}-dns`,
     });
 
-    // Lambda assumes this role to manage the connector's network interfaces.
-    const operatorRole = new iam.Role(this, 'ConnectorOperatorRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Manages the MicroVM connector network interfaces',
-      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')],
-    });
-    const connector = new lambda.CfnNetworkConnector(this, 'EgressConnector', {
-      name: `${namePrefix}-private`,
-      operatorRole: operatorRole.roleArn,
-      configuration: {
-        vpcEgressConfiguration: {
-          associatedComputeResourceTypes: ['MicroVm'],
-          subnetIds: vpc.isolatedSubnets.map((subnet) => subnet.subnetId),
-          securityGroupIds: [sessionsGroup.securityGroupId],
-          networkProtocol: 'IPv4',
+    if (props.networkConnectorImpl === 'l2') {
+      // The L2 creates the operator role (AWSLambdaNetworkConnectorOperatorPolicy) itself.
+      const connector = new lambda.NetworkConnector(this, 'EgressConnectorL2', {
+        networkConnectorName: `${namePrefix}-private`,
+        configuration: lambda.NetworkConnectorConfiguration.vpcEgress({
+          computeType: lambda.NetworkConnectorComputeType.MICRO_VM,
+          vpc,
+          vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+          securityGroups: [sessionsGroup],
+        }),
+      });
+      this.connectorArn = connector.networkConnectorArn;
+    } else {
+      // Lambda assumes this role to manage the connector's network interfaces.
+      const operatorRole = new iam.Role(this, 'ConnectorOperatorRole', {
+        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        description: 'Manages the MicroVM connector network interfaces',
+        managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole')],
+      });
+      const connector = new lambda.CfnNetworkConnector(this, 'EgressConnector', {
+        name: `${namePrefix}-private`,
+        operatorRole: operatorRole.roleArn,
+        configuration: {
+          vpcEgressConfiguration: {
+            associatedComputeResourceTypes: ['MicroVm'],
+            subnetIds: vpc.isolatedSubnets.map((subnet) => subnet.subnetId),
+            securityGroupIds: [sessionsGroup.securityGroupId],
+            networkProtocol: 'IPv4',
+          },
         },
-      },
-    });
-    this.connectorArn = connector.attrArn;
+      });
+      this.connectorArn = connector.attrArn;
+    }
 
     new cdk.CfnOutput(this, 'EgressConnectorArn', { value: this.connectorArn });
   }

@@ -8,7 +8,7 @@ import { buildStacks } from 'test/helpers';
  */
 const suppressions = [
   { id: 'AwsSolutions-L1', reason: 'Runtimes are pinned to nodejs22.x and bumped deliberately for reproducible builds.' },
-  { id: 'AwsSolutions-IAM4', reason: 'AWSLambdaBasicExecutionRole and AmazonSSMManagedInstanceCore are the AWS-recommended managed policies for logging and Session Manager.' },
+  { id: 'AwsSolutions-IAM4', reason: 'AWSLambdaBasicExecutionRole and AmazonSSMManagedInstanceCore are the AWS-recommended managed policies for logging and Session Manager; AWSLambdaVPCAccessExecutionRole (L1) or AWSLambdaNetworkConnectorOperatorPolicy (NetworkConnector L2 default) manages the connector ENIs.' },
   {
     id: 'AwsSolutions-IAM5',
     reason:
@@ -34,7 +34,7 @@ const suppressions = [
 describe('CDK Nag AwsSolutions Pack', () => {
   const app = new cdk.App();
   const stacks = buildStacks(app);
-  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess, stacks.codeCommit, stacks.privateNetwork];
+  const all = [stacks.microvm, stacks.ec2, stacks.controlPlane, stacks.browserAccess, stacks.codeCommit, stacks.privateNetwork, stacks.privateNetworkL2];
   all.forEach((stack) => NagSuppressions.addStackSuppressions(stack, suppressions, true));
   cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
   app.synth();
