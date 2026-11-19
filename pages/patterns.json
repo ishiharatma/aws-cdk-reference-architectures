@@ -915,5 +915,18 @@
     "date": "2026-11-18",
     "articles": {},
     "draft": true
+  },
+  {
+    "id": "lambda-managed-instances-gpu",
+    "title": "GPU Batch Inference on Lambda Managed Instances",
+    "description": "Images uploaded to S3 flow through SQS to a container-image Lambda Event Function that runs PyTorch on G-series GPU instances (g6, g5, g4dn) launched and scaled by Lambda Managed Instances. One SQS batch becomes one GPU batch, results go to DynamoDB, and the capacity provider runs in isolated subnets reached only through VPC endpoints. Shows the escape hatches aws-cdk-lib still needs for AcceleratorConfig, a MaxVCpuCount below 12 and GPU-utilization scaling. Code only; not deploy-verified yet.",
+    "image": "lambda-managed-instances-gpu/overview.drawio.svg",
+    "tags": ["CDK", "TypeScript", "Lambda", "Lambda Managed Instances", "GPU", "EC2", "PyTorch", "SQS", "S3", "DynamoDB", "VPC Endpoints", "CloudWatch"],
+    "link": "lambda-managed-instances-gpu",
+    "difficulty": "advanced",
+    "level": 300,
+    "date": "2026-11-19",
+    "articles": {},
+    "draft": true
   }
 ]
