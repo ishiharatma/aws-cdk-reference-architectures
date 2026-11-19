@@ -1,8 +1,9 @@
 # .github/workflows/aws-emulator-integration.yml
 #
 # Deploys eventbridge-custom-bus to AWS Emulator with cdkd and runs its end-to-end test script,
-# without an AWS account. Archive replay is skipped: AWS Emulator does not expose archives
-# created through Cloud Control / CloudFormation to the EventBridge API (1.0.348).
+# archive replay included, without an AWS account. The stack is deployed unmodified: since
+# cdkd 0.357.0, --aws-emulator leaves the enforceSSL Deny out of resource policies and creates
+# AWS::Events::Archive and AWS::Logs::Delivery* through the SDK, so no EmulatorCompatAspect is needed.
 name: AWS Emulator Integration
 
 on:
@@ -25,7 +26,7 @@ permissions:
 
 env:
   NODE_VERSION: "24"
-  CDKD_VERSION: "0.350.1"
+  CDKD_VERSION: "0.358.3"
   EMU_PORT: "9297"
   # Fingerprint of the key that signs AWS Emulator packages (AWS Emulator User Guide).
   EMU_GPG_FINGERPRINT: "98BCF336A3BE53B734E967C52E5BF49BD940F624"
@@ -87,15 +88,15 @@ jobs:
         run: |
           source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
           ENV=dev cdkd deploy '**' --aws-emulator \
-            -c project=emu -c env=dev -c emulator=cdkd -O "$RUNNER_TEMP/outputs.json"
+            -c project=emu -c env=dev -O "$RUNNER_TEMP/outputs.json"
 
-      - name: Run test-eventbus.sh (archive replay skipped)
+      - name: Run test-eventbus.sh (including archive replay)
         working-directory: ${{ env.WORKSPACE_DIR }}
         run: |
           source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
           export PATH="$GITHUB_WORKSPACE/scripts/aws-emulator/cfn-outputs-shim:$PATH"
           export CDKD_OUTPUTS="$RUNNER_TEMP/outputs.json"
-          bash ./test-eventbus.sh --project emu --env dev --region us-east-1 --skip-replay
+          bash ./test-eventbus.sh --project emu --env dev --region us-east-1
 
       - name: Destroy with cdkd
         if: always()
@@ -103,7 +104,7 @@ jobs:
         run: |
           source "$GITHUB_WORKSPACE/scripts/aws-emulator/env.sh" emu-dev
           ENV=dev cdkd destroy '**' --aws-emulator --force \
-            -c project=emu -c env=dev -c emulator=cdkd
+            -c project=emu -c env=dev
 
       - name: Emulator log
         if: failure()
